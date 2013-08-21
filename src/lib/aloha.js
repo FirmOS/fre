@@ -349,13 +349,13 @@
 		var moduleMap = mergeObjects(coreMap, pluginConfig.map)
 
 		var defaultConfig = {
-			context: 'aloha',
+//			context: 'aloha',
 			config: {
 				i18n: {
 					locale: Aloha.settings.locale || 'en'
 				}
 			},
-			baseUrl: Aloha.settings.baseUrl,
+//			baseUrl: Aloha.settings.baseUrl,
 			map: moduleMap
 		};
 		
@@ -392,7 +392,11 @@
 			pluginConfig.paths,
 			requireConfig.paths
 		);
-
+		
+		for (var x in requireConfig.paths) {
+		  requireConfig.paths[x]='../../aloha/src/lib/'+requireConfig.paths[x];
+		}
+		
 		// Create define() wrappers that will provide the initialized objects
 		// that the user passes into Aloha via require() calls.
 		var predefinedModules = Aloha.settings.predefinedModules || {};
@@ -408,7 +412,7 @@
 		}
 
 		// Configure require and expose the Aloha.require.
-		var alohaRequire = require.config(requireConfig);
+		var alohaRequire = require;//.config(requireConfig);
 
 		Aloha.require = function (callback) {
 			// Pass the Aloha object to the given callback.

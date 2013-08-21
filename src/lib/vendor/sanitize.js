@@ -58,6 +58,8 @@ function Sanitize(){
 Sanitize.REGEX_PROTOCOL = /^([A-Za-z0-9\+\-\.\&\;\*\s]*?)(?:\:|&*0*58|&*x0*3a)/i
 Sanitize.RELATIVE = '__relative__'; // emulate Ruby symbol with string constant
 
+window.Sanitize = Sanitize;
+
 Sanitize.prototype.clean_node = function(container) {
   var fragment = this.dom.createDocumentFragment();
   this.current_element = fragment;
