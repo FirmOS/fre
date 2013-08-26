@@ -1,4 +1,4 @@
-unit fos_dbcorebox_vm_machines_mod;
+unit fos_firmbox_vm_machines_mod;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
@@ -11,18 +11,19 @@ uses
   FRE_DB_SYSRIGHT_CONSTANTS,
   FRE_DB_INTERFACE,
   FOS_VM_CONTROL_INTERFACE,
-  fos_dbcorebox_machine,
+  fre_hal_schemes,
+  fre_system,
   FRE_DB_COMMON;
 
-var
-     cVM_HostUser:string   = ''; // 'root';
-     cVMHostMachine:string = ''; // '10.1.0.130';
+//var
+//     cVM_HostUser:string   = ''; // 'root';
+//     cVMHostMachine:string = ''; // '10.1.0.130';
 
 type
 
-  { TFRE_DBCOREBOX_VM_MACHINES_MOD }
+  { TFRE_FIRMBOX_VM_MACHINES_MOD }
 
-  TFRE_DBCOREBOX_VM_MACHINES_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_VM_MACHINES_MOD = class (TFRE_DB_APPLICATION_MODULE)
   protected
     class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
@@ -43,9 +44,9 @@ type
     function  IMI_UpdateVM              (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_VM_NETWORK_MOD }
+  { TFRE_FIRMBOX_VM_NETWORK_MOD }
 
-  TFRE_DBCOREBOX_VM_NETWORK_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_VM_NETWORK_MOD = class (TFRE_DB_APPLICATION_MODULE)
   protected
     class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
@@ -57,9 +58,9 @@ type
     function        IMI_DatalinkCreateStub    (const input:IFRE_DB_OBject):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_VM_STATUS_MOD }
+  { TFRE_FIRMBOX_VM_STATUS_MOD }
 
-  TFRE_DBCOREBOX_VM_STATUS_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_VM_STATUS_MOD = class (TFRE_DB_APPLICATION_MODULE)
   protected
     class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
@@ -73,47 +74,47 @@ implementation
 
 procedure Register_DB_Extensions;
 begin
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_VM_MACHINES_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_VM_STATUS_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_VM_NETWORK_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_MACHINES_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_STATUS_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_NETWORK_MOD);
   GFRE_DBI.Initialize_Extension_Objects;
 end;
 
-{ TFRE_DBCOREBOX_VM_STATUS_MOD }
+{ TFRE_FIRMBOX_VM_STATUS_MOD }
 
-class procedure TFRE_DBCOREBOX_VM_STATUS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_VM_STATUS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_VM_STATUS_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_VM_STATUS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('VMSTATUS','$status_description');
 end;
 
 
-function TFRE_DBCOREBOX_VM_STATUS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_STATUS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');
 end;
 
-{ TFRE_DBCOREBOX_VM_NETWORK_MOD }
+{ TFRE_FIRMBOX_VM_NETWORK_MOD }
 
-class procedure TFRE_DBCOREBOX_VM_NETWORK_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_VM_NETWORK_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_VM_NETWORK_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_VM_NETWORK_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('VMNETWORK','$vnetwork_description');
 end;
 
-procedure TFRE_DBCOREBOX_VM_NETWORK_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_VM_NETWORK_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var datalink_dc       : IFRE_DB_DERIVED_COLLECTION;
     datalink_tr_Grid  : IFRE_DB_SIMPLE_TRANSFORM;
     app               : TFRE_DB_APPLICATION;
@@ -143,7 +144,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_VM_NETWORK_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_NETWORK_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app             : TFRE_DB_APPLICATION;
   conn            : IFRE_DB_CONNECTION;
@@ -169,7 +170,7 @@ begin
   Result                     := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_datalink,datalink_content,nil,nil,nil,true,1,1);
 end;
 
-function TFRE_DBCOREBOX_VM_NETWORK_MOD.IMI_DatalinkContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_NETWORK_MOD.IMI_DatalinkContent(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   panel         : TFRE_DB_FORM_PANEL_DESC;
   scheme        : IFRE_DB_SchemeObject;
@@ -202,7 +203,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VM_NETWORK_MOD.IMI_DatalinkMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_NETWORK_MOD.IMI_DatalinkMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -235,28 +236,28 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VM_NETWORK_MOD.IMI_DatalinkCreateStub(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_NETWORK_MOD.IMI_DatalinkCreateStub(const input: IFRE_DB_OBject): IFRE_DB_Object;
 begin
   result :=  TFRE_DB_MESSAGE_DESC.create.Describe('','Feature disabled in Demo Mode',fdbmt_info,nil);
 end;
 
 
-{ TFRE_DBCOREBOX_VM_MACHINES_MOD }
+{ TFRE_FIRMBOX_VM_MACHINES_MOD }
 
-class procedure TFRE_DBCOREBOX_VM_MACHINES_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_VM_MACHINES_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_VM_MACHINES_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   writeln('setup app module vm machines mod');
   InitModuleDesc('VMCONTROLLER','$machines_description');
 end;
 
-procedure TFRE_DBCOREBOX_VM_MACHINES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_VM_MACHINES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var vmc        : IFRE_DB_DERIVED_COLLECTION;
     vmcp       : IFRE_DB_COLLECTION;
     tr_Grid    : IFRE_DB_SIMPLE_TRANSFORM;
@@ -298,7 +299,7 @@ begin
 end;
 
 
-procedure TFRE_DBCOREBOX_VM_MACHINES_MOD._GetSelectedVMData(session: TFRE_DB_UserSession; const selected: TGUID; var vmkey, vnc_port, vnc_host, vm_state: String);
+procedure TFRE_FIRMBOX_VM_MACHINES_MOD._GetSelectedVMData(session: TFRE_DB_UserSession; const selected: TGUID; var vmkey, vnc_port, vnc_host, vm_state: String);
 var DC_VMC     : IFRE_DB_DERIVED_COLLECTION;
       vmo        : IFRE_DB_Object;
 begin
@@ -312,7 +313,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_VM_Feed_Update(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_VM_Feed_Update(const input: IFRE_DB_Object): IFRE_DB_Object;
 var vmc     : IFOS_VM_HOST_CONTROL;
     vmo     : IFRE_DB_Object;
     vm      : IFRE_DB_Object;
@@ -325,7 +326,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   coll   : IFRE_DB_DERIVED_COLLECTION;
   list   : TFRE_DB_VIEW_LIST_DESC;
@@ -343,7 +344,7 @@ begin
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of all configured virtual machines.</b>'));
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_VM_ShowInfo(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_VM_ShowInfo(const input: IFRE_DB_Object): IFRE_DB_Object;
 var vmcc  : IFRE_DB_COLLECTION;
     vmkey : string;
       obj : IFRE_DB_Object;
@@ -357,7 +358,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_VM_ShowVNC(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_VM_ShowVNC(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   vmkey              : string;
   vmcc               : IFRE_DB_COLLECTION;
@@ -403,12 +404,12 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_VM_ShowPerf(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_VM_ShowPerf(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_ContentNote(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_ContentNote(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn                  : IFRE_DB_CONNECTION;
   load_func             : TFRE_DB_SERVER_FUNC_DESC;
@@ -425,7 +426,7 @@ begin
   Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CSF(@IMI_NoteStartEdit),CSF(@IMI_NoteStopEdit));
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_VM_Details(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_VM_Details(const input: IFRE_DB_Object): IFRE_DB_Object;
 var   vm_sub       : TFRE_DB_SUBSECTIONS_DESC;
       vmo          : IFRE_DB_Object;
       sf           : TFRE_DB_SERVER_FUNC_DESC;
@@ -450,12 +451,12 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_NewVM(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_NewVM(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','NEW VM',fdbmt_info);
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_StartVM(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_StartVM(const input: IFRE_DB_Object): IFRE_DB_Object;
 var   vmc   : IFOS_VM_HOST_CONTROL;
       vmkey : string;
       vncp  : string;
@@ -466,14 +467,14 @@ begin
   //exit;
   if input.FieldExists('SELECTED') then begin
     _GetSelectedVMData(GetSession(input),input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
-    vmc := Get_VM_Host_Control(cVM_HostUser,cVMHostMachine);
+    vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Start(vmkey);
     vmc.Finalize;
   end;
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_StopVM(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_StopVM(const input: IFRE_DB_Object): IFRE_DB_Object;
 var   vmc     : IFOS_VM_HOST_CONTROL;
       vmkey   : string;
       vncp    : string;
@@ -484,14 +485,14 @@ begin
   //exit;
   if input.FieldExists('SELECTED') then begin
     _GetSelectedVMData(GetSession(input),input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
-    vmc := Get_VM_Host_Control(cVM_HostUser,cVMHostMachine);
+    vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Halt(vmkey);
     vmc.Finalize;
   end;
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_StopVMF(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_StopVMF(const input: IFRE_DB_Object): IFRE_DB_Object;
 var   vmc     : IFOS_VM_HOST_CONTROL;
       vmkey   : string;
       vncp    : string;
@@ -500,21 +501,21 @@ var   vmc     : IFOS_VM_HOST_CONTROL;
 begin
   if input.FieldExists('SELECTED') then begin
     _GetSelectedVMData(GetSession(input),input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
-    vmc := Get_VM_Host_Control(cVM_HostUser,cVMHostMachine);
+    vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Halt(vmkey,true);
     vmc.Finalize;
   end;
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_VM_MACHINES_MOD.IMI_UpdateVM(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.IMI_UpdateVM(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   vmc : IFOS_VM_HOST_CONTROL;
   vmo : IFRE_DB_Object;
   vmcc: IFRE_DB_COLLECTION;
 begin
   writeln('GET - UPDATE DATA');
-  vmc := Get_VM_Host_Control(cVM_HostUser,cVMHostMachine);
+  vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   vmc.VM_ListMachines(vmo);
   writeln('GOT - UPDATE DATA1');
   vmc.Finalize;

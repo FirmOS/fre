@@ -1,4 +1,4 @@
-unit FOS_DBCOREBOX_STORAGEAPP;
+unit fos_firmbox_storageapp;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
@@ -7,9 +7,10 @@ interface
 
 uses
   Classes, SysUtils, FRE_SYSTEM,
-  FOS_TOOL_INTERFACES,fos_dbcorebox_vm_machines_mod,
-  FRE_DB_SYSRIGHT_CONSTANTS,FRE_ZFS,FOS_DBCOREBOX_FILESERVER,
+  FOS_TOOL_INTERFACES,
+  FRE_DB_SYSRIGHT_CONSTANTS,FRE_ZFS,
   FRE_DB_INTERFACE,fos_stats_control_interface,FOS_VM_CONTROL_INTERFACE,
+  fos_firmbox_vm_machines_mod,fos_firmbox_fileserver,
   FRE_DB_COMMON;
 
 var
@@ -19,9 +20,9 @@ var
 
 type
 
-  { TFRE_DBCOREBOX_STORAGE_APP }
+  { TFRE_FIRMBOX_STORAGE_APP }
 
-  TFRE_DBCOREBOX_STORAGE_APP=class(TFRE_DB_APPLICATION)
+  TFRE_FIRMBOX_STORAGE_APP=class(TFRE_DB_APPLICATION)
   private
     procedure       SetupApplicationStructure ; override;
     function        InstallAppDefaults          (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
@@ -38,9 +39,9 @@ type
     function        IMI_RAW_DISK_FEED           (const data:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_STORAGE_POOLS_MOD }
+  { TFRE_FIRMBOX_STORAGE_POOLS_MOD }
 
-  TFRE_DBCOREBOX_STORAGE_POOLS_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_STORAGE_POOLS_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _addDisksToPool            (const pool: TFRE_DB_ZFS_ROOTOBJ; const target:TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: TFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: TFRE_DB_UserSession):TFRE_DB_MENU_DESC;
     function        _getPool                   (const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_ROOTOBJ;
@@ -95,9 +96,9 @@ type
   end;
 
 
-  { TFRE_DBCOREBOX_STORAGE_SYNCH_MOD }
+  { TFRE_FIRMBOX_STORAGE_SYNC_MOD }
 
-  TFRE_DBCOREBOX_STORAGE_SYNCH_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_STORAGE_SYNC_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -106,9 +107,9 @@ type
     function        IMI_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD }
+  { TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD }
 
-  TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _GetFileServerID          (conn : IFRE_DB_CONNECTION): TGuid;
     function        _getShareNames            (const shares: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
@@ -141,11 +142,11 @@ type
     function        IMI_LUNViewModify         (const input:IFRE_DB_OBject):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD }
+  { TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD }
 
   TFILESHARE_ROLETYPE = (rtRead,rtWrite);
 
-  TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _getVFSNames               (const vfss: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
     function        _getShareNames             (const shares: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
@@ -180,9 +181,9 @@ type
     function        IMI_VFSShareGroupOutDrop   (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_BACKUP_MOD }
+  { TFRE_FIRMBOX_BACKUP_MOD }
 
-  TFRE_DBCOREBOX_BACKUP_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_BACKUP_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -205,18 +206,18 @@ var __idx: NativeInt; //FIXXXME - remove me
 
 procedure Register_DB_Extensions;
 begin
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_BACKUP_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_STORAGE_POOLS_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_STORAGE_SYNCH_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_STORAGE_APP);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_BACKUP_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_POOLS_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_SYNC_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_APP);
   GFRE_DBI.Initialize_Extension_Objects;
 end;
 
-{ TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD }
+{ TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD }
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD._getVFSNames(const vfss: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD._getVFSNames(const vfss: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
 var
   i     : NativeInt;
   vfs   : IFRE_DB_Object;
@@ -231,7 +232,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD._getShareNames(const shares: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD._getShareNames(const shares: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
 var
   i     : NativeInt;
   share : IFRE_DB_Object;
@@ -246,7 +247,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD._getRolename(const share_id: TFRE_DB_NameType; const roletype: TFILESHARE_ROLETYPE): TFRE_DB_NameType;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD._getRolename(const share_id: TFRE_DB_NameType; const roletype: TFILESHARE_ROLETYPE): TFRE_DB_NameType;
 begin
   case roletype of
     rtRead  : result := FREDB_Get_Rightname_UID('FSREAD',GFRE_BT.HexString_2_GUID(share_id));
@@ -256,7 +257,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD._setShareRoles(const input: IFRE_DB_Object; const change_read, change_write, read, write: boolean): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD._setShareRoles(const input: IFRE_DB_Object; const change_read, change_write, read, write: boolean): IFRE_DB_Object;
 var
   app           : TFRE_DB_APPLICATION;
   conn          : IFRE_DB_CONNECTION;
@@ -322,19 +323,19 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-class procedure TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('STORAGE_FILESERVER_VIRTUAL','$fileserver_virtual_description')
 end;
 
-procedure TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.CalculateReadWriteAccess(const conn: IFRE_DB_CONNECTION; const dependency_input: IFRE_DB_Object; const input_object: IFRE_DB_Object; const transformed_object: IFRE_DB_Object);
+procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.CalculateReadWriteAccess(const conn: IFRE_DB_CONNECTION; const dependency_input: IFRE_DB_Object; const input_object: IFRE_DB_Object; const transformed_object: IFRE_DB_Object);
 var sel_guid,rr,wr : string;
     sel_guidg      : TGUID;
     group_id       : TGUID;
@@ -379,7 +380,7 @@ begin
 
 end;
 
-procedure TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var fs_dc           : IFRE_DB_DERIVED_COLLECTION;
     fs_tr_Grid      : IFRE_DB_SIMPLE_TRANSFORM;
     share_dc        : IFRE_DB_DERIVED_COLLECTION;
@@ -460,7 +461,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   vfs           : TFRE_DB_LAYOUT_DESC;
   sub_sec_fs    : TFRE_DB_SUBSECTIONS_DESC;
@@ -499,7 +500,7 @@ begin
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,vfs,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of virtual NAS fileservers and shares.</b>'));
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_ContentShareGroups(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_ContentShareGroups(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   dc_group_in   : IFRE_DB_DERIVED_COLLECTION;
   //grid_group_in : TFRE_DB_VIEW_LIST_DESC;
@@ -529,7 +530,7 @@ begin
   //Result        := share_group;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_ContentVFShares(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_ContentVFShares(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn          : IFRE_DB_CONNECTION;
   app           : TFRE_DB_APPLICATION;
@@ -566,7 +567,7 @@ begin
   Result        := share;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_CreateVFS(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_CreateVFS(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -588,7 +589,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -608,7 +609,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSContent(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   html          : TFRE_DB_HTML_DESC;
   panel         : TFRE_DB_FORM_PANEL_DESC;
@@ -648,7 +649,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSDelete(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSDelete(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
@@ -667,7 +668,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSDeleteConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSDeleteConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -683,7 +684,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_CreateVFSShare(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_CreateVFSShare(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -719,7 +720,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -739,7 +740,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareContent(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   html          : TFRE_DB_HTML_DESC;
   panel         : TFRE_DB_FORM_PANEL_DESC;
@@ -777,7 +778,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareDelete(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareDelete(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
@@ -796,7 +797,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareDeleteConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareDeleteConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -813,7 +814,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -855,39 +856,39 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupSetRead(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupSetRead(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result :=_setShareRoles(input,true,false,true,false);
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupSetWrite(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupSetWrite(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result :=_setShareRoles(input,false,true,false,true);
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupClearRead(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupClearRead(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result :=_setShareRoles(input,true,false,false,false);
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupClearWrite(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupClearWrite(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result :=_setShareRoles(input,false,true,false,false);
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupInDrop(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupInDrop(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := _setShareRoles(input,true,true,true,true);
 end;
 
-function TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupOutDrop(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.IMI_VFSShareGroupOutDrop(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := _setShareRoles(input,true,true,false,false);
 end;
 
-{ TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD }
+{ TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD }
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD._GetFileServerID(conn: IFRE_DB_CONNECTION): TGuid;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD._GetFileServerID(conn: IFRE_DB_CONNECTION): TGuid;
 var coll  : IFRE_DB_COLLECTION;
     id    : TGuid;
 
@@ -907,7 +908,7 @@ begin
   result := id;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD._getShareNames(const shares: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD._getShareNames(const shares: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
 var
   i     : NativeInt;
   share : IFRE_DB_Object;
@@ -922,19 +923,19 @@ begin
   end;
 end;
 
-class procedure TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('STORAGE_FILESERVER_GLOBAL','$fileserver_global_description')
 end;
 
-procedure TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var nfs_share_dc       : IFRE_DB_DERIVED_COLLECTION;
     nfs_tr_Grid        : IFRE_DB_SIMPLE_TRANSFORM;
     nfs_access_dc      : IFRE_DB_DERIVED_COLLECTION;
@@ -1021,7 +1022,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app           : TFRE_DB_APPLICATION;
   conn          : IFRE_DB_CONNECTION;
@@ -1040,7 +1041,7 @@ begin
 
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_ContentFilerNFS(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_ContentFilerNFS(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn                : IFRE_DB_CONNECTION;
   app                 : TFRE_DB_APPLICATION;
@@ -1078,7 +1079,7 @@ begin
   Result        := nfs;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_ContentFilerLUN(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_ContentFilerLUN(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn          : IFRE_DB_CONNECTION;
   app           : TFRE_DB_APPLICATION;
@@ -1116,7 +1117,7 @@ begin
   Result     := lun;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_CreateNFSExport(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_CreateNFSExport(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -1151,7 +1152,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_CreateNFSAccess(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_CreateNFSAccess(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -1173,7 +1174,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_NFSContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_NFSContent(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   html          : TFRE_DB_HTML_DESC;
   panel         : TFRE_DB_FORM_PANEL_DESC;
@@ -1210,7 +1211,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_NFSMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_NFSMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -1231,7 +1232,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_NFSDelete(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_NFSDelete(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
@@ -1250,7 +1251,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_NFSDeleteConfirmed(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_NFSDeleteConfirmed(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -1266,7 +1267,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_NFSAccessMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_NFSAccessMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -1290,7 +1291,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_NFSAccessDelete(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_NFSAccessDelete(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -1306,7 +1307,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_NFSAccessModify(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_NFSAccessModify(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -1328,7 +1329,7 @@ serverfunc :=TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_NFS_FILESHARE.Clas
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_CreateLUN(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_CreateLUN(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -1359,7 +1360,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_CreateLUNView(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_CreateLUNView(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -1381,7 +1382,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_LUNMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_LUNMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -1401,7 +1402,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_LUNContent(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_LUNContent(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   html          : TFRE_DB_HTML_DESC;
   panel         : TFRE_DB_FORM_PANEL_DESC;
@@ -1438,7 +1439,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_LUNDelete(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_LUNDelete(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
@@ -1457,7 +1458,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_LUNDeleteConfirmed(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_LUNDeleteConfirmed(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -1473,7 +1474,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_LUNViewMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_LUNViewMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -1496,7 +1497,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_LUNViewDelete(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_LUNViewDelete(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -1512,7 +1513,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.IMI_LUNViewModify(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.IMI_LUNViewModify(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -1533,21 +1534,21 @@ begin
   Result:=res;
 end;
 
-{ TFRE_DBCOREBOX_BACKUP_MOD }
+{ TFRE_FIRMBOX_BACKUP_MOD }
 
-class procedure TFRE_DBCOREBOX_BACKUP_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_BACKUP_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_BACKUP_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_BACKUP_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('STORAGE_BACKUP','$backup_description')
 end;
 
-procedure TFRE_DBCOREBOX_BACKUP_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_BACKUP_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 
 var snap_dc            : IFRE_DB_DERIVED_COLLECTION;
     snap_tr_Grid       : IFRE_DB_SIMPLE_TRANSFORM;
@@ -1578,7 +1579,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_BACKUP_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_BACKUP_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   snap          : TFRE_DB_LAYOUT_DESC;
   grid_snap     : TFRE_DB_VIEW_LIST_DESC;
@@ -1611,7 +1612,7 @@ begin
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,backup,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of backup snapshots of shares, block devices and virtual machines.</b>'));
 end;
 
-function TFRE_DBCOREBOX_BACKUP_MOD.IMI_ContentSnapShot(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_BACKUP_MOD.IMI_ContentSnapShot(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   html          : TFRE_DB_HTML_DESC;
   panel         : TFRE_DB_FORM_PANEL_DESC;
@@ -1645,12 +1646,12 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_BACKUP_MOD.IMI_ContentSchedule(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_BACKUP_MOD.IMI_ContentSchedule(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := TFRE_DB_HTML_DESC.Create.Describe('Definition of backup schedules')
 end;
 
-function TFRE_DBCOREBOX_BACKUP_MOD.IMI_SnapshotMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_BACKUP_MOD.IMI_SnapshotMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -1670,7 +1671,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_BACKUP_MOD.IMI_DeleteSnapshot(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_BACKUP_MOD.IMI_DeleteSnapshot(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app       : TFRE_DB_APPLICATION;
   conn      : IFRE_DB_CONNECTION;
@@ -1681,9 +1682,9 @@ begin
 end;
 
 
-{ TFRE_DBCOREBOX_STORAGE_POOLS_MOD }
+{ TFRE_FIRMBOX_STORAGE_POOLS_MOD }
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD._addDisksToPool(const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: TFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: TFRE_DB_UserSession): TFRE_DB_MENU_DESC;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD._addDisksToPool(const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: TFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: TFRE_DB_UserSession): TFRE_DB_MENU_DESC;
 var
   res      : TFRE_DB_MENU_DESC;
   pools    : IFRE_DB_COLLECTION;
@@ -2037,7 +2038,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD._getPool(const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_ROOTOBJ;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getPool(const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_ROOTOBJ;
 var
   pools : IFRE_DB_COLLECTION;
   dbObj : IFRE_DB_Object;
@@ -2050,7 +2051,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD._getPoolByName(const conn: IFRE_DB_CONNECTION; const name: String): TFRE_DB_ZFS_ROOTOBJ;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getPoolByName(const conn: IFRE_DB_CONNECTION; const name: String): TFRE_DB_ZFS_ROOTOBJ;
 var
   pools : IFRE_DB_COLLECTION;
   pool  : TFRE_DB_ZFS_ROOTOBJ;
@@ -2072,7 +2073,7 @@ begin
   Result:=pool;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD._getUnassignedPool(const conn: IFRE_DB_CONNECTION): TFRE_DB_ZFS_UNASSIGNED;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getUnassignedPool(const conn: IFRE_DB_CONNECTION): TFRE_DB_ZFS_UNASSIGNED;
 var
   pools : IFRE_DB_COLLECTION;
   ua    : TFRE_DB_ZFS_UNASSIGNED;
@@ -2093,7 +2094,7 @@ begin
   Result:=ua;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD._getTreeObj(const zfsObj: TFRE_DB_ZFS_OBJ): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getTreeObj(const zfsObj: TFRE_DB_ZFS_OBJ): IFRE_DB_Object;
 var
   entry : IFRE_DB_Object;
 begin
@@ -2132,19 +2133,19 @@ begin
   Result:=entry;
 end;
 
-class procedure TFRE_DBCOREBOX_STORAGE_POOLS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_POOLS_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('STORAGE_POOLS','$pools_description')
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_POOLS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
   ast,rbw,wbw,busy,
   sp,struct            : IFRE_DB_DERIVED_COLLECTION;
@@ -2208,7 +2209,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_POOLS_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
 var
   pool_disks    : IFRE_DB_COLLECTION;
   pool_capacity : IFRE_DB_COLLECTION;
@@ -2229,8 +2230,8 @@ var
     zfs_pool:=admin_dbc.Collection('ZFS_POOLS',true);
 
     zfs:=TFRE_DB_ZFS.create;
-    if cVM_HostUser<>'' then begin
-      zfs.SetRemoteSSH(cVM_HostUser, cVMHostMachine, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR + '/ssl/user/id_rsa'));
+    if cFRE_REMOTE_USER<>'' then begin
+      zfs.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR + '/ssl/user/id_rsa'));
     end;
     zfs_res:=zfs.GetPoolStatus('zones',zfs_error,pool);
     zfs.Free;
@@ -2252,8 +2253,8 @@ var
 begin
   inherited MyServerInitializeModule(admin_dbc);
 
-  DISKI_HACK := Get_Stats_Control(cVM_HostUser,cVMHostMachine);
-  VM_HACK    := Get_VM_Host_Control(cVM_HostUser,cVMHostMachine);
+  DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  VM_HACK    := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
 
   pool_disks := admin_dbc.Collection('POOL_DISKS',true,true);
   pool_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
@@ -2263,7 +2264,7 @@ begin
 
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   main      : TFRE_DB_LAYOUT_DESC;
   grid      : TFRE_DB_VIEW_LIST_DESC;
@@ -2310,7 +2311,7 @@ begin
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of disks and pools and their status. Update interval: 10s. The average IO size is 128kByte.</b>'));
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_PoolLayout(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_PoolLayout(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn                  : IFRE_DB_CONNECTION;
   app                   : TFRE_DB_APPLICATION;
@@ -2321,7 +2322,7 @@ begin
   Result:=TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_PoolSpace(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_PoolSpace(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res,center,top,bottom : TFRE_DB_LAYOUT_DESC;
   html                  : TFRE_DB_HTML_DESC;
@@ -2341,7 +2342,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_PoolNotes(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_PoolNotes(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn                  : IFRE_DB_CONNECTION;
   app                   : TFRE_DB_APPLICATION;
@@ -2364,7 +2365,7 @@ begin
   Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CSF(@IMI_NoteStartEdit),CSF(@IMI_NoteStopEdit));
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_PoolNotesLoad(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_PoolNotesLoad(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   writeln('LOAD EDITOR DATA');
   writeln('----------------------------------------');
@@ -2373,12 +2374,12 @@ begin
 
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_PoolNotesSave(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_PoolNotesSave(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_TreeGridData(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_TreeGridData(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res       : TFRE_DB_STORE_DATA_DESC;
   app       : TFRE_DB_APPLICATION;
@@ -2437,7 +2438,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_TreeDrop(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_TreeDrop(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app        : TFRE_DB_APPLICATION;
   conn       : IFRE_DB_CONNECTION;
@@ -2474,7 +2475,7 @@ begin
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DROP','Drop: '+disk.DumpToString()+ ' into ' + target.DumpToString(),fdbmt_info);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_GridMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_GridMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res,sub: TFRE_DB_MENU_DESC;
   app    : TFRE_DB_APPLICATION;
@@ -2635,7 +2636,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_UpdatePoolsTree(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_UpdatePoolsTree(const input: IFRE_DB_Object): IFRE_DB_Object;
 var disk_data   : IFRE_DB_Object;
     pool_disks  : IFRE_DB_COLLECTION;
 begin
@@ -2646,7 +2647,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_CreatePool(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_CreatePool(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app     : TFRE_DB_APPLICATION;
   conn    : IFRE_DB_CONNECTION;
@@ -2710,7 +2711,7 @@ begin
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_CreatePoolDiag(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_CreatePoolDiag(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res  :TFRE_DB_DIALOG_DESC;
   app  : TFRE_DB_APPLICATION;
@@ -2726,7 +2727,7 @@ begin
   result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_ImportPoolDiag(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_ImportPoolDiag(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app  : TFRE_DB_APPLICATION;
   conn : IFRE_DB_CONNECTION;
@@ -2738,7 +2739,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppText(conn,'$import_pool_diag_cap').Getshort,app.FetchAppText(conn,'$import_pool_diag_msg').Getshort,fdbmt_info,nil);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_AssignSpareDisk(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_AssignSpareDisk(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn    : IFRE_DB_CONNECTION;
   app     : TFRE_DB_APPLICATION;
@@ -2789,7 +2790,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_AssignCacheDisk(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_AssignCacheDisk(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn    : IFRE_DB_CONNECTION;
   app     : TFRE_DB_APPLICATION;
@@ -2840,7 +2841,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_AssignLogDisk(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_AssignLogDisk(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn    : IFRE_DB_CONNECTION;
   app     : TFRE_DB_APPLICATION;
@@ -2933,7 +2934,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_AssignStorageDisk(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_AssignStorageDisk(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn    : IFRE_DB_CONNECTION;
   app     : TFRE_DB_APPLICATION;
@@ -3026,7 +3027,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_RemoveNew(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_RemoveNew(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn    : IFRE_DB_CONNECTION;
   app     : TFRE_DB_APPLICATION;
@@ -3095,7 +3096,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_ChangeRaidLevel(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_ChangeRaidLevel(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn    : IFRE_DB_CONNECTION;
   app     : TFRE_DB_APPLICATION;
@@ -3131,7 +3132,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_DestroyPool(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_DestroyPool(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -3148,7 +3149,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppText(conn,'$confirm_destroy_caption').Getshort,StringReplace(app.FetchAppText(conn,'$confirm_destroy_msg').Getshort,'%pool%',pool.caption,[rfReplaceAll]),fdbmt_confirm,sf);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_DestroyPoolConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_DestroyPoolConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -3162,7 +3163,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Destroy Pool confirmed','Please implement me',fdbmt_info);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_Identify_on(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_Identify_on(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -3188,7 +3189,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_Identify_off(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_Identify_off(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -3215,7 +3216,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_SwitchOffline(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_SwitchOffline(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -3247,7 +3248,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Offline','Switch offline (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_SwitchOnline(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_SwitchOnline(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -3279,7 +3280,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Online','Switch online (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_POOLS_MOD._unassignDisk(const upool: TFRE_DB_ZFS_UNASSIGNED; const disks: TFRE_DB_StringArray; const app: TFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._unassignDisk(const upool: TFRE_DB_ZFS_UNASSIGNED; const disks: TFRE_DB_StringArray; const app: TFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: TFRE_DB_UserSession);
 var
   spool   : TFRE_DB_ZFS_ROOTOBJ;
   i       : Integer;
@@ -3319,7 +3320,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
 var
   session : TFRE_DB_UserSession;
 begin
@@ -3331,7 +3332,7 @@ begin
   __idx:=__idx+1;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_SaveConfig(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_SaveConfig(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -3347,7 +3348,7 @@ begin
   result:=TFRE_DB_MESSAGE_DESC.create.Describe('SAVE','Save Config',fdbmt_info);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_ResetConfig(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_ResetConfig(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   session : TFRE_DB_UserSession;
   conn    : IFRE_DB_CONNECTION;
@@ -3390,7 +3391,7 @@ begin
   //Result:=storeup;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_Replace(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_Replace(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn: IFRE_DB_CONNECTION;
   app : TFRE_DB_APPLICATION;
@@ -3402,7 +3403,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Replace','Please implement me',fdbmt_info);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.IMI_RAW_DISK_FEED(const data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_RAW_DISK_FEED(const data: IFRE_DB_Object): IFRE_DB_Object;
 var pool_disks : IFRE_DB_COLLECTION;
     dbc        : IFRE_DB_CONNECTION;
     pools      : IFRE_DB_COLLECTION;
@@ -3444,7 +3445,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.Usage(const input:IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.Usage(const input:IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
 var
   coll : IFRE_DB_DERIVED_COLLECTION;
 begin
@@ -3452,7 +3453,7 @@ begin
   Result:=coll.GetDisplayDescription;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.ServiceTime(const input:IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.ServiceTime(const input:IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
 var
   coll : IFRE_DB_DERIVED_COLLECTION;
 begin
@@ -3460,7 +3461,7 @@ begin
   Result:=coll.GetDisplayDescription;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.BusyTime(const input: IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.BusyTime(const input: IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
 var
   coll : IFRE_DB_DERIVED_COLLECTION;
 begin
@@ -3468,7 +3469,7 @@ begin
   Result:=coll.GetDisplayDescription;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.ReadBW(const input:IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.ReadBW(const input:IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
 var
   coll : IFRE_DB_DERIVED_COLLECTION;
 begin
@@ -3476,7 +3477,7 @@ begin
   Result:=coll.GetDisplayDescription;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_POOLS_MOD.WriteBW(const input:IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WriteBW(const input:IFRE_DB_Object): TFRE_DB_CONTENT_DESC;
 var
   coll : IFRE_DB_DERIVED_COLLECTION;
 begin
@@ -3484,7 +3485,7 @@ begin
   Result:=coll.GetDisplayDescription;
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_POOLS_MOD.UpdateDiskCollection(const pool_disks: IFRE_DB_COLLECTION; const data: IFRE_DB_Object);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.UpdateDiskCollection(const pool_disks: IFRE_DB_COLLECTION; const data: IFRE_DB_Object);
 var       debugs   : string;
   procedure UpdateDisks(const field:IFRE_DB_Field);
   var diskname : string;
@@ -3535,7 +3536,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_POOLS_MOD.UpdateZpool(const zpool: TFRE_DB_ZFS_ROOTOBJ; const data: IFRE_DB_Object; const updateDescr: TFRE_DB_UPDATE_STORE_DESC);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.UpdateZpool(const zpool: TFRE_DB_ZFS_ROOTOBJ; const data: IFRE_DB_Object; const updateDescr: TFRE_DB_UPDATE_STORE_DESC);
 var
   zfsObj : TFRE_DB_ZFS_OBJ;
 
@@ -3559,41 +3560,41 @@ begin
   data.ForAllFields(@_updateZfsObject);
 end;
 
-{ TFRE_DBCOREBOX_STORAGE_SYNCH_MOD }
+{ TFRE_FIRMBOX_STORAGE_SYNC_MOD }
 
-class procedure TFRE_DBCOREBOX_STORAGE_SYNCH_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_STORAGE_SYNC_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_SYNCH_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_STORAGE_SYNC_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('STORAGE_SYNC','$synch_description')
 end;
 
 
-function TFRE_DBCOREBOX_STORAGE_SYNCH_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_SYNC_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me.');
 end;
 
 
-{ TFRE_DBCOREBOX_STORAGE_APP }
+{ TFRE_FIRMBOX_STORAGE_APP }
 
-procedure TFRE_DBCOREBOX_STORAGE_APP.SetupApplicationStructure;
+procedure TFRE_FIRMBOX_STORAGE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
   InitAppDesc('corebox_storage','$description');
-  AddApplicationModule(TFRE_DBCOREBOX_STORAGE_POOLS_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_STORAGE_SYNCH_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_GLOBAL_FILESERVER_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_VIRTUAL_FILESERVER_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_BACKUP_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_STORAGE_POOLS_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_STORAGE_SYNC_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_BACKUP_MOD.create);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_STORAGE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
 var
   old_version  : TFRE_DB_String;
 
@@ -3817,7 +3818,7 @@ begin
 
 end;
 
-function TFRE_DBCOREBOX_STORAGE_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_STORAGE_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
 var
   role         : IFRE_DB_ROLE;
 begin
@@ -3897,7 +3898,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORAGE_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
 var
   SiteMapData  : IFRE_DB_Object;
   conn         : IFRE_DB_CONNECTION;
@@ -3920,7 +3921,7 @@ begin
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORAGE_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionInitialize(session);
   if session.IsInteractiveSession then begin
@@ -3928,29 +3929,29 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_STORAGE_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORAGE_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionPromotion(session);
   _UpdateSitemap(session);
 end;
 
-function TFRE_DBCOREBOX_STORAGE_APP.CFG_ApplicationUsesRights: boolean;
+function TFRE_FIRMBOX_STORAGE_APP.CFG_ApplicationUsesRights: boolean;
 begin
   result := true;
 end;
 
-function TFRE_DBCOREBOX_STORAGE_APP._ActualVersion: TFRE_DB_String;
+function TFRE_FIRMBOX_STORAGE_APP._ActualVersion: TFRE_DB_String;
 begin
   Result := '1.0';
 end;
 
-class procedure TFRE_DBCOREBOX_STORAGE_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_STORAGE_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
-function TFRE_DBCOREBOX_STORAGE_APP.IMI_RAW_DISK_FEED(const data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_APP.IMI_RAW_DISK_FEED(const data: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := DelegateInvoke('STORAGE_POOLS','RAW_DISK_FEED',data);
 end;

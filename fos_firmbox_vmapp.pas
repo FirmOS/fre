@@ -1,4 +1,4 @@
-unit FOS_DBCOREBOX_VMAPP;
+unit fos_firmbox_vmapp;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
@@ -11,13 +11,13 @@ uses
   FRE_DB_SYSRIGHT_CONSTANTS,
   FRE_DB_INTERFACE,
   FRE_DB_COMMON,
-  fos_dbcorebox_vm_machines_mod;
+  fos_firmbox_vm_machines_mod;
 
 type
 
-  { TFRE_DBCOREBOX_VM_APP }
+  { TFRE_FIRMBOX_VM_APP }
 
-  TFRE_DBCOREBOX_VM_APP=class(TFRE_DB_APPLICATION)
+  TFRE_FIRMBOX_VM_APP=class(TFRE_DB_APPLICATION)
   private
     procedure       SetupApplicationStructure   ; override;
     function        InstallAppDefaults          (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
@@ -42,19 +42,19 @@ implementation
 
 
 
-{ TFRE_DBCOREBOX_VM_APP }
+{ TFRE_FIRMBOX_VM_APP }
 
-procedure TFRE_DBCOREBOX_VM_APP.SetupApplicationStructure;
+procedure TFRE_FIRMBOX_VM_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
   writeln('init appdesc corebox_vm');
   InitAppDesc('corebox_vm','$description');
-  AddApplicationModule(TFRE_DBCOREBOX_VM_NETWORK_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_VM_MACHINES_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_VM_STATUS_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_VM_NETWORK_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_VM_MACHINES_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_VM_STATUS_MOD.create);
 end;
 
-function TFRE_DBCOREBOX_VM_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_VM_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
 var  old_version  : TFRE_DB_String;
 
   procedure _InstallAllDomains(const obj:IFRE_DB_Object);
@@ -97,7 +97,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_VM_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_VM_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
 var admin_app_rg : IFRE_DB_ROLE;
      user_app_rg : IFRE_DB_ROLE;
     guest_app_rg : IFRE_DB_ROLE;
@@ -125,7 +125,7 @@ begin
   _AddSystemGroups(conn,domain);
 end;
 
-procedure TFRE_DBCOREBOX_VM_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_VM_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
 var
   SiteMapData  : IFRE_DB_Object;
   conn         : IFRE_DB_CONNECTION;
@@ -141,7 +141,7 @@ begin
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;
 
-procedure TFRE_DBCOREBOX_VM_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_VM_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionInitialize(session);
   if session.IsInteractiveSession then begin
@@ -149,37 +149,37 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_VM_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_VM_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionPromotion(session);
   _UpdateSitemap(session);
 end;
 
-function TFRE_DBCOREBOX_VM_APP.CFG_ApplicationUsesRights: boolean;
+function TFRE_FIRMBOX_VM_APP.CFG_ApplicationUsesRights: boolean;
 begin
   result := true;
 end;
 
-function TFRE_DBCOREBOX_VM_APP._ActualVersion: TFRE_DB_String;
+function TFRE_FIRMBOX_VM_APP._ActualVersion: TFRE_DB_String;
 begin
   Result:='1.0';
 end;
 
-class procedure TFRE_DBCOREBOX_VM_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_VM_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
-function TFRE_DBCOREBOX_VM_APP.IMI_VM_Feed_Update(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_APP.IMI_VM_Feed_Update(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := DelegateInvoke('VMCONTROLLER','VM_Feed_Update',input);
 end;
 
 procedure Register_DB_Extensions;
 begin
-  fos_dbcorebox_vm_machines_mod.Register_DB_Extensions;
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_VM_APP);
+  fos_firmbox_vm_machines_mod.Register_DB_Extensions;
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_APP);
   GFRE_DBI.Initialize_Extension_Objects;
 end;
 

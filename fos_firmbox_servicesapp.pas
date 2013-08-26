@@ -1,4 +1,4 @@
-unit FOS_DBCOREBOX_SERVICESAPP;
+unit fos_firmbox_servicesapp;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
@@ -14,9 +14,9 @@ uses
 
 type
 
-  { TFRE_DBCOREBOX_SERVICES_APP }
+  { TFRE_FIRMBOX_SERVICES_APP }
 
-  TFRE_DBCOREBOX_SERVICES_APP=class(TFRE_DB_APPLICATION)
+  TFRE_FIRMBOX_SERVICES_APP=class(TFRE_DB_APPLICATION)
   private
     procedure       SetupApplicationStructure ; override;
     function        InstallAppDefaults        (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
@@ -31,9 +31,9 @@ type
   published
   end;
 
-  { TFRE_DBCOREBOX_MAILSERVER_MOD }
+  { TFRE_FIRMBOX_MAILSERVER_MOD }
 
-  TFRE_DBCOREBOX_MAILSERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_MAILSERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -42,9 +42,9 @@ type
     function        IMI_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_WEBSERVER_MOD }
+  { TFRE_FIRMBOX_WEBSERVER_MOD }
 
-  TFRE_DBCOREBOX_WEBSERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_WEBSERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -53,9 +53,9 @@ type
     function        IMI_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_DATABASE_MOD }
+  { TFRE_FIRMBOX_DATABASE_MOD }
 
-  TFRE_DBCOREBOX_DATABASE_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_DATABASE_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -68,78 +68,78 @@ procedure Register_DB_Extensions;
 implementation
 
 
-{ TFRE_DBCOREBOX_MAILSERVER_MOD }
+{ TFRE_FIRMBOX_MAILSERVER_MOD }
 
-class procedure TFRE_DBCOREBOX_MAILSERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_MAILSERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_MAILSERVER_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_MAILSERVER_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('MAILSERVER','$mailserver_description')
 end;
 
 
-function TFRE_DBCOREBOX_MAILSERVER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_MAILSERVER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me');
 end;
 
-{ TFRE_DBCOREBOX_WEBSERVER_MOD }
+{ TFRE_FIRMBOX_WEBSERVER_MOD }
 
-class procedure TFRE_DBCOREBOX_WEBSERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_WEBSERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_WEBSERVER_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_WEBSERVER_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('WEBSERVER','$webserver_description')
 end;
 
 
-function TFRE_DBCOREBOX_WEBSERVER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_WEBSERVER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me');
 end;
 
-{ TFRE_DBCOREBOX_DATABASE_MOD }
+{ TFRE_FIRMBOX_DATABASE_MOD }
 
-class procedure TFRE_DBCOREBOX_DATABASE_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_DATABASE_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
 end;
 
-procedure TFRE_DBCOREBOX_DATABASE_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_DATABASE_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('DATABASE','$database_description')
 end;
 
 
-function TFRE_DBCOREBOX_DATABASE_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DATABASE_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me');
 end;
 
 
-{ TFRE_DBCOREBOX_SERVICES_APP }
+{ TFRE_FIRMBOX_SERVICES_APP }
 
-procedure TFRE_DBCOREBOX_SERVICES_APP.SetupApplicationStructure;
+procedure TFRE_FIRMBOX_SERVICES_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
   InitAppDesc('corebox_services','$description');
-  AddApplicationModule(TFRE_DBCOREBOX_MAILSERVER_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_WEBSERVER_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_DATABASE_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_MAILSERVER_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_WEBSERVER_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_DATABASE_MOD.create);
 end;
 
-function TFRE_DBCOREBOX_SERVICES_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_SERVICES_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
 var admin_app_rg : IFRE_DB_ROLE;
      user_app_rg : IFRE_DB_ROLE;
     guest_app_rg : IFRE_DB_ROLE;
@@ -188,7 +188,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_SERVICES_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_SERVICES_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
 var
   SiteMapData  : IFRE_DB_Object;
   conn         : IFRE_DB_CONNECTION;
@@ -206,7 +206,7 @@ begin
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;                           session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;
 
-procedure TFRE_DBCOREBOX_SERVICES_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_SERVICES_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionInitialize(session);
   if session.IsInteractiveSession then begin
@@ -214,23 +214,23 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_SERVICES_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_SERVICES_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionPromotion(session);
   _UpdateSitemap(session);
 end;
 
-function TFRE_DBCOREBOX_SERVICES_APP.CFG_ApplicationUsesRights: boolean;
+function TFRE_FIRMBOX_SERVICES_APP.CFG_ApplicationUsesRights: boolean;
 begin
   result := true;
 end;
 
-function TFRE_DBCOREBOX_SERVICES_APP._ActualVersion: TFRE_DB_String;
+function TFRE_FIRMBOX_SERVICES_APP._ActualVersion: TFRE_DB_String;
 begin
   Result := '1.0';
 end;
 
-class procedure TFRE_DBCOREBOX_SERVICES_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_SERVICES_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
@@ -238,10 +238,10 @@ end;
 
 procedure Register_DB_Extensions;
 begin
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_MAILSERVER_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_WEBSERVER_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_DATABASE_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_SERVICES_APP);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_MAILSERVER_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_WEBSERVER_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_DATABASE_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_SERVICES_APP);
   GFRE_DBI.Initialize_Extension_Objects;
 end;
 

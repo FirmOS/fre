@@ -1,4 +1,4 @@
-unit FOS_DBCOREBOX_STOREAPP;
+unit fos_firmbox_storeapp;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
@@ -13,9 +13,9 @@ uses
 
 type
 
-  { TFRE_DBCOREBOX_STORE_APP }
+  { TFRE_FIRMBOX_STORE_APP }
 
-  TFRE_DBCOREBOX_STORE_APP=class(TFRE_DB_APPLICATION)
+  TFRE_FIRMBOX_STORE_APP=class(TFRE_DB_APPLICATION)
   private
     procedure       SetupApplicationStructure ; override;
     function        InstallAppDefaults        (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
@@ -36,19 +36,19 @@ implementation
 
 procedure Register_DB_Extensions;
 begin
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_STORE_APP);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORE_APP);
   GFRE_DBI.Initialize_Extension_Objects;
 end;
 
-{ TFRE_DBCOREBOX_STORE_APP }
+{ TFRE_FIRMBOX_STORE_APP }
 
-procedure TFRE_DBCOREBOX_STORE_APP.SetupApplicationStructure;
+procedure TFRE_FIRMBOX_STORE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
   InitAppDesc('corebox_store','$description');
 end;
 
-function TFRE_DBCOREBOX_STORE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_STORE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
 var admin_app_rg : IFRE_DB_ROLE;
      user_app_rg : IFRE_DB_ROLE;
     guest_app_rg : IFRE_DB_ROLE;
@@ -92,7 +92,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_STORE_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORE_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
 var
   SiteMapData  : IFRE_DB_Object;
   conn         : IFRE_DB_CONNECTION;
@@ -109,7 +109,7 @@ begin
   FREDB_SiteMap_RadialAutoposition(SiteMapData);      session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;
 
-procedure TFRE_DBCOREBOX_STORE_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORE_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionInitialize(session);
   if session.IsInteractiveSession then begin
@@ -117,23 +117,23 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_STORE_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORE_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionPromotion(session);
   _UpdateSitemap(session);
 end;
 
-function TFRE_DBCOREBOX_STORE_APP.CFG_ApplicationUsesRights: boolean;
+function TFRE_FIRMBOX_STORE_APP.CFG_ApplicationUsesRights: boolean;
 begin
   result := true;
 end;
 
-function TFRE_DBCOREBOX_STORE_APP._ActualVersion: TFRE_DB_String;
+function TFRE_FIRMBOX_STORE_APP._ActualVersion: TFRE_DB_String;
 begin
   Result :='1.0';
 end;
 
-class procedure TFRE_DBCOREBOX_STORE_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_STORE_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');

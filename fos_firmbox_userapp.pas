@@ -1,4 +1,4 @@
-unit FOS_DBCOREBOX_USERAPP;
+unit fos_firmbox_userapp;
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
 
@@ -15,9 +15,9 @@ uses
 
 type
 
-  { TFRE_DBCOREBOX_USER_APP }
+  { TFRE_FIRMBOX_USER_APP }
 
-  TFRE_DBCOREBOX_USER_APP=class(TFRE_DB_APPLICATION)
+  TFRE_FIRMBOX_USER_APP=class(TFRE_DB_APPLICATION)
   private
     procedure       SetupApplicationStructure     ; override;
     function        InstallAppDefaults            (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
@@ -33,9 +33,9 @@ type
   published
   end;
 
-  { TFRE_DBCOREBOX_USER_MOD }
+  { TFRE_FIRMBOX_USER_MOD }
 
-  TFRE_DBCOREBOX_USER_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_USER_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _getUsersString           (const logins: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
   protected
@@ -59,9 +59,9 @@ type
     function        IMI_UserContent           (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_GROUP_MOD }
+  { TFRE_FIRMBOX_GROUP_MOD }
 
-  TFRE_DBCOREBOX_GROUP_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_GROUP_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _getGroupsString          (const groups: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
     function        _addremoverole            (const input:IFRE_DB_Object;const addrole:boolean): IFRE_DB_Object;
@@ -90,9 +90,9 @@ type
     function        IMI_RemoveFromRole        (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_ROLE_MOD }
+  { TFRE_FIRMBOX_ROLE_MOD }
 
-  TFRE_DBCOREBOX_ROLE_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_ROLE_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _addremoverole            (const input:IFRE_DB_Object;const addrole:boolean):IFRE_DB_Object;
   protected
@@ -109,9 +109,9 @@ type
     function        IMI_RemoveFromRole        (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_DOMAIN_MOD }
+  { TFRE_FIRMBOX_DOMAIN_MOD }
 
-  TFRE_DBCOREBOX_DOMAIN_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_DOMAIN_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -134,21 +134,21 @@ procedure Register_DB_Extensions;
 
 implementation
 
-{ TFRE_DBCOREBOX_DOMAIN_MOD }
+{ TFRE_FIRMBOX_DOMAIN_MOD }
 
-class procedure TFRE_DBCOREBOX_DOMAIN_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_DOMAIN_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_DOMAIN_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_DOMAIN_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('DOMAIN','$domain_description')
 end;
 
-procedure TFRE_DBCOREBOX_DOMAIN_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_DOMAIN_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var domain_Grid   : IFRE_DB_DERIVED_COLLECTION;
     tr_domain     : IFRE_DB_SIMPLE_TRANSFORM;
 
@@ -205,7 +205,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_DOMAIN_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DOMAIN_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   main          : TFRE_DB_CONTENT_DESC;
   sec           : TFRE_DB_SUBSECTIONS_DESC;
@@ -255,7 +255,7 @@ begin
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>'+app.FetchAppText(conn,'$domain_info').Getshort+'</b>'));
 end;
 
-function TFRE_DBCOREBOX_DOMAIN_MOD.IMI_ContentUsers(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DOMAIN_MOD.IMI_ContentUsers(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn          : IFRE_DB_CONNECTION;
   app           : TFRE_DB_APPLICATION;
@@ -272,7 +272,7 @@ begin
   Result  := useringrid;
 end;
 
-function TFRE_DBCOREBOX_DOMAIN_MOD.IMI_ContentGroups(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DOMAIN_MOD.IMI_ContentGroups(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn          : IFRE_DB_CONNECTION;
   app           : TFRE_DB_APPLICATION;
@@ -290,7 +290,7 @@ begin
   Result  := groupingrid;
 end;
 
-function TFRE_DBCOREBOX_DOMAIN_MOD.IMI_AddDomain(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DOMAIN_MOD.IMI_AddDomain(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme: IFRE_DB_SchemeObject;
   res   : TFRE_DB_DIALOG_DESC;
@@ -308,7 +308,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_DOMAIN_MOD.IMI_ModifyDomain(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DOMAIN_MOD.IMI_ModifyDomain(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme: IFRE_DB_SchemeObject;
   res   : TFRE_DB_DIALOG_DESC;
@@ -340,7 +340,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_DOMAIN_MOD.IMI_DeleteDomain(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DOMAIN_MOD.IMI_DeleteDomain(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
@@ -369,7 +369,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_DOMAIN_MOD.IMI_DeleteDomainConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DOMAIN_MOD.IMI_DeleteDomainConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn   : IFRE_DB_CONNECTION;
   app    : TFRE_DB_APPLICATION;
@@ -390,7 +390,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_DOMAIN_MOD.IMI_SaveDomain(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_DOMAIN_MOD.IMI_SaveDomain(const input: IFRE_DB_Object): IFRE_DB_Object;
 var dbo              : IFRE_DB_Object;
     data             : IFRE_DB_Object;
     res              : TFRE_DB_Errortype;
@@ -424,9 +424,9 @@ begin
 end;
 
 
-{ TFRE_DBCOREBOX_ROLE_MOD }
+{ TFRE_FIRMBOX_ROLE_MOD }
 
-function TFRE_DBCOREBOX_ROLE_MOD._addremoverole(const input: IFRE_DB_Object; const addrole: boolean): IFRE_DB_Object;
+function TFRE_FIRMBOX_ROLE_MOD._addremoverole(const input: IFRE_DB_Object; const addrole: boolean): IFRE_DB_Object;
 var
   role     : IFRE_DB_ROLE;
   group    : IFRE_DB_GROUP;
@@ -465,19 +465,19 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-class procedure TFRE_DBCOREBOX_ROLE_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_ROLE_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_ROLE_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_ROLE_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('ROLE','$role_description')
 end;
 
-procedure TFRE_DBCOREBOX_ROLE_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_ROLE_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var role_Grid     : IFRE_DB_DERIVED_COLLECTION;
     tr_role       : IFRE_DB_SIMPLE_TRANSFORM;
 
@@ -566,7 +566,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_ROLE_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_ROLE_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   main    : TFRE_DB_CONTENT_DESC;
   sec     : TFRE_DB_SUBSECTIONS_DESC;
@@ -609,7 +609,7 @@ begin
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>'+app.FetchAppText(conn,'$roles_info').Getshort+'</b>'));
 end;
 
-function TFRE_DBCOREBOX_ROLE_MOD.IMI_ContentUsers(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_ROLE_MOD.IMI_ContentUsers(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn        : IFRE_DB_CONNECTION;
   app         : TFRE_DB_APPLICATION;
@@ -632,7 +632,7 @@ begin
   Result  := user;
 end;
 
-function TFRE_DBCOREBOX_ROLE_MOD.IMI_ContentGroups(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_ROLE_MOD.IMI_ContentGroups(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn         : IFRE_DB_CONNECTION;
   app          : TFRE_DB_APPLICATION;
@@ -659,7 +659,7 @@ begin
   Result  := group;
 end;
 
-function TFRE_DBCOREBOX_ROLE_MOD.IMI_RoleNotification(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_ROLE_MOD.IMI_RoleNotification(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app         : TFRE_DB_APPLICATION;
   conn        : IFRE_DB_CONNECTION;
@@ -688,19 +688,19 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_ROLE_MOD.IMI_AddToRole(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_ROLE_MOD.IMI_AddToRole(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=_addremoverole(input,true);
 end;
 
-function TFRE_DBCOREBOX_ROLE_MOD.IMI_RemoveFromRole(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_ROLE_MOD.IMI_RemoveFromRole(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   Result:=_addremoverole(input,false);
 end;
 
-{ TFRE_DBCOREBOX_GROUP_MOD }
+{ TFRE_FIRMBOX_GROUP_MOD }
 
-function TFRE_DBCOREBOX_GROUP_MOD._getGroupsString(const groups: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
+function TFRE_FIRMBOX_GROUP_MOD._getGroupsString(const groups: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
 var
   i    : Integer;
   res  : String;
@@ -723,7 +723,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD._addremoverole(const input: IFRE_DB_Object; const addrole: boolean): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD._addremoverole(const input: IFRE_DB_Object; const addrole: boolean): IFRE_DB_Object;
 var
   role     : IFRE_DB_ROLE;
   group    : IFRE_DB_GROUP;
@@ -762,19 +762,19 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-class procedure TFRE_DBCOREBOX_GROUP_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_GROUP_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_GROUP_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_GROUP_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('GROUP','$group_description')
 end;
 
-procedure TFRE_DBCOREBOX_GROUP_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_GROUP_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var group_Grid    : IFRE_DB_DERIVED_COLLECTION;
     tr_Grid       : IFRE_DB_SIMPLE_TRANSFORM;
 
@@ -879,7 +879,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   main    : TFRE_DB_CONTENT_DESC;
   sec     : TFRE_DB_SUBSECTIONS_DESC;
@@ -934,7 +934,7 @@ begin
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>'+app.FetchAppText(conn,'$groups_info').Getshort+'</b>'));
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_ContentUsers(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_ContentUsers(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn        : IFRE_DB_CONNECTION;
   app         : TFRE_DB_APPLICATION;
@@ -961,7 +961,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_ContentRoles(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_ContentRoles(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn        : IFRE_DB_CONNECTION;
   app         : TFRE_DB_APPLICATION;
@@ -989,7 +989,7 @@ begin
   Result  := role;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_AddGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_AddGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme: IFRE_DB_SchemeObject;
   res   : TFRE_DB_DIALOG_DESC;
@@ -1008,7 +1008,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_ModifyGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_ModifyGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme: IFRE_DB_SchemeObject;
   res   : TFRE_DB_DIALOG_DESC;
@@ -1035,7 +1035,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_DeleteGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_DeleteGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
@@ -1059,7 +1059,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_DeleteGroupConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_DeleteGroupConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   cap,msg: String;
   conn   : IFRE_DB_CONNECTION;
@@ -1090,7 +1090,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_GGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_GGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -1121,7 +1121,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_GGNotification(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_GGNotification(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   dc_userout  : IFRE_DB_DERIVED_COLLECTION;
   dc_roleout  : IFRE_DB_DERIVED_COLLECTION;
@@ -1144,7 +1144,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_UIGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_UIGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn      : IFRE_DB_CONNECTION;
   app       : TFRE_DB_APPLICATION;
@@ -1173,7 +1173,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_UOGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_UOGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn      : IFRE_DB_CONNECTION;
   app       : TFRE_DB_APPLICATION;
@@ -1202,7 +1202,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_RemoveFromUser(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_RemoveFromUser(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   user     : IFRE_DB_USER;
   group    : IFRE_DB_GROUP;
@@ -1233,7 +1233,7 @@ begin
 
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_AddToUser(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_AddToUser(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   user     : IFRE_DB_USER;
   group    : IFRE_DB_GROUP;
@@ -1263,7 +1263,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_RIGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_RIGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn      : IFRE_DB_CONNECTION;
   app       : TFRE_DB_APPLICATION;
@@ -1292,7 +1292,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_ROGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_ROGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn      : IFRE_DB_CONNECTION;
   app       : TFRE_DB_APPLICATION;
@@ -1321,19 +1321,19 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_RemoveFromRole(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_RemoveFromRole(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := _addremoverole(input,false);
 end;
 
-function TFRE_DBCOREBOX_GROUP_MOD.IMI_AddToRole(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_GROUP_MOD.IMI_AddToRole(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := _addremoverole(input,true);
 end;
 
-{ TFRE_DBCOREBOX_USER_MOD }
+{ TFRE_FIRMBOX_USER_MOD }
 
-function TFRE_DBCOREBOX_USER_MOD._getUsersString(const logins: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
+function TFRE_FIRMBOX_USER_MOD._getUsersString(const logins: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
 var
   i   : Integer;
   res : String;
@@ -1366,19 +1366,19 @@ begin
   Result:=res;
 end;
 
-class procedure TFRE_DBCOREBOX_USER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_USER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_USER_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_USER_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('USER','$user_description')
 end;
 
-procedure TFRE_DBCOREBOX_USER_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_USER_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var user_Grid     : IFRE_DB_DERIVED_COLLECTION;
     tr_Grid       : IFRE_DB_SIMPLE_TRANSFORM;
     tr_Domains    : IFRE_DB_SIMPLE_TRANSFORM;
@@ -1490,7 +1490,7 @@ begin
 end;
 
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   main        : TFRE_DB_CONTENT_DESC;
   sec         : TFRE_DB_SUBSECTIONS_DESC;
@@ -1539,7 +1539,7 @@ begin
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>'+app.FetchAppText(conn,'$users_info').Getshort+'</b>'));
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_ContentInfo(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_ContentInfo(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app         : TFRE_DB_APPLICATION;
   conn        : IFRE_DB_CONNECTION;
@@ -1582,7 +1582,7 @@ begin
   Result      := user_info;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_ContentGroups(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_ContentGroups(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app          : TFRE_DB_APPLICATION;
   conn         : IFRE_DB_CONNECTION;
@@ -1608,7 +1608,7 @@ begin
   Result  := group;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_ContentRoles(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_ContentRoles(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app         : TFRE_DB_APPLICATION;
   conn        : IFRE_DB_CONNECTION;
@@ -1631,7 +1631,7 @@ begin
   Result  := role;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_AddUser(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_AddUser(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme: IFRE_DB_SchemeObject;
   res   : TFRE_DB_DIALOG_DESC;
@@ -1654,7 +1654,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_DeleteUser(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_DeleteUser(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
@@ -1678,7 +1678,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_DeleteUserConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_DeleteUserConfirmed(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   cap,msg: String;
   conn   : IFRE_DB_CONNECTION;
@@ -1710,7 +1710,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_UGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_UGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -1736,7 +1736,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_GIGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_GIGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn      : IFRE_DB_CONNECTION;
   app       : TFRE_DB_APPLICATION;
@@ -1765,7 +1765,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_GOGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_GOGMenu(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   conn      : IFRE_DB_CONNECTION;
   app       : TFRE_DB_APPLICATION;
@@ -1794,7 +1794,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_RemoveFromGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_RemoveFromGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   user   : IFRE_DB_USER;
   group  : IFRE_DB_GROUP;
@@ -1825,7 +1825,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_AddToGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_AddToGroup(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   user   : IFRE_DB_USER;
   group  : IFRE_DB_GROUP;
@@ -1856,7 +1856,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_USER_MOD.IMI_UserContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_USER_MOD.IMI_UserContent(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   html          : TFRE_DB_HTML_DESC;
   panel         : TFRE_DB_FORM_PANEL_DESC;
@@ -1894,19 +1894,19 @@ begin
   end;
 end;
 
-{ TFRE_DBCOREBOX_USER_APP }
+{ TFRE_FIRMBOX_USER_APP }
 
-procedure TFRE_DBCOREBOX_USER_APP.SetupApplicationStructure;
+procedure TFRE_FIRMBOX_USER_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
   InitAppDesc('corebox_user','$description');
-  AddApplicationModule(TFRE_DBCOREBOX_DOMAIN_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_USER_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_GROUP_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_ROLE_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_DOMAIN_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_USER_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_GROUP_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_ROLE_MOD.create);
 end;
 
-function TFRE_DBCOREBOX_USER_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_USER_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
 var
   old_version  : TFRE_DB_String;
 
@@ -2063,7 +2063,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_USER_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_USER_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
 var role         : IFRE_DB_ROLE;
 begin
   role := _CreateAppRole('view_users','View Users','Allowed to see user list.');
@@ -2110,7 +2110,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_USER_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_USER_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
 var
   SiteMapData  : IFRE_DB_Object;
   conn         : IFRE_DB_CONNECTION;
@@ -2126,7 +2126,7 @@ begin
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;
 
-procedure TFRE_DBCOREBOX_USER_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_USER_APP.MySessionInitialize(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionInitialize(session);
   if session.IsInteractiveSession then begin
@@ -2134,23 +2134,23 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_USER_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_USER_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionPromotion(session);
   _UpdateSitemap(session);
 end;
 
-function TFRE_DBCOREBOX_USER_APP.CFG_ApplicationUsesRights: boolean;
+function TFRE_FIRMBOX_USER_APP.CFG_ApplicationUsesRights: boolean;
 begin
   result := true;
 end;
 
-function TFRE_DBCOREBOX_USER_APP._ActualVersion: TFRE_DB_String;
+function TFRE_FIRMBOX_USER_APP._ActualVersion: TFRE_DB_String;
 begin
   Result := '1.0';
 end;
 
-class procedure TFRE_DBCOREBOX_USER_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_USER_APP.RegisterSystemScheme( const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
@@ -2158,11 +2158,11 @@ end;
 
 procedure Register_DB_Extensions;
 begin
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_DOMAIN_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_USER_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_GROUP_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_ROLE_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_USER_APP);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_DOMAIN_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_USER_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_GROUP_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_ROLE_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_USER_APP);
   GFRE_DBI.Initialize_Extension_Objects;
 end;
 

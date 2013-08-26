@@ -1,4 +1,4 @@
-unit fos_dbcorebox_applianceapp;
+unit fos_firmbox_applianceapp;
 
 
 {$mode objfpc}{$H+}
@@ -10,8 +10,9 @@ uses
   Classes, SysUtils,
   FOS_TOOL_INTERFACES,
   FRE_DB_SYSRIGHT_CONSTANTS,
-  fos_dbcorebox_machine,
-  FRE_DB_INTERFACE,fos_stats_control_interface,fos_dbcorebox_vm_machines_mod,
+  fre_hal_schemes,
+  FRE_DB_INTERFACE,fos_stats_control_interface,fos_firmbox_vm_machines_mod,
+  fre_system,
   FRE_DB_COMMON;
 
 type
@@ -35,9 +36,9 @@ var G_HACK_SHARE_OBJECT : IFRE_DB_Object;
 
 type
 
-  { TFRE_DBCOREBOX_APPLIANCE_APP }
+  { TFRE_FIRMBOX_APPLIANCE_APP }
 
-  TFRE_DBCOREBOX_APPLIANCE_APP=class(TFRE_DB_APPLICATION)
+  TFRE_FIRMBOX_APPLIANCE_APP=class(TFRE_DB_APPLICATION)
   private
     procedure       SetupApplicationStructure     ; override;
     function        InstallAppDefaults            (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
@@ -55,9 +56,9 @@ type
     function        IMI_RAW_DATA_FEED30       (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD }
+  { TFRE_FIRMBOX_APPLIANCE_STATUS_MOD }
 
-  TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_APPLIANCE_STATUS_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     FtotalSwap,FtotalRam : Integer; //in kb
     FtotalNet            : Integer; //in byte
@@ -86,9 +87,9 @@ type
     function        IMI_RAW_UPDATE30          (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD }
+  { TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD }
 
-  TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -109,9 +110,9 @@ type
     function        IMI_FCMenu                (const input:IFRE_DB_OBject):IFRE_DB_Object;
   end;
 
-  { TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD }
+  { TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD }
 
-  TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -129,45 +130,45 @@ implementation
 var __idxCPU,__idxRAM,__idxCache,__idxDisk,__idxNet: NativeInt; //FIXXXME - remove me
     __SendAdded : boolean;
 
-{ TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD }
+{ TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD }
 
-class procedure TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('ANALYTICS','$analytics_description')
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 begin
   inherited MySessionInitializeModule(session);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-{ TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD }
+{ TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD }
 
-class procedure TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('SETTINGS','$settings_description')
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var datalink_dc       : IFRE_DB_DERIVED_COLLECTION;
     datalink_tr_Grid  : IFRE_DB_SIMPLE_TRANSFORM;
     fc_dc             : IFRE_DB_DERIVED_COLLECTION;
@@ -228,7 +229,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app             : TFRE_DB_APPLICATION;
   conn            : IFRE_DB_CONNECTION;
@@ -251,7 +252,7 @@ begin
   result := sub_sec_s;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentSystem(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentSystem(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app             : TFRE_DB_APPLICATION;
   conn            : IFRE_DB_CONNECTION;
@@ -272,7 +273,7 @@ begin
   Result                   := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_system,system_content,nil,nil,nil,true,1,4);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentDatalink(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentDatalink(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app             : TFRE_DB_APPLICATION;
   conn            : IFRE_DB_CONNECTION;
@@ -298,7 +299,7 @@ begin
   Result                     := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_datalink,datalink_content,nil,nil,nil,true,1,1);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentFC(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentFC(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app             : TFRE_DB_APPLICATION;
   conn            : IFRE_DB_CONNECTION;
@@ -318,7 +319,7 @@ begin
   Result              := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_fc,fc_content,nil,nil,nil,true,2);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_SYSTEMContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_SYSTEMContent(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   panel         : TFRE_DB_FORM_PANEL_DESC;
   scheme        : IFRE_DB_SchemeObject;
@@ -361,12 +362,12 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_SYSTEMMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_SYSTEMMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
 begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkContent(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   panel         : TFRE_DB_FORM_PANEL_DESC;
   scheme        : IFRE_DB_SchemeObject;
@@ -399,7 +400,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
@@ -431,7 +432,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkCreateAggr(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkCreateAggr(const input: IFRE_DB_OBject): IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -456,7 +457,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_FCContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_FCContent(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   panel         : TFRE_DB_FORM_PANEL_DESC;
   scheme        : IFRE_DB_SchemeObject;
@@ -489,14 +490,14 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.IMI_FCMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_FCMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
 begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-{ TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD }
+{ TFRE_FIRMBOX_APPLIANCE_STATUS_MOD }
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD._byteToString(const byte: Int64): String;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._byteToString(const byte: Int64): String;
 var
   unity: String;
   amount: Real;
@@ -526,7 +527,7 @@ begin
   Result:=FloatToStrF(amount,ffFixed,1,2)+unity;
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD._fillPoolCollection(const conn: IFRE_DB_CONNECTION; const data: IFRE_DB_Object);
+procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._fillPoolCollection(const conn: IFRE_DB_CONNECTION; const data: IFRE_DB_Object);
 var
   coll      : IFRE_DB_COLLECTION;
   pool_space: IFRE_DB_Object;
@@ -556,7 +557,7 @@ begin
   coll.ForAll(@_addValues);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
 var
   session    : TFRE_DB_UserSession;
   res        : TFRE_DB_LIVE_CHART_DATA_DESC;
@@ -595,7 +596,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD._HandleRegisterSend(session : TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._HandleRegisterSend(session : TFRE_DB_UserSession);
 begin
   if (__idxRAM=-1) and (__idxCache=-1) and (__idxDisk=-1) and (__idxNet=-1) and (__idxCPU=-1) then
     begin
@@ -615,19 +616,19 @@ begin
      end;
 end;
 
-class procedure TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.SetupAppModuleStructure;
+procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   InitModuleDesc('STATUS','$status_description')
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
   DC_CHARTDATA_ZONES  : IFRE_DB_DERIVED_COLLECTION;
   CHARTDATA           : IFRE_DB_COLLECTION;
@@ -644,7 +645,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
+procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
 var
   coll      : IFRE_DB_COLLECTION;
   used      : Extended;
@@ -680,7 +681,7 @@ begin
   space.Field('value_leg').AsString := 'Referred';
   CheckDbResult(coll.Store(space),'Add zones space');
 
-  DISKI_HACK := Get_Stats_Control(cVM_HostUser,cVMHostMachine);
+  DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   _fillPoolCollection(admin_dbc,DISKI_HACK.Get_ZFS_Data_Once);
 
   coll := admin_dbc.Collection('MYPOOL_SPACE',true,true);
@@ -711,7 +712,7 @@ begin
   coll.DefineIndexOnField('feedname',fdbft_String,true,true);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   app                : TFRE_DB_APPLICATION;
   conn               : IFRE_DB_CONNECTION;
@@ -746,7 +747,7 @@ begin
 
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_CPUStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_CPUStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   session: TFRE_DB_UserSession;
 begin
@@ -758,7 +759,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_CPUStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_CPUStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -780,7 +781,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_NetStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_NetStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
       __idxNet:=0
@@ -790,7 +791,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_NetStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_NetStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -812,7 +813,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_RAMStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAMStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
     __idxRAM:=0
@@ -822,7 +823,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_RAMStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAMStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -844,7 +845,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_DiskStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_DiskStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
       __idxDisk:=0
@@ -854,7 +855,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_DiskStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_DiskStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -876,7 +877,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_CacheStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_CacheStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
       __idxCache:=0
@@ -886,7 +887,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_CacheStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_CacheStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -908,7 +909,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_RAW_UPDATE(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAW_UPDATE(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
 var LIVE_DATA  : IFRE_DB_COLLECTION;
     LD         : IFRE_DB_Object;
     totalCache : Int64;
@@ -977,7 +978,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.IMI_RAW_UPDATE30(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAW_UPDATE30(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
 var
   session: TFRE_DB_UserSession;
   coll   : IFRE_DB_COLLECTION;
@@ -988,18 +989,18 @@ begin
    result := GFRE_DB_NIL_DESC;
 end;
 
-{ TFRE_DBCOREBOX_APPLIANCE_APP }
+{ TFRE_FIRMBOX_APPLIANCE_APP }
 
-procedure TFRE_DBCOREBOX_APPLIANCE_APP.SetupApplicationStructure;
+procedure TFRE_FIRMBOX_APPLIANCE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
   InitAppDesc('corebox_appliance','$description');
-  AddApplicationModule(TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD.create);
-  AddApplicationModule(TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.create);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_APPLIANCE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
 var
   old_version  : TFRE_DB_String;
 
@@ -1084,7 +1085,7 @@ begin
   end;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_APPLIANCE_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
 var role         : IFRE_DB_ROLE;
 begin
 
@@ -1122,7 +1123,7 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_APP._UpdateSitemap(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_APPLIANCE_APP._UpdateSitemap(const session: TFRE_DB_UserSession);
 var
   SiteMapData  : IFRE_DB_Object;
   conn         : IFRE_DB_CONNECTION;
@@ -1137,7 +1138,7 @@ begin
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_APP.MySessionInitialize(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_APPLIANCE_APP.MySessionInitialize(const session: TFRE_DB_UserSession);
 begin
   inherited MySessionInitialize(session);
   if session.IsInteractiveSession then begin
@@ -1145,44 +1146,44 @@ begin
   end;
 end;
 
-procedure TFRE_DBCOREBOX_APPLIANCE_APP.MySessionPromotion(const session: TFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_APPLIANCE_APP.MySessionPromotion(const session: TFRE_DB_UserSession);
 begin
   inherited MySessionPromotion(session);
   _UpdateSitemap(session);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_APP.CFG_ApplicationUsesRights: boolean;
+function TFRE_FIRMBOX_APPLIANCE_APP.CFG_ApplicationUsesRights: boolean;
 begin
   result := true;
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_APP._ActualVersion: TFRE_DB_String;
+function TFRE_FIRMBOX_APPLIANCE_APP._ActualVersion: TFRE_DB_String;
 begin
   Result := '1.0';
 end;
 
-class procedure TFRE_DBCOREBOX_APPLIANCE_APP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+class procedure TFRE_FIRMBOX_APPLIANCE_APP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_APP.IMI_RAW_DATA_FEED(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_APP.IMI_RAW_DATA_FEED(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := DelegateInvoke('STATUS','RAW_UPDATE',raw_data);
 end;
 
-function TFRE_DBCOREBOX_APPLIANCE_APP.IMI_RAW_DATA_FEED30(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_APP.IMI_RAW_DATA_FEED30(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := DelegateInvoke('STATUS','RAW_UPDATE30',raw_data);
 end;
 
 procedure Register_DB_Extensions;
 begin
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_APPLIANCE_ANALYTICS_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_APPLIANCE_SETTINGS_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_APPLIANCE_STATUS_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_DBCOREBOX_APPLIANCE_APP);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_APPLIANCE_APP);
   GFRE_DBI.Initialize_Extension_Objects;
 end;
 

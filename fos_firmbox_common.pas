@@ -1,4 +1,4 @@
-unit FOS_DBCOREBOX_COMMON;
+unit fos_firmbox_common;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
@@ -12,17 +12,19 @@ uses
   FRE_DB_INTERFACE,
   FRE_DBBASE,
   FRE_DBBUSINESS,
-  FOS_DBCOREBOX_USERAPP,
-  FOS_DBCOREBOX_FILESERVER,
-  FOS_DBCOREBOX_INFRASTRUCTUREAPP,
-  FOS_DBCOREBOX_SERVICESAPP,
-  FOS_DBCOREBOX_STORAGEAPP,
-  FOS_DBCOREBOX_VMAPP,
-  FOS_DBCOREBOX_STOREAPP,
-  fos_dbcorebox_machine,
-  fos_dbcorebox_applianceapp,
+  fos_firmbox_userapp,
+  fos_firmbox_fileserver,
+  fos_firmbox_infrastructureapp,
+  fos_firmbox_servicesapp,
+  fos_firmbox_storageapp,
+  fos_firmbox_vmapp,
+  fos_firmbox_storeapp,
+  fos_firmbox_applianceapp,
+  fos_firmbox_vm_machines_mod,
+  fre_hal_schemes,
   FRE_ZFS,
-  fos_dbcorebox_vm_machines_mod,
+  fre_testcase,
+  fre_system,
   fos_vm_control_interface
 ;
 
@@ -404,7 +406,7 @@ var conn     : IFRE_DB_Connection;
     end;
 
   begin
-    vmc := Get_VM_Host_Control(cVM_HostUser,cVMHostMachine);
+    vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     try
       vmc.VM_ListMachines(vmo);
     finally
@@ -598,29 +600,30 @@ begin
   GenerateTestData(dbname,user,pass);
 end;
 
-procedure COREBOX_MetaRegister;
+procedure FIRMBOX_MetaRegister;
 begin
   // Base Registrations
   FRE_DBBASE.Register_DB_Extensions;
   FRE_DBBUSINESS.Register_DB_Extensions;
-  fos_dbcorebox_applianceapp.Register_DB_Extensions;
-  FOS_DBCOREBOX_USERAPP.Register_DB_Extensions;
-  FOS_DBCOREBOX_INFRASTRUCTUREAPP.Register_DB_Extensions;
-  fos_dbcorebox_machine.Register_DB_Extensions;
-  FOS_DBCOREBOX_FILESERVER.Register_DB_Extensions;
-  FOS_DBCOREBOX_SERVICESAPP.Register_DB_Extensions;
-  FOS_DBCOREBOX_STORAGEAPP.Register_DB_Extensions;
-  FOS_DBCOREBOX_VMAPP.Register_DB_Extensions;
-  FOS_DBCOREBOX_STOREAPP.Register_DB_Extensions;
+  fos_firmbox_applianceapp.Register_DB_Extensions;
+  fos_firmbox_userapp.Register_DB_Extensions;
+  fos_firmbox_infrastructureapp.Register_DB_Extensions;
+  fre_testcase.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  fos_firmbox_fileserver.Register_DB_Extensions;
+  fos_firmbox_servicesapp.Register_DB_Extensions;
+  fos_firmbox_storageapp.Register_DB_Extensions;
+  fos_firmbox_vmapp.Register_DB_Extensions;
+  fos_firmbox_storeapp.Register_DB_Extensions;
   FRE_ZFS.Register_DB_Extensions;
 end;
 
-procedure COREBOX_MetaInitializeDatabase(const dbname: string; const user, pass: string);
+procedure FIRMBOX_MetaInitializeDatabase(const dbname: string; const user, pass: string);
 begin
-  FOS_DBCOREBOX_COMMON.InitDB(dbname,user,pass);
+  fos_firmbox_common.InitDB(dbname,user,pass);
 end;
 
-procedure COREBOX_MetaRemove(const dbname: string; const user, pass: string);
+procedure FIRMBOX_MetaRemove(const dbname: string; const user, pass: string);
 var conn  : IFRE_DB_SYS_CONNECTION;
     res   : TFRE_DB_Errortype;
     i     : integer;
@@ -643,7 +646,7 @@ end;
 
 initialization
 
- GFRE_DBI_REG_EXTMGR.RegisterNewExtension('COREBOX',@COREBOX_MetaRegister,@COREBOX_MetaInitializeDatabase,@COREBOX_MetaRemove);
+ GFRE_DBI_REG_EXTMGR.RegisterNewExtension('FIRMBOX',@FIRMBOX_MetaRegister,@FIRMBOX_MetaInitializeDatabase,@FIRMBOX_MetaRemove);
 
 
 end.

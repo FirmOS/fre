@@ -1,4 +1,4 @@
-unit FOS_DBCOREBOX_FILESERVER;
+unit fos_firmbox_fileserver;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
@@ -10,7 +10,7 @@ uses
   Classes, SysUtils,FOS_TOOL_INTERFACES,
   FRE_DB_COMMON,
   FRE_DBBUSINESS,
-  fos_dbcorebox_machine,
+  fre_hal_schemes,
   FRE_DB_INTERFACE,
   FRE_SYSTEM;
 
