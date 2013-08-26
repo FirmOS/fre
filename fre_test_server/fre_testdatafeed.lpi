@@ -61,8 +61,8 @@
       <Filename Value="fre_testdatafeed"/>
     </Target>
     <SearchPaths>
-      <IncludeFiles Value="../fos_include;$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..;../fre_hal;../fre_db/create_cc_db;../fre_aps;../fre_core;../fre_fcom;../fre_blockcom;../fre_db;../fre_bullet;../fre_external;../fre_server;../fre_monsys;../fos_interfaces;../fre_apps;../fre_external/synapse;../fos_corebox;../fos_corebox/common"/>
+      <IncludeFiles Value="../../core/fos_include;$(ProjOutDir)"/>
+      <OtherUnitFiles Value="../../core/fre_aps;../../core/fre_core;../../core/fre_fcom;../../core/fre_blockcom;../../core/fre_db;../../core/fos_interfaces;../../core/fre_server;../../core/fre_apps;../../core/fre_external/synapse;../../firmbox;../../hal;../../artemes/webapp"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then

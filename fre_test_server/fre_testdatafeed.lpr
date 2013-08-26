@@ -38,9 +38,7 @@ program fre_testdatafeed;
 }
 
 {$mode objfpc}{$H+}
-{$LIBRARYPATH /opt/local/fre/lib/}
-{$LIBRARYPATH ../fre_external/fre_ext_libs}
-
+{$LIBRARYPATH ../../lib}
 
 // ./fre_testdatafeed -U root -H 10.220.251.10 -u feeder@system -p a1234
 // lazarus+debugger: => ./fre_testdatafeed -U root -H 10.220.251.10 -D
@@ -55,7 +53,7 @@ uses
 
   FRE_APS_IMPL_LE, FOS_FCOM_DEFAULT, FRE_DB_EMBEDDED_IMPL,
   FRE_CONFIGURATION,FRE_BASE_SERVER,
-  fre_base_client, fre_feed_client
+  fre_base_client, fos_firmboxfeed_client
   ;
 
 {$I fos_version_helper.inc}
@@ -78,7 +76,7 @@ type
 procedure TFRE_TESTDATA_FEED.DoRun;
 var
   ErrorMsg   : String;
-  FeedClient : TFRE_SAMPLE_FEED_CLIENT;
+  FeedClient : TFRE_BOX_FEED_CLIENT;
 begin
   ErrorMsg:=CheckOptions('hDU:H:u:p:',['help','debugger','remoteuser:','remotehost:','user:','pass:']);
   if ErrorMsg<>'' then begin
@@ -118,7 +116,7 @@ begin
   InitEmbedded;
   Init4Server;
   SetupAPS;
-  FeedClient := TFRE_SAMPLE_FEED_CLIENT.Create;
+  FeedClient := TFRE_BOX_FEED_CLIENT.Create;
   GFRE_S.Start(FeedClient);
   GFRE_S.Run;
   TearDownAPS;
