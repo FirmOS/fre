@@ -72,7 +72,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="../../core/fos_include;$(ProjOutDir)"/>
-      <OtherUnitFiles Value="../../core/fre_aps;../../core/fre_core;../../core/fre_fcom;../../core/fre_blockcom;../../core/fre_db;../../core/fos_interfaces;../../core/fre_server;../../core/fre_apps;../../core/fre_external/synapse;../../firmbox;../../hal;../../artemes/webapp"/>
+      <OtherUnitFiles Value="../../core/fre_aps;../../core/fre_core;../../core/fre_fcom;../../core/fre_blockcom;../../core/fre_db;../../core/fos_interfaces;../../core/fre_server;../../core/fre_apps;../../core/fre_external/synapse;../../firmbox;../../hal;../../artemes/webapp;../../monsys/webapp;../../citycom/captiveportal"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then
