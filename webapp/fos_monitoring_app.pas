@@ -1,4 +1,4 @@
-unit fre_monitoring_app;
+unit fos_monitoring_app;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
@@ -1444,7 +1444,7 @@ begin
   FRE_DBBUSINESS.Register_DB_Extensions;
   fre_testcase.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
-  fre_monitoring_app.Register_DB_Extensions;
+  fos_monitoring_app.Register_DB_Extensions;
   FRE_ZFS.Register_DB_Extensions;
 end;
 
