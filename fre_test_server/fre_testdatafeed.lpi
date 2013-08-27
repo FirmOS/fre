@@ -58,7 +58,7 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="fre_testdatafeed"/>
+      <Filename Value="../../bin/fre_testdatafeed"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="../../core/fos_include;$(ProjOutDir)"/>
@@ -66,7 +66,11 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then
-   CustomOptions := '-WM10.6';"/>
+   CustomOptions := '-WM10.6';
+//if TargetOS = 'darwin' then
+//   CustomOptions := '-dFOS_LINK_STATIC';
+//if TargetOS = 'darwin' then
+//   CustomOptions := '-dFOS_DEBUG';"/>
     <CodeGeneration>
       <TargetCPU Value="x86_64"/>
     </CodeGeneration>

@@ -68,7 +68,7 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="fre_testserver"/>
+      <Filename Value="../../bin/fre_testserver"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="../../core/fos_include;$(ProjOutDir)"/>
@@ -76,7 +76,7 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then
-   CustomOptions := '-WM10.6 -dFOS_LINK_STATIC';"/>
+   CustomOptions := '-WM10.6';"/>
     <Parsing>
       <SyntaxOptions>
         <IncludeAssertionCode Value="True"/>
