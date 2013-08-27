@@ -12,7 +12,7 @@ uses
   FRE_DB_INTERFACE,
   FRE_DBBASE,
   FRE_DBBUSINESS,
-  fos_firmbox_userapp,
+  fre_accesscontrol_common,
   fos_firmbox_fileserver,
   fos_firmbox_infrastructureapp,
   fos_firmbox_servicesapp,
@@ -606,7 +606,7 @@ begin
   FRE_DBBASE.Register_DB_Extensions;
   FRE_DBBUSINESS.Register_DB_Extensions;
   fos_firmbox_applianceapp.Register_DB_Extensions;
-  fos_firmbox_userapp.Register_DB_Extensions;
+  fre_accesscontrol_common.Register_DB_Extensions;
   fos_firmbox_infrastructureapp.Register_DB_Extensions;
   fre_testcase.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;

@@ -29,10 +29,10 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-e COREBOX -U root -H 10.220.251.10 -u admin1@system -p a1234 -x -y -t -i -D"/>
+        <CommandLineParams Value="-e FIRMBOX -U root -H 10.220.251.10 -u admin1@system -p a1234 -x -y -t -i -D"/>
       </local>
     </RunParams>
-    <Units Count="6">
+    <Units Count="7">
       <Unit0>
         <Filename Value="firmbox.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -63,6 +63,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="fos_dbcorebox_machine"/>
       </Unit5>
+      <Unit6>
+        <Filename Value="../fos_firmbox_accesscontrol.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fos_firmbox_accesscontrol"/>
+      </Unit6>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
