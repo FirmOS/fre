@@ -46,7 +46,7 @@ uses
   cthreads,
   {$ENDIF}
 
-  fre_monitoring_app,
+  fos_monitoring_app,
 
   fre_basecli_app
   ;
