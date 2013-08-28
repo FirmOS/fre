@@ -426,7 +426,7 @@ begin
         input.Field('delete_vnic').AsString := app.FetchAppText(conn,'$datalink_delete_vnic').Getshort;
         input.Field('delete_aggr').AsString := app.FetchAppText(conn,'$datalink_delete_aggr').Getshort;
         input.Field('delete_stub').AsString := app.FetchAppText(conn,'$datalink_delete_stub').Getshort;
-        result := dl.Invoke('Menu',input);
+        result := dl.Invoke('Menu',input,nil,nil,nil);
       end;
     end;
   end;

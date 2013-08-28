@@ -46,14 +46,6 @@ uses
   fre_system,fos_stats_control_interface;
 
 
-var
-  //cVM_HostUser   : string = '';
-  //cVMHostMachine : string = '';
-  cFEEDUser      : string = '';
-  cFEEDPass      : string = '';
-//  cVMHostMachine : string = '10.001.000.102';
-  //cVMHostMachine :string = '10.220.251.10';
-
 type
 
 
@@ -111,8 +103,8 @@ end;
 
 procedure TFRE_BOX_FEED_CLIENT.QueryUserPass(out user, pass: string);
 begin
-  user := cFEEDUser;
-  pass := cFEEDPass;
+  user := cFRE_Feed_User;
+  pass := cFRE_Feed_Pass;
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyInitialize;
