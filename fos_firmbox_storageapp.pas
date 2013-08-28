@@ -274,7 +274,7 @@ begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
 
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 //  GFRE_BT.SeperateString(input.Field('selected').AsString,',',sIdPath);
 
   if input.FieldExists('share_id') then begin
@@ -482,7 +482,7 @@ begin
 
   dc_fs       := GetSession(input).FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
   grid_fs     := dc_fs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs')) then begin
+  if conn.CheckRight(Get_Rightname('edit_vfs')) then begin
     txt:=app.FetchAppText(conn,'$create_vfs');
     grid_fs.AddButton.Describe(CSF(@IMI_CreateVFS),'images_apps/corebox_storage/create_vfs.png',txt.Getshort,txt.GetHint);
   end;
@@ -519,7 +519,7 @@ begin
   //dc_group_out  := GetSession(input).FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_OUT_GRID');
   //grid_group_out:= dc_group_out.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   //
-//  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs_share')) then begin
+//  if conn.CheckRight(Get_Rightname('edit_vfs_share')) then begin
 //    grid_group_out.SetDropGrid(grid_group_in,nil,TFRE_DB_StringArray.create('TFRE_DB_GROUP'));
 ////  grid_group_in.SetDragObjClasses(TFRE_DB_StringArray.create('TFRE_DB_GROUP'));
 //    grid_group_in.SetDropGrid(grid_group_out,nil,TFRE_DB_StringArray.create('TFRE_DB_GROUP'));
@@ -548,7 +548,7 @@ begin
 
   dc_share    := GetSession(input).FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
   grid_share  := dc_share.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs_share')) then begin
+  if conn.CheckRight(Get_Rightname('edit_vfs_share')) then begin
     txt:=app.FetchAppText(conn,'$create_vfs_share');
     grid_share.AddButton.Describe(CSF(@IMI_CreateVFSShare),'images_apps/corebox_storage/create_vfs_share.png',txt.Getshort,txt.GetHint);
   end;
@@ -577,7 +577,7 @@ var
 begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_vfs')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   conn.GetScheme(TFRE_DB_VIRTUAL_FILESERVER.ClassName,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$vfs_add_diag_cap').Getshort,600,0,true,true,false);
@@ -598,7 +598,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs')) then begin
+  if conn.CheckRight(Get_Rightname('edit_vfs')) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_VFSDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -628,7 +628,7 @@ begin
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
-    if dc.FetchFromParent(sel_guid,vfs) then begin
+    if dc.Fetch(sel_guid,vfs) then begin
       conn.GetScheme(vfs.SchemeClass,scheme);
       dom_guid := vfs.Field('domainid').AsGUID;
       writeln('DOMAINID :',GFRE_BT.GUID_2_HexString(dom_guid));
@@ -658,7 +658,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_vfs')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   sf:=CSF(@IMI_VFSDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -676,7 +676,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_vfs')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   for i:= 0 to input.Field('selected').ValueCount-1 do begin
     //FIXXME: Errorhandling
     CheckDbResult(conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i])),'The object is referenced');
@@ -696,7 +696,7 @@ var
 begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   dependend  := GetDependencyFiltervalues(input,'uids_ref');
   if length(dependend)=0 then begin
@@ -729,7 +729,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs_share')) then begin
+  if conn.CheckRight(Get_Rightname('edit_vfs_share')) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_VFSShareDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -754,12 +754,12 @@ var
 begin
   conn     := GetDBConnection(input);
   app      := GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'view_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('view_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
-    if dc.FetchFromParent(sel_guid,share) then begin
+    if dc.Fetch(sel_guid,share) then begin
       conn.GetScheme(share.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$vfs_share_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
@@ -787,7 +787,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   sf:=CSF(@IMI_VFSShareDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -805,7 +805,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_vfs_share')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   for i:= 0 to input.Field('selected').ValueCount-1 do begin
     //FIXXME: Errorhandling
     conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
@@ -832,7 +832,7 @@ begin
 
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vfs_share')) then begin
+  if conn.CheckRight(Get_Rightname('edit_vfs_share')) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_VFSShareGroupSetRead);
     func.AddParam.Describe('share_id',share_id);
@@ -1059,14 +1059,14 @@ begin
 
   dc_share_nfs := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_GRID');
   grid_nfs     := dc_share_nfs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then begin
+  if conn.CheckRight(Get_Rightname('edit_nfs_global')) then begin
     txt:=app.FetchAppText(conn,'$create_nfs_export');
     grid_nfs.AddButton.Describe(CSF(@IMI_CreateNFSExport),'images_apps/corebox_storage/create_nfs_export.png',txt.Getshort,txt.GetHint);
   end;
 
   dc_share_nfs_access := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_ACCESS_GRID');
   grid_nfs_access     := dc_share_nfs_access.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then begin
+  if conn.CheckRight(Get_Rightname('edit_nfs_global')) then begin
     txt:=app.FetchAppText(conn,'$create_nfs_access');
     grid_nfs_access.AddButton.Describe(CSF(@IMI_CreateNFSAccess),'images_apps/corebox_storage/create_nfs_access.png',txt.Getshort,txt.GetHint);
   end;
@@ -1097,14 +1097,14 @@ begin
 
   dc_lun     := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
   grid_lun   := dc_lun.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then begin
+  if conn.CheckRight(Get_Rightname('edit_lun_global')) then begin
     txt:=app.FetchAppText(conn,'$create_lun');
     grid_lun.AddButton.Describe(CSF(@IMI_CreateLUN),'images_apps/corebox_storage/create_lun.png',txt.Getshort,txt.GetHint);
   end;
 
   dc_lun_view   := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_VIEW_GRID');
   grid_lun_view := dc_lun_view.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then begin
+  if conn.CheckRight(Get_Rightname('edit_lun_global')) then begin
     txt:=app.FetchAppText(conn,'$create_lun_view');
     grid_lun_view.AddButton.Describe(CSF(@IMI_CreateLUNView),'images_apps/corebox_storage/create_lun_view.png',txt.Getshort,txt.GetHint);
   end;
@@ -1127,7 +1127,7 @@ var
 begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   conn.GetScheme(TFRE_DB_NFS_FILESHARE.ClassName,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$nfs_add_diag_cap').Getshort,600);
@@ -1162,7 +1162,7 @@ var
 begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   conn.GetScheme(TFRE_DB_NFS_ACCESS.ClassName,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$nfsaccess_add_diag_cap').Getshort,600);
@@ -1192,7 +1192,7 @@ begin
   if input.Field('SELECTED').ValueCount>0  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_GRID');
-    if dc.FetchFromParent(sel_guid,nfs) then begin
+    if dc.Fetch(sel_guid,nfs) then begin
       conn.GetScheme(nfs.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$nfs_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
@@ -1221,7 +1221,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then begin
+  if conn.CheckRight(Get_Rightname('edit_nfs_global')) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_NFSDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1241,7 +1241,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   sf:=CSF(@IMI_NFSDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1259,7 +1259,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   for i:= 0 to input.Field('selected').ValueCount-1 do begin
     //FIXXME: Errorhandling
     conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
@@ -1277,7 +1277,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then begin
+  if conn.CheckRight(Get_Rightname('edit_nfs_global')) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_NFSAccessDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1299,7 +1299,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   for i:= 0 to input.Field('selected').ValueCount-1 do begin
     //FIXXME: Errorhandling
     conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
@@ -1317,7 +1317,7 @@ var
 begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   conn.GetScheme(TFRE_DB_NFS_ACCESS.ClassName,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$nfsaccess_modify_diag_cap').Getshort,600);
@@ -1339,7 +1339,7 @@ var
 begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   conn.GetScheme(TFRE_DB_LUN.ClassName,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$lun_add_diag_cap').Getshort,600);
@@ -1370,7 +1370,7 @@ var
 begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   conn.GetScheme(TFRE_DB_LUN_VIEW.ClassName,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$lunview_add_diag_cap').Getshort,600);
@@ -1391,7 +1391,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then begin
+  if conn.CheckRight(Get_Rightname('edit_lun_global')) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_LUNDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1420,7 +1420,7 @@ begin
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
-    if dc.FetchFromParent(sel_guid,nfs) then begin
+    if dc.Fetch(sel_guid,nfs) then begin
       conn.GetScheme(nfs.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$lun_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
@@ -1448,7 +1448,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   sf:=CSF(@IMI_NFSDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1466,7 +1466,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   for i:= 0 to input.Field('selected').ValueCount-1 do begin
     //FIXXME: Errorhandling
     conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
@@ -1483,7 +1483,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then begin
+  if conn.CheckRight(Get_Rightname('edit_lun_global')) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_LUNViewDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1505,7 +1505,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   for i:= 0 to input.Field('selected').ValueCount-1 do begin
     //FIXXME: Errorhandling
     conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
@@ -1523,7 +1523,7 @@ var
 begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   conn.GetScheme(TFRE_DB_LUN_VIEW.ClassName,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$lunview_modify_diag_cap').Getshort,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
@@ -1599,7 +1599,7 @@ begin
 
   dc_snap       := GetSession(input).FetchDerivedCollection('BACKUP_MOD_SNAPSHOT_GRID');
   grid_snap     := dc_snap.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'delete_backup')) then begin
+  if conn.CheckRight(Get_Rightname('delete_backup')) then begin
     txt:=app.FetchAppText(conn,'$backup_snapshot_delete');
     grid_snap.AddButton.Describe(CSF(@IMI_DeleteSnapshot),'images_apps/corebox_storage/delete_snapshot.png',txt.Getshort,txt.GetHint,fdgbd_multi);
   end;
@@ -1630,7 +1630,7 @@ begin
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('BACKUP_MOD_SNAPSHOT_GRID');
-    if dc.FetchFromParent(sel_guid,snap) then begin
+    if dc.Fetch(sel_guid,snap) then begin
       conn.GetScheme(snap.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$backup_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
@@ -1660,7 +1660,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'delete_backup')) then begin
+  if conn.CheckRight(Get_Rightname('delete_backup')) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_DeleteSnapshot);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -2108,7 +2108,7 @@ begin
     end;
   end;
   entry.Field('uidpath').AsStringArr:=Self.GetUIDPath;
-  entry.Field('_funcclassname_').AsString:='TFRE_DBCOREBOX_STORAGE_POOLS_MOD';
+  entry.Field('_funcclassname_').AsString:='TFRE_FIRMBOX_STORAGE_POOLS_MOD'; //FIXXME CHRIS: ? not "rename" resistent
   entry.Field('_childrenfunc_').AsString:='TreeGridData';
   entry.Field('objectclass').AsString:=zfsObj.ClassName;
   entry.Field('id').AsString:=zfsObj.getId;
@@ -2454,7 +2454,7 @@ begin
   session:=GetSession(input);
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
 //  GFRE_BT.SeperateString(input.Field('selected').AsString,',',sIdPath);
   GFRE_BT.SeperateString(input.Field('target').AsString,',',tIdPath);
@@ -2495,7 +2495,7 @@ begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
   res:=TFRE_DB_MENU_DESC.create.Describe;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then begin
+  if conn.CheckRight(Get_Rightname('administer_pools')) then begin
     if input.Field('selected').ValueCount>1 then begin //multiselection
       fnIdentifyOn:=true;
       fnIdentifyOFf:=true;
@@ -2676,7 +2676,7 @@ begin
   session:=GetSession(input);
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   pools := conn.Collection('ZFS_POOLS');
   nameOk:=true;
@@ -2719,7 +2719,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$create_pool_diag_cap').Getshort);
   res.AddInput.Describe(app.FetchAppText(conn,'$create_pool_diag_name').Getshort,'pool_name',true);
@@ -2734,7 +2734,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppText(conn,'$import_pool_diag_cap').Getshort,app.FetchAppText(conn,'$import_pool_diag_msg').Getshort,fdbmt_info,nil);
 end;
@@ -3141,7 +3141,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   pool:=_getPool(conn,input.Field('pool').AsString);
   sf:=CSF(@IMI_DestroyPoolConfirmed);
@@ -3157,7 +3157,7 @@ var
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   pool:=_getPool(conn,input.Field('pool').AsString);
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Destroy Pool confirmed','Please implement me',fdbmt_info);
@@ -3177,7 +3177,7 @@ begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
   session:=GetSession(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     GFRE_BT.SeperateString(input.Field('selected').AsStringItem[i],',',idPath);
     pool:=_getPool(conn,idPath[0]);
@@ -3203,7 +3203,7 @@ begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
   session:=GetSession(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     GFRE_BT.SeperateString(input.Field('selected').AsStringItem[i],',',idPath);
     pool:=_getPool(conn,idPath[0]);
@@ -3232,7 +3232,7 @@ begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
   session:=GetSession(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   pools := conn.Collection('ZFS_POOLS');
   update:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store');
@@ -3264,7 +3264,7 @@ begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
   session:=GetSession(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   pools := conn.Collection('ZFS_POOLS');
   update:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store');
@@ -3341,7 +3341,7 @@ begin
   session:=GetSession(input);
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
   session.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',true));
   session.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',true));
@@ -3378,7 +3378,7 @@ begin
   //session:=GetSession(input);
   //conn:=GetDBConnection(input);
   //app:=GetEmbeddingApp;
-  //if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
+  //if not conn.CheckRight(Get_Rightname('administer_pools')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
   //
   //storeup:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store');
   //pools := conn.Collection('ZFS_POOLS');
