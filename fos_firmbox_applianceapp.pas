@@ -104,7 +104,7 @@ type
     function        IMI_SYSTEMContent         (const input:IFRE_DB_Object):IFRE_DB_Object;
     function        IMI_SYSTEMMenu            (const input:IFRE_DB_OBject):IFRE_DB_Object;
     function        IMI_DatalinkContent       (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_DatalinkMenu          (const input:IFRE_DB_OBject):IFRE_DB_Object;
+    function        WEB_DatalinkMenu          (const input:IFRE_DB_OBject ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        IMI_DatalinkCreateAggr    (const input:IFRE_DB_OBject):IFRE_DB_Object;
     function        IMI_FCContent             (const input:IFRE_DB_Object):IFRE_DB_Object;
     function        IMI_FCMenu                (const input:IFRE_DB_OBject):IFRE_DB_Object;
@@ -196,7 +196,7 @@ begin
       SetDeriveTransformation(datalink_tr_Grid);
 //      AddBooleanFieldFilter('zoned','zoned',false);
       AddBooleanFieldFilter('showglobal','showglobal',true,false);
-      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CSF(@IMI_DatalinkMenu),nil,CSF(@IMI_DatalinkContent));
+      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CSF(@IMI_DatalinkContent));
       SetChildToParentLinkField ('parentid');
     end;
 
@@ -289,7 +289,7 @@ begin
 
   dc_datalink                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_settings')) then begin
+  if conn.CheckRight(Get_Rightname('edit_settings')) then begin
     txt:=app.FetchAppText(conn,'$create_aggr');
     grid_datalink.AddButton.Describe(CSF(@IMI_DatalinkCreateAggr),'images_apps/corebox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
   end;
@@ -337,7 +337,7 @@ begin
   if input.Field('SELECTED').ValueCount>0  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
-    if dc.FetchFromParent(sel_guid,so) then begin
+    if dc.Fetch(sel_guid,so) then begin
       conn.GetScheme(so.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$system_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
@@ -384,7 +384,7 @@ begin
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
-    if dc.FetchFromParent(sel_guid,dl) then begin
+    if dc.Fetch(sel_guid,dl) then begin
       conn.GetScheme(dl.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
@@ -400,33 +400,28 @@ begin
   end;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_DatalinkMenu(const input: IFRE_DB_OBject; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
-  conn      : IFRE_DB_CONNECTION;
-  app       : TFRE_DB_APPLICATION;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   dl            : IFRE_DB_Object;
   sel_guid      : TGUID;
   sclass        : TFRE_DB_NameType;
 begin
-  conn:=GetDBConnection(input);
-  app:=GetEmbeddingApp;
-
   Result:=GFRE_DB_NIL_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_settings')) then begin
+  if conn.CheckRight(app.Get_Rightname('edit_settings')) then begin
     if input.Field('SELECTED').ValueCount=1  then begin
       sel_guid := input.Field('SELECTED').AsGUID;
       dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
-      if dc.FetchFromParent(sel_guid,dl) then begin
+      if dc.Fetch(sel_guid,dl) then begin
         sclass := dl.SchemeClass;
         writeln(schemeclass);
-        input.Field('add_vnic').AsString    := app.FetchAppText(conn,'$datalink_add_vnic').Getshort;
-        input.Field('delete_vnic').AsString := app.FetchAppText(conn,'$datalink_delete_vnic').Getshort;
-        input.Field('delete_aggr').AsString := app.FetchAppText(conn,'$datalink_delete_aggr').Getshort;
-        input.Field('delete_stub').AsString := app.FetchAppText(conn,'$datalink_delete_stub').Getshort;
-        result := dl.Invoke('Menu',input,nil,nil,nil);
+        input.Field('add_vnic').AsString    := app.FetchAppText(ses,'$datalink_add_vnic').Getshort;
+        input.Field('delete_vnic').AsString := app.FetchAppText(ses,'$datalink_delete_vnic').Getshort;
+        input.Field('delete_aggr').AsString := app.FetchAppText(ses,'$datalink_delete_aggr').Getshort;
+        input.Field('delete_stub').AsString := app.FetchAppText(ses,'$datalink_delete_stub').Getshort;
+        result := dl.Invoke('Menu',input,ses,app,conn);
       end;
     end;
   end;
@@ -444,7 +439,7 @@ begin
   exit;
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_settings')) then raise EFRE_DB_Exception.Create('No access to edit settings!');
+  if not conn.CheckRight(Get_Rightname('edit_settings')) then raise EFRE_DB_Exception.Create('No access to edit settings!');
 
   conn.GetScheme(TFRE_DB_DATALINK_AGGR.ClassName,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$aggr_add_diag_cap').Getshort,600,0,true,true,false);
@@ -474,7 +469,7 @@ begin
   if input.Field('SELECTED').ValueCount>0  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
-    if dc.FetchFromParent(sel_guid,fc) then begin
+    if dc.Fetch(sel_guid,fc) then begin
       conn.GetScheme(fc.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$fc_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));

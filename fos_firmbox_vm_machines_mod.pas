@@ -53,8 +53,8 @@ type
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   published
     function        IMI_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_DatalinkContent       (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_DatalinkMenu          (const input:IFRE_DB_OBject):IFRE_DB_Object;
+    function        WEB_DatalinkContent       (const input:IFRE_DB_Object ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DatalinkMenu          (const input:IFRE_DB_OBject ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        IMI_DatalinkCreateStub    (const input:IFRE_DB_OBject):IFRE_DB_Object;
   end;
 
@@ -137,7 +137,7 @@ begin
       SetDeriveParent(conn.Collection('datalink'));
       SetDeriveTransformation(datalink_tr_Grid);
       AddBooleanFieldFilter('showvirtual','showvirtual',true,false);
-      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CSF(@IMI_DatalinkMenu),nil,CSF(@IMI_DatalinkContent));
+      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
       SetChildToParentLinkField ('parentid');
     end;
   end;
@@ -160,7 +160,7 @@ begin
 
   dc_datalink                := GetSession(input).FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vmnetwork')) then begin
+  if conn.CheckRight(Get_Rightname('edit_vmnetwork')) then begin
     txt:=app.FetchAppText(conn,'$datalink_create_stub');
     grid_datalink.AddButton.Describe(CSF(@IMI_DatalinkCreateStub),'images_apps/corebox_appliance/create_stub.png',txt.Getshort,txt.GetHint);
   end;
@@ -170,67 +170,56 @@ begin
   Result                     := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_datalink,datalink_content,nil,nil,nil,true,1,1);
 end;
 
-function TFRE_FIRMBOX_VM_NETWORK_MOD.IMI_DatalinkContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_NETWORK_MOD.WEB_DatalinkContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   panel         : TFRE_DB_FORM_PANEL_DESC;
   scheme        : IFRE_DB_SchemeObject;
-  app           : TFRE_DB_APPLICATION;
-  conn          : IFRE_DB_CONNECTION;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   dl            : IFRE_DB_Object;
   sel_guid      : TGUID;
 
 begin
-  conn     := GetDBConnection(input);
-  app      := GetEmbeddingApp;
-
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
-    dc       := GetSession(input).FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
-    if dc.FetchFromParent(sel_guid,dl) then begin
+    dc       := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
+    if dc.Fetch(sel_guid,dl) then begin
       conn.GetScheme(dl.SchemeClass,scheme);
-      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
-      panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
-      panel.FillWithObjectValues(dl,GetSession(input));
+      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
+      panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+      panel.FillWithObjectValues(dl,ses);
       panel.contentId:='DATALINK_CONTENT';
 //      panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(dl,'saveOperation'),fdbbt_submit);
       Result:=panel;
     end;
   end else begin
-    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
+    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
     panel.contentId:='DATALINK_CONTENT';
     Result:=panel;
   end;
 end;
 
-function TFRE_FIRMBOX_VM_NETWORK_MOD.IMI_DatalinkMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_NETWORK_MOD.WEB_DatalinkMenu(const input: IFRE_DB_OBject; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
-  conn      : IFRE_DB_CONNECTION;
-  app       : TFRE_DB_APPLICATION;
-  dc            : IFRE_DB_DERIVED_COLLECTION;
-  dl            : IFRE_DB_Object;
-  sel_guid      : TGUID;
-  sclass        : TFRE_DB_NameType;
+  dc        : IFRE_DB_DERIVED_COLLECTION;
+  dl        : IFRE_DB_Object;
+  sel_guid  : TGUID;
+  sclass    : TFRE_DB_NameType;
 begin
-  conn:=GetDBConnection(input);
-  app:=GetEmbeddingApp;
-
   Result:=GFRE_DB_NIL_DESC;
-  if conn.CheckRight(Get_Rightname_App(app.ObjectName,'edit_vmnetwork')) then begin
+  if conn.CheckRight(app.Get_Rightname('edit_vmnetwork')) then begin
     if input.Field('SELECTED').ValueCount=1  then begin
-      writeln('BUILD MENU');
       sel_guid := input.Field('SELECTED').AsGUID;
-      dc       := GetSession(input).FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
-      if dc.FetchFromParent(sel_guid,dl) then begin
+      dc       := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
+      if dc.Fetch(sel_guid,dl) then begin
         sclass := dl.SchemeClass;
         writeln(schemeclass);
-        input.Field('add_vnic').AsString    := app.FetchAppText(conn,'$datalink_add_vnic').Getshort;
-        input.Field('delete_vnic').AsString := app.FetchAppText(conn,'$datalink_delete_vnic').Getshort;
-        input.Field('delete_aggr').AsString := app.FetchAppText(conn,'$datalink_delete_aggr').Getshort;
-        input.Field('delete_stub').AsString := app.FetchAppText(conn,'$datalink_delete_stub').Getshort;
-        result := dl.Invoke('Menu',input,nil,nil,nil);
+        input.Field('add_vnic').AsString    := app.FetchAppText(ses,'$datalink_add_vnic').Getshort;
+        input.Field('delete_vnic').AsString := app.FetchAppText(ses,'$datalink_delete_vnic').Getshort;
+        input.Field('delete_aggr').AsString := app.FetchAppText(ses,'$datalink_delete_aggr').Getshort;
+        input.Field('delete_stub').AsString := app.FetchAppText(ses,'$datalink_delete_stub').Getshort;
+        result := dl.Invoke('Menu',input,ses,app,conn);
       end;
     end;
   end;
@@ -304,7 +293,7 @@ var DC_VMC     : IFRE_DB_DERIVED_COLLECTION;
       vmo        : IFRE_DB_Object;
 begin
   DC_VMC := session.FetchDerivedCollection('VMC');
-  if DC_VMC.FetchFromParent(selected,vmo) then begin
+  if DC_VMC.Fetch(selected,vmo) then begin
     vmkey    := vmo.Field('MKEY').AsString;
     vnc_port := vmo.Field('VNC_PORT').AsString;
     vnc_host := vmo.Field('VNC_HOST').AsString;
