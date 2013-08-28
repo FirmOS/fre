@@ -84,7 +84,7 @@ type
   protected
     procedure       MySessionInitialize       (const session:TFRE_DB_UserSession);override;
     procedure       MySessionPromotion        (const session: TFRE_DB_UserSession); override;
-    function        ShowInApplicationChooser  (const session:TFRE_DB_UserSession): Boolean;override;
+    function        ShowInApplicationChooser  (const session:IFRE_DB_UserSession): Boolean;override;
     function        CFG_ApplicationUsesRights : boolean; override;
     function        _ActualVersion            : TFRE_DB_String; override;
   public
@@ -1289,7 +1289,7 @@ begin
   _UpdateSitemap(session);
 end;
 
-function TFRE_DB_MONSYS.ShowInApplicationChooser(const session: TFRE_DB_UserSession): Boolean;
+function TFRE_DB_MONSYS.ShowInApplicationChooser(const session: IFRE_DB_UserSession): Boolean;
 begin
   Result := true;
 end;
