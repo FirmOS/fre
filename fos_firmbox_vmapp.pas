@@ -47,8 +47,7 @@ implementation
 procedure TFRE_FIRMBOX_VM_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  writeln('init appdesc corebox_vm');
-  InitAppDesc('corebox_vm','$description');
+  InitAppDesc('firmbox_vm','$description');
   AddApplicationModule(TFRE_FIRMBOX_VM_NETWORK_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VM_MACHINES_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VM_STATUS_MOD.create);
@@ -102,11 +101,11 @@ var admin_app_rg : IFRE_DB_ROLE;
      user_app_rg : IFRE_DB_ROLE;
     guest_app_rg : IFRE_DB_ROLE;
 begin
-  admin_app_rg  := _CreateAppRole('ADMIN','COREBOX VMAPP ADMIN','Corebox VMAPP Administration Rights');      // TODO: REWORK
-  user_app_rg   := _CreateAppRole('USER','COREBOX VMAPP USER','Corebox VMAPP Default User Rights');
-  guest_app_rg  := _CreateAppRole('GUEST','COREBOX VMAPP GUEST','Corebox VMAPP Default Guest User Rights');
-  _AddAppRight(admin_app_rg ,'ADMIN'  ,'COREBOX VMAPP Admin','Administration of Corebox VMAPP');
-  _AddAppRight(user_app_rg  ,'START'  ,'COREBOX VMAPP Start','Startup of Corebox VMAPP');
+  admin_app_rg  := _CreateAppRole('ADMIN','firmbox VMAPP ADMIN','firmbox VMAPP Administration Rights');      // TODO: REWORK
+  user_app_rg   := _CreateAppRole('USER','firmbox VMAPP USER','firmbox VMAPP Default User Rights');
+  guest_app_rg  := _CreateAppRole('GUEST','firmbox VMAPP GUEST','firmbox VMAPP Default Guest User Rights');
+  _AddAppRight(admin_app_rg ,'ADMIN'  ,'firmbox VMAPP Admin','Administration of firmbox VMAPP');
+  _AddAppRight(user_app_rg  ,'START'  ,'firmbox VMAPP Start','Startup of firmbox VMAPP');
   _AddAppRight(admin_app_rg,'edit_vmnetwork','Edit Virtual Network','Edit Virtual Network');
 
 //  _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['main']));
@@ -132,11 +131,11 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization','Virtualization','images_apps/corebox_vm/monitor_white.svg','',0,CheckAppRightModule(conn,'vmcontroller') or CheckAppRightModule(conn,'vmnetwork') or CheckAppRightModule(conn,'vmstatus'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/Machines','Machines','images_apps/corebox_vm/server_white.svg','VMCONTROLLER',0,CheckAppRightModule(conn,'vmcontroller'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch','Virtual Network','images_apps/corebox_vm/network_white.svg','VMNETWORK',0,CheckAppRightModule(conn,'vmnetwork'));
-//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch/Interfaces','Interfaces','images_apps/corebox_vm/plug_white.svg','',0,CheckAppRightModule(conn,'interfaces'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/Status','Status','images_apps/corebox_vm/monitor_white.svg','VMSTATUS',0,CheckAppRightModule(conn,'vmstatus'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization','Virtualization','images_apps/firmbox_vm/monitor_white.svg','',0,CheckAppRightModule(conn,'vmcontroller') or CheckAppRightModule(conn,'vmnetwork') or CheckAppRightModule(conn,'vmstatus'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/Machines','Machines','images_apps/firmbox_vm/server_white.svg','VMCONTROLLER',0,CheckAppRightModule(conn,'vmcontroller'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch','Virtual Network','images_apps/firmbox_vm/network_white.svg','VMNETWORK',0,CheckAppRightModule(conn,'vmnetwork'));
+//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch/Interfaces','Interfaces','images_apps/firmbox_vm/plug_white.svg','',0,CheckAppRightModule(conn,'interfaces'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/Status','Status','images_apps/firmbox_vm/monitor_white.svg','VMSTATUS',0,CheckAppRightModule(conn,'vmstatus'));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;

@@ -162,7 +162,7 @@ begin
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('edit_vmnetwork')) then begin
     txt:=app.FetchAppText(conn,'$datalink_create_stub');
-    grid_datalink.AddButton.Describe(CSF(@IMI_DatalinkCreateStub),'images_apps/corebox_appliance/create_stub.png',txt.Getshort,txt.GetHint);
+    grid_datalink.AddButton.Describe(CSF(@IMI_DatalinkCreateStub),'images_apps/hal/create_stub.png',txt.Getshort,txt.GetHint);
   end;
 
   datalink_content           := TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
@@ -323,10 +323,10 @@ var
 begin
   coll := GetSession(input).FetchDerivedCollection('VMC');
   list := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  list.AddButton.Describe(CSF(@IMI_NewVM)         , '/images_apps/corebox_vm_machines/add_vm.png','New','New VM');
-  list.AddButton.Describe(CSF(@IMI_StartVM)       , '/images_apps/corebox_vm_machines/start_vm.png','Start','Start the selected VM',fdgbd_single);
-  list.AddButton.Describe(CSF(@IMI_StopVM)        , '/images_apps/corebox_vm_machines/stop_vm.png','Stop','Stop the selected VM',fdgbd_single);
-  list.AddButton.Describe(CSF(@IMI_StopVMF)        , '/images_apps/corebox_vm_machines/stop_vm.png','Kill','Stop the selected VM (FORCED)',fdgbd_single);
+  list.AddButton.Describe(CSF(@IMI_NewVM)         , '/images_apps/hal/add_vm.png','New','New VM');
+  list.AddButton.Describe(CSF(@IMI_StartVM)       , '/images_apps/hal/start_vm.png','Start','Start the selected VM',fdgbd_single);
+  list.AddButton.Describe(CSF(@IMI_StopVM)        , '/images_apps/hal/stop_vm.png','Stop','Stop the selected VM',fdgbd_single);
+  list.AddButton.Describe(CSF(@IMI_StopVMF)        , '/images_apps/hal/stop_vm.png','Kill','Stop the selected VM (FORCED)',fdgbd_single);
   list.AddButton.Describe(CSF(@IMI_UpdateVM), '','Update','Update list');
   main := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(list,nil,nil,nil,nil,true,2);
 

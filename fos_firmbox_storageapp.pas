@@ -366,8 +366,8 @@ begin
   rr := FREDB_Get_Rightname_UID_STR('FSREAD',sel_guid);
   wr := FREDB_Get_Rightname_UID_STR('FSWRITE',sel_guid);
 
-  true_icon  := getThemedResource('images_apps/corebox_storage/access_true.png');
-  false_icon := getThemedResource('images_apps/corebox_storage/access_false.png');
+  true_icon  := getThemedResource('images_apps/firmbox_storage/access_true.png');
+  false_icon := getThemedResource('images_apps/firmbox_storage/access_false.png');
   if conn.CheckRightForGroup(rr,group_id) then
     transformed_object.field('read').Asstring  := true_icon
   else
@@ -484,7 +484,7 @@ begin
   grid_fs     := dc_fs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('edit_vfs')) then begin
     txt:=app.FetchAppText(conn,'$create_vfs');
-    grid_fs.AddButton.Describe(CSF(@IMI_CreateVFS),'images_apps/corebox_storage/create_vfs.png',txt.Getshort,txt.GetHint);
+    grid_fs.AddButton.Describe(CSF(@IMI_CreateVFS),'images_apps/firmbox_storage/create_vfs.png',txt.Getshort,txt.GetHint);
   end;
 
 
@@ -550,7 +550,7 @@ begin
   grid_share  := dc_share.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('edit_vfs_share')) then begin
     txt:=app.FetchAppText(conn,'$create_vfs_share');
-    grid_share.AddButton.Describe(CSF(@IMI_CreateVFSShare),'images_apps/corebox_storage/create_vfs_share.png',txt.Getshort,txt.GetHint);
+    grid_share.AddButton.Describe(CSF(@IMI_CreateVFSShare),'images_apps/firmbox_storage/create_vfs_share.png',txt.Getshort,txt.GetHint);
   end;
 
   sub_sec_share := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
@@ -602,7 +602,7 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_VFSDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$vfs_delete').Getshort,'images_apps/corebox_storage/delete_vfs.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$vfs_delete').Getshort,'images_apps/firmbox_storage/delete_vfs.png',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -733,7 +733,7 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_VFSShareDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$vfs_share_delete').Getshort,'images_apps/corebox_storage/delete_vfs_share.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$vfs_share_delete').Getshort,'images_apps/firmbox_storage/delete_vfs_share.png',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -837,19 +837,19 @@ begin
     func:=CSF(@IMI_VFSShareGroupSetRead);
     func.AddParam.Describe('share_id',share_id);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$share_group_setread_on').Getshort,'images_apps/corebox_storage/share_access_set_on.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$share_group_setread_on').Getshort,'images_apps/firmbox_storage/share_access_set_on.png',func);
     func:=CSF(@IMI_VFSShareGroupSetWrite);
     func.AddParam.Describe('share_id',share_id);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$share_group_setwrite_on').Getshort,'images_apps/corebox_storage/share_access_set_on.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$share_group_setwrite_on').Getshort,'images_apps/firmbox_storage/share_access_set_on.png',func);
     func:=CSF(@IMI_VFSShareGroupClearRead);
     func.AddParam.Describe('share_id',share_id);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$share_group_setread_off').Getshort,'images_apps/corebox_storage/share_access_set_off.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$share_group_setread_off').Getshort,'images_apps/firmbox_storage/share_access_set_off.png',func);
     func:=CSF(@IMI_VFSShareGroupClearWrite);
     func.AddParam.Describe('share_id',share_id);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$share_group_setwrite_off').Getshort,'images_apps/corebox_storage/share_access_set_off.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$share_group_setwrite_off').Getshort,'images_apps/firmbox_storage/share_access_set_off.png',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1061,14 +1061,14 @@ begin
   grid_nfs     := dc_share_nfs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('edit_nfs_global')) then begin
     txt:=app.FetchAppText(conn,'$create_nfs_export');
-    grid_nfs.AddButton.Describe(CSF(@IMI_CreateNFSExport),'images_apps/corebox_storage/create_nfs_export.png',txt.Getshort,txt.GetHint);
+    grid_nfs.AddButton.Describe(CSF(@IMI_CreateNFSExport),'images_apps/firmbox_storage/create_nfs_export.png',txt.Getshort,txt.GetHint);
   end;
 
   dc_share_nfs_access := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_ACCESS_GRID');
   grid_nfs_access     := dc_share_nfs_access.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('edit_nfs_global')) then begin
     txt:=app.FetchAppText(conn,'$create_nfs_access');
-    grid_nfs_access.AddButton.Describe(CSF(@IMI_CreateNFSAccess),'images_apps/corebox_storage/create_nfs_access.png',txt.Getshort,txt.GetHint);
+    grid_nfs_access.AddButton.Describe(CSF(@IMI_CreateNFSAccess),'images_apps/firmbox_storage/create_nfs_access.png',txt.Getshort,txt.GetHint);
   end;
 
   dc_share_nfs := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_GRID');
@@ -1099,14 +1099,14 @@ begin
   grid_lun   := dc_lun.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('edit_lun_global')) then begin
     txt:=app.FetchAppText(conn,'$create_lun');
-    grid_lun.AddButton.Describe(CSF(@IMI_CreateLUN),'images_apps/corebox_storage/create_lun.png',txt.Getshort,txt.GetHint);
+    grid_lun.AddButton.Describe(CSF(@IMI_CreateLUN),'images_apps/firmbox_storage/create_lun.png',txt.Getshort,txt.GetHint);
   end;
 
   dc_lun_view   := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_VIEW_GRID');
   grid_lun_view := dc_lun_view.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('edit_lun_global')) then begin
     txt:=app.FetchAppText(conn,'$create_lun_view');
-    grid_lun_view.AddButton.Describe(CSF(@IMI_CreateLUNView),'images_apps/corebox_storage/create_lun_view.png',txt.Getshort,txt.GetHint);
+    grid_lun_view.AddButton.Describe(CSF(@IMI_CreateLUNView),'images_apps/firmbox_storage/create_lun_view.png',txt.Getshort,txt.GetHint);
   end;
 
   grid_lun.AddFilterEvent(dc_lun_view.getDescriptionStoreId(),'uids');
@@ -1225,7 +1225,7 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_NFSDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$nfs_delete').Getshort,'images_apps/corebox_storage/delete_nfs.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$nfs_delete').Getshort,'images_apps/firmbox_storage/delete_nfs.png',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1281,10 +1281,10 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_NFSAccessDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$nfsaccess_delete').Getshort,'images_apps/corebox_storage/delete_nfsaccess.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$nfsaccess_delete').Getshort,'images_apps/firmbox_storage/delete_nfsaccess.png',func);
     func:=CSF(@IMI_NFSAccessModify);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$nfsaccess_modify').Getshort,'images_apps/corebox_storage/modify_nfsaccess.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$nfsaccess_modify').Getshort,'images_apps/firmbox_storage/modify_nfsaccess.png',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1395,7 +1395,7 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_LUNDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$lun_delete').Getshort,'images_apps/corebox_storage/delete_lun.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$lun_delete').Getshort,'images_apps/firmbox_storage/delete_lun.png',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1487,10 +1487,10 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_LUNViewDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$lunview_delete').Getshort,'images_apps/corebox_storage/delete_lunview.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$lunview_delete').Getshort,'images_apps/firmbox_storage/delete_lunview.png',func);
     func:=CSF(@IMI_LUNViewModify);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$lunview_modify').Getshort,'images_apps/corebox_storage/modify_lunview.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$lunview_modify').Getshort,'images_apps/firmbox_storage/modify_lunview.png',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1601,7 +1601,7 @@ begin
   grid_snap     := dc_snap.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('delete_backup')) then begin
     txt:=app.FetchAppText(conn,'$backup_snapshot_delete');
-    grid_snap.AddButton.Describe(CSF(@IMI_DeleteSnapshot),'images_apps/corebox_storage/delete_snapshot.png',txt.Getshort,txt.GetHint,fdgbd_multi);
+    grid_snap.AddButton.Describe(CSF(@IMI_DeleteSnapshot),'images_apps/firmbox_storage/delete_snapshot.png',txt.Getshort,txt.GetHint,fdgbd_multi);
   end;
 
   sub_sec.AddSection.Describe(CSF(@IMI_ContentSnapshot),app.FetchAppText(conn,'$backup_snapshot_properties').Getshort,1,'backup_properties');
@@ -1664,7 +1664,7 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CSF(@IMI_DeleteSnapshot);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppText(conn,'$backup_snapshot_delete').Getshort,'images_apps/corebox_storage/delete_snapshot.png',func);
+    res.AddEntry.Describe(app.FetchAppText(conn,'$backup_snapshot_delete').Getshort,'images_apps/firmbox_storage/delete_snapshot.png',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1715,11 +1715,11 @@ var
           zfs_rl_z2: raid_str:=app.FetchAppText(conn,'$add_disks_rl_z2').Getshort;
           zfs_rl_z3: raid_str:=app.FetchAppText(conn,'$add_disks_rl_z3').Getshort;
         end;
-        menu.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_storage_ex_same').Getshort,'%raid_level%',raid_str,[rfReplaceAll]),'images_apps/corebox_storage/expand_storage_disks_same.png',sf);
+        menu.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_storage_ex_same').Getshort,'%raid_level%',raid_str,[rfReplaceAll]),'images_apps/firmbox_storage/expand_storage_disks_same.png',sf);
       end;
-      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_storage_ex_other').Getshort,'images_apps/corebox_storage/expand_storage_disks_other.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_storage_ex_other').Getshort,'images_apps/firmbox_storage/expand_storage_disks_other.png');
     end else begin
-      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_storage').Getshort,'images_apps/corebox_storage/add_storage_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_storage').Getshort,'images_apps/firmbox_storage/add_storage_disks.png');
     end;
     if storageRL<>zfs_rl_stripe then begin
       sf:=CSF(@IMI_AssignStorageDisk);
@@ -1727,7 +1727,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_stripe').Getshort,'images_apps/corebox_storage/expand_storage_disks_s.png',sf);
+      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_stripe').Getshort,'images_apps/firmbox_storage/expand_storage_disks_s.png',sf);
     end;
     if storageRL<>zfs_rl_mirror then begin
       sf:=CSF(@IMI_AssignStorageDisk);
@@ -1735,7 +1735,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_mirror').Getshort,'images_apps/corebox_storage/expand_storage_disks_m.png',sf);
+      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_mirror').Getshort,'images_apps/firmbox_storage/expand_storage_disks_m.png',sf);
     end;
     if storageRL<>zfs_rl_z1 then begin
       sf:=CSF(@IMI_AssignStorageDisk);
@@ -1743,7 +1743,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
-      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z1').Getshort,'images_apps/corebox_storage/expand_storage_disks_z1.png',sf);
+      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z1').Getshort,'images_apps/firmbox_storage/expand_storage_disks_z1.png',sf);
     end;
     if storageRL<>zfs_rl_z2 then begin
       sf:=CSF(@IMI_AssignStorageDisk);
@@ -1751,7 +1751,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
-      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z2').Getshort,'images_apps/corebox_storage/expand_storage_disks_z2.png',sf);
+      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z2').Getshort,'images_apps/firmbox_storage/expand_storage_disks_z2.png',sf);
     end;
     if storageRL<>zfs_rl_z3 then begin
       sf:=CSF(@IMI_AssignStorageDisk);
@@ -1759,53 +1759,53 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
-      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z3').Getshort,'images_apps/corebox_storage/expand_storage_disks_z3.png',sf);
+      sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z3').Getshort,'images_apps/firmbox_storage/expand_storage_disks_z3.png',sf);
     end;
     if Length(addStorage)>1 then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_storage').Getshort,'images_apps/corebox_storage/add_storage_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_storage').Getshort,'images_apps/firmbox_storage/add_storage_disks.png');
     end else begin
       sub:=menu;
     end;
     for i := 0 to Length(addStorage) - 1 do begin
       vdev:=addStorage[i].Implementor_HC as TFRE_DB_ZFS_VDEV;
       if vdev.raidLevel=zfs_rl_undefined then begin
-        subsub:=sub.AddMenu.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_storage_to').Getshort,'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/corebox_storage/add_storage_disks.png');
+        subsub:=sub.AddMenu.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_storage_to').Getshort,'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_storage_disks.png');
         sf:=CSF(@IMI_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_stripe').Getshort,'images_apps/corebox_storage/add_storage_disks_s.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_stripe').Getshort,'images_apps/firmbox_storage/add_storage_disks_s.png',sf);
         sf:=CSF(@IMI_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_mirror').Getshort,'images_apps/corebox_storage/add_storage_disks_m.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_mirror').Getshort,'images_apps/firmbox_storage/add_storage_disks_m.png',sf);
         sf:=CSF(@IMI_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
-        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z1').Getshort,'images_apps/corebox_storage/add_storage_disks_z1.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z1').Getshort,'images_apps/firmbox_storage/add_storage_disks_z1.png',sf);
         sf:=CSF(@IMI_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
-        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z2').Getshort,'images_apps/corebox_storage/add_storage_disks_z2.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z2').Getshort,'images_apps/firmbox_storage/add_storage_disks_z2.png',sf);
         sf:=CSF(@IMI_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
-        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z3').Getshort,'images_apps/corebox_storage/add_storage_disks_z3.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_z3').Getshort,'images_apps/firmbox_storage/add_storage_disks_z3.png',sf);
       end else begin
         sf:=CSF(@IMI_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
-        sub.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_storage_to').Getshort,'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/corebox_storage/add_storage_disks.png',sf);
+        sub.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_storage_to').Getshort,'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_storage_disks.png',sf);
       end;
     end;
   end;
@@ -1817,7 +1817,7 @@ var
     sf:=CSF(@IMI_AssignCacheDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
-    menu.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_cache').Getshort,'images_apps/corebox_storage/add_cache_disks.png',sf);
+    menu.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_cache').Getshort,'images_apps/firmbox_storage/add_cache_disks.png',sf);
   end;
 
   procedure _addLogMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const expandLog: Boolean; const addLog: IFRE_DB_ObjectArray);
@@ -1828,24 +1828,24 @@ var
     sf   : TFRE_DB_SERVER_FUNC_DESC;
   begin
     if expandLog then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_log_ex').Getshort,'images_apps/corebox_storage/expand_log_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_log_ex').Getshort,'images_apps/firmbox_storage/expand_log_disks.png');
     end else begin
-      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_log').Getshort,'images_apps/corebox_storage/add_log_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_log').Getshort,'images_apps/firmbox_storage/add_log_disks.png');
     end;
     sf:=CSF(@IMI_AssignLogDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('expand','true');
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-    sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_stripe').Getshort,'images_apps/corebox_storage/expand_storage_disks_s.png',sf);
+    sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_stripe').Getshort,'images_apps/firmbox_storage/expand_storage_disks_s.png',sf);
     sf:=CSF(@IMI_AssignLogDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('expand','true');
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-    sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_mirror').Getshort,'images_apps/corebox_storage/expand_storage_disks_m.png',sf);
+    sub.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_rl_mirror').Getshort,'images_apps/firmbox_storage/expand_storage_disks_m.png',sf);
     if Length(addLog)>1 then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_log').Getshort,'images_apps/corebox_storage/add_log_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppText(conn,'$add_disks_log').Getshort,'images_apps/firmbox_storage/add_log_disks.png');
     end else begin
       sub:=menu;
     end;
@@ -1855,7 +1855,7 @@ var
       sf.AddParam.Describe('disks',disks);
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('add',vdev.getId);
-      sub.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_log_to').Getshort,'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/corebox_storage/add_log_disks.png',sf);
+      sub.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_log_to').Getshort,'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_log_disks.png',sf);
     end;
   end;
 
@@ -1866,7 +1866,7 @@ var
     sf:=CSF(@IMI_AssignSpareDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
-    menu.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_spare').Getshort,'images_apps/corebox_storage/add_spare_disks.png',sf);
+    menu.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_spare').Getshort,'images_apps/firmbox_storage/add_spare_disks.png',sf);
   end;
 
   procedure _addVdevMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_VDEV);
@@ -1886,7 +1886,7 @@ var
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('add',target.getId);
-    menu.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_vdev').Getshort,'images_apps/corebox_storage/add_disks_vdev.png',sf);
+    menu.AddEntry.Describe(app.FetchAppText(conn,'$add_disks_vdev').Getshort,'images_apps/firmbox_storage/add_disks_vdev.png',sf);
   end;
 
   procedure _addPoolMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_DISKCONTAINER);
@@ -1997,7 +1997,7 @@ var
   begin
     if obj.Implementor_HC is TFRE_DB_ZFS_POOL then begin
       pool:=obj.Implementor_HC as TFRE_DB_ZFS_POOL;
-      sub:=res.AddMenu.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_pool').Getshort,'%pool%',pool.caption,[rfReplaceAll]),'images_apps/corebox_storage/add_pool_disks.png');
+      sub:=res.AddMenu.Describe(StringReplace(app.FetchAppText(conn,'$add_disks_pool').Getshort,'%pool%',pool.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_pool_disks.png');
       _addPoolMenu(sub,pool,pool);
     end;
   end;
@@ -2012,7 +2012,7 @@ begin
         res:=TFRE_DB_MENU_DESC.create.Describe;
         FREDB_SeperateString(disks[0],',',idPath);
         disk:=_getPool(conn,idPath[0]).getPoolItem(TFRE_DB_StringArray(idPath));
-        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_replace').Getshort,'images_apps/corebox_storage/cm_replace.png',CSF(@IMI_Replace),(target.Parent.Implementor_HC as TFRE_DB_ZFS_OBJ).getId=(disk.Parent.Implementor_HC as TFRE_DB_ZFS_OBJ).getId);
+        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_replace').Getshort,'images_apps/firmbox_storage/cm_replace.png',CSF(@IMI_Replace),(target.Parent.Implementor_HC as TFRE_DB_ZFS_OBJ).getId=(disk.Parent.Implementor_HC as TFRE_DB_ZFS_OBJ).getId);
         Result:=res;
       end else begin
         res:=TFRE_DB_MENU_DESC.create.Describe;
@@ -2118,15 +2118,15 @@ begin
   entry.Field('transfer_r').AsString:=zfsObj.transferR;
   entry.Field('transfer_w').AsString:=zfsObj.transferW;
   if zfsObj.isNew then begin
-    entry.Field('icon').AsString:=getThemedResource('images_apps/corebox_storage/'+zfsObj.ClassName+'_new.png');
+    entry.Field('icon').AsString:=getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_new.png');
   end else begin
     if zfsObj.isModified then begin
-      entry.Field('icon').AsString:=getThemedResource('images_apps/corebox_storage/'+zfsObj.ClassName+'_mod.png');
+      entry.Field('icon').AsString:=getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_mod.png');
     end else begin
       if (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) and (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
-        entry.Field('icon').AsString:=getThemedResource('images_apps/corebox_storage/'+zfsObj.ClassName+'_offline.png');
+        entry.Field('icon').AsString:=getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_offline.png');
       end else begin
-        entry.Field('icon').AsString:=getThemedResource('images_apps/corebox_storage/'+zfsObj.ClassName+'.png');
+        entry.Field('icon').AsString:=getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'.png');
       end;
     end;
   end;
@@ -2301,11 +2301,11 @@ begin
   grid.SetDropGrid(grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
   grid.SetDragObjClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
 
-  grid.AddButton.Describe(CSF(@IMI_CreatePoolDiag),'images_apps/corebox_storage/create_pool.png',app.FetchAppText(conn,'$create_pool').Getshort);
-  grid.AddButton.Describe(CSF(@IMI_ImportPoolDiag),'images_apps/corebox_storage/import_pool.png',app.FetchAppText(conn,'$import_pool').Getshort);
-  grid.AddButton.DescribeManualType('pool_save',CSF(@IMI_SaveConfig),'images_apps/corebox_storage/save_config.png',app.FetchAppText(conn,'$save_config').Getshort,'',true);
-  grid.AddButton.DescribeManualType('pool_reset',CSF(@IMI_ResetConfig),'images_apps/corebox_storage/reset_config.png',app.FetchAppText(conn,'$reset_config').Getshort,'',true);
-  //grid.AddButton.Describe(CSF(@IMI_UpdatePoolsTree),'images_apps/corebox_storage/update.png','Update');
+  grid.AddButton.Describe(CSF(@IMI_CreatePoolDiag),'images_apps/firmbox_storage/create_pool.png',app.FetchAppText(conn,'$create_pool').Getshort);
+  grid.AddButton.Describe(CSF(@IMI_ImportPoolDiag),'images_apps/firmbox_storage/import_pool.png',app.FetchAppText(conn,'$import_pool').Getshort);
+  grid.AddButton.DescribeManualType('pool_save',CSF(@IMI_SaveConfig),'images_apps/firmbox_storage/save_config.png',app.FetchAppText(conn,'$save_config').Getshort,'',true);
+  grid.AddButton.DescribeManualType('pool_reset',CSF(@IMI_ResetConfig),'images_apps/firmbox_storage/reset_config.png',app.FetchAppText(conn,'$reset_config').Getshort,'',true);
+  //grid.AddButton.Describe(CSF(@IMI_UpdatePoolsTree),'images_apps/firmbox_storage/update.png','Update');
   main    := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid,secs,nil,nil,nil,true,2);
   //main    := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(coll.GetDisplayDescription,secs,nil,nil,nil,true,2);
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of disks and pools and their status. Update interval: 10s. The average IO size is 128kByte.</b>'));
@@ -2542,27 +2542,27 @@ begin
       if fnRemove then begin
         sf:=CSF(@IMI_RemoveNew);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$cm_multiple_remove').Getshort,'%num%',IntToStr(input.field('selected').ValueCount),[rfReplaceAll]),'images_apps/corebox_storage/cm_multiple_remove.png',sf);
+        res.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$cm_multiple_remove').Getshort,'%num%',IntToStr(input.field('selected').ValueCount),[rfReplaceAll]),'images_apps/firmbox_storage/cm_multiple_remove.png',sf);
       end;
       if fnIdentifyOn then begin
         sf:=CSF(@IMI_Identify_on);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_identify_on').Getshort,'images_apps/corebox_storage/cm_identify.png',sf);
+        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_identify_on').Getshort,'images_apps/firmbox_storage/cm_identify.png',sf);
       end;
       if fnIdentifyOff then begin
         sf:=CSF(@IMI_Identify_off);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_identify_off').Getshort,'images_apps/corebox_storage/cm_identify.png',sf);
+        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_identify_off').Getshort,'images_apps/firmbox_storage/cm_identify.png',sf);
       end;
       if fnSwitchOffline then begin
         sf:=CSF(@IMI_SwitchOffline);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_switch_offline').Getshort,'images_apps/corebox_storage/cm_switch_offline.png',sf,fnSwitchOfflineDisabled);
+        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_switch_offline').Getshort,'images_apps/firmbox_storage/cm_switch_offline.png',sf,fnSwitchOfflineDisabled);
       end;
       if fnSwitchOnline then begin
         sf:=CSF(@IMI_SwitchOnline);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_switch_online').Getshort,'images_apps/corebox_storage/cm_switch_online.png',sf,fnSwitchOnlineDisabled);
+        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_switch_online').Getshort,'images_apps/firmbox_storage/cm_switch_online.png',sf,fnSwitchOnlineDisabled);
       end;
       Result:=res;
     end else begin //single selection
@@ -2576,60 +2576,60 @@ begin
           if (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
             sf:=CSF(@IMI_SwitchOnline);
             sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            res.AddEntry.Describe(app.FetchAppText(conn,'$cm_switch_online').Getshort,'images_apps/corebox_storage/cm_switch_online.png',sf);
+            res.AddEntry.Describe(app.FetchAppText(conn,'$cm_switch_online').Getshort,'images_apps/firmbox_storage/cm_switch_online.png',sf);
           end else begin
             sf:=CSF(@IMI_SwitchOffline);
             sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            res.AddEntry.Describe(app.FetchAppText(conn,'$cm_switch_offline').Getshort,'images_apps/corebox_storage/cm_switch_offline.png',sf);
+            res.AddEntry.Describe(app.FetchAppText(conn,'$cm_switch_offline').Getshort,'images_apps/firmbox_storage/cm_switch_offline.png',sf);
           end;
         end;
       end;
       if zfsObj.isNew then begin
         sf:=CSF(@IMI_RemoveNew);
         sf.AddParam.Describe('selected',input.Field('selected').AsString);
-        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_remove').Getshort,'images_apps/corebox_storage/cm_remove.png',sf);
+        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_remove').Getshort,'images_apps/firmbox_storage/cm_remove.png',sf);
         if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.Parent.Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
-          sub:=res.AddMenu.Describe(app.FetchAppText(conn,'$cm_change_raid_level').Getshort,'images_apps/corebox_storage/cm_change_raid_level.png');
+          sub:=res.AddMenu.Describe(app.FetchAppText(conn,'$cm_change_raid_level').Getshort,'images_apps/firmbox_storage/cm_change_raid_level.png');
           rl:=(zfsObj as TFRE_DB_ZFS_VDEV).raidLevel;
           if rl<>zfs_rl_mirror then begin
             sf:=CSF(@IMI_ChangeRaidLevel);
             sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
             sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            sub.AddEntry.Describe(app.FetchAppText(conn,'$cm_rl_mirror').Getshort,'images_apps/corebox_storage/cm_rl_mirror.png',sf);
+            sub.AddEntry.Describe(app.FetchAppText(conn,'$cm_rl_mirror').Getshort,'images_apps/firmbox_storage/cm_rl_mirror.png',sf);
           end;
           if rl<>zfs_rl_z1 then begin
             sf:=CSF(@IMI_ChangeRaidLevel);
             sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
             sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            sub.AddEntry.Describe(app.FetchAppText(conn,'$cm_rl_z1').Getshort,'images_apps/corebox_storage/cm_rl_z1.png',sf);
+            sub.AddEntry.Describe(app.FetchAppText(conn,'$cm_rl_z1').Getshort,'images_apps/firmbox_storage/cm_rl_z1.png',sf);
           end;
           if rl<>zfs_rl_z2 then begin
             sf:=CSF(@IMI_ChangeRaidLevel);
             sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
             sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            sub.AddEntry.Describe(app.FetchAppText(conn,'$cm_rl_z2').Getshort,'images_apps/corebox_storage/cm_rl_z2.png',sf);
+            sub.AddEntry.Describe(app.FetchAppText(conn,'$cm_rl_z2').Getshort,'images_apps/firmbox_storage/cm_rl_z2.png',sf);
           end;
           if rl<>zfs_rl_z3 then begin
             sf:=CSF(@IMI_ChangeRaidLevel);
             sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
             sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            sub.AddEntry.Describe(app.FetchAppText(conn,'$cm_rl_z3').Getshort,'images_apps/corebox_storage/cm_rl_z3.png',sf);
+            sub.AddEntry.Describe(app.FetchAppText(conn,'$cm_rl_z3').Getshort,'images_apps/firmbox_storage/cm_rl_z3.png',sf);
           end;
         end;
       end else begin
         if zfsObj is TFRE_DB_ZFS_POOL then begin
           sf:=CSF(@IMI_DestroyPool);
           sf.AddParam.Describe('pool',input.Field('selected').AsString);
-          res.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$cm_destroy_pool').Getshort,'%pool%',zfsObj.caption,[rfReplaceAll]),'images_apps/corebox_storage/cm_destroy_pool.png',sf,zfsObj.isModified);
+          res.AddEntry.Describe(StringReplace(app.FetchAppText(conn,'$cm_destroy_pool').Getshort,'%pool%',zfsObj.caption,[rfReplaceAll]),'images_apps/firmbox_storage/cm_destroy_pool.png',sf,zfsObj.isModified);
         end;
       end;
       if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin
         sf:=CSF(@IMI_Identify_on);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_identify_on').Getshort,'images_apps/corebox_storage/cm_identify.png',sf);
+        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_identify_on').Getshort,'images_apps/firmbox_storage/cm_identify.png',sf);
         sf:=CSF(@IMI_Identify_off);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_identify_off').Getshort,'images_apps/corebox_storage/cm_identify.png',sf);
+        res.AddEntry.Describe(app.FetchAppText(conn,'$cm_identify_off').Getshort,'images_apps/firmbox_storage/cm_identify.png',sf);
       end;
     end;
     Result:=res;
@@ -3586,7 +3586,7 @@ end;
 procedure TFRE_FIRMBOX_STORAGE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('corebox_storage','$description');
+  InitAppDesc('firmbox_storage','$description');
   AddApplicationModule(TFRE_FIRMBOX_STORAGE_POOLS_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_STORAGE_SYNC_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.create);
@@ -3905,18 +3905,18 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/corebox_storage/files_white.svg','',0,CheckAppRightModule(conn,'storage_pools') or CheckAppRightModule(conn,'storage_sync') or CheckAppRightModule(conn,'storage_fileserver_global') or CheckAppRightModule(conn,'storage_fileserver_virtual') or CheckAppRightModule(conn,'storage_sync'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools',FetchAppText(conn,'$sitemap_pools').Getshort,'images_apps/corebox_storage/disk_white.svg','STORAGE_POOLS',0,CheckAppRightModule(conn,'storage_pools'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Status',FetchAppText(conn,'$sitemap_pools_status').Getshort,'images_apps/corebox_storage/monitor_white.svg','STORAGE_POOLS:status',0,CheckAppRightModule(conn,'storage_pools'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Space',FetchAppText(conn,'$sitemap_pools_space').Getshort,'images_apps/corebox_storage/piechart_white.svg','STORAGE_POOLS:space',0,CheckAppRightModule(conn,'storage_pools'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Layout',FetchAppText(conn,'$sitemap_pools_layout').Getshort,'images_apps/corebox_storage/piechart_white.svg','STORAGE_POOLS:layout',0,CheckAppRightModule(conn,'storage_pools'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Global',FetchAppText(conn,'$sitemap_fileserver_global').Getshort,'images_apps/corebox_storage/files_global_white.svg','STORAGE_FILESERVER_GLOBAL',0,CheckAppRightModule(conn,'storage_fileserver_global'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Virtual',FetchAppText(conn,'$sitemap_fileserver_virtual').Getshort,'images_apps/corebox_storage/files_virtual_white.svg','STORAGE_FILESERVER_VIRTUAL',0,CheckAppRightModule(conn,'storage_fileserver_virtual'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup',FetchAppText(conn,'$sitemap_backup').Getshort,'images_apps/corebox_storage/clock_white.svg','STORAGE_BACKUP',0,CheckAppRightModule(conn,'storage_backup') or CheckAppRightModule(conn,'storage_filebrowser'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup/Filebrowser',FetchAppText(conn,'$sitemap_filebrowser').Getshort,'images_apps/corebox_storage/filebrowser_white.svg','',0,CheckAppRightModule(conn,'storage_filebrowser'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize',FetchAppText(conn,'$sitemap_synchronize').Getshort,'images_apps/corebox_storage/sync_white.svg','STORAGE_SYNC',0,CheckAppRightModule(conn,'storage_sync'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize/FibreChannel',FetchAppText(conn,'$sitemap_synchronize_fc').Getshort,'images_apps/corebox_storage/sync_white.svg','',0,CheckAppRightModule(conn,'storage_sync'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize/iSCSI',FetchAppText(conn,'$sitemap_synchronize_iscsi').Getshort,'images_apps/corebox_storage/sync_white.svg','',0,CheckAppRightModule(conn,'storage_sync'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/firmbox_storage/files_white.svg','',0,CheckAppRightModule(conn,'storage_pools') or CheckAppRightModule(conn,'storage_sync') or CheckAppRightModule(conn,'storage_fileserver_global') or CheckAppRightModule(conn,'storage_fileserver_virtual') or CheckAppRightModule(conn,'storage_sync'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools',FetchAppText(conn,'$sitemap_pools').Getshort,'images_apps/firmbox_storage/disk_white.svg','STORAGE_POOLS',0,CheckAppRightModule(conn,'storage_pools'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Status',FetchAppText(conn,'$sitemap_pools_status').Getshort,'images_apps/firmbox_storage/monitor_white.svg','STORAGE_POOLS:status',0,CheckAppRightModule(conn,'storage_pools'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Space',FetchAppText(conn,'$sitemap_pools_space').Getshort,'images_apps/firmbox_storage/piechart_white.svg','STORAGE_POOLS:space',0,CheckAppRightModule(conn,'storage_pools'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Layout',FetchAppText(conn,'$sitemap_pools_layout').Getshort,'images_apps/firmbox_storage/piechart_white.svg','STORAGE_POOLS:layout',0,CheckAppRightModule(conn,'storage_pools'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Global',FetchAppText(conn,'$sitemap_fileserver_global').Getshort,'images_apps/firmbox_storage/files_global_white.svg','STORAGE_FILESERVER_GLOBAL',0,CheckAppRightModule(conn,'storage_fileserver_global'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Virtual',FetchAppText(conn,'$sitemap_fileserver_virtual').Getshort,'images_apps/firmbox_storage/files_virtual_white.svg','STORAGE_FILESERVER_VIRTUAL',0,CheckAppRightModule(conn,'storage_fileserver_virtual'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup',FetchAppText(conn,'$sitemap_backup').Getshort,'images_apps/firmbox_storage/clock_white.svg','STORAGE_BACKUP',0,CheckAppRightModule(conn,'storage_backup') or CheckAppRightModule(conn,'storage_filebrowser'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup/Filebrowser',FetchAppText(conn,'$sitemap_filebrowser').Getshort,'images_apps/firmbox_storage/filebrowser_white.svg','',0,CheckAppRightModule(conn,'storage_filebrowser'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize',FetchAppText(conn,'$sitemap_synchronize').Getshort,'images_apps/firmbox_storage/sync_white.svg','STORAGE_SYNC',0,CheckAppRightModule(conn,'storage_sync'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize/FibreChannel',FetchAppText(conn,'$sitemap_synchronize_fc').Getshort,'images_apps/firmbox_storage/sync_white.svg','',0,CheckAppRightModule(conn,'storage_sync'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize/iSCSI',FetchAppText(conn,'$sitemap_synchronize_iscsi').Getshort,'images_apps/firmbox_storage/sync_white.svg','',0,CheckAppRightModule(conn,'storage_sync'));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;

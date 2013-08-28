@@ -291,7 +291,7 @@ begin
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckRight(Get_Rightname('edit_settings')) then begin
     txt:=app.FetchAppText(conn,'$create_aggr');
-    grid_datalink.AddButton.Describe(CSF(@IMI_DatalinkCreateAggr),'images_apps/corebox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
+    grid_datalink.AddButton.Describe(CSF(@IMI_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
   end;
 
   datalink_content           := TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
@@ -989,7 +989,7 @@ end;
 procedure TFRE_FIRMBOX_APPLIANCE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('corebox_appliance','$description');
+  InitAppDesc('firmbox_appliance','$description');
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.create);
@@ -1125,10 +1125,10 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/corebox_appliance/appliance_white.svg','',0,CheckAppRightModule(conn,'status') or CheckAppRightModule(conn,'settings') or CheckAppRightModule(conn,'analytics'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppText(conn,'$sitemap_status').Getshort,'images_apps/corebox_appliance/status_white.svg','STATUS',0,CheckAppRightModule(conn,'status'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppText(conn,'$sitemap_settings').Getshort,'images_apps/corebox_appliance/settings_white.svg','SETTINGS',0,CheckAppRightModule(conn,'settings'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppText(conn,'$sitemap_analytics').Getshort,'images_apps/corebox_appliance/analytics_white.svg','ANALYTICS',0,CheckAppRightModule(conn,'analytics'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/firmbox_appliance/appliance_white.svg','',0,CheckAppRightModule(conn,'status') or CheckAppRightModule(conn,'settings') or CheckAppRightModule(conn,'analytics'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppText(conn,'$sitemap_status').Getshort,'images_apps/firmbox_appliance/status_white.svg','STATUS',0,CheckAppRightModule(conn,'status'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppText(conn,'$sitemap_settings').Getshort,'images_apps/firmbox_appliance/settings_white.svg','SETTINGS',0,CheckAppRightModule(conn,'settings'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppText(conn,'$sitemap_analytics').Getshort,'images_apps/firmbox_appliance/analytics_white.svg','ANALYTICS',0,CheckAppRightModule(conn,'analytics'));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;

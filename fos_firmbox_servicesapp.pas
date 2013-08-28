@@ -133,7 +133,7 @@ end;
 procedure TFRE_FIRMBOX_SERVICES_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('corebox_services','$description');
+  InitAppDesc('firmbox_services','$description');
   AddApplicationModule(TFRE_FIRMBOX_MAILSERVER_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_WEBSERVER_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_DATABASE_MOD.create);
@@ -148,13 +148,13 @@ begin
   case _CheckVersion(conn,old_version) of
    NotInstalled : begin
                      _SetAppdataVersion(conn,_ActualVersion);
-                     admin_app_rg  := _CreateAppRole('ADMIN','COREBOX SERVICESAPP ADMIN','Corebox SERVICESAPP Administration Rights');
-                     user_app_rg   := _CreateAppRole('USER','COREBOX SERVICESAPP USER','Corebox SERVICESAPP Default User Rights');
-                     guest_app_rg  := _CreateAppRole('GUEST','COREBOX SERVICESAPP GUEST','Corebox SERVICESAPP Default Guest User Rights');
-                     _AddAppRight(admin_app_rg ,'ADMIN'  ,'COREBOX SERVICESAPP Admin','Administration of Corebox SERVICESAPP');
-                     _AddAppRight(user_app_rg  ,'START'  ,'COREBOX SERVICESAPP Start','Startup of Corebox SERVICESAPP');
+                     admin_app_rg  := _CreateAppRole('ADMIN','firmbox SERVICESAPP ADMIN','firmbox SERVICESAPP Administration Rights');
+                     user_app_rg   := _CreateAppRole('USER','firmbox SERVICESAPP USER','firmbox SERVICESAPP Default User Rights');
+                     guest_app_rg  := _CreateAppRole('GUEST','firmbox SERVICESAPP GUEST','firmbox SERVICESAPP Default Guest User Rights');
+                     _AddAppRight(admin_app_rg ,'ADMIN'  ,'firmbox SERVICESAPP Admin','Administration of firmbox SERVICESAPP');
+                     _AddAppRight(user_app_rg  ,'START'  ,'firmbox SERVICESAPP Start','Startup of firmbox SERVICESAPP');
 
-//                     _AddAppRight(guest_app_rg ,'START','COREBOX SERVICESAPP Start','Startup of COREBORX SERVICESAPP');
+//                     _AddAppRight(guest_app_rg ,'START','firmbox SERVICESAPP Start','Startup of COREBORX SERVICESAPP');
 
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['main']));
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['mailserver']));
@@ -195,13 +195,13 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/corebox_services/tool_white.svg','',0,CheckAppRightModule(conn,'main'));
-//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Mailserver','Mailserver','images_apps/corebox_services/letter_white.svg','MAILSERVER',0,CheckAppRightModule(conn,'mailserver'));
-//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Mailserver/Webmail','Webmail','images_apps/corebox_services/letter_white.svg','',0,CheckAppRightModule(conn,'webmail'));
-//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Webserver','Webserver','images_apps/corebox_services/webportal_white.svg','WEBSERVER',0,CheckAppRightModule(conn,'webserver'));
-//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Database','Database','images_apps/corebox_services/db_white.svg','DATABASE',0,CheckAppRightModule(conn,'database'));
-//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Database/PostgreSQL','PostgreSQL','images_apps/corebox_services/db_white.svg','',0,CheckAppRightModule(conn,'pgsql'));
-//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Database/MySQL','MySQL','images_apps/corebox_services/db_white.svg','',0,CheckAppRightModule(conn,'mysql'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/firmbox_services/tool_white.svg','',0,CheckAppRightModule(conn,'main'));
+//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Mailserver','Mailserver','images_apps/firmbox_services/letter_white.svg','MAILSERVER',0,CheckAppRightModule(conn,'mailserver'));
+//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Mailserver/Webmail','Webmail','images_apps/firmbox_services/letter_white.svg','',0,CheckAppRightModule(conn,'webmail'));
+//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Webserver','Webserver','images_apps/firmbox_services/webportal_white.svg','WEBSERVER',0,CheckAppRightModule(conn,'webserver'));
+//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Database','Database','images_apps/firmbox_services/db_white.svg','DATABASE',0,CheckAppRightModule(conn,'database'));
+//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Database/PostgreSQL','PostgreSQL','images_apps/firmbox_services/db_white.svg','',0,CheckAppRightModule(conn,'pgsql'));
+//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Database/MySQL','MySQL','images_apps/firmbox_services/db_white.svg','',0,CheckAppRightModule(conn,'mysql'));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;                           session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;

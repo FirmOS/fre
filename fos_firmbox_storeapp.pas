@@ -45,7 +45,7 @@ end;
 procedure TFRE_FIRMBOX_STORE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('corebox_store','$description');
+  InitAppDesc('firmbox_store','$description');
 end;
 
 function TFRE_FIRMBOX_STORE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
@@ -57,13 +57,13 @@ begin
   case _CheckVersion(conn,old_version) of
     NotInstalled : begin
                       _SetAppdataVersion(conn,_ActualVersion);
-                      admin_app_rg  := _CreateAppRole('ADMIN','COREBOX STOREAPP ADMIN','Corebox STOREAPP Administration Rights');
-                      user_app_rg   := _CreateAppRole('USER','COREBOX STOREAPP USER','Corebox STOREAPP Default User Rights');
-                      guest_app_rg  := _CreateAppRole('GUEST','COREBOX STOREAPP GUEST','Corebox STOREAPP Default Guest User Rights');
-                      _AddAppRight(admin_app_rg ,'ADMIN'  ,'COREBOX STOREAPP Admin','Administration of Corebox STOREAPP');
-                      _AddAppRight(user_app_rg  ,'START'  ,'COREBOX STOREAPP Start','Startup of Corebox STOREAPP');
+                      admin_app_rg  := _CreateAppRole('ADMIN','firmbox STOREAPP ADMIN','firmbox STOREAPP Administration Rights');
+                      user_app_rg   := _CreateAppRole('USER','firmbox STOREAPP USER','firmbox STOREAPP Default User Rights');
+                      guest_app_rg  := _CreateAppRole('GUEST','firmbox STOREAPP GUEST','firmbox STOREAPP Default Guest User Rights');
+                      _AddAppRight(admin_app_rg ,'ADMIN'  ,'firmbox STOREAPP Admin','Administration of firmbox STOREAPP');
+                      _AddAppRight(user_app_rg  ,'START'  ,'firmbox STOREAPP Start','Startup of firmbox STOREAPP');
 
-                      _AddAppRight(guest_app_rg ,'START','COREBOX STOREAPP Start','Startup of COREBORX STOREAPP');
+                      _AddAppRight(guest_app_rg ,'START','firmbox STOREAPP Start','Startup of COREBORX STOREAPP');
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['main']));
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['modules']));
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['space']));
@@ -100,12 +100,12 @@ begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
   //STORE(SALES) -> APP ( Funktionsmodule / Speicherplatz Kaufen / VM RAM / Virtuelle CPU's / BACKUPSPACE )
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store','Store','images_apps/corebox_store/store_white.svg','',0,CheckAppRightModule(conn,'main'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Modules','Modules','images_apps/corebox_store/puzzle_white.svg','',0,CheckAppRightModule(conn,'modules'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Backupspace','Backupspace','images_apps/corebox_store/clock_white.svg','',0,CheckAppRightModule(conn,'space'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Machines','Machines','images_apps/corebox_store/server_white.svg','',0,CheckAppRightModule(conn,'machines'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Machines/RAM','RAM','images_apps/corebox_store/microchip_white.svg','',0,CheckAppRightModule(conn,'ram'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Machines/CPU','CPU','images_apps/corebox_store/gauge_white.svg','',0,CheckAppRightModule(conn,'cpu'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store','Store','images_apps/firmbox_store/store_white.svg','',0,CheckAppRightModule(conn,'main'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Modules','Modules','images_apps/firmbox_store/puzzle_white.svg','',0,CheckAppRightModule(conn,'modules'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Backupspace','Backupspace','images_apps/firmbox_store/clock_white.svg','',0,CheckAppRightModule(conn,'space'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Machines','Machines','images_apps/firmbox_store/server_white.svg','',0,CheckAppRightModule(conn,'machines'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Machines/RAM','RAM','images_apps/firmbox_store/microchip_white.svg','',0,CheckAppRightModule(conn,'ram'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Machines/CPU','CPU','images_apps/firmbox_store/gauge_white.svg','',0,CheckAppRightModule(conn,'cpu'));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);      session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;
 

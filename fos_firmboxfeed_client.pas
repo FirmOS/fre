@@ -81,16 +81,16 @@ implementation
 
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished;
 begin
-  if Get_AppClassAndUid('corebox_storage',FSTORAGE_FeedAppClass,FSTORAGE_FeedAppUid) then begin
+  if Get_AppClassAndUid('firmbox_storage',FSTORAGE_FeedAppClass,FSTORAGE_FeedAppUid) then begin
     FDISK_Feeding := True;
   end;
-  if Get_AppClassAndUid('COREBOX_APPLIANCE',FAPPL_FeedAppClass,FAPPL_FeedAppUid) then begin
+  if Get_AppClassAndUid('FIRMBOX_APPLIANCE',FAPPL_FeedAppClass,FAPPL_FeedAppUid) then begin
     FAPP_Feeding := True;
   end;
-  if Get_AppClassAndUid('COREBOX_VM',FVM_FeedAppClass,FVM_FeedAppUid) then begin
+  if Get_AppClassAndUid('FIRMBOX_VM',FVM_FeedAppClass,FVM_FeedAppUid) then begin
     FVM_Feeding   := True;
   end else begin
-    GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDiNG NOT POSSIBLE, COREBOX_VM APP NOT FOUND!');
+    GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDiNG NOT POSSIBLE, FIRMBOX_VM APP NOT FOUND!');
   end;
 end;
 

@@ -45,8 +45,8 @@ end;
 procedure TFRE_FIRMBOX_INFRASTRUCTURE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  writeln('init appdesc corebox_infrastructure');
-  InitAppDesc('corebox_infrastructure','$description');
+  writeln('init appdesc firmbox_infrastructure');
+  InitAppDesc('firmbox_infrastructure','$description');
 end;
 
 function TFRE_FIRMBOX_INFRASTRUCTURE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
@@ -56,18 +56,18 @@ var admin_app_rg : IFRE_DB_ROLE;
     appdata      : IFRE_DB_APPDATA;
     old_version  : TFRE_DB_String;
 begin
-  writeln('corebox_infrastructure install appdefault role');
+  writeln('firmbox_infrastructure install appdefault role');
 
   case _CheckVersion(conn,old_version) of
    NotInstalled : begin
                      _SetAppdataVersion(conn,_ActualVersion);
-                     admin_app_rg  := _CreateAppRole('ADMIN','COREBOX INFRASTRUCTUREAPP ADMIN','Corebox INFRASTRUCTUREAPP Administration Rights');
-                     user_app_rg   := _CreateAppRole('USER','COREBOX INFRASTRUCTUREAPP USER','Corebox INFRASTRUCTUREAPP Default User Rights');
-                     guest_app_rg  := _CreateAppRole('GUEST','COREBOX INFRASTRUCTUREAPP GUEST','Corebox INFRASTRUCTUREAPP Default Guest User Rights');
-                     _AddAppRight(admin_app_rg ,'ADMIN'  ,'COREBOX INFRASTRUCTUREAPP Admin','Administration of Corebox INFRASTRUCTUREAPP');
-                     _AddAppRight(user_app_rg  ,'START'  ,'COREBOX INFRASTRUCTUREAPP Start','Startup of Corebox INFRASTRUCTUREAPP');
+                     admin_app_rg  := _CreateAppRole('ADMIN','firmbox INFRASTRUCTUREAPP ADMIN','firmbox INFRASTRUCTUREAPP Administration Rights');
+                     user_app_rg   := _CreateAppRole('USER','firmbox INFRASTRUCTUREAPP USER','firmbox INFRASTRUCTUREAPP Default User Rights');
+                     guest_app_rg  := _CreateAppRole('GUEST','firmbox INFRASTRUCTUREAPP GUEST','firmbox INFRASTRUCTUREAPP Default Guest User Rights');
+                     _AddAppRight(admin_app_rg ,'ADMIN'  ,'firmbox INFRASTRUCTUREAPP Admin','Administration of firmbox INFRASTRUCTUREAPP');
+                     _AddAppRight(user_app_rg  ,'START'  ,'firmbox INFRASTRUCTUREAPP Start','Startup of firmbox INFRASTRUCTUREAPP');
 
- //                    _AddAppRight(guest_app_rg ,'START','COREBOX INFRASTRUCTUREAPP Start','Startup of COREBORX INFRASTRUCTUREAPP');
+ //                    _AddAppRight(guest_app_rg ,'START','firmbox INFRASTRUCTUREAPP Start','Startup of COREBORX INFRASTRUCTUREAPP');
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['main']));
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['computer']));
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['ap']));
@@ -107,13 +107,13 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure','Infrastructure','images_apps/corebox_infrastructure/infrastructure_white.svg','',0,CheckAppRightModule(conn,'main'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Computer','Devices','images_apps/corebox_infrastructure/computer_white.svg','',0,CheckAppRightModule(conn,'computer'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/AP','Wifi','images_apps/corebox_infrastructure/wireless_white.svg','',0,CheckAppRightModule(conn,'ap'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Network','Network','images_apps/corebox_infrastructure/network_white.svg','',0,CheckAppRightModule(conn,'network'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/VPN','VPN','images_apps/corebox_infrastructure/house_white.svg','',0,CheckAppRightModule(conn,'vpn'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Portsecurity','Portsecurity','images_apps/corebox_infrastructure/security_white.svg','',0,CheckAppRightModule(conn,'portsecurity'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Assets','Assets','images_apps/corebox_infrastructure/handheld_white.svg','',0,CheckAppRightModule(conn,'assets'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure','Infrastructure','images_apps/firmbox_infrastructure/infrastructure_white.svg','',0,CheckAppRightModule(conn,'main'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Computer','Devices','images_apps/firmbox_infrastructure/computer_white.svg','',0,CheckAppRightModule(conn,'computer'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/AP','Wifi','images_apps/firmbox_infrastructure/wireless_white.svg','',0,CheckAppRightModule(conn,'ap'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Network','Network','images_apps/firmbox_infrastructure/network_white.svg','',0,CheckAppRightModule(conn,'network'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/VPN','VPN','images_apps/firmbox_infrastructure/house_white.svg','',0,CheckAppRightModule(conn,'vpn'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Portsecurity','Portsecurity','images_apps/firmbox_infrastructure/security_white.svg','',0,CheckAppRightModule(conn,'portsecurity'));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Assets','Assets','images_apps/firmbox_infrastructure/handheld_white.svg','',0,CheckAppRightModule(conn,'assets'));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   Session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;

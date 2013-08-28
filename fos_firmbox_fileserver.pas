@@ -336,7 +336,7 @@ var    licon    : TFRE_DB_String;
      if length(licon)>0 then begin
       licon := licon +',';
      end;
-     licon := licon + 'images_apps/corebox_storage/'+fieldname+'.png';
+     licon := licon + 'images_apps/firmbox_storage/'+fieldname+'.png';
     end;
    end;
   end;
