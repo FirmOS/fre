@@ -338,7 +338,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
     if dc.Fetch(sel_guid,so) then begin
-      conn.GetScheme(so.SchemeClass,scheme);
+      GetSystemSchemeByName(so.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$system_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('setting'),GetSession(input));
@@ -385,7 +385,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
     if dc.Fetch(sel_guid,dl) then begin
-      conn.GetScheme(dl.SchemeClass,scheme);
+      GetSystemSchemeByName(dl.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.FillWithObjectValues(dl,GetSession(input));
@@ -441,7 +441,7 @@ begin
   conn:=GetDBConnection(input);
   if not conn.CheckRight(Get_Rightname('edit_settings')) then raise EFRE_DB_Exception.Create('No access to edit settings!');
 
-  conn.GetScheme(TFRE_DB_DATALINK_AGGR.ClassName,scheme);
+  GetSystemScheme(TFRE_DB_DATALINK_AGGR,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$aggr_add_diag_cap').Getshort,600,0,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
   res.SetElementValue('objname','aggr');
@@ -470,7 +470,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
     if dc.Fetch(sel_guid,fc) then begin
-      conn.GetScheme(fc.SchemeClass,scheme);
+      GetSystemSchemeByName(fc.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$fc_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.FillWithObjectValues(fc,GetSession(input));

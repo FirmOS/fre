@@ -183,7 +183,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
     if dc.Fetch(sel_guid,dl) then begin
-      conn.GetScheme(dl.SchemeClass,scheme);
+      GFRE_DBI.GetSystemSchemeByName(dl.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
       panel.FillWithObjectValues(dl,ses);

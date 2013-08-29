@@ -579,7 +579,7 @@ begin
   conn:=GetDBConnection(input);
   if not conn.CheckRight(Get_Rightname('edit_vfs')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
-  conn.GetScheme(TFRE_DB_VIRTUAL_FILESERVER.ClassName,scheme);
+  GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESERVER,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$vfs_add_diag_cap').Getshort,600,0,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
   res.SetElementValue('pool','zones');
@@ -629,7 +629,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
     if dc.Fetch(sel_guid,vfs) then begin
-      conn.GetScheme(vfs.SchemeClass,scheme);
+      GFRE_DBI.GetSystemSchemeByName(vfs.SchemeClass,scheme);
       dom_guid := vfs.Field('domainid').AsGUID;
       writeln('DOMAINID :',GFRE_BT.GUID_2_HexString(dom_guid));
       dc_groupin := GetSession(input).FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
@@ -706,7 +706,7 @@ begin
   fileserver := dependend[0];
 
 
-  conn.GetScheme(TFRE_DB_VIRTUAL_FILESHARE.ClassName,scheme);
+  GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESHARE,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$vfs_share_add_diag_cap').Getshort,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
   res.AddSchemeFormGroup(scheme.GetInputGroup('share'),GetSession(input),true,false);
@@ -760,7 +760,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
     if dc.Fetch(sel_guid,share) then begin
-      conn.GetScheme(share.SchemeClass,scheme);
+      GFRE_DBI.GetSystemSchemeByName(share.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$vfs_share_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('share'),GetSession(input),true,false);
@@ -1129,7 +1129,7 @@ begin
   conn:=GetDBConnection(input);
   if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
-  conn.GetScheme(TFRE_DB_NFS_FILESHARE.ClassName,scheme);
+  GetSystemScheme(TFRE_DB_NFS_FILESHARE,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$nfs_add_diag_cap').Getshort,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('nfs'),GetSession(input),true,false);
@@ -1164,7 +1164,7 @@ begin
   conn:=GetDBConnection(input);
   if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
-  conn.GetScheme(TFRE_DB_NFS_ACCESS.ClassName,scheme);
+  GetSystemScheme(TFRE_DB_NFS_ACCESS,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$nfsaccess_add_diag_cap').Getshort,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
 //  res.SetElementValue('fileshare','');
@@ -1193,7 +1193,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_GRID');
     if dc.Fetch(sel_guid,nfs) then begin
-      conn.GetScheme(nfs.SchemeClass,scheme);
+      GetSystemSchemeByName(nfs.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$nfs_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('nfs'),GetSession(input),true,false);
@@ -1319,7 +1319,7 @@ begin
   conn:=GetDBConnection(input);
   if not conn.CheckRight(Get_Rightname('edit_nfs_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
-  conn.GetScheme(TFRE_DB_NFS_ACCESS.ClassName,scheme);
+  GetSystemScheme(TFRE_DB_NFS_ACCESS,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$nfsaccess_modify_diag_cap').Getshort,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
 //  res.SetElementValue('fileshare','');
@@ -1341,7 +1341,7 @@ begin
   conn:=GetDBConnection(input);
   if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
-  conn.GetScheme(TFRE_DB_LUN.ClassName,scheme);
+  GetSystemScheme(TFRE_DB_LUN,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$lun_add_diag_cap').Getshort,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('lun'),GetSession(input),true,false);
@@ -1372,7 +1372,7 @@ begin
   conn:=GetDBConnection(input);
   if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
-  conn.GetScheme(TFRE_DB_LUN_VIEW.ClassName,scheme);
+  GetSystemScheme(TFRE_DB_LUN_VIEW,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$lunview_add_diag_cap').Getshort,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
 //  res.SetElementValue('fileshare','');
@@ -1421,7 +1421,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
     if dc.Fetch(sel_guid,nfs) then begin
-      conn.GetScheme(nfs.SchemeClass,scheme);
+      GetSystemSchemeByName(nfs.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$lun_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('lun'),GetSession(input),true,false);
@@ -1524,7 +1524,7 @@ begin
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
   if not conn.CheckRight(Get_Rightname('edit_lun_global')) then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
-  conn.GetScheme(TFRE_DB_LUN_VIEW.ClassName,scheme);
+  GetSystemScheme(TFRE_DB_LUN_VIEW,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$lunview_modify_diag_cap').Getshort,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
 //  res.SetElementValue('fileshare','');
@@ -1631,7 +1631,7 @@ begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('BACKUP_MOD_SNAPSHOT_GRID');
     if dc.Fetch(sel_guid,snap) then begin
-      conn.GetScheme(snap.SchemeClass,scheme);
+      GetSystemSchemeByName(snap.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$backup_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.FillWithObjectValues(snap,GetSession(input));
