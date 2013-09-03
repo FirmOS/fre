@@ -82,6 +82,13 @@ begin
                       CreateAppText(conn,'$datalink_delete_aggr','Delete Aggregation');
                       CreateAppText(conn,'$datalink_create_stub','Create Virtual Switch');
 
+                      CreateAppText(conn,'$vmnetwork_no_access','No Access to settings!');
+
+                      CreateAppText(conn,'$machines_new_vm','New','','New VM');
+                      CreateAppText(conn,'$machines_start','Start','','Start the selected VM');
+                      CreateAppText(conn,'$machines_stop','Stop','','Stop the selected VM');
+                      CreateAppText(conn,'$machines_kill','Kill','','Stop the selected VM (FORCED)');
+                      CreateAppText(conn,'$machines_update','Update','','Update list');
                    end;
     SameVersion  : begin
                       writeln('Version '+old_version+' already installed');
