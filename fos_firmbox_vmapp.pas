@@ -84,11 +84,27 @@ begin
 
                       CreateAppText(conn,'$vmnetwork_no_access','No Access to settings!');
 
+                      CreateAppText(conn,'$machines_content_header','<b>Overview of all configured virtual machines.</b>');
+                      CreateAppText(conn,'$machines_no_info','- could not get info -');
+
                       CreateAppText(conn,'$machines_new_vm','New','','New VM');
                       CreateAppText(conn,'$machines_start','Start','','Start the selected VM');
                       CreateAppText(conn,'$machines_stop','Stop','','Stop the selected VM');
                       CreateAppText(conn,'$machines_kill','Kill','','Stop the selected VM (FORCED)');
                       CreateAppText(conn,'$machines_update','Update','','Update list');
+
+                      CreateAppText(conn,'$vm_details_config','Configuration');
+                      CreateAppText(conn,'$vm_details_console','Console');
+                      CreateAppText(conn,'$vm_details_perf','Performance');
+                      CreateAppText(conn,'$vm_details_note','Note');
+
+                      CreateAppText(conn,'$gc_vm_name','Name');
+                      CreateAppText(conn,'$gc_vm_type','Type');
+                      CreateAppText(conn,'$gc_vm_state','State');
+                      CreateAppText(conn,'$gc_vm_cpu','CPU');
+                      CreateAppText(conn,'$gc_vm_used_mem','Used Mem');
+                      CreateAppText(conn,'$gc_vm_paged_mem','Paged Mem');
+                      CreateAppText(conn,'$gc_vm_virtual_mem','Virtual Mem');
 
                       CreateAppText(conn,'$error_no_access','Access denied');
 
@@ -117,6 +133,7 @@ begin
   CheckDbResult(conn.StoreRole(ObjectName,domain,role),'InstallSystemGroupsAndRoles');
 
   role := _CreateAppRole('admin_vms','Admin VMs','Allowed to administer VMs');
+  _AddAppRight(role,'view_vms','View VMs','Allowed to view VMs.');
   _AddAppRight(role,'admin_vms','Admin VMs','Allowed to administer VMs.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['vmcontroller','vmnetwork','interfaces','vmstatus']));//FIXXME - add more roles
   CheckDbResult(conn.StoreRole(ObjectName,domain,role),'InstallSystemGroupsAndRoles');

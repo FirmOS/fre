@@ -156,10 +156,8 @@ begin
 
   dc_datalink                := GetSession(input).FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname('edit_vmnetwork')) then begin
-    txt:=app.FetchAppText(ses,'$datalink_create_stub');
-    grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateStub),'images_apps/hal/create_stub.png',txt.Getshort,txt.GetHint);
-  end;
+  txt:=app.FetchAppText(ses,'$datalink_create_stub');
+  grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateStub),'images_apps/hal/create_stub.png',txt.Getshort,txt.GetHint);
 
   datalink_content           := TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
   datalink_content.contentId :='DATALINK_CONTENT';
@@ -206,19 +204,17 @@ var
 begin
   if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   Result:=GFRE_DB_NIL_DESC;
-  if conn.CheckRight(app.Get_Rightname('edit_vmnetwork')) then begin
-    if input.Field('SELECTED').ValueCount=1  then begin
-      sel_guid := input.Field('SELECTED').AsGUID;
-      dc       := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
-      if dc.Fetch(sel_guid,dl) then begin
-        sclass := dl.SchemeClass;
-        writeln(schemeclass);
-        input.Field('add_vnic').AsString    := app.FetchAppText(ses,'$datalink_add_vnic').Getshort;
-        input.Field('delete_vnic').AsString := app.FetchAppText(ses,'$datalink_delete_vnic').Getshort;
-        input.Field('delete_aggr').AsString := app.FetchAppText(ses,'$datalink_delete_aggr').Getshort;
-        input.Field('delete_stub').AsString := app.FetchAppText(ses,'$datalink_delete_stub').Getshort;
-        result := dl.Invoke('Menu',input,ses,app,conn);
-      end;
+  if input.Field('SELECTED').ValueCount=1  then begin
+    sel_guid := input.Field('SELECTED').AsGUID;
+    dc       := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
+    if dc.Fetch(sel_guid,dl) then begin
+      sclass := dl.SchemeClass;
+      writeln(schemeclass);
+      input.Field('add_vnic').AsString    := app.FetchAppText(ses,'$datalink_add_vnic').Getshort;
+      input.Field('delete_vnic').AsString := app.FetchAppText(ses,'$datalink_delete_vnic').Getshort;
+      input.Field('delete_aggr').AsString := app.FetchAppText(ses,'$datalink_delete_aggr').Getshort;
+      input.Field('delete_stub').AsString := app.FetchAppText(ses,'$datalink_delete_stub').Getshort;
+      result := dl.Invoke('Menu',input,ses,app,conn);
     end;
   end;
 end;
@@ -246,34 +242,31 @@ begin
 end;
 
 procedure TFRE_FIRMBOX_VM_MACHINES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
-var vmc        : IFRE_DB_DERIVED_COLLECTION;
-    vmcp       : IFRE_DB_COLLECTION;
-    tr_Grid    : IFRE_DB_SIMPLE_TRANSFORM;
-       vmo     : IFRE_DB_Object;
-       vm      : IFRE_DB_Object;
-       uvm     : IFRE_DB_Object;
-       i       : Integer;
+var
+  vmc     : IFRE_DB_DERIVED_COLLECTION;
+  vmcp    : IFRE_DB_COLLECTION;
+  tr_Grid : IFRE_DB_SIMPLE_TRANSFORM;
+  vmo     : IFRE_DB_Object;
+  vm      : IFRE_DB_Object;
+  uvm     : IFRE_DB_Object;
+  i       : Integer;
+  app     : TFRE_DB_APPLICATION;
+  conn    : IFRE_DB_CONNECTION;
 begin
   inherited MySessionInitializeModule(session);
+  app:=GetEmbeddingApp;
+  conn := session.GetDBConnection;
+
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     with tr_Grid do begin
-      AddOneToOnescheme('Objname','','Name',dt_string,4);
-      AddOneToOnescheme('MType','','Typ');
-  //    AddOneToOnescheme('MState','','State');
-      AddOneToOnescheme('MStateIcon','','State',dt_icon);
-      //AddOneToOnescheme('Mkey','','Key');
-      //AddOneToOnescheme('MBrand','','Brand');
-      //AddCollectorscheme('');
-      AddOneToOnescheme('PERFPCPU','','CPU',dt_number,2);
-      AddOneToOnescheme('PERFPMEM','','Used Mem',dt_number,2);
-      AddOneToOnescheme('PERFRSS','','Paged Mem',dt_number,2);
-      AddOneToOnescheme('PERFVSZ','','Virtual Mem',dt_number,2);
-      //AddOneToOnescheme('MVIOPRIO','','IO Prio',dt_number);
-        //PERFPSET (STRING) : [ '' ]
-        //VNC_PORT (STRING) : [ '6001' ]
-        //MCPUQUOTA (STRING) : [ '10' ]
-        //MCPUSHARES (STRING) : [ '100' ]
+      AddOneToOnescheme('Objname','',app.FetchAppText(conn,'$gc_vm_name').Getshort,dt_string,4);
+      AddOneToOnescheme('MType','',app.FetchAppText(conn,'$gc_vm_type').Getshort);
+      AddOneToOnescheme('MStateIcon','',app.FetchAppText(conn,'$gc_vm_state').Getshort,dt_icon);
+      AddOneToOnescheme('PERFPCPU','',app.FetchAppText(conn,'$gc_vm_cpu').Getshort,dt_number,2);
+      AddOneToOnescheme('PERFPMEM','',app.FetchAppText(conn,'$gc_vm_used_mem').Getshort,dt_number,2);
+      AddOneToOnescheme('PERFRSS','',app.FetchAppText(conn,'$gc_vm_paged_mem').Getshort,dt_number,2);
+      AddOneToOnescheme('PERFVSZ','',app.FetchAppText(conn,'$gc_vm_virtual_mem').Getshort,dt_number,2);
     end;
     vmcp := session.GetDBConnection.Collection('virtualmachine',false);
     vmc  := session.NewDerivedCollection('VMC');
@@ -339,7 +332,7 @@ begin
   list.AddButton.Describe(CWSF(@WEB_UpdateVM), '',text.Getshort,text.GetHint);
   main := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(list,nil,nil,nil,nil,true,2);
 
-  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of all configured virtual machines.</b>'));
+  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe(app.FetchAppText(ses,'$machines_content_header').Getshort));
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_ShowInfo(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -353,7 +346,7 @@ begin
   if vmcc.GetIndexedObj(vmkey,obj) then begin
     result := TFRE_DB_HTML_DESC.create.Describe(FREDB_String2EscapedJSString('<pre style="font-size: 10px">'+obj.DumpToString+'</pre>'));
   end else begin
-    result := TFRE_DB_HTML_DESC.create.Describe('- could not get info -');
+    result := TFRE_DB_HTML_DESC.create.Describe(app.FetchAppText(ses,'$machines_no_info').Getshort);
   end;
 end;
 
@@ -400,14 +393,14 @@ begin
       result := TFRE_DB_HTML_DESC.create.Describe(FREDB_String2EscapedJSString('<pre style="font-size: 10px">'+obj.DumpToString+'</pre>'));
     end;
   end else begin
-    result := TFRE_DB_HTML_DESC.create.Describe('- could not get infos -');
+    result := TFRE_DB_HTML_DESC.create.Describe(app.FetchAppText(ses,'$machines_no_info').Getshort);
   end;
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_ShowPerf(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
-  result := TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');
+  result := TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.'); //FIXXME: please implement me
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_ContentNote(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -441,12 +434,12 @@ begin
     _GetSelectedVMData(GetSession(input),sel_guid,vmkey,vncp,vnch,vmstate);
     vm_sub := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
     sf := CWSF(@WEB_VM_ShowInfo); sf.AddParam.Describe('VMKEY',vmkey);
-    vm_sub.AddSection.Describe(sf,'Configuration',2);
+    vm_sub.AddSection.Describe(sf,app.FetchAppText(ses,'$vm_details_config').Getshort,2);
     sf := CWSF(@WEB_VM_ShowVNC); sf.AddParam.Describe('VNC_PORT',vncp) ; sf.AddParam.Describe('VNC_HOST',vnch); sf.AddParam.Describe('VMKEY',vmkey);
-    vm_sub.AddSection.Describe(sf,'Console',1);
-    vm_sub.AddSection.Describe(CWSF(@WEB_VM_ShowPerf),'Performance',3);
+    vm_sub.AddSection.Describe(sf,app.FetchAppText(ses,'$vm_details_console').Getshort,1);
+    vm_sub.AddSection.Describe(CWSF(@WEB_VM_ShowPerf),app.FetchAppText(ses,'$vm_details_perf').Getshort,3);
     sf := CWSF(@WEB_ContentNote); sf.AddParam.Describe('linkid',input.Field('SELECTED').asstring);
-    vm_sub.AddSection.Describe(sf,'Note',4);
+    vm_sub.AddSection.Describe(sf,app.FetchAppText(ses,'$vm_details_note').Getshort,4);
     result := vm_sub;
   end else begin
     result := TFRE_DB_HTML_DESC.create.Describe('');
@@ -456,7 +449,7 @@ end;
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_NewVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','NEW VM',fdbmt_info);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','NEW VM',fdbmt_info); //FIXXME: please implement me
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_StartVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
