@@ -97,6 +97,7 @@ end;
 
 function TFRE_FIRMBOX_VM_STATUS_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   Result:=TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');//FIXXME: Please implement me
 end;
 
@@ -151,7 +152,7 @@ var
   datalink_content: TFRE_DB_FORM_PANEL_DESC;
   txt             : IFRE_DB_TEXT;
 begin
-  if not app.CheckAppRightModule(conn,'vmnetwork') then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$vmnetwork_no_access'));
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   dc_datalink                := GetSession(input).FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -174,6 +175,7 @@ var
   sel_guid      : TGUID;
 
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
@@ -202,6 +204,7 @@ var
   sel_guid  : TGUID;
   sclass    : TFRE_DB_NameType;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   Result:=GFRE_DB_NIL_DESC;
   if conn.CheckRight(app.Get_Rightname('edit_vmnetwork')) then begin
     if input.Field('SELECTED').ValueCount=1  then begin
@@ -222,6 +225,7 @@ end;
 
 function TFRE_FIRMBOX_VM_NETWORK_MOD.WEB_DatalinkCreateStub(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   result :=  TFRE_DB_MESSAGE_DESC.create.Describe('','Feature disabled in Demo Mode',fdbmt_info,nil);//FIXXME: Please implement me
 end;
 
@@ -303,6 +307,7 @@ var vmc     : IFOS_VM_HOST_CONTROL;
     vm      : IFRE_DB_Object;
     vmcc    : IFRE_DB_COLLECTION;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   GFRE_DBI.LogInfo(dblc_APPLICATION,'START FEED UPDATE');
   conn.CollectionAsIntf('virtualmachine',IFRE_DB_COLLECTION,vmcc,false);
   VM_UpdateCollection(conn,vmcc,input.CloneToNewObject(),TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
@@ -317,10 +322,13 @@ var
   main   : TFRE_DB_LAYOUT_DESC;
   text   : IFRE_DB_TEXT;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   coll := ses.FetchDerivedCollection('VMC');
   list := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  text:=app.FetchAppText(ses,'$machines_new_vm');
-  list.AddButton.Describe(CWSF(@WEB_NewVM)         , '/images_apps/hal/add_vm.png',text.Getshort,text.GetHint);
+  if conn.CheckRight(Get_Rightname('admin_vms')) then begin
+    text:=app.FetchAppText(ses,'$machines_new_vm');
+    list.AddButton.Describe(CWSF(@WEB_NewVM)         , '/images_apps/hal/add_vm.png',text.Getshort,text.GetHint);
+  end;
   text:=app.FetchAppText(ses,'$machines_start');
   list.AddButton.Describe(CWSF(@WEB_StartVM)       , '/images_apps/hal/start_vm.png',text.Getshort,text.GetHint,fdgbd_single);
   text:=app.FetchAppText(ses,'$machines_stop');
@@ -339,6 +347,7 @@ var vmcc  : IFRE_DB_COLLECTION;
     vmkey : string;
       obj : IFRE_DB_Object;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   vmkey := input.Field('vmkey').AsString;
   conn.CollectionAsIntf('virtualmachine',IFRE_DB_COLLECTION,VMCC,true,true);
   if vmcc.GetIndexedObj(vmkey,obj) then begin
@@ -358,6 +367,7 @@ var
   tmp                : String;
   i                  : Integer;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   writeln('VNC INPUT ',input.DumpToString);
   vmkey  := input.Field('vmkey').AsString;
   VMCC := conn.Collection('virtualmachine',false);
@@ -396,6 +406,7 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_ShowPerf(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   result := TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');
 end;
 
@@ -404,6 +415,7 @@ var
   load_func             : TFRE_DB_SERVER_FUNC_DESC;
   save_func             : TFRE_DB_SERVER_FUNC_DESC;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   writeln('CONTENTNOTE');
   writeln(input.DumpToString);
 
@@ -423,6 +435,7 @@ var   vm_sub       : TFRE_DB_SUBSECTIONS_DESC;
       vmkey,vncp,
       vnch,vmstate : string;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     _GetSelectedVMData(GetSession(input),sel_guid,vmkey,vncp,vnch,vmstate);
@@ -442,6 +455,7 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_NewVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','NEW VM',fdbmt_info);
 end;
 
@@ -452,6 +466,7 @@ var   vmc   : IFOS_VM_HOST_CONTROL;
       vnch  : string;
     vmstate : string;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','START VM',fdbmt_info);
   //exit;
   if input.FieldExists('SELECTED') then begin
@@ -470,6 +485,7 @@ var   vmc     : IFOS_VM_HOST_CONTROL;
       vnch    : string;
       vmstate : string;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','STOP VM',fdbmt_info);
   //exit;
   if input.FieldExists('SELECTED') then begin
@@ -488,6 +504,7 @@ var   vmc     : IFOS_VM_HOST_CONTROL;
       vnch    : string;
       vmstate : string;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   if input.FieldExists('SELECTED') then begin
     _GetSelectedVMData(GetSession(input),input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
@@ -503,6 +520,7 @@ var
   vmo : IFRE_DB_Object;
   vmcc: IFRE_DB_COLLECTION;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   writeln('GET - UPDATE DATA');
   vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   vmc.VM_ListMachines(vmo);

@@ -21,7 +21,7 @@ type
   private
     procedure       SetupApplicationStructure   ; override;
     function        InstallAppDefaults          (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
-    function        InstallSystemGroupsandRoles (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
+    function        InstallSystemGroupsAndRoles (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
     procedure       _UpdateSitemap              (const session: TFRE_DB_UserSession);
   protected
     procedure       MySessionInitialize       (const session: TFRE_DB_UserSession);override;
@@ -31,7 +31,7 @@ type
   public
     class procedure RegisterSystemScheme      (const scheme:IFRE_DB_SCHEMEOBJECT); override;
   published
-    function  IMI_VM_Feed_Update               (const input:IFRE_DB_Object) : IFRE_DB_Object;
+    function  WEB_VM_Feed_Update              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -89,6 +89,9 @@ begin
                       CreateAppText(conn,'$machines_stop','Stop','','Stop the selected VM');
                       CreateAppText(conn,'$machines_kill','Kill','','Stop the selected VM (FORCED)');
                       CreateAppText(conn,'$machines_update','Update','','Update list');
+
+                      CreateAppText(conn,'$error_no_access','Access denied');
+
                    end;
     SameVersion  : begin
                       writeln('Version '+old_version+' already installed');
@@ -103,32 +106,26 @@ begin
   end;
 end;
 
-function TFRE_FIRMBOX_VM_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
-var admin_app_rg : IFRE_DB_ROLE;
-     user_app_rg : IFRE_DB_ROLE;
-    guest_app_rg : IFRE_DB_ROLE;
+function TFRE_FIRMBOX_VM_APP.InstallSystemGroupsAndRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
+var
+  role: IFRE_DB_ROLE;
 begin
-  admin_app_rg  := _CreateAppRole('ADMIN','firmbox VMAPP ADMIN','firmbox VMAPP Administration Rights');      // TODO: REWORK
-  user_app_rg   := _CreateAppRole('USER','firmbox VMAPP USER','firmbox VMAPP Default User Rights');
-  guest_app_rg  := _CreateAppRole('GUEST','firmbox VMAPP GUEST','firmbox VMAPP Default Guest User Rights');
-  _AddAppRight(admin_app_rg ,'ADMIN'  ,'firmbox VMAPP Admin','Administration of firmbox VMAPP');
-  _AddAppRight(user_app_rg  ,'START'  ,'firmbox VMAPP Start','Startup of firmbox VMAPP');
-  _AddAppRight(admin_app_rg,'edit_vmnetwork','Edit Virtual Network','Edit Virtual Network');
 
-//  _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['main']));
-  _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['vmcontroller']));  //TODO check rights handling (module identifier)
-  _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['vmnetwork']));
-  _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['interfaces']));
-  _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['vmstatus']));
+  role := _CreateAppRole('view_vms','View VMs','Allowed to view VMs');
+  _AddAppRight(role,'view_vms','View VMs','Allowed to view VMs.');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['vmcontroller']));
+  CheckDbResult(conn.StoreRole(ObjectName,domain,role),'InstallSystemGroupsAndRoles');
 
-  _AddAppRightModules(user_app_rg,GFRE_DBI.ConstructStringArray(['vmcontroller']));
-  _AddAppRightModules(user_app_rg,GFRE_DBI.ConstructStringArray(['vmstatus']));
-
-  conn.StoreRole(ObjectName,domain,admin_app_rg);
-  conn.StoreRole(ObjectName,domain,user_app_rg);
-  conn.StoreRole(ObjectName,domain,guest_app_rg);
+  role := _CreateAppRole('admin_vms','Admin VMs','Allowed to administer VMs');
+  _AddAppRight(role,'admin_vms','Admin VMs','Allowed to administer VMs.');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['vmcontroller','vmnetwork','interfaces','vmstatus']));//FIXXME - add more roles
+  CheckDbResult(conn.StoreRole(ObjectName,domain,role),'InstallSystemGroupsAndRoles');
 
   _AddSystemGroups(conn,domain);
+
+  CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_vms'+'@'+domain)])),'InstallSystemGroupsAndRoles');
+  CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_vms'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'admin_vms'+'@'+domain)])),'InstallSystemGroupsAndRoles');
+
 end;
 
 procedure TFRE_FIRMBOX_VM_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
@@ -177,8 +174,9 @@ begin
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
-function TFRE_FIRMBOX_VM_APP.IMI_VM_Feed_Update(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_APP.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
+  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   result := DelegateInvoke('VMCONTROLLER','VM_Feed_Update',input);
 end;
 
