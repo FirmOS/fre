@@ -56,7 +56,7 @@ type
     class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
   published
-    function IMI_GetDisplayName  (const input:IFRE_DB_Object): IFRE_DB_Object;
+    procedure CALC_GetDisplayName  (const setter : IFRE_DB_CALCFIELD_SETTER);
   end;
 
   { TFRE_DB_ZFS_DATASET_FILE }
@@ -100,7 +100,7 @@ type
     class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
   published
-    function IMI_GetIcons(const input: IFRE_DB_Object): IFRE_DB_Object;
+    procedure CALC_GetIcons(const setter: IFRE_DB_CALCFIELD_SETTER);
   end;
 
   { TFRE_DB_NFS_ACCESS }
@@ -307,7 +307,7 @@ begin
   scheme.AddSchemeField('afp',fdbft_Boolean);
   scheme.AddSchemeField('ftp',fdbft_Boolean);
   scheme.AddSchemeField('webdav',fdbft_Boolean);
-  scheme.AddCalculatedField('icons','GetIcons',cft_OnStoreUpdate);
+  scheme.AddCalcSchemeField('icons',fdbft_String,@CALC_GetIcons);
   group:=scheme.AddInputGroup('share').Setup('$scheme_TFRE_DB_VIRTUAL_FILESHARE_share');
   group.AddInput('objname','$scheme_TFRE_DB_VIRTUAL_FILESHARE_sharename');
   group.AddInput('cifs','$scheme_TFRE_DB_VIRTUAL_FILESHARE_cifs');
@@ -326,7 +326,7 @@ begin
   conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESHARE_webdav','WebDAV'));
 end;
 
-function TFRE_DB_VIRTUAL_FILESHARE.IMI_GetIcons(const input: IFRE_DB_Object): IFRE_DB_Object;
+procedure TFRE_DB_VIRTUAL_FILESHARE.CALC_GetIcons(const setter: IFRE_DB_CALCFIELD_SETTER);
 var    licon    : TFRE_DB_String;
 
   procedure AddIcon(const fieldname: string);
@@ -348,8 +348,7 @@ begin
   AddIcon('nfs');
   AddIcon('ftp');
   AddIcon('webdav');
-  result := GFRE_DBI.NewObject;
-  result.Field(CalcFieldResultKey(fdbft_String)).AsString:=licon;
+  setter.SetAsString(licon);
 end;
 
 { TFRE_DB_NFS_FILESHARE }
@@ -397,7 +396,7 @@ begin
   scheme.AddSchemeField('vlan',fdbft_UInt16);
   scheme.AddSchemeField('domainid',fdbft_GUID);
 
-  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_DB_VIRTUAL_FILESERVER_main_group');
+  group:=scheme.ReplaceInputGroup('main').Setup('$scheme_TFRE_DB_VIRTUAL_FILESERVER_main_group');
   group.AddInput('objname','$scheme_TFRE_DB_VIRTUAL_FILESERVER_fileservername',false);
   group.AddInput('pool','$scheme_TFRE_DB_VIRTUAL_FILESERVER_pool',false);
   //group.AddInput('pool','$scheme_TFRE_DB_VIRTUAL_FILESERVER_pool',true); -> FISH TO FIX FOR CHRIS
@@ -455,7 +454,7 @@ begin
   scheme.AddSchemeField('copies',fdbft_String).SetupFieldDef(true,false,'copies');
   scheme.AddSchemeField('sync',fdbft_String).SetupFieldDef(true,false,'sync');
   scheme.AddSchemeField('fileservername',fdbft_String);
-  scheme.AddCalculatedField ('displayname','GetDisplayName',cft_OnStoreUpdate);
+  scheme.AddCalcSchemeField ('displayname',fdbft_String,@CALC_GetDisplayName);
 
   group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_DB_ZFS_DATASET_main_group');
   group.AddInput('fileserver','',true,true);
@@ -493,10 +492,9 @@ begin
   conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_sync','Sync'));
 end;
 
-function TFRE_DB_ZFS_DATASET.IMI_GetDisplayName(const input: IFRE_DB_Object): IFRE_DB_Object;
+procedure TFRE_DB_ZFS_DATASET.CALC_GetDisplayName(const setter: IFRE_DB_CALCFIELD_SETTER);
 begin
- result := GFRE_DBI.NewObject;
- result.Field(CalcFieldResultKey(fdbft_String)).AsString:=Field('fileservername').AsString+'/'+Field('objname').AsString;
+  setter.SetAsString(Field('fileservername').AsString+'/'+Field('objname').AsString);
 end;
 
 { TFRE_DB_FILESERVER }

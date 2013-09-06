@@ -379,15 +379,18 @@ begin
           prot:='http';
         end;
         GFRE_BT.SeperateString(tmp,':',urlSep);
-        host:=urlSep[0];
-        tmp:=urlSep[1];
-        GFRE_BT.SeperateString(tmp,'/',urlSep);
-        port:=urlSep[0];
-        path:='';
-        for i := 1 to Length(urlSep) - 1 do begin
-          path:=path+'/'+urlSep[i];
-        end;
-        result := TFRE_DB_SHELL_DESC.create.Describe(host,StrToInt(port),path,prot);
+        if Length(urlSep)>=2 then
+          begin
+            host:=urlSep[0];
+            tmp:=urlSep[1];
+            GFRE_BT.SeperateString(tmp,'/',urlSep);
+            port:=urlSep[0];
+            path:='';
+            for i := 1 to Length(urlSep) - 1 do begin
+              path:=path+'/'+urlSep[i];
+            end;
+            result := TFRE_DB_SHELL_DESC.create.Describe(host,StrToInt(port),path,prot);
+          end;
       end;
     end else begin
       result := TFRE_DB_HTML_DESC.create.Describe(FREDB_String2EscapedJSString('<pre style="font-size: 10px">'+obj.DumpToString+'</pre>'));
