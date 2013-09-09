@@ -676,8 +676,9 @@ begin
   space.Field('value_leg').AsString := 'Referred';
   CheckDbResult(coll.Store(space),'Add zones space');
 
-  DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-  _fillPoolCollection(admin_dbc,DISKI_HACK.Get_ZFS_Data_Once);
+  //FIRMBOX TESTMODE STARTUP SPEED ENHANCEMENT
+  //DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  //_fillPoolCollection(admin_dbc,DISKI_HACK.Get_ZFS_Data_Once);
 
   coll := admin_dbc.Collection('MYPOOL_SPACE',true,true);
 

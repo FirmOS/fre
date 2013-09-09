@@ -406,17 +406,17 @@ var conn     : IFRE_DB_Connection;
     end;
 
   begin
-    vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-    try
-      vmc.VM_ListMachines(vmo);
-    finally
-      vmc.Finalize;
-    end;
-
     coll := conn.Collection('virtualmachine');
     coll.DefineIndexOnField('Mkey',fdbft_String,true,true);
 
-    VM_UpdateCollection(conn,coll,vmo,TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
+    //STARTUP SPEED_ENHANCEMENT
+    //vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+    //try
+    //  vmc.VM_ListMachines(vmo);
+    //finally
+    //  vmc.Finalize;
+    //end;
+    //VM_UpdateCollection(conn,coll,vmo,TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
 
     // add root
 

@@ -14,8 +14,8 @@ uses
   FRE_DB_COMMON;
 
 var
-    DISKI_HACK : IFOS_STATS_CONTROL;
-    VM_HACK    : IFOS_VM_HOST_CONTROL;
+    //DISKI_HACK : IFOS_STATS_CONTROL;
+    //VM_HACK    : IFOS_VM_HOST_CONTROL;
     ZPOOL_IOSTAT_UPDATE: TFRE_DB_UPDATE_STORE_DESC;
 
 type
@@ -2253,14 +2253,17 @@ var
 begin
   inherited MyServerInitializeModule(admin_dbc);
 
-  DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-  VM_HACK    := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  //STARTUP SPEED_ENHANCEMENT
+  //DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  //VM_HACK    := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
 
   pool_disks := admin_dbc.Collection('POOL_DISKS',true,true);
   pool_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
-  UpdateDiskCollection(pool_disks,DISKI_HACK.Get_Disk_Data_Once);
 
-  _buildPoolsCollection();
+  //// Used to fix display in startup case, when no feeder has made initial data
+  //UpdateDiskCollection(pool_disks,DISKI_HACK.Get_Disk_Data_Once);
+
+  //_buildPoolsCollection(); //FIXME: Must be done over feeder
 
 end;
 
@@ -2429,6 +2432,7 @@ begin
     count:=0;
     pools := conn.Collection('ZFS_POOLS');
     res:=TFRE_DB_STORE_DATA_DESC.create;
+    ua := nil;
     pools.ForAll(@_ProcessPools);
     if Assigned(ua) then begin
       res.addEntry(ua);
@@ -3183,7 +3187,7 @@ begin
     pool:=_getPool(conn,idPath[0]);
     disk:=pool.getPoolItem(TFRE_DB_StringArray(idPath)) as TFRE_DB_ZFS_BLOCKDEVICE;
     writeln('DISK ',disk.field('name').AsString);
-    writeln('IDENT : ',VM_HACK.DS_IdentifyDisk(disk.field('name').AsString,false));
+    //writeln('IDENT : ',VM_HACK.DS_IdentifyDisk(disk.field('name').AsString,false));
   end;
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Offline','Switch offline (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
   result := GFRE_DB_NIL_DESC;
@@ -3209,7 +3213,7 @@ begin
     pool:=_getPool(conn,idPath[0]);
     disk:=pool.getPoolItem(TFRE_DB_StringArray(idPath)) as TFRE_DB_ZFS_BLOCKDEVICE;
     writeln('DISK ',disk.field('name').AsString);
-    writeln('IDENT : ',VM_HACK.DS_IdentifyDisk(disk.field('name').AsString,true));
+    //writeln('IDENT : ',VM_HACK.DS_IdentifyDisk(disk.field('name').AsString,true));
   end;
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Offline','Switch offline (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
   result := GFRE_DB_NIL_DESC;

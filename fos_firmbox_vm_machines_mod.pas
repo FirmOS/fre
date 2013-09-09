@@ -295,7 +295,7 @@ begin
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-var vmc     : IFOS_VM_HOST_CONTROL;
+var// vmc     : IFOS_VM_HOST_CONTROL;
     vmo     : IFRE_DB_Object;
     vm      : IFRE_DB_Object;
     vmcc    : IFRE_DB_COLLECTION;
