@@ -82,7 +82,6 @@ type
     class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
   published
-    class function  IMC_NewOperation(const input:IFRE_DB_Object):IFRE_DB_Object;override;
   end;
 
   { TFRE_DB_LUN }
@@ -375,11 +374,6 @@ begin
   conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_FILESHARE_anonymous','Anonymous access'));
   conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_FILESHARE_anonymousrw','Anonymous RW access'));
   conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_FILESHARE_auth','Authentication'));
-end;
-
-class function TFRE_DB_NFS_FILESHARE.IMC_NewOperation(const input: IFRE_DB_Object): IFRE_DB_Object;
-begin
-  Result:=inherited IMC_NewOperation(input);
 end;
 
 { TFRE_DB_VIRTUAL_FILESERVER }

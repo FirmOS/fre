@@ -168,7 +168,7 @@ var conn     : IFRE_DB_Connection;
   var
     datalink    : IFRE_DB_Object;
   begin
-    datalink := CONN.NewObject(clname);
+    datalink := GFRE_DBI.NewObjectSchemeByName(clname);
     datalink.Field('objname').asstring := name;
     if parentid<>GUID_NULL then begin
       datalink.Field('parentid').AsObjectLink := parentid;
@@ -178,7 +178,7 @@ var conn     : IFRE_DB_Connection;
     datalink.Field('ip_net').Asstring         := ip;
     datalink.Field('mtu').AsUInt16            := 1500;
     datalink.Field('icon').AsString:='images_apps/firmbox_appliance/datalink_'+lowercase(icon)+'.png';
-    datalink.Field('desc').AsObject := CONN.NewObject('TFRE_DB_TEXT');
+    datalink.Field('desc').AsObject := GFRE_DBI.NewObjectSchemeByName('TFRE_DB_TEXT');
     datalink.Field('desc').AsObject.Field('txt').asString := desc;
     if vlan<>0 then begin
       datalink.Field('vlan').AsUInt16 := vlan;
@@ -194,7 +194,7 @@ var conn     : IFRE_DB_Connection;
       rightname : string;
       i         : NativeInt;
   begin
-    share := CONN.NewObject(TFRE_DB_VIRTUAL_FILESHARE.ClassName);
+    share :=  GFRE_DBI.NewObjectScheme(TFRE_DB_VIRTUAL_FILESHARE);
     share.Field('fileserver').AsObjectLink := fs;
     share.Field('fileservername').AsString := fsname;
     share.Field('pool').AsString := 'zones';
@@ -227,7 +227,7 @@ var conn     : IFRE_DB_Connection;
     CheckDbResult(CONN.StoreRole('firmbox_storage',domain,role),'Saving Role');
 
     for i:=1 to 10 do begin
-      snap := CONN.NewObject(TFRE_DB_ZFS_SNAPSHOT.ClassName);
+      snap :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZFS_SNAPSHOT);
       snap.Field('parentid').AsObjectLink := share_id;
       snap.Field('objname').asString      := 'zones/vfiler/'+GFRE_BT.GUID_2_HexString(fs)+'/'+GFRE_BT.GUID_2_HexString(share_id)+'@AUTO-'+inttostr(i);
       snap.Field('creation').AsDateTimeUTC:= GFRE_DT.Now_UTC-(86400*1000*(10-i));
@@ -243,7 +243,7 @@ var conn     : IFRE_DB_Connection;
       snap      : IFRE_DB_Object;
       i         : NativeInt;
   begin
-    share := CONN.NewObject(TFRE_DB_NFS_FILESHARE.ClassName);
+    share :=  GFRE_DBI.NewObjectScheme(TFRE_DB_NFS_FILESHARE);
     share.Field('fileserver').AsObjectLink := fs;
     share.Field('fileservername').AsString := fsname;
     share.Field('objname').AsString := sharename;
@@ -262,20 +262,20 @@ var conn     : IFRE_DB_Connection;
     share_id                        := share.UID;
     CheckDbResult(SCOLL.Store(share),'Add Share');
 
-    access := CONN.NewObject(TFRE_DB_NFS_ACCESS.ClassName);
+    access :=  GFRE_DBI.NewObjectScheme(TFRE_DB_NFS_ACCESS);
     access.Field('fileshare').AsObjectLink := share_id;
     access.Field('accesstype').AsString    := 'ro';
     access.Field('subnet').Asstring        := '192.168.0.0/24';
     CheckDbResult(ACOLL.Store(access),'Add Access');
 
-    access := CONN.NewObject(TFRE_DB_NFS_ACCESS.ClassName);
+    access :=  GFRE_DBI.NewObjectScheme(TFRE_DB_NFS_ACCESS);
     access.Field('fileshare').AsObjectLink := share_id;
     access.Field('accesstype').AsString    := 'rw';
     access.Field('subnet').Asstring        := '10.0.0.0/24';
     CheckDbResult(ACOLL.Store(access),'Add Access');
 
     for i:=1 to 10 do begin
-      snap := CONN.NewObject(TFRE_DB_ZFS_SNAPSHOT.ClassName);
+      snap :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZFS_SNAPSHOT);
       snap.Field('parentid').AsObjectLink := share_id;
       snap.Field('objname').asString      := 'zones/nfs/'+GFRE_BT.GUID_2_HexString(share_id)+'@AUTO-'+inttostr(i);
       snap.Field('creation').AsDateTimeUTC:= GFRE_DT.Now_UTC-(86400*1000*(10-i));
@@ -292,7 +292,7 @@ var conn     : IFRE_DB_Connection;
       snap      : IFRE_DB_Object;
       i         : NativeInt;
   begin
-    share := CONN.NewObject(TFRE_DB_LUN.ClassName);
+    share :=  GFRE_DBI.NewObjectScheme(TFRE_DB_LUN);
     share.Field('fileserver').AsObjectLink := fs;
     share.Field('fileservername').AsString := fsname;
     share.Field('objname').AsString := guid;
@@ -307,20 +307,20 @@ var conn     : IFRE_DB_Connection;
     share_id                        := share.UID;
     CheckDbResult(SCOLL.Store(share),'Add LUN');
 
-    view := CONN.NewObject(TFRE_DB_LUN_VIEW.ClassName);
+    view :=  GFRE_DBI.NewObjectScheme(TFRE_DB_LUN_VIEW);
     view.Field('fileshare').AsObjectLink := share_id;
     view.Field('initiatorgroup').AsString    := 'vmhosts';
     view.Field('targetgroup').AsString       := 'firmbox_iscsi_target';
     CheckDbResult(ACOLL.Store(view),'Add View');
 
-    view := CONN.NewObject(TFRE_DB_LUN_VIEW.ClassName);
+    view :=  GFRE_DBI.NewObjectScheme(TFRE_DB_LUN_VIEW);
     view.Field('fileshare').AsObjectLink := share_id;
     view.Field('initiatorgroup').AsString    := 'firmbox_initator';
     view.Field('targetgroup').AsString       := 'firmbox_iscsi_target';
     CheckDbResult(ACOLL.Store(view),'Add View');
 
     for i:=1 to 10 do begin
-      snap := CONN.NewObject(TFRE_DB_ZFS_SNAPSHOT.ClassName);
+      snap :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZFS_SNAPSHOT);
       snap.Field('parentid').AsObjectLink := share_id;
       snap.Field('objname').asString      := 'zones/lun/'+GFRE_BT.GUID_2_HexString(share_id)+'@AUTO-'+inttostr(i);
       snap.Field('creation').AsDateTimeUTC:= GFRE_DT.Now_UTC-(86400*1000*(10-i));
@@ -385,7 +385,7 @@ var conn     : IFRE_DB_Connection;
       sz :=  20*(random(10)+1);
 
       for i:=1 to 3 do begin
-        snap := CONN.NewObject(TFRE_DB_ZFS_SNAPSHOT.ClassName);
+        snap :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZFS_SNAPSHOT);
         snap.Field('parentid').AsObjectLink := obj.uid;
         if obj.SchemeClass=TFRE_DB_ZONE.ClassName then
           begin
@@ -420,7 +420,7 @@ var conn     : IFRE_DB_Connection;
 
     // add root
 
-    root := conn.NewObject(TFRE_DB_ZONE.ClassName);
+    root :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZONE);
     root.Field('objname').asstring    :='Global Root Zone';
     root.Field('MKey').AsString       :='ROOT';
     root.Field('MType').AsString      :='OS';
@@ -448,7 +448,7 @@ begin
 
  InitVirtualMachines;
 
- COB  := CONN.NewObject(TFRE_DB_VIRTUAL_FILESERVER.ClassName);
+ COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_VIRTUAL_FILESERVER);
 // cob.Field('machineid').AsObjectLink:=wlan_machine_uid;
 // COb.Field('servicegroup').AsObjectLink:=si;
  cob.Field('pool').asstring:='zones';
@@ -464,7 +464,7 @@ begin
  _AddVShare('Development',true,true,true,true,2000,'FIRMOS');
  _AddVShare('Testing',false,false,true,false,1024,'FIRMOS');
 
- COB  := CONN.NewObject(TFRE_DB_VIRTUAL_FILESERVER.ClassName);
+ COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_VIRTUAL_FILESERVER);
 // cob.Field('machineid').AsObjectLink:=wlan_machine_uid;
 // COb.Field('servicegroup').AsObjectLink:=si;
  cob.Field('pool').asstring:='zones';
@@ -482,7 +482,7 @@ begin
  _AddVShare('Management',false,false,false,true,2048,'DEMO');
 
 
- COB  := CONN.NewObject(TFRE_DB_GLOBAL_FILESERVER.ClassName);
+ COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_GLOBAL_FILESERVER);
 // cob.Field('machineid').AsObjectLink:=wlan_machine_uid;
 // COb.Field('servicegroup').AsObjectLink:=si;
  fs := COB.UID;
@@ -527,7 +527,7 @@ begin
 
  hcoll := Conn.Collection('hba');
 
- COB  := CONN.NewObject(TFRE_DB_FC_PORT.ClassName);
+ COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_FC_PORT);
  cob.Field('objname').asstring:='10000090fa0ef24a';
  cob.Field('targetmode').AsBoolean:=false;
  cob.Field('portnr').AsUInt16:=1;
@@ -545,7 +545,7 @@ begin
  cob.Field('nodewwn').asstring:='20000090fa0ef24a';
  CheckDbResult(hCOLL.Store(cob),'Add FC Port');
 
- COB  := CONN.NewObject(TFRE_DB_FC_PORT.ClassName);
+ COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_FC_PORT);
  cob.Field('objname').asstring:='10000090fa0ef24b';
  cob.Field('targetmode').AsBoolean:=true;
  cob.Field('portnr').AsUInt16:=2;
@@ -564,25 +564,25 @@ begin
  CheckDbResult(hCOLL.Store(cob),'Add FC Port');
 
  mcoll := Conn.Collection('setting');
- COB  := CONN.NewObject(TFRE_DB_MACHINE_SETTING_POWER.ClassName);
+ COB   := GFRE_DBI.NewObjectScheme(TFRE_DB_MACHINE_SETTING_POWER);
  cob.Field('objname').asstring:='Power State';
  cob.Field('poweroperation').asstring:='nothing';
  CheckDbResult(mCOLL.Store(cob),'Add Setting');
 
- COB  := CONN.NewObject(TFRE_DB_MACHINE_SETTING_HOSTNAME.ClassName);
+ COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_MACHINE_SETTING_HOSTNAME);
  cob.Field('objname').asstring:='Hostname';
  cob.Field('hostname').asstring:='firmbox';
  cob.Field('domainname').asstring:='firmos.at';
  CheckDbResult(mCOLL.Store(cob),'Add Setting');
 
- COB  := CONN.NewObject(TFRE_DB_MACHINE_SETTING_TIME.ClassName);
+ COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_MACHINE_SETTING_TIME);
  cob.Field('objname').asstring:='Time';
  cob.Field('region').asstring:='Europe';
  cob.Field('timezone').asstring:='Europe/Vienna';
  cob.Field('ntpserver').asstring:='pool.ntp.org';
  CheckDbResult(mCOLL.Store(cob),'Add Setting');
 
- COB  := CONN.NewObject(TFRE_DB_MACHINE_SETTING_MAIL.ClassName);
+ COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_MACHINE_SETTING_MAIL);
  cob.Field('objname').asstring:='Mail';
  cob.Field('smtpserver').asstring:='localhost';
  cob.Field('mailfrom').asstring:='firmbox@firmos.at';

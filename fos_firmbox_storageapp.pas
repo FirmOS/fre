@@ -298,23 +298,23 @@ begin
 //    writeln( group.ObjectName,'->',GFRE_DBI.StringArray2String(group.GetRoleNames));
 
     rrole := _getRolename(share_s,rtRead);
-    if conn.RoleExists(rrole+'@'+group.Domain)=false then raise EFRE_DB_Exception.Create('No Read Role for Fileshare !');
+    if conn.RoleExists(rrole+'@'+group.GetDomain(conn))=false then raise EFRE_DB_Exception.Create('No Read Role for Fileshare !');
 
     wrole := _getRolename(share_s,rtWrite);
-    if conn.RoleExists(wrole+'@'+group.Domain)=false then raise EFRE_DB_Exception.Create('No Write Role for Fileshare !');
+    if conn.RoleExists(wrole+'@'+group.GetDomain(conn))=false then raise EFRE_DB_Exception.Create('No Write Role for Fileshare !');
 
     if change_read then begin
       if read then begin
-        conn.AddGroupRoles(group.ObjectName+'@'+group.Domain,GFRE_DBI.ConstructStringArray([rrole+'@'+group.Domain]));
+        conn.AddGroupRoles(group.ObjectName+'@'+group.GetDomain(conn),GFRE_DBI.ConstructStringArray([rrole+'@'+group.GetDomain(conn)]));
       end else begin
-        conn.RemoveGroupRoles(group.ObjectName+'@'+group.Domain,GFRE_DBI.ConstructStringArray([rrole+'@'+group.Domain]),true);
+        conn.RemoveGroupRoles(group.ObjectName+'@'+group.GetDomain(conn),GFRE_DBI.ConstructStringArray([rrole+'@'+group.GetDomain(conn)]),true);
       end;
     end;
     if change_write then begin
       if write then begin
-        conn.AddGroupRoles(group.ObjectName+'@'+group.Domain,GFRE_DBI.ConstructStringArray([wrole+'@'+group.Domain]));
+        conn.AddGroupRoles(group.ObjectName+'@'+group.GetDomain(conn),GFRE_DBI.ConstructStringArray([wrole+'@'+group.GetDomain(conn)]));
       end else begin
-        conn.RemoveGroupRoles(group.ObjectName+'@'+group.Domain,GFRE_DBI.ConstructStringArray([wrole+'@'+group.Domain]),true);
+        conn.RemoveGroupRoles(group.ObjectName+'@'+group.GetDomain(conn),GFRE_DBI.ConstructStringArray([wrole+'@'+group.GetDomain(conn)]),true);
       end;
     end;
   end;
@@ -2357,15 +2357,15 @@ begin
 
   if not app.CheckAppRightModule(conn,'storage_pools') then raise EFRE_DB_Exception.Create(app.FetchAppText(conn,'$error_no_access').Getshort);
 
-  load_func   := CSF(@IMI_NoteLoad);
-  save_func   := CSF(@IMI_NoteSave);
+  load_func   := CWSF(@WEB_NoteLoad);
+  save_func   := CWSF(@WEB_NoteSave);
 //  load_func.AddParam.Describe('linkid',input.Field('SELECTED').asstring);
 //  save_func.AddParam.Describe('linkid',input.Field('SELECTED').asstring);
 
   load_func.AddParam.Describe('linkid','zones');
   save_func.AddParam.Describe('linkid','zones');
 
-  Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CSF(@IMI_NoteStartEdit),CSF(@IMI_NoteStopEdit));
+  Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CWSF(@WEB_NoteStartEdit),CWSF(@WEB_NoteStopEdit));
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_PoolNotesLoad(const input: IFRE_DB_Object): IFRE_DB_Object;

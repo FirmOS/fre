@@ -415,12 +415,12 @@ begin
   writeln('CONTENTNOTE');
   writeln(input.DumpToString);
 
-  load_func   := CSF(@IMI_NoteLoad);
-  save_func   := CSF(@IMI_NoteSave);
+  load_func   := CWSF(@WEB_NoteLoad);
+  save_func   := CWSF(@WEB_NoteSave);
   load_func.AddParam.Describe('linkid',input.Field('linkid').asstring);
   save_func.AddParam.Describe('linkid',input.Field('linkid').asstring);
 
-  Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CSF(@IMI_NoteStartEdit),CSF(@IMI_NoteStopEdit));
+  Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CWSF(@WEB_NoteStartEdit),CWSF(@WEB_NoteStopEdit));
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_Details(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
