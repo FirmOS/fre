@@ -51,8 +51,8 @@ type
   protected
     class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
   published
-    function        IMI_FullStatusUpdate(const input: IFRE_DB_Object): IFRE_DB_Object;
-    function        IMI_PartialStatusUpdate(const input: IFRE_DB_Object): IFRE_DB_Object;
+    function        WEB_FullStatusUpdate   (const input:IFRE_DB_OBject ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PartialStatusUpdate(const input:IFRE_DB_OBject ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_DB_MONSYS_MOD }
@@ -229,7 +229,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
       procedure AddServiceGroup(const name :string);
       begin
-        sg                                  := conn.NewObject('TFRE_DB_SERVICEGROUP');
+        sg                                  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_SERVICEGROUP);
         sg.Field('objname').AsString        := name;
         // sg.Field('CUSTOMERID').AsObjectLink := customerid;
         sg_id                               := sg.UID;
@@ -239,7 +239,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
       procedure AddService(const name :string);
       begin
-        service                                     := conn.NewObject('TFRE_DB_SERVICE');
+        service                                     :=  GFRE_DBI.NewObjectScheme(TFRE_DB_SERVICE);
         service.Field('objname').AsString           := name;
         service_id                                  := service.UID;
         service.Field('servicegroup').AsObjectLink  := sg_id;
@@ -255,7 +255,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
        var
          tcs      : IFRE_DB_Object;
        begin
-         tcs      := Conn.NewObject(TFRE_DB_TESTCASESTATUS.ClassName);
+         tcs      :=TFRE_DB_TESTCASESTATUS.CreateForDB;
          tcs.Field('periodic_ord').AsInt16  := Ord(periodic);
          tcs.Field('testcase').AsObjectLink        :=  tc_id;
          TFRE_DB_TestcaseStatus(tcs.Implementor_HC).IMI_ClearStatus(nil);
@@ -282,11 +282,9 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
       var
         job      : TFRE_DB_MultiPingTestcase;
         i        : integer;
-        obj      : IFRE_DB_Object;
 
       begin
-        obj    :=conn.NewObject(TFRE_DB_MultiPingTestcase.ClassName);
-        job    :=TFRE_DB_MultiPingTestcase(obj.Implementor_HC);
+        job    :=TFRE_DB_MultiPingTestcase.CreateForDB;
         job.SetJobkeyDescription(mon_key+'_'+uppercase(vmhost),'Host '+vmhost);
         job.SetInformation(vmhost);
         job.SetRTTTimeout_ms(rtt);
@@ -307,10 +305,10 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          var c_dbo : IFRE_DB_Object;
              a_dbo : IFRE_DB_Object;
          begin
-           c_dbo:=Conn.NewObject('TFRE_DB_COUNTRY');
+           c_dbo := TFRE_DB_COUNTRY.CreateForDB;
            c_dbo.Field('objname').AsString:='Österreich';
            c_dbo.Field('tld').AsString:='at';
-           a_dbo:=CONN.NewObject('TFRE_DB_ADDRESS');
+           a_dbo := TFRE_DB_ADDRESS.CreateForDB;
            if where in [tmFOSLab,tmFOSServ,tmKSMServ] then begin
             a_dbo.Field('street').asstring:='Obstweg';
             a_dbo.Field('nr').asstring:='4';
@@ -343,7 +341,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          end;
 
       begin
-        machine                                := conn.NewObject('TFRE_DB_MACHINE');
+        machine                                := TFRE_DB_MACHINE.CreateForDB;
         machine.Field('objname').AsString      := name;
         machine.Field('ip').AsString           := ip;
         AddAddress;
@@ -421,144 +419,127 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
       procedure AddTestCase(const name : string);
       var
-        obj    : IFRE_DB_Object;
+        obj    : TFRE_DB_Testcase;
       begin
-        obj   :=conn.NewObject(TFRE_DB_Testcase.ClassName);
-        TFRE_DB_Testcase(obj.Implementor_HC).SetJobkeyDescription('DUMMY'+'_'+name,'Description TODO:'+name);
+        obj   :=TFRE_DB_Testcase.CreateForDB;
+        obj.SetJobkeyDescription('DUMMY'+'_'+name,'Description TODO:'+name);
         Troubleshooting(obj,'fix it :-) '+name);
         StoreAndAddToMachine(obj);
       end;
 
       procedure AddZpoolStatusTestCase(const server: string; const jobkey: string; const desc: string);
       var
-        obj    : IFRE_DB_Object;
         z      : TFRE_DB_ZFSJob;
       begin
-        obj   :=conn.NewObject(TFRE_DB_ZFSJob.ClassName);
-        z     :=TFRE_DB_ZFSJob(obj.Implementor_HC);
+        z   :=TFRE_DB_ZFSJob.CreateForDB;
         z.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         z.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         z.SetPeriodic(everyHour);
         z.SetPoolStatus('zones',7,14);
-        Troubleshooting(obj,'Check Disks ! ');
-        StoreAndAddToMachine(obj);
+        Troubleshooting(z,'Check Disks ! ');
+        StoreAndAddToMachine(z);
       end;
 
       procedure AddZFSSpaceTestCase(const server: string; const jobkey: string; const desc: string);
       var
-        obj    : IFRE_DB_Object;
         z      : TFRE_DB_ZFSJob;
       begin
-        obj   :=conn.NewObject(TFRE_DB_ZFSJob.ClassName);
-        z     :=TFRE_DB_ZFSJob(obj.Implementor_HC);
+        z   := TFRE_DB_ZFSJob.CreateForDB;
         z.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         z.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         z.SetDatasetspace('zones',80,95);
-        Troubleshooting(obj,'Delete data or remove snapshots in your dataset !');
-        StoreAndAddToMachine(obj);
+        Troubleshooting(z,'Delete data or remove snapshots in your dataset !');
+        StoreAndAddToMachine(z);
       end;
 
       procedure AddDiskSpaceTestCase(const server: string; const jobkey: string; const desc: string; const mountpoint:string);
       var
-        obj    : IFRE_DB_Object;
         z      : TFRE_DB_DiskspaceTestcase;
       begin
-        obj   :=conn.NewObject(TFRE_DB_DiskspaceTestcase.ClassName);
-        z     :=TFRE_DB_DiskspaceTestcase(obj.Implementor_HC);
+        z     :=TFRE_DB_DiskspaceTestcase.CreateForDB;
         z.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         z.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         z.SetMountpoint(mountpoint,80,95);
-        Troubleshooting(obj,'Delete data or extend the device !');
-        StoreAndAddToMachine(obj);
+        Troubleshooting(z,'Delete data or extend the device !');
+        StoreAndAddToMachine(z);
       end;
 
       procedure AddHTTPTestCase(const url: string; const jobkey: string; const desc: string; const header:string; const responsematch:string);
       var
-        obj    : IFRE_DB_Object;
         z      : TFRE_DB_HTTPTestcase;
       begin
-        obj   :=conn.NewObject(TFRE_DB_HTTPTestcase.ClassName);
-        z     :=TFRE_DB_HTTPTestcase(obj.Implementor_HC);
+        z     :=TFRE_DB_HTTPTestcase.CreateForDB;
         z.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
 //             z.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         z.SetURL(url,header,responsematch);
         z.SetPeriodic(everyHour);
-        Troubleshooting(obj,'Delete data or extend the device !');
-        StoreAndAddToMachine(obj);
+        Troubleshooting(z,'Delete data or extend the device !');
+        StoreAndAddToMachine(z);
       end;
 
       procedure AddCPUTestCase(const server: string; const jobkey: string; const desc: string; const warning_load:integer; const error_load:integer);
       var
-        obj    : IFRE_DB_Object;
         t      : TFRE_DB_CPULoadTestcase;
       begin
-        obj   :=conn.NewObject(TFRE_DB_CPULoadTestcase.ClassName);
-        t     :=TFRE_DB_CPULoadTestcase(obj.Implementor_HC);
+        t     :=TFRE_DB_CPULoadTestcase.CreateForDB;
         t.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         t.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         t.SetLimits(warning_load,error_load);
         t.SetPeriodic(everyHour);
-        Troubleshooting(obj,'Check for slow processes or hangs !');
-        StoreAndAddToMachine(obj);
+        Troubleshooting(t,'Check for slow processes or hangs !');
+        StoreAndAddToMachine(t);
       end;
 
 
       procedure AddProcessTestCase(const server: string;const jobkey:string;const desc:string;const processname:TFRE_DB_StringArray;const error_count:TFRE_DB_UInt32Array);
       var
-        obj    : IFRE_DB_Object;
         p      : TFRE_DB_ProcessTestcase;
         i      : integer;
       begin
-        obj   :=conn.NewObject(TFRE_DB_ProcessTestcase.ClassName);
-        p     :=TFRE_DB_ProcessTestcase(obj.Implementor_HC);
+        p     :=TFRE_DB_ProcessTestcase.CreateForDB;
         p.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         p.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         for i := 0 to high(processname) do begin
           p.AddProcessTest(processname[i],1,error_count[i],processname[i]);
         end;
-        Troubleshooting(obj,'Restart failing Processes !');
-        StoreAndAddToMachine(obj);
+        Troubleshooting(p,'Restart failing Processes !');
+        StoreAndAddToMachine(p);
       end;
 
       procedure AddZFSReplication(const jobkey: string; const desc : string; const sourcehost: string; const desthost:string; const sourceds:string; const destds: string;const checkperiod_sec: integer);
        var
-         obj    : IFRE_DB_Object;
          zf     : TFRE_DB_ZFSJob;
        begin
-         obj   :=conn.NewObject(TFRE_DB_ZFSJob.ClassName);
-         zf    :=TFRE_DB_ZFSJob(obj.Implementor_HC);
+         zf    :=TFRE_DB_ZFSJob.CreateForDB;
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
          zf.SetReplicate(sourceds,destds,'AUTO',desthost,'zfsback',GetbackupKeyFileName,'/zones/firmos/zfsback/.ssh/id_rsa');
          zf.SetPeriodic(everyDay);
-         Troubleshooting(obj,'Check Replication ! ');
-         StoreAndAddToMachine(obj);
+         Troubleshooting(zf,'Check Replication ! ');
+         StoreAndAddToMachine(zf);
 
-         obj   :=conn.NewObject(TFRE_DB_ZFSJob.ClassName);
-         zf    :=TFRE_DB_ZFSJob(obj.Implementor_HC);
+         zf    :=TFRE_DB_ZFSJob.CreateForDB;
          zf.SetJobkeyDescription(mon_key+'_'+jobkey+'_CHECK',desc);
          zf.SetRemoteSSH(cremoteuser, desthost, Getremotekeyfilename);
          zf.SetSnapshotCheck(destds,'AUTO',checkperiod_sec*2,checkperiod_sec*4);
          zf.SetPeriodic(everyHour);
-         Troubleshooting(obj,'Check Snapshot ! ');
-         StoreAndAddToMachine(obj);
+         Troubleshooting(zf,'Check Snapshot ! ');
+         StoreAndAddToMachine(zf);
       end;
 
 
       procedure AddInternetTestCase(const office:boolean);
       var
-        obj    : IFRE_DB_Object;
         job    : TFRE_DB_InternetTestcase;
       begin
-        obj    :=conn.NewObject(TFRE_DB_InternetTestcase.ClassName);
-        job    :=TFRE_DB_InternetTestcase(obj.Implementor_HC);
+        job    :=TFRE_DB_InternetTestcase.CreateForDB;
         job.SetRemoteSSH(cremoteuser, cremotehost, Getremotekeyfilename);
         if office then begin
           job.SetJobkeyDescription(mon_key+'_'+'INTERNETTESTCASE','Internetverbindung FirmOS Office');
           job.PrepareTest('91.114.28.42','91.114.28.41',TFRE_DB_StringArray.Create ('10.1.0.1'));
         end else begin
          job.SetJobkeyDescription(mon_key+'_'+'INTERNETTESTCASE_HOUSING','Internetverbindung FirmOS Housing');
-        job.PrepareTest('10.220.251.1','80.120.208.113',TFRE_DB_StringArray.Create ('8.8.8.8'));
+         job.PrepareTest('10.220.251.1','80.120.208.113',TFRE_DB_StringArray.Create ('8.8.8.8'));
         end;
         job.SetPeriodic(everyHour);
         Troubleshooting(job,'Restart Modem !');
@@ -568,13 +549,10 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
       procedure AddWinRMTestCase(const server: string; const jobkey: string; const desc: string);
       var
-        obj    : IFRE_DB_Object;
         wm     : TFRE_DB_WinRMTestcase;
         wmt    : TFRE_DB_WinRMTarget;
       begin
-        obj   :=conn.NewObject(TFRE_DB_WinRMTestcase.ClassName);
-
-        wm    :=TFRE_DB_WinRMTestcase(obj.Implementor_HC);
+        wm    :=TFRE_DB_WinRMTestcase.CreateForDB;
         wm.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         wm.SetRemoteSSH(cremoteuser, cremotehosttester, Getremotekeyfilename);
         wmt      := wm.AddWinRMTarget(cwinrmurl, cwinrmuser, cwinrmpassword);
@@ -582,25 +560,22 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         wmt.AddTestServiceRunning('MSExchangeServiceHost');
         wmt.AddTestServiceRunning('DHCPServer');
         wmt.SetTestCPUUsage(90);
-        Troubleshooting(obj,'Check KSM Server ! ');
-        StoreAndAddToMachine(obj);
+        Troubleshooting(wm,'Check KSM Server ! ');
+        StoreAndAddToMachine(wm);
       end;
 
       procedure AddMailCheck(const name : string);
       var
         sm     : TFRE_DB_MailSendTestcase;
         cm     : TFRE_DB_MailCheckTestcase;
-        obj    : IFRE_DB_Object;
       begin
-        obj      := conn.NewObject(TFRE_DB_MailSendTestcase.ClassName);
-        sm       := TFRE_DB_MailSendTestcase(obj.Implementor_HC);
+        sm       := TFRE_DB_MailSendTestcase.CreateForDB;
         sm.SetJobkeyDescription(mon_key+'_'+name,'Senden von Mails über den KSM Exchange Server');
         sm.SetRemoteSSH(cremoteuser, cremotehosttester, GetRemoteKeyFilename);
         sm.AddMailserver('10.4.0.234',cwinrmuser,cwinrmpassword,'tester@ksm.at','monsys@monsys.firmos.at');
-        StoreAndAddToMachine(obj);
+        StoreAndAddToMachine(sm);
 
-        obj      := conn.NewObject(TFRE_DB_MailCheckTestcase.ClassName);
-        cm       := TFRE_DB_MailCheckTestcase(obj.Implementor_HC);
+        cm       := TFRE_DB_MailCheckTestcase.CreateForDB;
         cm.SetJobkeyDescription(mon_key+'_'+name+'_CHECK','Empfangen von über den KSM Exchange Server gesendenten Mails');
         cm.Field('MAX_ALLOWED_TIME').AsInt32 := 60;
         cm.SetRemoteSSH(cremoteuser, cremotehosttester, Getremotekeyfilename);
@@ -610,21 +585,18 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
       procedure AddSMBTestCase(const server: string; const jobkey: string; const desc: string; const user : string; const pass: string; const fileshare : string; const mountpoint : string);
       var
-        obj    : IFRE_DB_Object;
         smb    : TFRE_DB_SMBTestcase;
       begin
-        obj   :=conn.NewObject(TFRE_DB_SMBTestcase.ClassName);
-        smb   :=TFRE_DB_SMBTestcase(obj.Implementor_HC);
+        smb   :=TFRE_DB_SMBTestcase.CreateForDB;
         smb.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         smb.SetRemoteSSH(cremoteuser, cremotehosttester, Getremotekeyfilename);
         smb.SetFileshare(server,user,pass,fileshare,mountpoint);
-        Troubleshooting(obj,'Check Fileservice ! ');
-        StoreAndAddToMachine(obj);
+        Troubleshooting(smb,'Check Fileservice ! ');
+        StoreAndAddToMachine(smb);
       end;
 
       procedure AddSBFWZones;
       var
-        obj      : IFRE_DB_Object;
         job      : TFRE_DB_MultiPingTestcase;
         i        : integer;
 
@@ -635,8 +607,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         end;
 
       begin
-        obj    :=conn.NewObject(TFRE_DB_MultiPingTestcase.ClassName);
-        job    :=TFRE_DB_MultiPingTestcase(obj.Implementor_HC);
+        job    :=TFRE_DB_MultiPingTestcase.CreateForDB;
         job.SetJobkeyDescription(mon_key+'_'+'SBFW_ZONES_PING','Small Business Firewall');
         job.SetInformation('Small Business Firewall');
         job.SetRTTTimeout_ms(100);
@@ -658,13 +629,11 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
         procedure _addCheck;
         var
-          obj      : IFRE_DB_Object;
           check    : TFRE_AlertHTMLJob;
         begin
-         obj      :=conn.NewObject(TFRE_AlertHTMLJob.ClassName);
-         check    :=TFRE_AlertHTMLJob(obj.Implementor_HC);
+         check :=TFRE_AlertHTMLJob.CreateForDB;
          check.SetJobkeyDescription(mon_key+'_'+'ALERT_HTML_REPORT','HTML_REPORT');
-         StoreAndAddToMachine(obj);
+         StoreAndAddToMachine(check);
         end;
 
 
@@ -678,11 +647,12 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
         begin
           writeln ('SITE:',site.Field('objname').asstring);
-          aps   := site.ReferencedByList(TFRE_DB_AP_Lancom.Classname);
+          //Fixme
+          //aps   := site.ReferencedByList(TFRE_DB_AP_Lancom.Classname);
+          abort;
           if length(aps)>0 then begin
             writeln('AP:',length(aps));
-            obj    :=conn.NewObject(TFRE_DB_MultiPingTestcase.ClassName);
-            job    :=TFRE_DB_MultiPingTestcase(obj.Implementor_HC);
+            job    :=TFRE_DB_MultiPingTestcase.CreateForDB;
             job.SetJobkeyDescription(mon_key+'_'+'CITYACCESS_AP_'+site.Field('sitekey').asstring,'Cityaccess Accesspoints '+site.Field('objname').asstring);
  //           job.SetRemoteSSH(cremoteuser, cremotehost, Getremotekeyfilename);
             job.SetInformation(site.Field('objname').asstring);
@@ -729,7 +699,7 @@ begin
 
   mon_key                               := 'MONFOS';
 
-  mon                                := CONN.NewObject('TFRE_DB_Monitoring');
+  mon                                := TFRE_DB_Monitoring.CreateForDB;
   mon.Field('objname').AsString      := mon_key;
   mon_id                             := mon.UID;
   CheckDbResult(coll_mon.Store(mon),'Add Monitoring');
@@ -1319,14 +1289,14 @@ begin
   scheme.SetParentSchemeByName  ('TFRE_DB_OBJECTEX');
 end;
 
-function TFRE_DB_Monitoring.IMI_FullStatusUpdate(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_DB_Monitoring.WEB_FullStatusUpdate(const input: IFRE_DB_OBject; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 
   procedure _dopartialupdate(const fld : IFRE_DB_Field);
   begin
 //    writeln(fld.FieldName);
     if (fld.FieldType = fdbft_Object) then begin
       fld.AsObject.Field('jobkey').AsString := fld.FieldName;
-      IMI_PartialStatusUpdate(fld.AsObject);
+      WEB_PartialStatusUpdate(fld.AsObject,ses,app,conn);
     end;
   end;
 
@@ -1334,7 +1304,7 @@ begin
   input.ForAllFields(@_dopartialupdate);
 end;
 
-function TFRE_DB_Monitoring.IMI_PartialStatusUpdate(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_DB_Monitoring.WEB_PartialStatusUpdate(const input: IFRE_DB_OBject; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var jobkey              : string;
     coll_testcase       : IFRE_DB_COLLECTION;
     testcase_dbo        : IFRE_DB_Object;
@@ -1343,13 +1313,16 @@ var jobkey              : string;
     itcs                : integer;
 begin
   jobkey        := input.Field('jobkey').AsString;
-  coll_testcase := GetDBConnection.Collection('testcase',true);
+  coll_testcase := conn.Collection('testcase',true);
   if coll_testcase.GetIndexedObj(jobkey,testcase_dbo) then begin
-    testcase_status_ids := testcase_dbo.ReferencedByList('TFRE_DB_TestcaseStatus');
+
+  //  testcase_status_ids := testcase_dbo.ReferencedByList('TFRE_DB_TestcaseStatus'); DEPRECATED
+    testcase_status_ids := conn.GetReferences(testcase_dbo.UID,false,'TFRE_DB_TestcaseStatus');
     for itcs := low(testcase_status_ids) to high(testcase_status_ids) do begin
-      GetDBConnection.Fetch(testcase_status_ids[itcs],testcase_status_dbo);
+      conn.Fetch(testcase_status_ids[itcs],testcase_status_dbo);
       if testcase_status_dbo.Field('actual').AsBoolean = true then begin
-        TFRE_DB_TestcaseStatus(testcase_status_dbo.Implementor_HC).IMI_UpdateActualStatus(input);
+       //TFRE_DB_TestcaseStatus(testcase_status_dbo.Implementor_HC).WEB_UpdateActualStatus(input,ses,app,conn); NOT SO CUTE
+        testcase_status_dbo.Invoke('WEB_UpdateActualStatus',input,ses,app,conn);
       end;
     end;
   end else begin
@@ -1436,7 +1409,9 @@ begin
   coll_mon.ForAllBreak(@_getmon);
 //  writeln(mon.DumpToString);
 
-  TFRE_DB_Monitoring(mon.Implementor_HC).IMI_FullStatusUpdate(actmon);
+  abort;
+  //FIXME ? Dangling global Method ?
+  //TFRE_DB_Monitoring(mon.Implementor_HC).WEB_FullStatusUpdate(actmon);
 end;
 
 procedure MONSYS_MetaRegister;
