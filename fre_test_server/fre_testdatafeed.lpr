@@ -41,6 +41,7 @@ program fre_testdatafeed;
 {$LIBRARYPATH ../../lib}
 
 // ./fre_testdatafeed -U root -H 10.220.251.10 -u feeder@system -p a1234
+// ./fre_testdatafeed -U root -H 10.1.0.116 -u feeder@system -p a1234
 // lazarus+debugger: => ./fre_testdatafeed -U root -H 10.220.251.10 -D
 
 uses
