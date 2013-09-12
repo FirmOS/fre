@@ -106,6 +106,12 @@ begin
                       CreateAppText(conn,'$gc_vm_paged_mem','Paged Mem');
                       CreateAppText(conn,'$gc_vm_virtual_mem','Virtual Mem');
 
+                      CreateAppText(conn,'$vm_new_caption','New Virtual Machine');
+                      CreateAppText(conn,'$vm_new_save','Create');
+
+                      CreateAppText(conn,'$vm_name','Name');
+                      CreateAppText(conn,'$vm_mem','RAM (kB)');
+
                       CreateAppText(conn,'$error_no_access','Access denied');
 
                    end;
