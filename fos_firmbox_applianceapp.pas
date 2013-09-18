@@ -62,7 +62,6 @@ type
   private
     FtotalSwap,FtotalRam : Integer; //in kb
     FtotalNet            : Integer; //in byte
-    function        _byteToString             (const byte: Int64): String; inline;
     procedure       _fillPoolCollection       (const conn: IFRE_DB_CONNECTION; const data: IFRE_DB_Object);
     function        _SendData                 (const Input:IFRE_DB_Object):IFRE_DB_Object;
     procedure       _HandleRegisterSend       (session : TFRE_DB_UserSession);
@@ -186,7 +185,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,datalink_tr_Grid);
     with datalink_tr_Grid do begin
       //AddOneToOnescheme('icon','',app.FetchAppText(conn,'$datalink_icon').GetShort,dt_icon);
-      AddOneToOnescheme('objname','linkname',app.FetchAppText(conn,'$datalink_name').Getshort,dt_string,1,'icon');
+      AddOneToOnescheme('objname','linkname',app.FetchAppText(conn,'$datalink_name').Getshort,dt_string,true,1,'icon');
 //      AddOneToOnescheme('zoned','zoned',app.FetchAppText(conn,'$datalink_zoned').Getshort);
       AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$datalink_desc').Getshort);
     end;
@@ -492,36 +491,6 @@ end;
 
 { TFRE_FIRMBOX_APPLIANCE_STATUS_MOD }
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._byteToString(const byte: Int64): String;
-var
-  unity: String;
-  amount: Real;
-begin
-  unity:='Byte';
-  amount:=byte;
-  if amount>1000 then begin
-    amount:=amount/1024;
-    unity:='kB';
-    if amount>1000 then begin
-      amount:=amount/1024;
-      unity:='MB';
-      if amount>1000 then begin
-        amount:=amount/1024;
-        unity:='GB';
-        if amount>1000 then begin
-          amount:=amount/1024;
-          unity:='TB';
-          if amount>1000 then begin
-            amount:=amount/1024;
-            unity:='PB';
-          end;
-        end;
-      end;
-    end;
-  end;
-  Result:=FloatToStrF(amount,ffFixed,1,2)+unity;
-end;
-
 procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._fillPoolCollection(const conn: IFRE_DB_CONNECTION; const data: IFRE_DB_Object);
 var
   coll      : IFRE_DB_COLLECTION;
@@ -533,15 +502,15 @@ var
     case obj.Field('name').AsString of
       'used' : begin
                  obj.Field('value').AsReal32 := data.FieldPath('zones.used').AsInt64;
-                 obj.Field('value_lbl').AsString := _byteToString(data.FieldPath('zones.used').AsInt64);
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('zones.used').AsInt64);
                end;
       'avail': begin
                  obj.Field('value').AsReal32 := data.FieldPath('zones.available').AsInt64;
-                 obj.Field('value_lbl').AsString := _byteToString(data.FieldPath('zones.available').AsInt64);
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('zones.available').AsInt64);
                end;
       'ref'  : begin
                  obj.Field('value').AsReal32 := data.FieldPath('zones.referenced').AsInt64;
-                 obj.Field('value_lbl').AsString := _byteToString(data.FieldPath('zones.referenced').AsInt64);
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('zones.referenced').AsInt64);
                end;
     end;
     CheckDbResult(coll.Update(obj),'Update pool space');

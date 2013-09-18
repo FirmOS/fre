@@ -381,7 +381,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,datalink_tr_Grid);
     with datalink_tr_Grid do begin
       //AddOneToOnescheme('icon','',app.FetchAppText(conn,'$datalink_icon').GetShort,dt_icon);
-      AddOneToOnescheme('objname','linkname',app.FetchAppText(conn,'$datalink_name').Getshort,dt_string,1,'icon');
+      AddOneToOnescheme('objname','linkname',app.FetchAppText(conn,'$datalink_name').Getshort,dt_string,true,1,'icon');
 //      AddOneToOnescheme('zoned','zoned',app.FetchAppText(conn,'$datalink_zoned').Getshort);
       AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$datalink_desc').Getshort);
     end;
@@ -541,13 +541,13 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     with tr_Grid do begin
-      AddOneToOnescheme('Objname','',app.FetchAppText(conn,'$gc_vm_name').Getshort,dt_string,4);
+      AddOneToOnescheme('Objname','',app.FetchAppText(conn,'$gc_vm_name').Getshort,dt_string,true,4);
       AddOneToOnescheme('MType','',app.FetchAppText(conn,'$gc_vm_type').Getshort);
       AddOneToOnescheme('MStateIcon','',app.FetchAppText(conn,'$gc_vm_state').Getshort,dt_icon);
-      AddOneToOnescheme('PERFPCPU','',app.FetchAppText(conn,'$gc_vm_cpu').Getshort,dt_number,2);
-      AddOneToOnescheme('PERFPMEM','',app.FetchAppText(conn,'$gc_vm_used_mem').Getshort,dt_number,2);
-      AddOneToOnescheme('PERFRSS','',app.FetchAppText(conn,'$gc_vm_paged_mem').Getshort,dt_number,2);
-      AddOneToOnescheme('PERFVSZ','',app.FetchAppText(conn,'$gc_vm_virtual_mem').Getshort,dt_number,2);
+      AddOneToOnescheme('PERFPCPU','',app.FetchAppText(conn,'$gc_vm_cpu').Getshort,dt_number,true,2);
+      AddOneToOnescheme('PERFPMEM','',app.FetchAppText(conn,'$gc_vm_used_mem').Getshort,dt_number,true,2);
+      AddOneToOnescheme('PERFRSS','',app.FetchAppText(conn,'$gc_vm_paged_mem').Getshort,dt_number,true,2);
+      AddOneToOnescheme('PERFVSZ','',app.FetchAppText(conn,'$gc_vm_virtual_mem').Getshort,dt_number,true,2);
     end;
     vmcp := session.GetDBConnection.Collection('virtualmachine',false);
     vmc  := session.NewDerivedCollection('VMC');
