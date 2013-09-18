@@ -17,18 +17,24 @@ uses
 
 //var
 //     cVM_HostUser:string   = ''; // 'root';
-//     cVMHostMachine:string = ''; // '10.1.0.130';
+//     cVMHostMachine:string = ''; // '10.1.0.116';
 
 type
 
   { TFRE_FIRMBOX_VM_MACHINES_MOD }
 
   TFRE_FIRMBOX_VM_MACHINES_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  private
+    function  getAvailableRAM           :Integer;
+    function  getMinimumRAM             :Integer;
+    function  getRAMSteps               :Integer;
+    function  getAvailableCPU           :Integer;
   protected
     class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
     procedure       MySessionInitializeModule (const session   : TFRE_DB_UserSession);override;
-    procedure       _GetSelectedVMData        (session : TFRE_DB_UserSession ; const selected : TGUID; var vmkey,vnc_port,vnc_host,vm_state: String);
+    procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
+    procedure       _GetSelectedVMData        (session : IFRE_DB_UserSession ; const selected : TGUID; var vmkey,vnc_port,vnc_host,vm_state: String);
   published
     function  WEB_VM_Feed_Update        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -38,10 +44,29 @@ type
     function  WEB_ContentNote           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_VM_Details            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_NewVM                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_CreateVM              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StartVM               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StopVM                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StopVMF               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_UpdateVM              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+  end;
+
+  { TFRE_FIRMBOX_VM_RESOURCES_MOD }
+
+  TFRE_FIRMBOX_VM_RESOURCES_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  protected
+    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
+    procedure       SetupAppModuleStructure   ; override;
+    procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
+    procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
+  published
+    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentDisks          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentISOs           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CreateDisk            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteDisk            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_UploadISO             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteISO             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_VM_NETWORK_MOD }
@@ -68,6 +93,23 @@ type
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
+  { TFRE_FIRMBOX_VM_DISK }
+
+  TFRE_FIRMBOX_VM_DISK = class (TFRE_DB_ObjectEx)
+  protected
+    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects    (const conn:IFRE_DB_SYS_CONNECTION); override;
+  end;
+
+  { TFRE_FIRMBOX_VM_ISO }
+
+  TFRE_FIRMBOX_VM_ISO = class (TFRE_DB_ObjectEx)
+  protected
+    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects    (const conn:IFRE_DB_SYS_CONNECTION); override;
+  end;
+
+
 procedure Register_DB_Extensions;
 
 implementation
@@ -75,9 +117,219 @@ implementation
 procedure Register_DB_Extensions;
 begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_MACHINES_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_RESOURCES_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_STATUS_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_NETWORK_MOD);
+
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_DISK);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_ISO);
   GFRE_DBI.Initialize_Extension_Objects;
+end;
+
+{ TFRE_FIRMBOX_VM_ISO }
+
+class procedure TFRE_FIRMBOX_VM_ISO.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group : IFRE_DB_InputGroupSchemeDefinition;
+begin
+  inherited RegisterSystemScheme(scheme);
+  scheme.AddSchemeField('isoid',fdbft_String).required:=true;
+  scheme.AddSchemeField('name',fdbft_String).required:=true;
+
+  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_FIRMBOX_VM_ISO_main_group');
+  group.AddInput('isoid','$scheme_TFRE_FIRMBOX_VM_ISO_id');
+  group.AddInput('name','$scheme_TFRE_FIRMBOX_VM_ISO_name');
+end;
+
+class procedure TFRE_FIRMBOX_VM_ISO.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+begin
+  inherited InstallDBObjects(conn);
+  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_ISO_main_group','General Information'));
+  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_ISO_id','ID'));
+  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_ISO_name','Name'));
+end;
+
+{ TFRE_FIRMBOX_VM_DISK }
+
+class procedure TFRE_FIRMBOX_VM_DISK.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group : IFRE_DB_InputGroupSchemeDefinition;
+begin
+  inherited RegisterSystemScheme(scheme);
+  scheme.AddSchemeField('diskid',fdbft_String).required:=true;
+  scheme.AddSchemeField('name',fdbft_String).required:=true;
+
+  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_FIRMBOX_VM_DISK_main_group');
+  group.AddInput('diskid','$scheme_TFRE_FIRMBOX_VM_DISK_id');
+  group.AddInput('name','$scheme_TFRE_FIRMBOX_VM_DISK_name');
+end;
+
+class procedure TFRE_FIRMBOX_VM_DISK.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+begin
+  inherited InstallDBObjects(conn);
+  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_DISK_main_group','General Information'));
+  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_DISK_id','ID'));
+  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_DISK_name','Name'));
+end;
+
+{ TFRE_FIRMBOX_VM_RESOURCES_MOD }
+
+class procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  inherited RegisterSystemScheme(scheme);
+  scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
+end;
+
+procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.SetupAppModuleStructure;
+begin
+  inherited SetupAppModuleStructure;
+  InitModuleDesc('VMRESOURCES','$vm_resources_description');
+end;
+
+procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
+var
+  vm_disks: IFRE_DB_COLLECTION;
+  vm_isos : IFRE_DB_COLLECTION;
+begin
+  inherited MyServerInitializeModule(admin_dbc);
+
+  vm_disks := admin_dbc.Collection('VM_DISKS',true,true);
+  vm_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
+
+  vm_isos := admin_dbc.Collection('VM_ISOS',true,true);
+  vm_isos.DefineIndexOnField('isoid',fdbft_String,true,true);
+end;
+
+procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+var
+  app     : TFRE_DB_APPLICATION;
+  conn    : IFRE_DB_CONNECTION;
+  tr_Grid : IFRE_DB_SIMPLE_TRANSFORM;
+  isosp   : IFRE_DB_COLLECTION;
+  isos    : IFRE_DB_DERIVED_COLLECTION;
+  diskp   : IFRE_DB_COLLECTION;
+  disks   : IFRE_DB_DERIVED_COLLECTION;
+begin
+  inherited MySessionInitializeModule(session);
+  app:=GetEmbeddingApp;
+  conn := session.GetDBConnection;
+
+  if session.IsInteractiveSession then begin
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
+    tr_Grid.AddOneToOnescheme('name','',app.FetchAppText(session,'$gc_iso_name').Getshort);
+
+    isosp := conn.Collection('VM_ISOS',false);
+    isos:= session.NewDerivedCollection('VM_ISOS_DERIVED');
+    with isos do begin
+      SetDeriveTransformation(tr_Grid);
+      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDeriveParent(isosp);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
+    tr_Grid.AddOneToOnescheme('name','',app.FetchAppText(session,'$gc_disk_name').Getshort);
+
+    diskp := conn.Collection('VM_DISKS',false);
+    disks:= session.NewDerivedCollection('VM_DISKS_DERIVED');
+    with disks do begin
+      SetDeriveTransformation(tr_Grid);
+      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDeriveParent(diskp);
+    end;
+  end;
+end;
+
+function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res : TFRE_DB_SUBSECTIONS_DESC;
+begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+
+  res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
+  res.AddSection.Describe(CWSF(@WEB_ContentDisks),app.FetchAppText(ses,'$vm_resources_disks').Getshort,1,'DISKS');
+  res.AddSection.Describe(CWSF(@WEB_ContentISOs),app.FetchAppText(ses,'$vm_resources_isos').Getshort,2,'ISOS');
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_ContentDisks(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  coll: IFRE_DB_DERIVED_COLLECTION;
+  res : TFRE_DB_VIEW_LIST_DESC;
+begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+
+  coll := ses.FetchDerivedCollection('VM_DISKS_DERIVED');
+  res := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+  res.AddButton.Describe(CWSF(@WEB_CreateDisk),'/images_apps/hal/add_disk.png',app.FetchAppText(ses,'$vm_resources_add_disk').Getshort,app.FetchAppText(ses,'$vm_resources_add_disk').GetHint);
+  res.AddButton.Describe(CWSF(@WEB_DeleteDisk),'/images_apps/hal/delete_disk.png',app.FetchAppText(ses,'$vm_resources_delete_disk').Getshort,app.FetchAppText(ses,'$vm_resources_delete_disk').GetHint,fdgbd_multi);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_ContentISOs(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  coll: IFRE_DB_DERIVED_COLLECTION;
+  res : TFRE_DB_VIEW_LIST_DESC;
+begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+
+  coll := ses.FetchDerivedCollection('VM_ISOS_DERIVED');
+  res := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+  res.AddButton.Describe(CWSF(@WEB_UploadISO),'/images_apps/hal/add_iso.png',app.FetchAppText(ses,'$vm_resources_add_iso').Getshort,app.FetchAppText(ses,'$vm_resources_add_iso').GetHint);
+  res.AddButton.Describe(CWSF(@WEB_DeleteISO),'/images_apps/hal/delete_iso.png',app.FetchAppText(ses,'$vm_resources_delete_iso').Getshort,app.FetchAppText(ses,'$vm_resources_delete_iso').GetHint,fdgbd_multi);
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_CreateDisk(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res       : TFRE_DB_DIALOG_DESC;
+  scheme    : IFRE_DB_SchemeObject;
+  serverFunc: TFRE_DB_SERVER_FUNC_DESC;
+begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+
+  GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_DISK',scheme);
+  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(ses,'ADD_DISK').Getshort,600);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  serverFunc:=CSCF('TFRE_FIRMBOX_VM_DISK','NewOperation','collection','VM_DISKS');
+  res.AddButton.Describe(app.FetchAppText(ses,'$button_save').Getshort,serverFunc,fdbbt_submit);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_DeleteDisk(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  obj: IFRE_DB_Object;
+begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+
+  conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
+  Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_DISK).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
+end;
+
+function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_UploadISO(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res: TFRE_DB_DIALOG_DESC;
+  serverFunc: TFRE_DB_SERVER_FUNC_DESC;
+  scheme: IFRE_DB_SchemeObject;
+begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+
+  GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_ISO',scheme);
+  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(ses,'UPLOAD_ISO').Getshort,600);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  serverFunc:=CSCF('TFRE_FIRMBOX_VM_ISO','NewOperation','collection','VM_ISOS');
+  res.AddButton.Describe(app.FetchAppText(ses,'$button_save').Getshort,serverFunc,fdbbt_submit);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_DeleteISO(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  obj: IFRE_DB_Object;
+begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+
+  conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
+  Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_ISO).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
 end;
 
 { TFRE_FIRMBOX_VM_STATUS_MOD }
@@ -154,7 +406,7 @@ var
 begin
   if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
-  dc_datalink                := GetSession(input).FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
+  dc_datalink                := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   txt:=app.FetchAppText(ses,'$datalink_create_stub');
   grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateStub),'images_apps/hal/create_stub.png',txt.Getshort,txt.GetHint);
@@ -228,6 +480,26 @@ end;
 
 { TFRE_FIRMBOX_VM_MACHINES_MOD }
 
+function TFRE_FIRMBOX_VM_MACHINES_MOD.getAvailableRAM: Integer;
+begin
+  Result:=64*1024; //FIXXME: please implement me
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.getMinimumRAM: Integer;
+begin
+  Result:=1024; //FIXXME: please implement me
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.getRAMSteps: Integer;
+begin
+  Result:=1024; //FIXXME: please implement me
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.getAvailableCPU: Integer;
+begin
+  Result:=4; //FIXXME - please implement me
+end;
+
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
@@ -243,15 +515,24 @@ end;
 
 procedure TFRE_FIRMBOX_VM_MACHINES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
-  vmc     : IFRE_DB_DERIVED_COLLECTION;
-  vmcp    : IFRE_DB_COLLECTION;
-  tr_Grid : IFRE_DB_SIMPLE_TRANSFORM;
-  vmo     : IFRE_DB_Object;
-  vm      : IFRE_DB_Object;
-  uvm     : IFRE_DB_Object;
-  i       : Integer;
-  app     : TFRE_DB_APPLICATION;
-  conn    : IFRE_DB_CONNECTION;
+  vmc        : IFRE_DB_DERIVED_COLLECTION;
+  vmcp       : IFRE_DB_COLLECTION;
+  tr_Grid    : IFRE_DB_SIMPLE_TRANSFORM;
+  vmo        : IFRE_DB_Object;
+  vm         : IFRE_DB_Object;
+  uvm        : IFRE_DB_Object;
+  i          : Integer;
+  app        : TFRE_DB_APPLICATION;
+  conn       : IFRE_DB_CONNECTION;
+  isosp      : IFRE_DB_COLLECTION;
+  isos       : IFRE_DB_DERIVED_COLLECTION;
+  disksp     : IFRE_DB_COLLECTION;
+  disks      : IFRE_DB_DERIVED_COLLECTION;
+  scsp       : IFRE_DB_COLLECTION;
+  scs        : IFRE_DB_DERIVED_COLLECTION;
+  keyboardsp : IFRE_DB_COLLECTION;
+  keyboards  : IFRE_DB_DERIVED_COLLECTION;
+  transform  : IFRE_DB_SIMPLE_TRANSFORM;
 begin
   inherited MySessionInitializeModule(session);
   app:=GetEmbeddingApp;
@@ -276,11 +557,164 @@ begin
       SetDeriveParent(vmcp);
       AddRightFilterForEntryAndUser('RF','VMLIST');
     end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    transform.AddOneToOnescheme('name');
+
+    isosp := conn.Collection('VM_ISOS',false);
+    isos:= session.NewDerivedCollection('VM_CH_ISOS_DERIVED');
+    with isos do begin
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDeriveParent(isosp);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    transform.AddOneToOnescheme('name');
+
+    disksp := session.GetDBConnection.Collection('VM_DISKS',false);
+    disks:= session.NewDerivedCollection('VM_CH_DISKS_DERIVED');
+    with disks do begin
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDeriveParent(disksp);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    transform.AddOneToOnescheme('name');
+
+    scsp := session.GetDBConnection.Collection('VM_SCS',false);
+    scs:= session.NewDerivedCollection('VM_CH_SCS_DERIVED');
+    with scs do begin
+      SetDeriveTransformation(transform);
+      AddOrderField('scs_order','order',true);
+      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDeriveParent(scsp);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    transform.AddOneToOnescheme('name');
+
+    keyboardsp := session.GetDBConnection.Collection('VM_KEYBOARDS',false);
+    keyboards:= session.NewDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
+    with keyboards do begin
+      SetDeriveTransformation(transform);
+      AddOrderField('keyboard_order','order',true);
+      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDeriveParent(keyboardsp);
+    end;
+
   end;
 end;
 
+procedure TFRE_FIRMBOX_VM_MACHINES_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
+var
+  vm_disks    : IFRE_DB_COLLECTION;
+  vm_isos     : IFRE_DB_COLLECTION;
+  vm_sc       : IFRE_DB_COLLECTION;
+  vm_keyboards: IFRE_DB_COLLECTION;
+  storeObj    : IFRE_DB_Object;
+begin
+  inherited MyServerInitializeModule(admin_dbc);
 
-procedure TFRE_FIRMBOX_VM_MACHINES_MOD._GetSelectedVMData(session: TFRE_DB_UserSession; const selected: TGUID; var vmkey, vnc_port, vnc_host, vm_state: String);
+  vm_disks := admin_dbc.Collection('VM_DISKS',true,true);
+  vm_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
+
+  vm_isos := admin_dbc.Collection('VM_ISOS',true,true);
+  vm_isos.DefineIndexOnField('isoid',fdbft_String,true,true);
+
+  vm_sc   := admin_dbc.Collection('VM_SCS',true,true);
+  vm_sc.DefineIndexOnField('scid',fdbft_String,true,true);
+
+  vm_keyboards := admin_dbc.Collection('VM_KEYBOARDS',true,true);
+  vm_keyboards.DefineIndexOnField('keyboardid',fdbft_String,true,true);
+
+  //FIXXME: remove test code
+  storeObj := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_DISK);
+  storeObj.Field('diskid').AsString:='d1';
+  storeObj.Field('name').AsString:='d1 name';
+  CheckDbResult(vm_disks.Store(storeObj),'Store VM disk');
+
+  storeObj := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_DISK);
+  storeObj.Field('diskid').AsString:='d2';
+  storeObj.Field('name').AsString:='d2 name';
+  CheckDbResult(vm_disks.Store(storeObj),'Store VM disk');
+
+  storeObj := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_ISO);
+  storeObj.Field('isoid').AsString:='i1';
+  storeObj.Field('name').AsString:='iso1 name';
+  CheckDbResult(vm_isos.Store(storeObj),'Store VM iso');
+
+  storeObj := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_ISO);
+  storeObj.Field('isoid').AsString:='i2';
+  storeObj.Field('name').AsString:='iso2 name';
+  CheckDbResult(vm_isos.Store(storeObj),'Store VM iso');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('keyboardid').AsString:='en-gb';
+  storeObj.Field('name').AsString:='English (GB)';
+  storeObj.Field('order').AsString:='1';
+  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('keyboardid').AsString:='en-us';
+  storeObj.Field('name').AsString:='English (US)';
+  storeObj.Field('order').AsString:='2';
+  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('keyboardid').AsString:='fr';
+  storeObj.Field('name').AsString:='French';
+  storeObj.Field('order').AsString:='3';
+  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('keyboardid').AsString:='de';
+  storeObj.Field('name').AsString:='German';
+  storeObj.Field('order').AsString:='4';
+  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('keyboardid').AsString:='it';
+  storeObj.Field('name').AsString:='Italian';
+  storeObj.Field('order').AsString:='5';
+  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('keyboardid').AsString:='es';
+  storeObj.Field('name').AsString:='Spanish';
+  storeObj.Field('order').AsString:='6';
+  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+  //FIXXME: move to correct location or read from qemu help
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('scid').AsString:='ac97';
+  storeObj.Field('name').AsString:='Intel 82801AA AC97 Audio';
+  storeObj.Field('order').AsString:='1';
+  CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('scid').AsString:='sb16';
+  storeObj.Field('name').AsString:='Creative Sound Blaster 16';
+  storeObj.Field('order').AsString:='2';
+  CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('scid').AsString:='es1370';
+  storeObj.Field('name').AsString:='ENSONIQ AudioPCI ES1370';
+  storeObj.Field('order').AsString:='3';
+  CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
+
+  storeObj:=GFRE_DBI.NewObject;
+  storeObj.Field('scid').AsString:='hda';
+  storeObj.Field('name').AsString:='Intel HD Audio';
+  storeObj.Field('order').AsString:='4';
+  CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
+
+end;
+
+
+procedure TFRE_FIRMBOX_VM_MACHINES_MOD._GetSelectedVMData(session: IFRE_DB_UserSession; const selected: TGUID; var vmkey, vnc_port, vnc_host, vm_state: String);
 var DC_VMC     : IFRE_DB_DERIVED_COLLECTION;
       vmo        : IFRE_DB_Object;
 begin
@@ -434,7 +868,7 @@ begin
   if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
-    _GetSelectedVMData(GetSession(input),sel_guid,vmkey,vncp,vnch,vmstate);
+    _GetSelectedVMData(ses,sel_guid,vmkey,vncp,vnch,vmstate);
     vm_sub := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
     sf := CWSF(@WEB_VM_ShowInfo); sf.AddParam.Describe('VMKEY',vmkey);
     vm_sub.AddSection.Describe(sf,app.FetchAppText(ses,'$vm_details_config').Getshort,2);
@@ -450,9 +884,102 @@ begin
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_NewVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+var
+  res                  : TFRE_DB_DIALOG_DESC;
+  maxRAM,minRAM,stepRAM: Integer;
+  maxCPU               : Integer;
+  idestore             : TFRE_DB_STORE_DESC;
+  isostore             : TFRE_DB_STORE_DESC;
+  diskstore            : TFRE_DB_STORE_DESC;
+  keyboardstore        : TFRE_DB_STORE_DESC;
+  vm_disks             : IFRE_DB_DERIVED_COLLECTION;
+  vm_isos              : IFRE_DB_DERIVED_COLLECTION;
+  vm_scs               : IFRE_DB_DERIVED_COLLECTION;
+  vm_keyboards         : IFRE_DB_DERIVED_COLLECTION;
+  chooser              : TFRE_DB_INPUT_CHOOSER_DESC;
+  diskchooser          : TFRE_DB_INPUT_CHOOSER_DESC;
+  isochooser           : TFRE_DB_INPUT_CHOOSER_DESC;
+  group                : TFRE_DB_INPUT_GROUP_DESC;
 begin
   if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','NEW VM',fdbmt_info); //FIXXME: please implement me
+
+  vm_isos := ses.FetchDerivedCollection('VM_CH_ISOS_DERIVED');
+  vm_disks:= ses.FetchDerivedCollection('VM_CH_DISKS_DERIVED');
+  vm_scs:= ses.FetchDerivedCollection('VM_CH_SCS_DERIVED');
+  vm_keyboards:= ses.FetchDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
+
+  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(ses,'$vm_new_caption').Getshort);
+  res.AddButton.Describe(app.FetchAppText(ses,'$vm_new_save').Getshort,CWSF(@WEB_CreateVM),fdbbt_submit);
+
+  res.AddInput.Describe(app.FetchAppText(ses,'$vm_name').Getshort,'name',true);
+  maxRAM:=getAvailableRAM; minRAM:=getMinimumRAM; stepRAM:=getRAMSteps;
+  res.AddNumber.DescribeSlider(app.FetchAppText(ses,'$vm_mem').Getshort,'mem',minRAM,maxRAM,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);
+
+  maxCPU:=getAvailableCPU;
+  res.AddNumber.DescribeSlider(app.FetchAppText(ses,'$vm_cpu').Getshort,'cpu',1,maxCPU,IntToStr(maxCPU),0,maxCPU);
+
+  res.AddChooser.Describe(app.FetchAppText(ses,'$vm_sc').Getshort,'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC,true,dh_chooser_combo,true);
+
+  idestore:=TFRE_DB_STORE_DESC.create.Describe();
+  idestore.AddEntry.Describe(app.FetchAppText(ses,'$vm_ide_option_disk').Getshort,'disk');
+  idestore.AddEntry.Describe(app.FetchAppText(ses,'$vm_ide_option_iso').Getshort,'iso');
+
+  isostore:=vm_isos.GetStoreDescription as TFRE_DB_STORE_DESC;
+  isostore.AddEntry.Describe(app.FetchAppText(ses,'$vm_upload_iso').Getshort,'upload');
+
+  diskstore:=vm_disks.GetStoreDescription as TFRE_DB_STORE_DESC;
+  diskstore.AddEntry.Describe(app.FetchAppText(ses,'$vm_create_new_disk').Getshort,'create');
+
+  chooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_ide0').Getshort,'ide0',idestore,true,dh_chooser_combo,false,false,false,'disk');
+
+  diskchooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_disk_chooser').Getshort,'disk0',diskstore,true,dh_chooser_combo,true);
+  chooser.addDependentInput(diskchooser,'disk');
+  diskchooser.addDependentInput(res.AddInput.Describe(app.FetchAppText(ses,'$vm_new_disk_name').Getshort,'diskname0',true),'create');
+  diskchooser.addDependentInput(res.AddNumber.Describe(app.FetchAppText(ses,'$vm_new_disk_size').Getshort,'disksize0',true,false,false,false,'40'),'create');
+  isochooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_iso_chooser').Getshort,'iso0',isostore,true,dh_chooser_combo,true);
+  chooser.addDependentInput(isochooser,'iso');
+
+  chooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_ide1').Getshort,'ide1',idestore,true,dh_chooser_combo,false,false,false,'iso');
+
+  diskchooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_disk_chooser').Getshort,'disk1',diskstore,true,dh_chooser_combo,true);
+  chooser.addDependentInput(diskchooser,'disk');
+  diskchooser.addDependentInput(res.AddInput.Describe(app.FetchAppText(ses,'$vm_new_disk_name').Getshort,'diskname1',true),'create');
+  diskchooser.addDependentInput(res.AddNumber.Describe(app.FetchAppText(ses,'$vm_new_disk_size').Getshort,'disksize1',true,false,false,false,'40'),'create');
+  isochooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_iso_chooser').Getshort,'iso1',isostore,true,dh_chooser_combo,true);
+  chooser.addDependentInput(isochooser,'iso');
+
+  chooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_ide2').Getshort,'ide2',idestore);
+
+  diskchooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_disk_chooser').Getshort,'disk2',diskstore,true,dh_chooser_combo,true);
+  chooser.addDependentInput(diskchooser,'disk');
+  diskchooser.addDependentInput(res.AddInput.Describe(app.FetchAppText(ses,'$vm_new_disk_name').Getshort,'diskname2',true),'create');
+  diskchooser.addDependentInput(res.AddNumber.Describe(app.FetchAppText(ses,'$vm_new_disk_size').Getshort,'disksize2',true,false,false,false,'40'),'create');
+  isochooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_iso_chooser').Getshort,'iso2',isostore,true,dh_chooser_combo,true);
+  chooser.addDependentInput(isochooser,'iso');
+
+  chooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_ide3').Getshort,'ide3',idestore);
+
+  diskchooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_disk_chooser').Getshort,'disk3',diskstore,true,dh_chooser_combo,true);
+  chooser.addDependentInput(diskchooser,'disk');
+  diskchooser.addDependentInput(res.AddInput.Describe(app.FetchAppText(ses,'$vm_new_disk_name').Getshort,'diskname3',true),'create');
+  diskchooser.addDependentInput(res.AddNumber.Describe(app.FetchAppText(ses,'$vm_new_disk_size').Getshort,'disksize3',true,false,false,false,'40'),'create');
+  isochooser:=res.AddChooser.Describe(app.FetchAppText(ses,'$vm_iso_chooser').Getshort,'iso3',isostore,true,dh_chooser_combo,true);
+  chooser.addDependentInput(isochooser,'iso');
+
+  group:=res.AddGroup.Describe(app.FetchAppText(ses,'$vm_advanced').Getshort,true,true);
+
+  keyboardstore:=vm_keyboards.GetStoreDescription as TFRE_DB_STORE_DESC;
+  keyboardstore.AddEntry.Describe(app.FetchAppText(ses,'$vm_keyboard_layout_auto').Getshort,'auto');
+  group.AddChooser.Describe(app.FetchAppText(ses,'$vm_keyboard_layout').Getshort,'keybord_layout',keyboardstore,true,dh_chooser_combo,true);
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not conn.CheckRight(Get_Rightname('admin_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  //FIXXME: please implement me
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_StartVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -466,7 +993,7 @@ begin
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','START VM',fdbmt_info);
   //exit;
   if input.FieldExists('SELECTED') then begin
-    _GetSelectedVMData(GetSession(input),input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
+    _GetSelectedVMData(ses,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Start(vmkey);
     vmc.Finalize;
@@ -485,7 +1012,7 @@ begin
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','STOP VM',fdbmt_info);
   //exit;
   if input.FieldExists('SELECTED') then begin
-    _GetSelectedVMData(GetSession(input),input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
+    _GetSelectedVMData(ses,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Halt(vmkey);
     vmc.Finalize;
@@ -502,7 +1029,7 @@ var   vmc     : IFOS_VM_HOST_CONTROL;
 begin
   if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   if input.FieldExists('SELECTED') then begin
-    _GetSelectedVMData(GetSession(input),input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
+    _GetSelectedVMData(ses,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Halt(vmkey,true);
     vmc.Finalize;
