@@ -366,8 +366,8 @@ begin
   rr := FREDB_Get_Rightname_UID_STR('FSREAD',sel_guid);
   wr := FREDB_Get_Rightname_UID_STR('FSWRITE',sel_guid);
 
-  true_icon  := getThemedResource('images_apps/firmbox_storage/access_true.png');
-  false_icon := getThemedResource('images_apps/firmbox_storage/access_false.png');
+  true_icon  := FREDB_getThemedResource('images_apps/firmbox_storage/access_true.png');
+  false_icon := FREDB_getThemedResource('images_apps/firmbox_storage/access_false.png');
   if conn.CheckRightForGroup(rr,group_id) then
     transformed_object.field('read').Asstring  := true_icon
   else
@@ -402,7 +402,7 @@ begin
     with fs_tr_Grid do begin
       AddOneToOnescheme('objname','Fileserver',app.FetchAppText(conn,'$vfs_name').Getshort);
       AddOneToOnescheme('pool','pool',app.FetchAppText(conn,'$vfs_pool').Getshort);
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$vfs_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$vfs_desc').Getshort);
       AddOneToOnescheme('ip','ip',app.FetchAppText(conn,'$vfs_ip').Getshort);
       AddOneToOnescheme('domain','domain',app.FetchAppText(conn,'$vfs_domain').Getshort);
     end;
@@ -417,7 +417,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,share_tr_Grid);
     with share_tr_Grid do begin
       AddOneToOnescheme('objname','share',app.FetchAppText(conn,'$vfs_share').Getshort);
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$vfs_share_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$vfs_share_desc').Getshort);
       AddOneToOnescheme('icons','',app.FetchAppText(conn,'$vfs_share_icon').GetShort,dt_icon);
       AddOneToOnescheme('refer_mb','refer',app.FetchAppText(conn,'$vfs_share_refer').Getshort);
       AddOneToOnescheme('used_mb','used',app.FetchAppText(conn,'$vfs_share_used').Getshort);
@@ -434,7 +434,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,groupin_tr_Grid);
     with groupin_tr_Grid do begin
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$share_group_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$share_group_desc').Getshort);
       AddOneToOnescheme('read','',app.FetchAppText(conn,'$share_group_read').Getshort,dt_Icon);
       AddOneToOnescheme('write','',app.FetchAppText(conn,'$share_group_write').Getshort,dt_Icon);
 //      AddOneToOnescheme('objname','group',app.FetchAppText(conn,'$share_group_group').Getshort);
@@ -958,7 +958,7 @@ begin
     with nfs_tr_Grid do begin
       AddOneToOnescheme('objname','export',app.FetchAppText(conn,'$nfs_export').Getshort);
       AddOneToOnescheme('pool','pool',app.FetchAppText(conn,'$nfs_pool').Getshort);
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$nfs_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$nfs_desc').Getshort);
       AddOneToOnescheme('refer_mb','refer',app.FetchAppText(conn,'$nfs_refer').Getshort);
       AddOneToOnescheme('used_mb','used',app.FetchAppText(conn,'$nfs_used').Getshort);
       AddOneToOnescheme('quota_mb','avail',app.FetchAppText(conn,'$nfs_avail').Getshort);
@@ -991,7 +991,7 @@ begin
     with lun_tr_Grid do begin
       AddOneToOnescheme('objname','LUN',app.FetchAppText(conn,'$lun_guid').Getshort);
       AddOneToOnescheme('pool','pool',app.FetchAppText(conn,'$lun_pool').Getshort);
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$lun_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$lun_desc').Getshort);
       AddOneToOnescheme('size_mb','size',app.FetchAppText(conn,'$lun_size').Getshort);
     end;
     lun_dc := session.NewDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
@@ -1568,7 +1568,7 @@ begin
       AddOneToOnescheme('used_mb','used',app.FetchAppText(conn,'$backup_used').Getshort);
       AddOneToOnescheme('refer_mb','refer',app.FetchAppText(conn,'$backup_refer').Getshort);
 //      AddOneToOnescheme('objname','snapshot',app.FetchAppText(conn,'$backup_snapshot').Getshort);
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$backup_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$backup_desc').Getshort);
     end;
     snap_dc := session.NewDerivedCollection('BACKUP_MOD_SNAPSHOT_GRID');
     with snap_dc do begin
@@ -2118,15 +2118,15 @@ begin
   entry.Field('transfer_r').AsString:=zfsObj.transferR;
   entry.Field('transfer_w').AsString:=zfsObj.transferW;
   if zfsObj.isNew then begin
-    entry.Field('icon').AsString:=getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_new.png');
+    entry.Field('icon').AsString:=FREDB_getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_new.png');
   end else begin
     if zfsObj.isModified then begin
-      entry.Field('icon').AsString:=getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_mod.png');
+      entry.Field('icon').AsString:=FREDB_getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_mod.png');
     end else begin
       if (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) and (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
-        entry.Field('icon').AsString:=getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_offline.png');
+        entry.Field('icon').AsString:=FREDB_getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_offline.png');
       end else begin
-        entry.Field('icon').AsString:=getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'.png');
+        entry.Field('icon').AsString:=FREDB_getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'.png');
       end;
     end;
   end;

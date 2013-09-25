@@ -187,7 +187,7 @@ begin
       //AddOneToOnescheme('icon','',app.FetchAppText(conn,'$datalink_icon').GetShort,dt_icon);
       AddOneToOnescheme('objname','linkname',app.FetchAppText(conn,'$datalink_name').Getshort,dt_string,true,1,'icon');
 //      AddOneToOnescheme('zoned','zoned',app.FetchAppText(conn,'$datalink_zoned').Getshort);
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$datalink_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$datalink_desc').Getshort);
     end;
     datalink_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
     with datalink_dc do begin
@@ -202,7 +202,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,system_tr_Grid);
     with system_tr_Grid do begin
       AddOneToOnescheme('objname','Name',app.FetchAppText(conn,'$system_name').Getshort);
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$system_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$system_desc').Getshort);
     end;
     system_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
     with system_dc do begin
@@ -216,7 +216,7 @@ begin
       AddOneToOnescheme('objname','wwn',app.FetchAppText(conn,'$fc_wwn').Getshort);
       AddOneToOnescheme('targetmode','targetmode',app.FetchAppText(conn,'$fc_targetmode').Getshort);
       AddOneToOnescheme('state','state',app.FetchAppText(conn,'$fc_state').Getshort);
-      AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, app.FetchAppText(conn,'$fc_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$fc_desc').Getshort);
     end;
     fc_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
     with fc_dc do begin
