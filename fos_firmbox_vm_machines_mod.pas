@@ -913,10 +913,10 @@ begin
 
   res.AddInput.Describe(app.FetchAppText(ses,'$vm_name').Getshort,'name',true);
   maxRAM:=getAvailableRAM; minRAM:=getMinimumRAM; stepRAM:=getRAMSteps;
-  res.AddNumber.DescribeSlider(app.FetchAppText(ses,'$vm_mem').Getshort,'mem',minRAM,maxRAM,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);
+  res.AddNumber.DescribeSlider(app.FetchAppText(ses,'$vm_mem').Getshort,'mem',minRAM,maxRAM,true,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);
 
   maxCPU:=getAvailableCPU;
-  res.AddNumber.DescribeSlider(app.FetchAppText(ses,'$vm_cpu').Getshort,'cpu',1,maxCPU,IntToStr(maxCPU),0,maxCPU);
+  res.AddNumber.DescribeSlider(app.FetchAppText(ses,'$vm_cpu').Getshort,'cpu',1,maxCPU,true,IntToStr(maxCPU),0,maxCPU);
 
   res.AddChooser.Describe(app.FetchAppText(ses,'$vm_sc').Getshort,'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC,true,dh_chooser_combo,true);
 
