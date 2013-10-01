@@ -189,6 +189,8 @@ begin
   finally
     conn.Finalize;
   end;
+
+
 end;
 
 procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
@@ -835,7 +837,18 @@ begin
           AddMachine('franzdata','10.220.252.149',tmFOSMB,'5c1eae31-67bc-4f19-a148-9ede039d7ad8');
 
           AddMachine('webext','10.220.252.150',tmFOSMB,'');
-    AddServiceGroup('Citycom');
+      AddService('Artemes');
+          AddMachine('Artemes','10.220.249.10',tmFOSMB,'',true);
+          AddZpoolStatusTestCase('10.220.249.10','ZPOOL_ARTEMES','Diskpool Artemes');
+          AddZFSSpaceTestCase('10.220.249.10','ZFS_SPACE_ARTEMES','Zones Artemes');
+          AddZFSReplication('ZFS_REPL_ARTEMES_ARTEMES','Replication Artemes Zone','10.220.249.10','smartstore.firmos.at','zones/6b365d41-283c-45c0-8300-f03c1666396a',
+                            'zones/backup/artemes/6b365d41-283c-45c0-8300-f03c1666396a',86400);
+          AddZFSReplication('ZFS_REPL_ARTEMES_INFRA_TEST','Replication Artemes Infra_test','10.220.249.10','smartstore.firmos.at','zones/infra_test',
+                            'zones/backup/artemes/infra_test',86400);
+          AddZFSReplication('ZFS_REPL_ARTEMES_INFRA_LIVE','Replication Artemes Infra_Live','10.220.249.10','smartstore.firmos.at','zones/infra_live',
+                            'zones/backup/artemes/infra_live',86400);
+
+ AddServiceGroup('Citycom');
       AddService('Cityaccess');
         AddMachine('WlanController','109.73.148.178',tmCC);
            AddDiskSpaceTestCase('172.17.0.1','WLANC_SPACE_USR','Diskspace on WLANC /usr','/usr');
