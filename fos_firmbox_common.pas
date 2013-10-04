@@ -216,13 +216,13 @@ var conn     : IFRE_DB_Connection;
 
     rightname := FREDB_Get_Rightname_UID('FSWRITE',share_id);
     CheckDbResult(CONN.NewRole(rightname,'Write Access to share '+sharename+' on NAS '+fsname,'Write Access to share '+sharename+' on NAS '+fsname,role),'Adding Write role');
-    right := GFRE_DBI.NewRight(rightname,'','');
+    right := GFRE_DBI.NewRight(rightname);
     role.AddRight(right);
     CheckDbResult(CONN.StoreRole('firmbox_storage',domain,role),'Saving Role');
 
     rightname := FREDB_Get_Rightname_UID('FSREAD',share_id);
     CheckDbResult(CONN.NewRole(rightname,'Read Access to share '+sharename+' on NAS '+fsname,'Read Access to share '+sharename+' on NAS '+fsname,role),'Adding Read role');
-    right := GFRE_DBI.NewRight(rightname,'','');
+    right := GFRE_DBI.NewRight(rightname);
     role.AddRight(right);
     CheckDbResult(CONN.StoreRole('firmbox_storage',domain,role),'Saving Role');
 
@@ -350,25 +350,25 @@ var conn     : IFRE_DB_Connection;
         begin
           rolename := FREDB_Get_Rightname_UID('VMLIST',obj.UID);
           CheckDbResult(CONN.NewRole(rolename,'List Virtual Machine '+obj.Field('objname').asstring,'List Virtual Machine '+obj.Field('objname').asstring,role),'Adding List role');
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID),'',''); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
           CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
 
           rolename := FREDB_Get_Rightname_UID('VMUSE',obj.UID);
           CheckDbResult(CONN.NewRole(rolename,'Use Virtual Machine '+obj.Field('objname').asstring,'Use Virtual Machine '+obj.Field('objname').asstring,role),'Adding Use role');
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID),'',''); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMVIEWCONSOLE',obj.UID),'',''); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMVIEWCONSOLE',obj.UID)); role.AddRight(right);
           CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
 
           conn.AddGroupRoles(Get_Groupname_App_Group_Subgroup('firmbox_vm','USER'+'@'+domainname),GFRE_DBI.ConstructStringArray([rolename+'@'+domainname]));
 
           rolename := FREDB_Get_Rightname_UID('VMADMIN',obj.UID);
           CheckDbResult(CONN.NewRole(rolename,'Admin Virtual Machine '+obj.Field('objname').asstring,'Admin Virtual Machine '+obj.Field('objname').asstring,role),'Adding Admin role');
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID),'',''); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMVIEWCONSOLE',obj.UID),'',''); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMUSECONSOLE',obj.UID),'',''); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMSTART',obj.UID),'',''); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMSTOP',obj.UID),'',''); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMCONFIGURE',obj.UID),'',''); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMVIEWCONSOLE',obj.UID)); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMUSECONSOLE',obj.UID)); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMSTART',obj.UID)); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMSTOP',obj.UID)); role.AddRight(right);
+          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMCONFIGURE',obj.UID)); role.AddRight(right);
           CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
 
           conn.AddGroupRoles(Get_Groupname_App_Group_Subgroup('firmbox_vm','ADMIN'+'@'+domainname),GFRE_DBI.ConstructStringArray([rolename+'@'+domainname]));

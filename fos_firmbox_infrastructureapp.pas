@@ -76,9 +76,9 @@ begin
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['portsecurity']));
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['assets']));
 
-                     CheckDbResult(conn.StoreRole(ObjectName,cSYS_DOMAIN,admin_app_rg),'Error creating default admin role for '+Objectname);
-                     CheckDbResult(conn.StoreRole(ObjectName,cSYS_DOMAIN,user_app_rg),'Error creating default user role for '+Objectname);
-                     CheckDbResult(conn.StoreRole(ObjectName,cSYS_DOMAIN,guest_app_rg),'Error creating default guest role for '+Objectname);
+                     CheckDbResult(conn.StoreRole(admin_app_rg,ObjectName,cSYS_DOMAIN),'Error creating default admin role for '+Objectname);
+                     CheckDbResult(conn.StoreRole(user_app_rg,ObjectName,cSYS_DOMAIN),'Error creating default user role for '+Objectname);
+                     CheckDbResult(conn.StoreRole(guest_app_rg,ObjectName,cSYS_DOMAIN),'Error creating default guest role for '+Objectname);
 
                      _AddSystemGroups(conn,cSYS_DOMAIN);
 

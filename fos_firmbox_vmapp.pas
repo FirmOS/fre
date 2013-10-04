@@ -174,13 +174,13 @@ begin
   role := _CreateAppRole('view_vms','View VMs','Allowed to view VMs');
   _AddAppRight(role,'view_vms','View VMs','Allowed to view VMs.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['vmcontroller']));
-  CheckDbResult(conn.StoreRole(ObjectName,domain,role),'InstallSystemGroupsAndRoles');
+  CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallSystemGroupsAndRoles');
 
   role := _CreateAppRole('admin_vms','Admin VMs','Allowed to administer VMs');
   _AddAppRight(role,'view_vms','View VMs','Allowed to view VMs.');
   _AddAppRight(role,'admin_vms','Admin VMs','Allowed to administer VMs.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['vmcontroller','vmresources','vmnetwork','interfaces','vmstatus']));//FIXXME - add more roles
-  CheckDbResult(conn.StoreRole(ObjectName,domain,role),'InstallSystemGroupsAndRoles');
+  CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallSystemGroupsAndRoles');
 
   _AddSystemGroups(conn,domain);
 

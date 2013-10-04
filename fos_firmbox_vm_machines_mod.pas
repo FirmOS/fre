@@ -97,16 +97,16 @@ type
 
   TFRE_FIRMBOX_VM_DISK = class (TFRE_DB_ObjectEx)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects    (const conn:IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_FIRMBOX_VM_ISO }
 
   TFRE_FIRMBOX_VM_ISO = class (TFRE_DB_ObjectEx)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects    (const conn:IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
 
@@ -136,17 +136,17 @@ begin
   scheme.AddSchemeField('isoid',fdbft_String).required:=true;
   scheme.AddSchemeField('name',fdbft_String).required:=true;
 
-  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_FIRMBOX_VM_ISO_main_group');
-  group.AddInput('isoid','$scheme_TFRE_FIRMBOX_VM_ISO_id');
-  group.AddInput('name','$scheme_TFRE_FIRMBOX_VM_ISO_name');
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('isoid',GetTranslateableTextKey('scheme_id'));
+  group.AddInput('name',GetTranslateableTextKey('scheme_name'));
 end;
 
-class procedure TFRE_FIRMBOX_VM_ISO.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_FIRMBOX_VM_ISO.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  inherited InstallDBObjects(conn);
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_ISO_main_group','General Information'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_ISO_id','ID'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_ISO_name','Name'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_main_group','General Information');
+  StoreTranslateableText(conn,'scheme_id','ID');
+  StoreTranslateableText(conn,'scheme_name','Name');
 end;
 
 { TFRE_FIRMBOX_VM_DISK }
@@ -159,17 +159,17 @@ begin
   scheme.AddSchemeField('diskid',fdbft_String).required:=true;
   scheme.AddSchemeField('name',fdbft_String).required:=true;
 
-  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_FIRMBOX_VM_DISK_main_group');
-  group.AddInput('diskid','$scheme_TFRE_FIRMBOX_VM_DISK_id');
-  group.AddInput('name','$scheme_TFRE_FIRMBOX_VM_DISK_name');
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('diskid',GetTranslateableTextKey('scheme_id'));
+  group.AddInput('name',GetTranslateableTextKey('scheme_name'));
 end;
 
-class procedure TFRE_FIRMBOX_VM_DISK.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_FIRMBOX_VM_DISK.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  inherited InstallDBObjects(conn);
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_DISK_main_group','General Information'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_DISK_id','ID'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_FIRMBOX_VM_DISK_name','Name'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_main_group','General Information');
+  StoreTranslateableText(conn,'scheme_id','ID');
+  StoreTranslateableText(conn,'scheme_name','Name');
 end;
 
 { TFRE_FIRMBOX_VM_RESOURCES_MOD }

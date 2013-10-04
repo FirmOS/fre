@@ -1057,17 +1057,17 @@ begin
   role := _CreateAppRole('view_status','View Status','Allowed to see the appliance status.');
   _AddAppRight(role,'view_status','View Status','Allowed to see the appliance status.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['status']));
-  conn.StoreRole(ObjectName,domain,role);
+  conn.StoreRole(role,ObjectName,domain);
 
   role := _CreateAppRole('view_settings','View Settings','Allowed to see the appliance settings.');
   _AddAppRight(role,'view_settings','View Settings','Allowed to see the appliance settings.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['settings']));
-  conn.StoreRole(ObjectName,domain,role);
+  conn.StoreRole(role,ObjectName,domain);
 
   role := _CreateAppRole('view_analytics','View Analytics','Allowed to see the appliance analytics.');
   _AddAppRight(role,'view_analytics','View Analytics','Allowed to see the appliance analytics.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['analytics']));
-  conn.StoreRole(ObjectName,domain,role);
+  conn.StoreRole(role,ObjectName,domain);
 
 
   if domain=cSYS_DOMAIN then begin
@@ -1075,7 +1075,7 @@ begin
     _AddAppRight(role,'edit_settings','Edit Settings','Allowed to see the appliance settings.');
     _AddAppRight(role,'view_settings','View Settings','Allowed to create/edit the appliance settings.');
     _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['settings']));
-    conn.StoreRole(ObjectName,domain,role);
+    conn.StoreRole(role,ObjectName,domain);
   end;
 
   _AddSystemGroups(conn,domain);

@@ -20,24 +20,24 @@ type
 
   TFRE_DB_FILESERVER=class(TFRE_DB_SERVICE)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects    (const conn:IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_GLOBAL_FILESERVER }
 
   TFRE_DB_GLOBAL_FILESERVER=class(TFRE_DB_SERVICE)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects    (const conn:IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_VIRTUAL_FILESERVER }
 
   TFRE_DB_VIRTUAL_FILESERVER=class(TFRE_DB_SERVICE)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects    (const conn:IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_ZFS_SNAPSHOT }
@@ -45,42 +45,42 @@ type
   TFRE_DB_ZFS_SNAPSHOT=class(TFRE_DB_ObjectEx)
   public
   protected
-    class procedure RegisterSystemScheme    (const scheme : IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects        (const conn:IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme : IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_ZFS_DATASET }
 
   TFRE_DB_ZFS_DATASET=class(TFRE_DB_ObjectEx)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   published
-    procedure CALC_GetDisplayName  (const setter : IFRE_DB_CALCFIELD_SETTER);
+    procedure CALC_GetDisplayName        (const setter : IFRE_DB_CALCFIELD_SETTER);
   end;
 
   { TFRE_DB_ZFS_DATASET_FILE }
 
   TFRE_DB_ZFS_DATASET_FILE=class(TFRE_DB_ZFS_DATASET)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_ZFS_DATASET_ZVOL }
 
   TFRE_DB_ZFS_DATASET_ZVOL=class(TFRE_DB_ZFS_DATASET)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_NFS_FILESHARE }
 
   TFRE_DB_NFS_FILESHARE=class(TFRE_DB_ZFS_DATASET_FILE)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   published
   end;
 
@@ -88,34 +88,34 @@ type
 
   TFRE_DB_LUN=class(TFRE_DB_ZFS_DATASET_ZVOL)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_VIRTUAL_FILESHARE }
 
   TFRE_DB_VIRTUAL_FILESHARE=class(TFRE_DB_ZFS_DATASET)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   published
-    procedure CALC_GetIcons(const setter: IFRE_DB_CALCFIELD_SETTER);
+    procedure CALC_GetIcons              (const setter: IFRE_DB_CALCFIELD_SETTER);
   end;
 
   { TFRE_DB_NFS_ACCESS }
 
   TFRE_DB_NFS_ACCESS=class(TFRE_DB_ObjectEx)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_LUN_VIEW }
 
   TFRE_DB_LUN_VIEW=class(TFRE_DB_ObjectEx)
   protected
-    class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION); override;
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
   end;
 
 
@@ -135,22 +135,23 @@ begin
   scheme.AddSchemeField('creation',fdbft_DateTimeUTC);
   scheme.AddSchemeField('used_mb',fdbft_UInt32);
   scheme.AddSchemeField('refer_mb',fdbft_UInt32);
-  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_DB_ZFS_SNAPSHOT_main_group');
-  group.AddInput('objname','$scheme_TFRE_DB_ZFS_SNAPSHOT_snapshot',true);
-  group.AddInput('desc.txt','$scheme_TFRE_DB_ZFS_SNAPSHOT_description',false);
-  group.AddInput('creation','$scheme_TFRE_DB_ZFS_SNAPSHOT_creation',true);
-  group.AddInput('used_mb','$scheme_TFRE_DB_ZFS_SNAPSHOT_used',true);
-  group.AddInput('refer_mb','$scheme_TFRE_DB_ZFS_SNAPSHOT_refer',true);
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_snapshot'),true);
+  group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'),false);
+  group.AddInput('creation',GetTranslateableTextKey('scheme_creation'),true);
+  group.AddInput('used_mb',GetTranslateableTextKey('scheme_used'),true);
+  group.AddInput('refer_mb',GetTranslateableTextKey('scheme_refer'),true);
 end;
 
-class procedure TFRE_DB_ZFS_SNAPSHOT.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_ZFS_SNAPSHOT.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
- conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_SNAPSHOT_main_group','Snapshot Properties'));
- conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_SNAPSHOT_snapshot','ZFS Snapshot'));
- conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_SNAPSHOT_description','Description'));
- conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_SNAPSHOT_creation','Creation Timestamp'));
- conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_SNAPSHOT_used','Used [MB]'));
- conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_SNAPSHOT_refer','Refer [MB]'));
+ newVersionId:='1.0';
+ StoreTranslateableText(conn,'scheme_main_group','Snapshot Properties');
+ StoreTranslateableText(conn,'scheme_snapshot','ZFS Snapshot');
+ StoreTranslateableText(conn,'scheme_description','Description');
+ StoreTranslateableText(conn,'scheme_creation','Creation Timestamp');
+ StoreTranslateableText(conn,'scheme_used','Used [MB]');
+ StoreTranslateableText(conn,'scheme_refer','Refer [MB]');
 end;
 
 { TFRE_DB_LUN_VIEW }
@@ -163,16 +164,17 @@ begin
   scheme.AddSchemeField('fileshare',fdbft_ObjLink).required:=true;
   scheme.AddSchemeField('initiatorgroup',fdbft_String);
   scheme.AddSchemeField('targetgroup',fdbft_String);
-  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_DB_LUN_VIEW_main');
-  group.AddInput('initiatorgroup','$scheme_TFRE_DB_LUN_VIEW_initiatorgroup');
-  group.AddInput('targetgroup','$scheme_TFRE_DB_LUN_VIEW_targetgroup');
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main'));
+  group.AddInput('initiatorgroup',GetTranslateableTextKey('scheme_initiatorgroup'));
+  group.AddInput('targetgroup',GetTranslateableTextKey('scheme_targetgroup'));
 end;
 
-class procedure TFRE_DB_LUN_VIEW.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_LUN_VIEW.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_LUN_VIEW_main','View Parameter'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_LUN_VIEW_initiatorgroup','Initiator Group'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_LUN_VIEW_targetgroup','Target Group'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_main','View Parameter');
+  StoreTranslateableText(conn,'scheme_initiatorgroup','Initiator Group');
+  StoreTranslateableText(conn,'scheme_targetgroup','Target Group');
 end;
 
 { TFRE_DB_ZFS_DATASET_ZVOL }
@@ -185,18 +187,19 @@ begin
   scheme.AddSchemeField('size_mb',fdbft_UInt32);
   scheme.AddSchemeField('primarycache',fdbft_String).SetupFieldDef(true,false,'cache');
   scheme.AddSchemeField('secondarycache',fdbft_String).SetupFieldDef(true,false,'cache');
-  group:=scheme.AddInputGroup('volume').Setup('$scheme_TFRE_DB_ZFS_DATASET_ZVOL_volume_group');
-  group.AddInput('size_mb','$scheme_TFRE_DB_ZFS_DATASET_ZVOL_size');
-  group.AddInput('primarycache','$scheme_TFRE_DB_ZFS_DATASET_ZVOL_primarycache');
-  group.AddInput('secondarycache','$scheme_TFRE_DB_ZFS_DATASET_ZVOL_secondarycache');
+  group:=scheme.AddInputGroup('volume').Setup(GetTranslateableTextKey('scheme_volume_group'));
+  group.AddInput('size_mb',GetTranslateableTextKey('scheme_size'));
+  group.AddInput('primarycache',GetTranslateableTextKey('scheme_primarycache'));
+  group.AddInput('secondarycache',GetTranslateableTextKey('scheme_secondarycache'));
 end;
 
-class procedure TFRE_DB_ZFS_DATASET_ZVOL.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_ZFS_DATASET_ZVOL.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_ZVOL_volume_group','Volume Properties'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_ZVOL_primarycache','Primary Cache'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_ZVOL_secondarycache','Secondary Cache'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_ZVOL_size','Size [MB]'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_volume_group','Volume Properties');
+  StoreTranslateableText(conn,'scheme_primarycache','Primary Cache');
+  StoreTranslateableText(conn,'scheme_secondarycache','Secondary Cache');
+  StoreTranslateableText(conn,'scheme_size','Size [MB]');
 end;
 
 { TFRE_DB_ZFS_DATASET_FILE }
@@ -219,37 +222,38 @@ begin
   scheme.AddSchemeField('canmount',fdbft_String).SetupFieldDef(true,false,'canmount');
   scheme.AddSchemeField('extendedattr',fdbft_Boolean);
 
-  group:=scheme.AddInputGroup('file').Setup('$scheme_TFRE_DB_ZFS_DATASET_FILE_file_group');
-  group.AddInput('quota_mb','$scheme_TFRE_DB_ZFS_DATASET_FILE_quota');
-  group.AddInput('referenced_mb','$scheme_TFRE_DB_ZFS_DATASET_FILE_referenced');
-  group.AddInput('accesstime','$scheme_TFRE_DB_ZFS_DATASET_FILE_accesstime');
-  group.AddInput('allowdevices','$scheme_TFRE_DB_ZFS_DATASET_FILE_allowdevices');
-  group.AddInput('allowexecution','$scheme_TFRE_DB_ZFS_DATASET_FILE_allowexecution');
-  group.AddInput('allowsetuid','$scheme_TFRE_DB_ZFS_DATASET_FILE_allowsetuid');
-  group.AddInput('snapshots','$scheme_TFRE_DB_ZFS_DATASET_FILE_snapshots');
-  group.AddInput('aclinheritance','$scheme_TFRE_DB_ZFS_DATASET_FILE_aclinheritance');
-  group.AddInput('aclmode','$scheme_TFRE_DB_ZFS_DATASET_FILE_aclmode');
-  group.AddInput('canmount','$scheme_TFRE_DB_ZFS_DATASET_FILE_canmount');
-  group.AddInput('extendedattr','$scheme_TFRE_DB_ZFS_DATASET_FILE_extendedattr');
+  group:=scheme.AddInputGroup('file').Setup(GetTranslateableTextKey('scheme_file_group'));
+  group.AddInput('quota_mb',GetTranslateableTextKey('scheme_quota'));
+  group.AddInput('referenced_mb',GetTranslateableTextKey('scheme_referenced'));
+  group.AddInput('accesstime',GetTranslateableTextKey('scheme_accesstime'));
+  group.AddInput('allowdevices',GetTranslateableTextKey('scheme_allowdevices'));
+  group.AddInput('allowexecution',GetTranslateableTextKey('scheme_allowexecution'));
+  group.AddInput('allowsetuid',GetTranslateableTextKey('scheme_allowsetuid'));
+  group.AddInput('snapshots',GetTranslateableTextKey('scheme_snapshots'));
+  group.AddInput('aclinheritance',GetTranslateableTextKey('scheme_aclinheritance'));
+  group.AddInput('aclmode',GetTranslateableTextKey('scheme_aclmode'));
+  group.AddInput('canmount',GetTranslateableTextKey('scheme_canmount'));
+  group.AddInput('extendedattr',GetTranslateableTextKey('scheme_extendedattr'));
 
 end;
 
-class procedure TFRE_DB_ZFS_DATASET_FILE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_ZFS_DATASET_FILE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_file_group','File Properties'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_refer','Refer [MB]'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_quota','Quota [MB]'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_used','Used [MB]'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_referenced','Referenced Quota [MB]'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_accesstime','Access Time'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_allowdevices','Allow Devices'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_allowexecution','Allow Execution'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_allowsetuid','Allow Set UID'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_snapshots','Show Snapshots'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_aclinheritance','ACL Inheritance'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_aclmode','ACL Mode'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_canmount','Can Mount'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_FILE_extendedattr','Extended Attributes'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_file_group','File Properties');
+  StoreTranslateableText(conn,'scheme_refer','Refer [MB]');
+  StoreTranslateableText(conn,'scheme_quota','Quota [MB]');
+  StoreTranslateableText(conn,'scheme_used','Used [MB]');
+  StoreTranslateableText(conn,'scheme_referenced','Referenced Quota [MB]');
+  StoreTranslateableText(conn,'scheme_accesstime','Access Time');
+  StoreTranslateableText(conn,'scheme_allowdevices','Allow Devices');
+  StoreTranslateableText(conn,'scheme_allowexecution','Allow Execution');
+  StoreTranslateableText(conn,'scheme_allowsetuid','Allow Set UID');
+  StoreTranslateableText(conn,'scheme_snapshots','Show Snapshots');
+  StoreTranslateableText(conn,'scheme_aclinheritance','ACL Inheritance');
+  StoreTranslateableText(conn,'scheme_aclmode','ACL Mode');
+  StoreTranslateableText(conn,'scheme_canmount','Can Mount');
+  StoreTranslateableText(conn,'scheme_extendedattr','Extended Attributes');
 end;
 
 { TFRE_DB_LUN }
@@ -260,16 +264,17 @@ begin
   inherited RegisterSystemScheme(scheme);
   scheme.AddSchemeField('writeback',fdbft_Boolean);
   scheme.AddSchemeField('writeprotect',fdbft_Boolean);
-  group:=scheme.AddInputGroup('lun').Setup('$scheme_TFRE_DB_LUN_lun_group');
-  group.AddInput('writeback','$scheme_TFRE_DB_LUN_writeback');
-  group.AddInput('writeprotect','$scheme_TFRE_DB_LUN_writeprotect');
+  group:=scheme.AddInputGroup('lun').Setup(GetTranslateableTextKey('scheme_lun_group'));
+  group.AddInput('writeback',GetTranslateableTextKey('scheme_writeback'));
+  group.AddInput('writeprotect',GetTranslateableTextKey('scheme_writeprotect'));
 end;
 
-class procedure TFRE_DB_LUN.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_LUN.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_LUN_lun_group','LUN Parameter'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_LUN_writeback','Writeback'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_LUN_writeprotect','Writeprotect'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_lun_group','LUN Parameter');
+  StoreTranslateableText(conn,'scheme_writeback','Writeback');
+  StoreTranslateableText(conn,'scheme_writeprotect','Writeprotect');
 end;
 
 { TFRE_DB_NFS_ACCESS }
@@ -282,16 +287,17 @@ begin
   scheme.AddSchemeField('fileshare',fdbft_ObjLink).required:=true;
   scheme.AddSchemeField('accesstype',fdbft_String).SetupFieldDef(true,false,'nfs_access');
   scheme.AddSchemeField('subnet',fdbft_String).SetupFieldDef(true);
-  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_DB_NFS_ACCESS_main');
-  group.AddInput('accesstype','$scheme_TFRE_DB_NFS_ACCESS_accesstype');
-  group.AddInput('subnet','$scheme_TFRE_DB_NFS_ACCESS_subnet');
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main'));
+  group.AddInput('accesstype',GetTranslateableTextKey('scheme_accesstype'));
+  group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
 end;
 
-class procedure TFRE_DB_NFS_ACCESS.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_NFS_ACCESS.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_ACCESS_main','Access Parameter'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_ACCESS_accesstype','Access Type'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_ACCESS_subnet','Subnet/Host'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_main','Access Parameter');
+  StoreTranslateableText(conn,'scheme_accesstype','Access Type');
+  StoreTranslateableText(conn,'scheme_subnet','Subnet/Host');
 end;
 
 { TFRE_DB_VIRTUAL_FILESHARE }
@@ -307,22 +313,23 @@ begin
   scheme.AddSchemeField('ftp',fdbft_Boolean);
   scheme.AddSchemeField('webdav',fdbft_Boolean);
   scheme.AddCalcSchemeField('icons',fdbft_String,@CALC_GetIcons);
-  group:=scheme.AddInputGroup('share').Setup('$scheme_TFRE_DB_VIRTUAL_FILESHARE_share');
-  group.AddInput('objname','$scheme_TFRE_DB_VIRTUAL_FILESHARE_sharename');
-  group.AddInput('cifs','$scheme_TFRE_DB_VIRTUAL_FILESHARE_cifs');
-  group.AddInput('afp','$scheme_TFRE_DB_VIRTUAL_FILESHARE_afp');
-  group.AddInput('ftp','$scheme_TFRE_DB_VIRTUAL_FILESHARE_ftp');
-  group.AddInput('webdav','$scheme_TFRE_DB_VIRTUAL_FILESHARE_webdav');
+  group:=scheme.AddInputGroup('share').Setup(GetTranslateableTextKey('scheme_share'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_sharename'));
+  group.AddInput('cifs',GetTranslateableTextKey('scheme_cifs'));
+  group.AddInput('afp',GetTranslateableTextKey('scheme_afp'));
+  group.AddInput('ftp',GetTranslateableTextKey('scheme_ftp'));
+  group.AddInput('webdav',GetTranslateableTextKey('scheme_webdav'));
 end;
 
-class procedure TFRE_DB_VIRTUAL_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_VIRTUAL_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESHARE_share','Share Properties'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESHARE_sharename','Share Name'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESHARE_cifs','CIFS (Windows File Sharing)'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESHARE_afp','AFP (Apple Filing Protocol)'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESHARE_ftp','FTP (File Transfer Protocol)'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESHARE_webdav','WebDAV'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_share','Share Properties');
+  StoreTranslateableText(conn,'scheme_sharename','Share Name');
+  StoreTranslateableText(conn,'scheme_cifs','CIFS (Windows File Sharing)');
+  StoreTranslateableText(conn,'scheme_afp','AFP (Apple Filing Protocol)');
+  StoreTranslateableText(conn,'scheme_ftp','FTP (File Transfer Protocol)');
+  StoreTranslateableText(conn,'scheme_webdav','WebDAV');
 end;
 
 procedure TFRE_DB_VIRTUAL_FILESHARE.CALC_GetIcons(const setter: IFRE_DB_CALCFIELD_SETTER);
@@ -360,20 +367,21 @@ begin
   scheme.AddSchemeField('anonymous',fdbft_Boolean);
   scheme.AddSchemeField('anonymousrw',fdbft_Boolean);
   scheme.AddSchemeField('auth',fdbft_String).SetupFieldDef(true,false,'nfs_auth');
-  group:=scheme.AddInputGroup('nfs').Setup('$scheme_TFRE_DB_NFS_FILESHARE_NFS_group');
-  group.AddInput('objname','$scheme_TFRE_DB_NFS_FILESHARE_export');
-  group.AddInput('anonymous','$scheme_TFRE_DB_NFS_FILESHARE_anonymous');
-  group.AddInput('anonymousrw','$scheme_TFRE_DB_NFS_FILESHARE_anonymousrw');
-  group.AddInput('auth','$scheme_TFRE_DB_NFS_FILESHARE_auth');
+  group:=scheme.AddInputGroup('nfs').Setup(GetTranslateableTextKey('scheme_NFS_group'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_export'));
+  group.AddInput('anonymous',GetTranslateableTextKey('scheme_anonymous'));
+  group.AddInput('anonymousrw',GetTranslateableTextKey('scheme_anonymousrw'));
+  group.AddInput('auth',GetTranslateableTextKey('scheme_auth'));
 end;
 
-class procedure TFRE_DB_NFS_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_NFS_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_FILESHARE_NFS_group','NFS Properties'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_FILESHARE_export','Export name'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_FILESHARE_anonymous','Anonymous access'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_FILESHARE_anonymousrw','Anonymous RW access'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_NFS_FILESHARE_auth','Authentication'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_NFS_group','NFS Properties');
+  StoreTranslateableText(conn,'scheme_export','Export name');
+  StoreTranslateableText(conn,'scheme_anonymous','Anonymous access');
+  StoreTranslateableText(conn,'scheme_anonymousrw','Anonymous RW access');
+  StoreTranslateableText(conn,'scheme_auth','Authentication');
 end;
 
 { TFRE_DB_VIRTUAL_FILESERVER }
@@ -390,26 +398,26 @@ begin
   scheme.AddSchemeField('vlan',fdbft_UInt16);
   scheme.AddSchemeField('domainid',fdbft_GUID);
 
-  group:=scheme.ReplaceInputGroup('main').Setup('$scheme_TFRE_DB_VIRTUAL_FILESERVER_main_group');
-  group.AddInput('objname','$scheme_TFRE_DB_VIRTUAL_FILESERVER_fileservername',false);
-  group.AddInput('pool','$scheme_TFRE_DB_VIRTUAL_FILESERVER_pool',false);
-  //group.AddInput('pool','$scheme_TFRE_DB_VIRTUAL_FILESERVER_pool',true); -> FISH TO FIX FOR CHRIS
-  group.AddInput('desc.txt','$scheme_TFRE_DB_VIRTUAL_FILESERVER_description');
-  group.AddInput('ip','$scheme_TFRE_DB_VIRTUAL_FILESERVER_ip');
-  group.AddInput('interface','$scheme_TFRE_DB_VIRTUAL_FILESERVER_interface');
-  group.AddInput('vlan','$scheme_TFRE_DB_VIRTUAL_FILESERVER_vlan');
+  group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_fileservername'),false);
+  group.AddInput('pool',GetTranslateableTextKey('scheme_pool'),false);
+  //group.AddInput('pool',GetTranslateableTextKey('scheme_pool'),true); -> FISH TO FIX FOR CHRIS
+  group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
+  group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
+  group.AddInput('interface',GetTranslateableTextKey('scheme_interface'));
+  group.AddInput('vlan',GetTranslateableTextKey('scheme_vlan'));
 end;
 
-class procedure TFRE_DB_VIRTUAL_FILESERVER.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_VIRTUAL_FILESERVER.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESERVER_main_group','Virtual Fileserver Properties'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESERVER_fileservername','Servername'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESERVER_pool','Diskpool'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESERVER_description','Description'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESERVER_ip','IP'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESERVER_interface','Interface'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_VIRTUAL_FILESERVER_vlan','Vlan'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_in_group','Virtual Fileserver Properties');
+  StoreTranslateableText(conn,'scheme_fileservername','Servername');
+  StoreTranslateableText(conn,'scheme_pool','Diskpool');
+  StoreTranslateableText(conn,'scheme_description','Description');
+  StoreTranslateableText(conn,'scheme_ip','IP');
+  StoreTranslateableText(conn,'scheme_interface','Interface');
+  StoreTranslateableText(conn,'scheme_vlan','Vlan');
 end;
 
 
@@ -421,9 +429,9 @@ begin
   scheme.SetParentSchemeByName(TFRE_DB_FILESERVER.Classname);
 end;
 
-class procedure TFRE_DB_GLOBAL_FILESERVER.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_GLOBAL_FILESERVER.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-
+  newVersionId:='1.0';
 end;
 
 { TFRE_DB_ZFS_DATASET }
@@ -450,40 +458,41 @@ begin
   scheme.AddSchemeField('fileservername',fdbft_String);
   scheme.AddCalcSchemeField ('displayname',fdbft_String,@CALC_GetDisplayName);
 
-  group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_DB_ZFS_DATASET_main_group');
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('fileserver','',true,true);
-  group.AddInput('pool','$scheme_TFRE_DB_ZFS_DATASET_pool',true);
-  group.AddInput('desc.txt','$scheme_TFRE_DB_ZFS_DATASET_description');
-  group:=scheme.AddInputGroup('advanced').Setup('$scheme_TFRE_DB_ZFS_DATASET_advanced_group');
-  group.AddInput('reservation_mb','$scheme_TFRE_DB_ZFS_DATASET_reservation');
-  group.AddInput('refres_mb','$scheme_TFRE_DB_ZFS_DATASET_refres');
-  group.AddInput('recordsize_kb','$scheme_TFRE_DB_ZFS_DATASET_recordsize');
-  group.AddInput('logbias','$scheme_TFRE_DB_ZFS_DATASET_logbias');
-  group.AddInput('deduplication','$scheme_TFRE_DB_ZFS_DATASET_deduplication');
-  group.AddInput('checksum','$scheme_TFRE_DB_ZFS_DATASET_checksum');
-  group.AddInput('compression','$scheme_TFRE_DB_ZFS_DATASET_compression');
-  group.AddInput('readonly','$scheme_TFRE_DB_ZFS_DATASET_readonly');
-  group.AddInput('copies','$scheme_TFRE_DB_ZFS_DATASET_copies');
-  group.AddInput('sync','$scheme_TFRE_DB_ZFS_DATASET_sync');
+  group.AddInput('pool',GetTranslateableTextKey('scheme_pool'),true);
+  group.AddInput('desc.txt',GetTranslateableTextKey('gzscheme_description'));
+  group:=scheme.AddInputGroup('advanced').Setup(GetTranslateableTextKey('scheme_advanced_group'));
+  group.AddInput('reservation_mb',GetTranslateableTextKey('scheme_reservation'));
+  group.AddInput('refres_mb',GetTranslateableTextKey('scheme_refres'));
+  group.AddInput('recordsize_kb',GetTranslateableTextKey('scheme_recordsize'));
+  group.AddInput('logbias',GetTranslateableTextKey('scheme_logbias'));
+  group.AddInput('deduplication',GetTranslateableTextKey('scheme_deduplication'));
+  group.AddInput('checksum',GetTranslateableTextKey('scheme_checksum'));
+  group.AddInput('compression',GetTranslateableTextKey('scheme_compression'));
+  group.AddInput('readonly',GetTranslateableTextKey('scheme_readonly'));
+  group.AddInput('copies',GetTranslateableTextKey('scheme_copies'));
+  group.AddInput('sync',GetTranslateableTextKey('scheme_sync'));
 
 end;
 
-class procedure TFRE_DB_ZFS_DATASET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_ZFS_DATASET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_main_group','General Information'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_pool','Diskpool'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_description','Description'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_advanced_group','Advanced Properties'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_reservation','Reservation [MB]'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_refres','Ref. Reservation [MB]'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_recordsize','Recordsize [kB]'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_logbias','Log Bias'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_deduplication','Deduplication'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_checksum','Checksum'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_compression','Compression'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_readonly','Read-Only'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_copies','Copies'));
-  conn.StoreTranslateableText(GFRE_DBI.CreateText('$scheme_TFRE_DB_ZFS_DATASET_sync','Sync'));
+  newVersionId:='1.0';
+  StoreTranslateableText(conn,'scheme_main_group','General Information');
+  StoreTranslateableText(conn,'scheme_pool','Diskpool');
+  StoreTranslateableText(conn,'scheme_description','Description');
+  StoreTranslateableText(conn,'scheme_advanced_group','Advanced Properties');
+  StoreTranslateableText(conn,'scheme_reservation','Reservation [MB]');
+  StoreTranslateableText(conn,'scheme_refres','Ref. Reservation [MB]');
+  StoreTranslateableText(conn,'scheme_recordsize','Recordsize [kB]');
+  StoreTranslateableText(conn,'scheme_logbias','Log Bias');
+  StoreTranslateableText(conn,'scheme_deduplication','Deduplication');
+  StoreTranslateableText(conn,'scheme_checksum','Checksum');
+  StoreTranslateableText(conn,'scheme_compression','Compression');
+  StoreTranslateableText(conn,'scheme_readonly','Read-Only');
+  StoreTranslateableText(conn,'scheme_copies','Copies');
+  StoreTranslateableText(conn,'scheme_sync','Sync');
 end;
 
 procedure TFRE_DB_ZFS_DATASET.CALC_GetDisplayName(const setter: IFRE_DB_CALCFIELD_SETTER);
@@ -499,8 +508,9 @@ begin
   scheme.SetParentSchemeByName(TFRE_DB_SERVICE.Classname);
 end;
 
-class procedure TFRE_DB_FILESERVER.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION);
+class procedure TFRE_DB_FILESERVER.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
 begin
+  newVersionId:='1.0';
 end;
 
 procedure Register_DB_Extensions;

@@ -71,9 +71,9 @@ begin
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['ram']));
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['cpu']));
 
-                      conn.StoreRole(ObjectName,cSYS_DOMAIN,admin_app_rg);
-                      conn.StoreRole(ObjectName,cSYS_DOMAIN,user_app_rg);
-                      conn.StoreRole(ObjectName,cSYS_DOMAIN,guest_app_rg);
+                      conn.StoreRole(admin_app_rg,ObjectName,cSYS_DOMAIN);
+                      conn.StoreRole(user_app_rg,ObjectName,cSYS_DOMAIN);
+                      conn.StoreRole(guest_app_rg,ObjectName,cSYS_DOMAIN);
 
                       _AddSystemGroups(conn,cSYS_DOMAIN);
 
