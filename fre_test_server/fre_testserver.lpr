@@ -49,6 +49,7 @@ uses
   FRE_DBTEST,
   fos_firmbox_common,
   fos_artemes_common,
+  fos_artemes_testapp,
   fos_monitoring_app,
   fos_captiveportal_app,
   fre_basecli_app,
