@@ -14,7 +14,7 @@ uses
   FRE_DB_COMMON;
 
 var
-    //DISKI_HACK : IFOS_STATS_CONTROL;
+    DISKI_HACK : IFOS_STATS_CONTROL;
     //VM_HACK    : IFOS_VM_HOST_CONTROL;
     ZPOOL_IOSTAT_UPDATE: TFRE_DB_UPDATE_STORE_DESC;
 
@@ -2254,14 +2254,14 @@ begin
   inherited MyServerInitializeModule(admin_dbc);
 
   //STARTUP SPEED_ENHANCEMENT
-  //DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   //VM_HACK    := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
 
   pool_disks := admin_dbc.Collection('POOL_DISKS',true,true);
   pool_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
 
   //// Used to fix display in startup case, when no feeder has made initial data
-  //UpdateDiskCollection(pool_disks,DISKI_HACK.Get_Disk_Data_Once);
+  UpdateDiskCollection(pool_disks,DISKI_HACK.Get_Disk_Data_Once);
 
   //_buildPoolsCollection(); //FIXME: Must be done over feeder
 
@@ -2646,7 +2646,7 @@ var disk_data   : IFRE_DB_Object;
 begin
   //FIXXXME - please implement me!
   pool_disks := GetDBConnection(input).Collection('POOL_DISKS',false,true);
-  //disk_data := DISKI_HACK.Get_Disk_Data;
+  disk_data := DISKI_HACK.Get_Disk_Data;
   UpdateDiskCollection(pool_disks,disk_data);
   result := GFRE_DB_NIL_DESC;
 end;

@@ -13,7 +13,8 @@ uses
   fre_hal_schemes,
   FRE_DB_INTERFACE,fos_stats_control_interface,fos_firmbox_vm_machines_mod,
   fre_system,
-  FRE_DB_COMMON;
+  FRE_DB_COMMON,
+  fre_zfs;
 
 type
    TAppliancePerformanceData = record
@@ -54,6 +55,7 @@ type
   published
     function        IMI_RAW_DATA_FEED         (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
     function        IMI_RAW_DATA_FEED30       (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
+    function        IMI_RAW_DISK_FEED           (const data:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_APPLIANCE_STATUS_MOD }
@@ -70,6 +72,7 @@ type
     procedure       SetupAppModuleStructure   ; override;
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
     procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
+    procedure       UpdateDiskCollection      (const pool_disks : IFRE_DB_COLLECTION ; const data:IFRE_DB_Object);
   published
     function        IMI_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
     function        IMI_CPUStatusStopStart    (const input:IFRE_DB_Object):IFRE_DB_Object;
@@ -84,6 +87,7 @@ type
     function        IMI_CacheStatusInit       (const input:IFRE_DB_Object):IFRE_DB_Object;
     function        IMI_RAW_UPDATE            (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
     function        IMI_RAW_UPDATE30          (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
+    function        IMI_RAW_DISK_UPDATE       (const data:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD }
@@ -596,6 +600,28 @@ procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.MySessionInitializeModule(const sess
 var
   DC_CHARTDATA_ZONES  : IFRE_DB_DERIVED_COLLECTION;
   CHARTDATA           : IFRE_DB_COLLECTION;
+
+  busy,ast,rbw,wbw    : IFRE_DB_DERIVED_COLLECTION;
+  disks               : IFRE_DB_COLLECTION;
+  labels              : TFRE_DB_StringArray;
+  idx                 : NativeInt;
+
+  procedure _AddDisk(const obj:IFRE_DB_Object);
+  var diskname : string;
+  begin
+    diskname := obj.Field('caption').AsString;
+    if Pos('C',diskname)=1 then begin
+      labels[idx]:='D '+inttostr(idx);
+    end else begin
+      if Pos('RAM',diskname)=1 then begin
+        labels[idx]:='RD';
+      end else begin
+        labels[idx]:=diskname;
+      end;
+    end;
+    idx:=idx+1;
+  end;
+
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -606,6 +632,33 @@ begin
       SetDeriveParent(CHARTDATA);
       SetDisplayTypeChart('Space on diskpool zones',fdbct_pie,TFRE_DB_StringArray.Create('value'),True,True,nil,true);
     end;
+
+    disks := session.GetDBConnection.Collection('POOL_DISKS',false);
+    idx:=0;
+
+    ast   := session.NewDerivedCollection('APP_POOL_AST');
+    ast.SetDeriveParent(disks);
+    ast.AddOrderField('1','diskid',true);
+    ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20);
+    SetLength(labels,ast.Count);
+    ast.ForAll(@_AddDisk);
+    ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20); // Hack for labels, must be redone
+
+    rbw   := session.NewDerivedCollection('APP_POOL_RBW');
+    rbw.SetDeriveParent(disks);
+    rbw.AddOrderField('1','diskid',true);
+    rbw.SetDisplayTypeChart('Raw Disk Bandwidth Read (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('rbw'),false,false,labels,false,160000);
+
+    wbw   := session.NewDerivedCollection('APP_POOL_WBW');
+    wbw.SetDeriveParent(disks);
+    wbw.AddOrderField('1','diskid',true);
+    wbw.SetDisplayTypeChart('Raw Disk Bandwidth Write (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('wbw'),false,false,labels,false,160000);
+
+    busy  := session.NewDerivedCollection('APP_POOL_BUSY');
+    busy.SetDeriveParent(disks);
+    busy.AddOrderField('1','diskid',true);
+    busy.SetDisplayTypeChart('Raw Disk Busy Times [%]',fdbct_column,TFRE_DB_StringArray.Create('b'),false,false,labels,false,100);
+
   end;
 end;
 
@@ -646,36 +699,64 @@ begin
   CheckDbResult(coll.Store(space),'Add zones space');
 
   //FIRMBOX TESTMODE STARTUP SPEED ENHANCEMENT
-  //DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-  //_fillPoolCollection(admin_dbc,DISKI_HACK.Get_ZFS_Data_Once);
-
-  coll := admin_dbc.Collection('MYPOOL_SPACE',true,true);
-
-  used:=random(3000)/100;
-  avail:=random(1500)/100;
-  ref:= 45 - used - avail;
-  space := GFRE_DBI.NewObject;
-  space.Field('value').AsReal32 := used;
-  space.Field('value_col').AsString := '#3A6D9E';
-  space.Field('value_lbl').AsString := FloatToStr(used) + ' TB';
-  space.Field('value_leg').AsString := 'Used';
-  CheckDbResult(coll.Store(space),'Add dummy space');
-  space := GFRE_DBI.NewObject;
-  space.Field('value').AsReal32 := avail;
-  space.Field('value_col').AsString := '#70A258';
-  space.Field('value_lbl').AsString := FloatToStr(avail) + ' TB';
-  space.Field('value_leg').AsString := 'Available';
-  CheckDbResult(coll.Store(space),'Add dummy space');
-  space := GFRE_DBI.NewObject;
-  space.Field('value').AsReal32 := ref;
-  space.Field('value_col').AsString := '#EDAF49';
-  space.Field('value_lbl').AsString := FloatToStr(ref) + ' TB';
-  space.Field('value_leg').AsString := 'Referred';
-  CheckDbResult(coll.Store(space),'Add dummy space');
+  DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);    //RZNORD
+  _fillPoolCollection(admin_dbc,DISKI_HACK.Get_ZFS_Data_Once);
 
   coll := admin_dbc.Collection('LIVE_STATUS',true,true);
   coll.DefineIndexOnField('feedname',fdbft_String,true,true);
 end;
+
+procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.UpdateDiskCollection(const pool_disks: IFRE_DB_COLLECTION; const data: IFRE_DB_Object);
+var       debugs   : string;
+  procedure UpdateDisks(const field:IFRE_DB_Field);
+  var diskname : string;
+      disk     : IFRE_DB_Object;
+      disko    : IFRE_DB_Object;
+  begin
+    if field.FieldType=fdbft_Object then begin
+      try
+        diskname := field.FieldName;
+        disko    := field.AsObject;
+        if diskname='DISK_AGGR' then
+          exit;
+        if pool_disks.GetIndexedObj(diskname,disk) then begin
+          disk.Field('caption').AsString := diskname;
+          disk.Field('ast').AsReal32 := disko.Field('actv_t').AsReal32;
+          disk.Field('wbw').AsReal32 := disko.Field('kwps').AsReal32;
+          disk.Field('rbw').AsReal32 := disko.Field('krps').AsReal32;;
+          disk.Field('b').AsReal32   := disko.Field('perc_b').AsReal32;
+          //writeln('>> ',format('%30.30s AST %05.1f WBW  %05.1f  RBW   %05.1f   BUSY %05.1f',[disk.Field('caption').AsString,disk.Field('ast').AsReal32,disk.Field('wbw').AsReal32,disk.Field('rbw').AsReal32,disk.Field('b').AsReal32]));
+          pool_disks.Update(disk);
+        end else begin
+          disk := GFRE_DBI.NewObject;
+          disk.Field('diskid').AsString  := diskname;
+          disk.Field('caption').AsString := diskname;
+          disk.Field('ast_uid').AsGUID := disk.UID;
+          disk.Field('wbw_uid').AsGUID := disk.UID;
+          disk.Field('rbw_uid').AsGUID := disk.UID;
+          disk.Field('b_uid').AsGUID := disk.UID;
+          disk.Field('ast').AsReal32 := disko.Field('actv_t').AsReal32;
+          disk.Field('wbw').AsReal32 := disko.Field('kwps').AsReal32;
+          disk.Field('rbw').AsReal32 := disko.Field('krps').AsReal32;;
+          disk.Field('b').AsReal32   := disko.Field('perc_b').AsReal32;;
+          pool_disks.Store(disk);
+        end;
+      except on e:exception do begin
+        writeln('>UPDATE DISK ERROR : ',e.Message);
+      end;end;
+    end;
+  end;
+
+begin
+  debugs := '';
+  pool_disks.StartBlockUpdating;
+  try
+    data.ForAllFields(@UpdateDisks);
+  finally
+    pool_disks.FinishBlockUpdating;
+  end;
+end;
+
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 var
@@ -685,6 +766,10 @@ var
   c1                 : TFRE_DB_LAYOUT_DESC;
   c2,c3,c4,c5,c6     : TFRE_DB_LIVE_CHART_DESC;
   session            : TFRE_DB_UserSession;
+  main               : TFRE_DB_LAYOUT_DESC;
+  sub3,sub4          : TFRE_DB_LAYOUT_DESC;
+  left               : TFRE_DB_LAYOUT_DESC;
+  right              : TFRE_DB_LAYOUT_DESC;
 
 begin
   conn:=GetDBConnection(input);
@@ -705,9 +790,17 @@ begin
   c6:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cache',2,CSF(@IMI_CacheStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_cache_misses_legend').ShortText,app.FetchAppText(conn,'$overview_cache_hits_legend').ShortText),11,CSF(@IMI_CacheStatusInit));
 
-  sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c1,c5,nil,nil,false,1,1,1);
+  sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,c1,nil,nil,false,1,1,1);
   sub2:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c3,c4,c6,nil,nil,false,1,1,1);
-  res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub2,nil,sub1,nil,false,-1,1,-1,1);
+  left:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub2,nil,sub1,nil,false,-1,1,-1,1);
+
+  //RZNORD
+
+  sub3:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(GetSession(input).FetchDerivedCollection('APP_POOL_BUSY').GetDisplayDescription,GetSession(input).FetchDerivedCollection('APP_POOL_AST').GetDisplayDescription,nil,nil,nil,false,1,1);
+  sub4:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(GetSession(input).FetchDerivedCollection('APP_POOL_WBW').GetDisplayDescription,GetSession(input).FetchDerivedCollection('APP_POOL_RBW').GetDisplayDescription,nil,nil,nil,false,1,1);
+  right:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub4,nil,sub3,nil,false,-1,1,-1,1);
+
+  res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(left,right,nil,nil,nil,false,3,2);
   result := res;
 
 end;
@@ -949,9 +1042,19 @@ var
   coll   : IFRE_DB_COLLECTION;
 begin
    //TURN OFF SAFETY
-   //session:=GetSession(raw_data);
-   //_fillPoolCollection(session.GetDBConnection,raw_data.Field('zfs').AsObject);
-   result := GFRE_DB_NIL_DESC;
+  session:=GetSession(raw_data);
+  _fillPoolCollection(session.GetDBConnection,raw_data.Field('zfs').AsObject);
+  result := GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAW_DISK_UPDATE(const data: IFRE_DB_Object): IFRE_DB_Object;
+var pool_disks : IFRE_DB_COLLECTION;
+    dbc        : IFRE_DB_CONNECTION;
+
+begin
+  dbc := GetDBConnection(data);
+  pool_disks := dbc.Collection('POOL_DISKS',false,true);
+  UpdateDiskCollection(pool_disks,data.Field('DISK').AsObject);
 end;
 
 { TFRE_FIRMBOX_APPLIANCE_APP }
@@ -1019,19 +1122,19 @@ begin
                       CreateAppText(conn,'$fc_desc','Description');
 
                       CreateAppText(conn,'$overview_caption_space','Space');
-                      CreateAppText(conn,'$overview_caption_cpu','CPU Load (2 Intel(r) Xeon(r) CPU E5-2603 0 @ 1.80GHz)');
+                      CreateAppText(conn,'$overview_caption_cpu','CPU Load (4 Intel E5-4620@2.20GHz)');
                       CreateAppText(conn,'$overview_cpu_system_legend','System [%]');
                       CreateAppText(conn,'$overview_cpu_user_legend','User [%]');
-                      CreateAppText(conn,'$overview_caption_net','Network (2 x I350 Gigabit Network)');
+                      CreateAppText(conn,'$overview_caption_net','Network');
                       CreateAppText(conn,'$overview_net_receive_legend','Receive [%]');
                       CreateAppText(conn,'$overview_net_transmit_legend','Transmit [%]');
-                      CreateAppText(conn,'$overview_caption_disk','Disk I/O (Disk Device Aggregation)');
+                      CreateAppText(conn,'$overview_caption_disk','Disk I/O (Device Aggregation)');
                       CreateAppText(conn,'$overview_disk_read_legend','Read [kIOPS]');
                       CreateAppText(conn,'$overview_disk_write_legend','Write [kIOPS]');
-                      CreateAppText(conn,'$overview_caption_ram','RAM Usage (16.351 MB Physical Memory, 21.500 MB Swap)');
+                      CreateAppText(conn,'$overview_caption_ram','RAM Usage (128 GB Physical Memory)');
                       CreateAppText(conn,'$overview_ram_ram_legend','RAM [%]');
                       CreateAppText(conn,'$overview_ram_swap_legend','Swap [%]');
-                      CreateAppText(conn,'$overview_caption_cache','Cache (Adaptive Read Cache 7.482 MB)');
+                      CreateAppText(conn,'$overview_caption_cache','Cache (Adaptive Read Cache)');
                       CreateAppText(conn,'$overview_cache_hits_legend','Cache Hits [%]');
                       CreateAppText(conn,'$overview_cache_misses_legend','Cache Misses [%]');
 
@@ -1095,10 +1198,14 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/firmbox_appliance/appliance_white.svg','',0,CheckAppRightModule(conn,'status') or CheckAppRightModule(conn,'settings') or CheckAppRightModule(conn,'analytics'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppText(conn,'$sitemap_status').Getshort,'images_apps/firmbox_appliance/status_white.svg','STATUS',0,CheckAppRightModule(conn,'status'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppText(conn,'$sitemap_settings').Getshort,'images_apps/firmbox_appliance/settings_white.svg','SETTINGS',0,CheckAppRightModule(conn,'settings'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppText(conn,'$sitemap_analytics').Getshort,'images_apps/firmbox_appliance/analytics_white.svg','ANALYTICS',0,CheckAppRightModule(conn,'analytics'));
+  if session.GetUsername='city@system' then begin  //RZNORD
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(conn,'$sitemap_status').Getshort,'images_apps/firmbox_appliance/status_white.svg','',0,CheckAppRightModule(conn,'status'));
+  end else begin
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/firmbox_appliance/appliance_white.svg','',0,CheckAppRightModule(conn,'status') or CheckAppRightModule(conn,'settings') or CheckAppRightModule(conn,'analytics'));
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppText(conn,'$sitemap_status').Getshort,'images_apps/firmbox_appliance/status_white.svg','STATUS',0,CheckAppRightModule(conn,'status'));
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppText(conn,'$sitemap_settings').Getshort,'images_apps/firmbox_appliance/settings_white.svg','SETTINGS',0,CheckAppRightModule(conn,'settings'));
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppText(conn,'$sitemap_analytics').Getshort,'images_apps/firmbox_appliance/analytics_white.svg','ANALYTICS',0,CheckAppRightModule(conn,'analytics'));
+  end;
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
 end;
@@ -1141,6 +1248,12 @@ end;
 function TFRE_FIRMBOX_APPLIANCE_APP.IMI_RAW_DATA_FEED30(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := DelegateInvoke('STATUS','RAW_UPDATE30',raw_data);
+end;
+
+function TFRE_FIRMBOX_APPLIANCE_APP.IMI_RAW_DISK_FEED(const data: IFRE_DB_Object): IFRE_DB_Object;
+begin
+  result := DelegateInvoke('STATUS','RAW_DISK_UPDATE',data);
+//  result := DelegateInvoke('STORAGE_POOLS','RAW_DISK_FEED',data);
 end;
 
 procedure Register_DB_Extensions;

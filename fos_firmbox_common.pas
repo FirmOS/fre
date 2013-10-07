@@ -90,11 +90,11 @@ var conn : IFRE_DB_SYS_CONNECTION;
       setLength(guestug,0);
 
       CreateAppUserGroups('firmbox_appliance',domain);
-      CreateAppUserGroups('accesscontrol',domain);
+//      CreateAppUserGroups('accesscontrol',domain); RZNORD
       //CreateAppUserGroups('firmbox_infrastructure');
       //CreateAppUserGroups('firmbox_services');
-      CreateAppUserGroups('firmbox_storage',domain);
-      CreateAppUserGroups('firmbox_vm',domain);
+//      CreateAppUserGroups('firmbox_storage',domain);// RZNORD
+//      CreateAppUserGroups('firmbox_vm',domain);    RZNORD
       //CreateAppUserGroups('monsys');
       //CreateAppUserGroups('firmbox_store');
 
@@ -105,6 +105,7 @@ var conn : IFRE_DB_SYS_CONNECTION;
         _addUsertoGroup('admin1',adminug);
         _addUsertoGroup('admin2',adminug);
         _addUsertoGroup('feeder',adminug);
+        _addUsertoGroup('city',adminug);
 
         _addUsertoGroup('user1',userug);
         _addUsertoGroup('user2',userug);
