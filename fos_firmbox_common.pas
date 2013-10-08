@@ -90,11 +90,11 @@ var conn : IFRE_DB_SYS_CONNECTION;
       setLength(guestug,0);
 
       CreateAppUserGroups('firmbox_appliance',domain);
-//      CreateAppUserGroups('accesscontrol',domain); RZNORD
+      //CreateAppUserGroups('accesscontrol',domain); //RZNORD
       //CreateAppUserGroups('firmbox_infrastructure');
       //CreateAppUserGroups('firmbox_services');
-//      CreateAppUserGroups('firmbox_storage',domain);// RZNORD
-//      CreateAppUserGroups('firmbox_vm',domain);    RZNORD
+      //CreateAppUserGroups('firmbox_storage',domain);// RZNORD
+      //CreateAppUserGroups('firmbox_vm',domain);   // RZNORD
       //CreateAppUserGroups('monsys');
       //CreateAppUserGroups('firmbox_store');
 

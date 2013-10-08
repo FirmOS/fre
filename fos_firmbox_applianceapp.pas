@@ -43,7 +43,8 @@ type
   private
     procedure       SetupApplicationStructure     ; override;
     function        InstallAppDefaults            (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
-    function        InstallSystemGroupsandRoles   (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
+    function        InstallRoles                  (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype;
+    function        InstallDomainGroupsandRoles   (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
     procedure       _UpdateSitemap                (const session: TFRE_DB_UserSession);
   protected
     procedure       MySessionInitialize           (const session: TFRE_DB_UserSession);override;
@@ -1078,14 +1079,14 @@ var
 
   procedure _InstallAllDomains(const obj:IFRE_DB_Object);
   begin
-    InstallSystemGroupsandRoles(conn,obj.Field('objname').asstring);
+    InstallDomainGroupsandRoles(conn,obj.Field('objname').asstring);
   end;
 
 begin
   case _CheckVersion(conn,old_version) of
     NotInstalled : begin
                       _SetAppdataVersion(conn,_ActualVersion);
-
+                      InstallRoles(conn);
                       conn.ForAllDomains(@_InstallAllDomains);
 
                       CreateAppText(conn,'$description','Appliance','Appliance','Appliance');
@@ -1157,41 +1158,46 @@ begin
   end;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
-var role         : IFRE_DB_ROLE;
+function TFRE_FIRMBOX_APPLIANCE_APP.InstallRoles(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+var
+  role         : IFRE_DB_ROLE;
 begin
 
   role := _CreateAppRole('view_status','View Status','Allowed to see the appliance status.');
   _AddAppRight(role,'view_status','View Status','Allowed to see the appliance status.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['status']));
-  conn.StoreRole(role,ObjectName,domain);
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
 
   role := _CreateAppRole('view_settings','View Settings','Allowed to see the appliance settings.');
   _AddAppRight(role,'view_settings','View Settings','Allowed to see the appliance settings.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['settings']));
-  conn.StoreRole(role,ObjectName,domain);
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
 
   role := _CreateAppRole('view_analytics','View Analytics','Allowed to see the appliance analytics.');
   _AddAppRight(role,'view_analytics','View Analytics','Allowed to see the appliance analytics.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['analytics']));
-  conn.StoreRole(role,ObjectName,domain);
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
+end;
 
-
+function TFRE_FIRMBOX_APPLIANCE_APP.InstallDomainGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
+var
+  role         : IFRE_DB_ROLE;
+begin
   if domain=cSYS_DOMAIN then begin
     role := _CreateAppRole('edit_settings','Edit Settings','Allowed to create/edit the appliance settings.');
     _AddAppRight(role,'edit_settings','Edit Settings','Allowed to see the appliance settings.');
     _AddAppRight(role,'view_settings','View Settings','Allowed to create/edit the appliance settings.');
     _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['settings']));
-    conn.StoreRole(role,ObjectName,domain);
+    CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
   end;
 
   _AddSystemGroups(conn,domain);
 
-  conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status'+'@'+domain)]));
+  CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status')])),'InstallDomainGroupsandRoles');
   if domain=cSYS_DOMAIN then begin
-    conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'edit_settings'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_analytics'+'@'+domain)]));
+    CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'edit_settings'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_status'),Get_Rightname_App_Role_SubRole(ObjectName,'view_analytics')])),'InstallDomainGroupsandRoles');
   end else begin
-    conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status'+'@'+domain)]));
+    CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status')])),'InstallDomainGroupsandRoles');
   end;
 end;
 

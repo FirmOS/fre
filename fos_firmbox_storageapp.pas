@@ -26,7 +26,8 @@ type
   private
     procedure       SetupApplicationStructure ; override;
     function        InstallAppDefaults          (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
-    function        InstallSystemGroupsandRoles (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
+    function        InstallRoles                (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype;
+    function        InstallDomainGroupsandRoles (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
     procedure       _UpdateSitemap              (const session: TFRE_DB_UserSession);
   protected
     procedure       MySessionInitialize         (const session: TFRE_DB_UserSession);override;
@@ -3604,7 +3605,7 @@ var
 
   procedure _InstallAllDomains(const obj:IFRE_DB_Object);
   begin
-    InstallSystemGroupsandRoles(conn,obj.Field('objname').asstring);
+    InstallDomainGroupsandRoles(conn,obj.Field('objname').asstring);
   end;
 
 
@@ -3612,6 +3613,7 @@ begin
   case _CheckVersion(conn,old_version) of
     NotInstalled : begin
                       _SetAppdataVersion(conn,_ActualVersion);
+                      InstallRoles(conn);
                       conn.ForAllDomains(@_InstallAllDomains);
 
                       CreateAppText(conn,'$description','Storage','Storage','Storage');
@@ -3822,7 +3824,45 @@ begin
 
 end;
 
-function TFRE_FIRMBOX_STORAGE_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
+function TFRE_FIRMBOX_STORAGE_APP.InstallRoles(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+var
+  role         : IFRE_DB_ROLE;
+begin
+  role := _CreateAppRole('view_fileserver_virtual','View virtual fileserver','Allowed to view virtual NAS.');
+  _AddAppRight(role,'view_fileserver_virtual','View virtual fileserver','Allowed to view virtual NAS.');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_virtual']));
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
+
+  role := _CreateAppRole('edit_vfs','Edit virtual fileservers','Allowed to create/edit virtual fileservers.');
+  _AddAppRight(role,'view_fileserver_virtual','View virtual fileserver','Allowed to view virtual NAS.');
+  _AddAppRight(role,'edit_vfs','Edit virtual fileservers','Allowed to create/edit virtual fileservers.');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_virtual']));
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
+
+  role := _CreateAppRole('view_vfs_share','view virtual fileserver shares','Allowed to view virtual fileserver shares.');
+  _AddAppRight(role,'view_vfs_share','View virtual fileserver share','Allowed to view virtual fileserver shares.');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_virtual']));
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
+
+  role := _CreateAppRole('edit_vfs_share','Edit virtual fileserver shares','Allowed to create/edit virtual fileserver shares.');
+  _AddAppRight(role,'view_vfs_share','View virtual fileserver share','Allowed to view virtual fileserver shares.');
+  _AddAppRight(role,'edit_vfs_share','Edit virtual fileserver shares','Allowed to create/edit virtual fileserver shares.');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_virtual']));
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
+
+  role := _CreateAppRole('view_backup','View backups','Allowed to view backups.');
+  _AddAppRight(role,'view_backup','Allowed to view backups.','Allowed to view backups.');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_backup']));
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
+
+  role := _CreateAppRole('delete_backup','Delete backups','Allowed to delete backups.');
+  _AddAppRight(role,'view_backup','Allowed to view backups.','Allowed to view backups.');
+  _AddAppRight(role,'delete_backup','Allowed to delete backups.','Allowed to delete backups.');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_backup']));
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
+end;
+
+function TFRE_FIRMBOX_STORAGE_APP.InstallDomainGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
 var
   role         : IFRE_DB_ROLE;
 begin
@@ -3830,75 +3870,41 @@ begin
     role := _CreateAppRole('view_pools','View pools','Allowed to view pools and pool statistics.');
     _AddAppRight(role,'view_pools','View pools','Allowed to view pools and pool statistics.');
     _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_pools']));
-    conn.StoreRole(role,ObjectName,domain);
+    CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
 
     role := _CreateAppRole('administer_pools','Administer pools','Allowed to administer pools.');
     _AddAppRight(role,'view_pools','View pools','Allowed to view pools and pool statistics.');
     _AddAppRight(role,'administer_pools','Administer pools','Allowed to administer pools.');
     _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_pools']));
-    conn.StoreRole(role,ObjectName,domain);
+    CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
 
     role := _CreateAppRole('view_fileserver_global','View SAN/NAS','Allowed to view SAN/NAS.');
     _AddAppRight(role,'view_fileserver_global','View SAN/NAS','Allowed to view SAN/NAS.');
     _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_global']));
-    conn.StoreRole(role,ObjectName,domain);
+    CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
 
     role := _CreateAppRole('edit_nfs_global','Edit global NFS fileshares','Allowed to create/edit NFS fileshares.');
     _AddAppRight(role,'view_fileserver_global','View SAN/NAS','Allowed to view SAN/NAS.');
     _AddAppRight(role,'edit_nfs_global','Edit NFS fileshares','Allowed to create/edit NFS fileshares.');
     _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_global']));
-    conn.StoreRole(role,ObjectName,domain);
+    CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
 
     role := _CreateAppRole('edit_lun_global','Edit global LUN','Allowed to create/edit LUN.');
     _AddAppRight(role,'view_fileserver_global','View SAN/NAS','Allowed to view SAN/NAS.');
     _AddAppRight(role,'edit_lun_global','Edit LUN','Allowed to create/edit LUN.');
     _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_global']));
-    conn.StoreRole(role,ObjectName,domain);
+    CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
   end;
-
-  role := _CreateAppRole('view_fileserver_virtual','View virtual fileserver','Allowed to view virtual NAS.');
-  _AddAppRight(role,'view_fileserver_virtual','View virtual fileserver','Allowed to view virtual NAS.');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_virtual']));
-  conn.StoreRole(role,ObjectName,domain);
-
-  role := _CreateAppRole('edit_vfs','Edit virtual fileservers','Allowed to create/edit virtual fileservers.');
-  _AddAppRight(role,'view_fileserver_virtual','View virtual fileserver','Allowed to view virtual NAS.');
-  _AddAppRight(role,'edit_vfs','Edit virtual fileservers','Allowed to create/edit virtual fileservers.');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_virtual']));
-  conn.StoreRole(role,ObjectName,domain);
-
-  role := _CreateAppRole('view_vfs_share','view virtual fileserver shares','Allowed to view virtual fileserver shares.');
-  _AddAppRight(role,'view_vfs_share','View virtual fileserver share','Allowed to view virtual fileserver shares.');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_virtual']));
-  conn.StoreRole(role,ObjectName,domain);
-
-  role := _CreateAppRole('edit_vfs_share','Edit virtual fileserver shares','Allowed to create/edit virtual fileserver shares.');
-  _AddAppRight(role,'view_vfs_share','View virtual fileserver share','Allowed to view virtual fileserver shares.');
-  _AddAppRight(role,'edit_vfs_share','Edit virtual fileserver shares','Allowed to create/edit virtual fileserver shares.');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_fileserver_virtual']));
-  conn.StoreRole(role,ObjectName,domain);
-
-
-  role := _CreateAppRole('view_backup','View backups','Allowed to view backups.');
-  _AddAppRight(role,'view_backup','Allowed to view backups.','Allowed to view backups.');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_backup']));
-  conn.StoreRole(role,ObjectName,domain);
-
-  role := _CreateAppRole('delete_backup','Delete backups','Allowed to delete backups.');
-  _AddAppRight(role,'view_backup','Allowed to view backups.','Allowed to view backups.');
-  _AddAppRight(role,'delete_backup','Allowed to delete backups.','Allowed to delete backups.');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['storage_backup']));
-  conn.StoreRole(role,ObjectName,domain);
 
   _AddSystemGroups(conn,domain);
 
   if domain=cSYS_DOMAIN then begin
-    conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_pools'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_fileserver_global'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_fileserver_virtual'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_vfs_share'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_backup'+'@'+domain)]));
-    conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'administer_pools'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'edit_nfs_global'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'edit_lun_global'+'@'+domain),
-                          Get_Rightname_App_Role_SubRole(ObjectName,'edit_vfs'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'edit_vfs_share'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'delete_backup'+'@'+domain)]));
+    CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_pools'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_fileserver_global'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_fileserver_virtual'),Get_Rightname_App_Role_SubRole(ObjectName,'view_vfs_share'),Get_Rightname_App_Role_SubRole(ObjectName,'view_backup')])),'InstallDomainGroupsandRoles');
+    CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'administer_pools'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'edit_nfs_global'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'edit_lun_global'+'@'+domain),
+                                        Get_Rightname_App_Role_SubRole(ObjectName,'edit_vfs'),Get_Rightname_App_Role_SubRole(ObjectName,'edit_vfs_share'),Get_Rightname_App_Role_SubRole(ObjectName,'delete_backup')])),'InstallDomainGroupsandRoles');
   end else begin
-    conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_fileserver_virtual'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_vfs_share'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_backup'+'@'+domain)]));
-    conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'edit_vfs'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'edit_vfs_share'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'delete_backup'+'@'+domain)]));
+    CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_fileserver_virtual'),Get_Rightname_App_Role_SubRole(ObjectName,'view_vfs_share'),Get_Rightname_App_Role_SubRole(ObjectName,'view_backup')])),'InstallDomainGroupsandRoles');
+    CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'edit_vfs'),Get_Rightname_App_Role_SubRole(ObjectName,'edit_vfs_share'),Get_Rightname_App_Role_SubRole(ObjectName,'delete_backup')])),'InstallDomainGroupsandRoles');
   end;
 end;
 
