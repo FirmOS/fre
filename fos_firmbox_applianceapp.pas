@@ -770,7 +770,8 @@ var
   sub3,sub4          : TFRE_DB_LAYOUT_DESC;
   left               : TFRE_DB_LAYOUT_DESC;
   right              : TFRE_DB_LAYOUT_DESC;
-
+  sub1l              : TFRE_DB_LAYOUT_DESC;
+  sub2l              : TFRE_DB_LAYOUT_DESC;
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
@@ -790,8 +791,11 @@ begin
   c6:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cache',2,CSF(@IMI_CacheStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_cache_misses_legend').ShortText,app.FetchAppText(conn,'$overview_cache_hits_legend').ShortText),11,CSF(@IMI_CacheStatusInit));
 
-  sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,c1,nil,nil,false,1,1,1);
-  sub2:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c3,c4,c6,nil,nil,false,1,1,1);
+  sub1l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,nil,nil,nil,false,1,1);
+  sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub1l,c1,nil,nil,nil,false,2,1);
+
+  sub2l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c3,c4,nil,nil,nil,false,1,1);
+  sub2:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub2l,c6,nil,nil,nil,false,2,1);
   left:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub2,nil,sub1,nil,false,-1,1,-1,1);
 
   //RZNORD
@@ -1131,12 +1135,12 @@ begin
                       CreateAppText(conn,'$overview_caption_disk','Disk I/O (Device Aggregation)');
                       CreateAppText(conn,'$overview_disk_read_legend','Read [kIOPS]');
                       CreateAppText(conn,'$overview_disk_write_legend','Write [kIOPS]');
-                      CreateAppText(conn,'$overview_caption_ram','RAM Usage (128 GB Physical Memory)');
+                      CreateAppText(conn,'$overview_caption_ram','RAM Usage (128 GB Phys)');
                       CreateAppText(conn,'$overview_ram_ram_legend','RAM [%]');
                       CreateAppText(conn,'$overview_ram_swap_legend','Swap [%]');
                       CreateAppText(conn,'$overview_caption_cache','Cache (Adaptive Read Cache)');
-                      CreateAppText(conn,'$overview_cache_hits_legend','Cache Hits [%]');
-                      CreateAppText(conn,'$overview_cache_misses_legend','Cache Misses [%]');
+                      CreateAppText(conn,'$overview_cache_hits_legend','Hits [%]');
+                      CreateAppText(conn,'$overview_cache_misses_legend','Misses [%]');
 
                       CreateAppText(conn,'$button_save','Save'); //global text?
                    end;
