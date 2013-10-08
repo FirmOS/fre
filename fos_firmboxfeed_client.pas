@@ -115,9 +115,9 @@ procedure TFRE_BOX_FEED_CLIENT.MyInitialize;
 begin
   FEED_Timer      := GFRE_S.AddPeriodicTimer (1000,@GenerateFeedDataTimer);
   FEED_Timer30    := GFRE_S.AddPeriodicTimer (30000,@GenerateFeedDataTimer30);
-  vmc             := Get_VM_Host_Control     (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  //vmc             := Get_VM_Host_Control     (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  //vmc.VM_EnableVMMonitor                     (true);
   statscontroller := Get_Stats_Control       (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-  vmc.VM_EnableVMMonitor                     (true);
   statscontroller.StartDiskPersistentMonitorParser(true);
   statscontroller.StartCPUParser(true);
   statscontroller.StartRAMParser(true);
@@ -128,8 +128,10 @@ begin
 end;
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;
 begin
+  writeln('FEED CLIENT FINALIZE');
   FEED_Timer.FinalizeIt;
-  vmc.Finalize ;
+  FEED_Timer30.FinalizeIt;
+  //vmc.Finalize ;
   statscontroller.Finalize;
 end;
 
@@ -150,7 +152,7 @@ begin
         vmo.Field('CACHE').AsObject := statscontroller.Get_CacheData;
         vmo.Field('DISK').AsObject := statscontroller.Get_Disk_Data;
         SendServerCommand(FAPPL_FeedAppClass,'RAW_DATA_FEED',TFRE_DB_GUIDArray.Create(FAPPL_FeedAppUid),vmo);
-        writeln('LIVEUPDATE SENT! ' , GFRE_DT.Now_UTC);
+        //writeln('LIVEUPDATE SENT! ' , GFRE_DT.Now_UTC);
       except on e:exception do begin
         writeln('FEED EXCEPTION : ',e.Message);
       end;end;
@@ -162,7 +164,7 @@ begin
         vmo.Field('DISK').AsObject := statscontroller.Get_Disk_Data;
         vmo.Field('ZPOOLIO').AsObject := statscontroller.Get_ZpoolIostat_Data;
         SendServerCommand(FSTORAGE_FeedAppClass,'RAW_DISK_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),vmo);
-        writeln('DISK LIVEUPDATE SENT!');
+        //writeln('DISK LIVEUPDATE SENT!');
       except on e:exception do begin
         writeln('SEND DISK FEED EXCEPTION : ',e.Message);
       end;end;
@@ -188,7 +190,7 @@ begin
         vmo.Field('LIVE STATUS FEED 30').AsString:='LSF30_0.0.1';
         vmo.Field('ZFS').AsObject := statscontroller.Get_ZFS_Data_Once;
         SendServerCommand(FAPPL_FeedAppClass,'RAW_DATA_FEED30',TFRE_DB_GUIDArray.Create(FAPPL_FeedAppUid),vmo);
-        writeln('LIVEUPDATE (30) SENT! ' , GFRE_DT.Now_UTC);
+        //writeln('LIVEUPDATE (30) SENT! ' , GFRE_DT.Now_UTC);
       except on e:exception do begin
         writeln('FEED EXCEPTION : ',e.Message);
       end;end;

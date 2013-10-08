@@ -2235,7 +2235,7 @@ var
     end;
     zfs_res:=zfs.GetPoolStatus('zones',zfs_error,pool);
     zfs.Free;
-    zfs_pool.ClearCollection;
+    //zfs_pool.ClearCollection; //FIXME
     CheckDbResult(zfs_pool.Store(pool),'Store current pool configuration');
 
 
