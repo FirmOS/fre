@@ -43,7 +43,8 @@ type
   private
     procedure       SetupApplicationStructure     ; override;
     function        InstallAppDefaults            (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
-    function        InstallSystemGroupsandRoles   (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
+    function        InstallRoles                  (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype;
+    function        InstallDomainGroupsandRoles   (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
     procedure       _UpdateSitemap                (const session: TFRE_DB_UserSession);
   protected
     procedure       MySessionInitialize           (const session: TFRE_DB_UserSession);override;
@@ -770,7 +771,8 @@ var
   sub3,sub4          : TFRE_DB_LAYOUT_DESC;
   left               : TFRE_DB_LAYOUT_DESC;
   right              : TFRE_DB_LAYOUT_DESC;
-
+  sub1l              : TFRE_DB_LAYOUT_DESC;
+  sub2l              : TFRE_DB_LAYOUT_DESC;
 begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
@@ -790,8 +792,11 @@ begin
   c6:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cache',2,CSF(@IMI_CacheStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_cache_misses_legend').ShortText,app.FetchAppText(conn,'$overview_cache_hits_legend').ShortText),11,CSF(@IMI_CacheStatusInit));
 
-  sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,c1,nil,nil,false,1,1,1);
-  sub2:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c3,c4,c6,nil,nil,false,1,1,1);
+  sub1l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,nil,nil,nil,false,1,1);
+  sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub1l,c1,nil,nil,nil,false,2,1);
+
+  sub2l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c3,c4,nil,nil,nil,false,1,1);
+  sub2:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub2l,c6,nil,nil,nil,false,2,1);
   left:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub2,nil,sub1,nil,false,-1,1,-1,1);
 
   //RZNORD
@@ -1074,14 +1079,14 @@ var
 
   procedure _InstallAllDomains(const obj:IFRE_DB_Object);
   begin
-    InstallSystemGroupsandRoles(conn,obj.Field('objname').asstring);
+    InstallDomainGroupsandRoles(conn,obj.Field('objname').asstring);
   end;
 
 begin
   case _CheckVersion(conn,old_version) of
     NotInstalled : begin
                       _SetAppdataVersion(conn,_ActualVersion);
-
+                      InstallRoles(conn);
                       conn.ForAllDomains(@_InstallAllDomains);
 
                       CreateAppText(conn,'$description','Appliance','Appliance','Appliance');
@@ -1131,12 +1136,12 @@ begin
                       CreateAppText(conn,'$overview_caption_disk','Disk I/O (Device Aggregation)');
                       CreateAppText(conn,'$overview_disk_read_legend','Read [kIOPS]');
                       CreateAppText(conn,'$overview_disk_write_legend','Write [kIOPS]');
-                      CreateAppText(conn,'$overview_caption_ram','RAM Usage (128 GB Physical Memory)');
+                      CreateAppText(conn,'$overview_caption_ram','RAM Usage (128 GB Phys)');
                       CreateAppText(conn,'$overview_ram_ram_legend','RAM [%]');
                       CreateAppText(conn,'$overview_ram_swap_legend','Swap [%]');
                       CreateAppText(conn,'$overview_caption_cache','Cache (Adaptive Read Cache)');
-                      CreateAppText(conn,'$overview_cache_hits_legend','Cache Hits [%]');
-                      CreateAppText(conn,'$overview_cache_misses_legend','Cache Misses [%]');
+                      CreateAppText(conn,'$overview_cache_hits_legend','Hits [%]');
+                      CreateAppText(conn,'$overview_cache_misses_legend','Misses [%]');
 
                       CreateAppText(conn,'$button_save','Save'); //global text?
                    end;
@@ -1153,41 +1158,46 @@ begin
   end;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_APP.InstallSystemGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
-var role         : IFRE_DB_ROLE;
+function TFRE_FIRMBOX_APPLIANCE_APP.InstallRoles(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
+var
+  role         : IFRE_DB_ROLE;
 begin
 
   role := _CreateAppRole('view_status','View Status','Allowed to see the appliance status.');
   _AddAppRight(role,'view_status','View Status','Allowed to see the appliance status.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['status']));
-  conn.StoreRole(role,ObjectName,domain);
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
 
   role := _CreateAppRole('view_settings','View Settings','Allowed to see the appliance settings.');
   _AddAppRight(role,'view_settings','View Settings','Allowed to see the appliance settings.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['settings']));
-  conn.StoreRole(role,ObjectName,domain);
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
 
   role := _CreateAppRole('view_analytics','View Analytics','Allowed to see the appliance analytics.');
   _AddAppRight(role,'view_analytics','View Analytics','Allowed to see the appliance analytics.');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['analytics']));
-  conn.StoreRole(role,ObjectName,domain);
+  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
+end;
 
-
+function TFRE_FIRMBOX_APPLIANCE_APP.InstallDomainGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
+var
+  role         : IFRE_DB_ROLE;
+begin
   if domain=cSYS_DOMAIN then begin
     role := _CreateAppRole('edit_settings','Edit Settings','Allowed to create/edit the appliance settings.');
     _AddAppRight(role,'edit_settings','Edit Settings','Allowed to see the appliance settings.');
     _AddAppRight(role,'view_settings','View Settings','Allowed to create/edit the appliance settings.');
     _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['settings']));
-    conn.StoreRole(role,ObjectName,domain);
+    CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
   end;
 
   _AddSystemGroups(conn,domain);
 
-  conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status'+'@'+domain)]));
+  CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status')])),'InstallDomainGroupsandRoles');
   if domain=cSYS_DOMAIN then begin
-    conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'edit_settings'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_analytics'+'@'+domain)]));
+    CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'edit_settings'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_status'),Get_Rightname_App_Role_SubRole(ObjectName,'view_analytics')])),'InstallDomainGroupsandRoles');
   end else begin
-    conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status'+'@'+domain)]));
+    CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status')])),'InstallDomainGroupsandRoles');
   end;
 end;
 
