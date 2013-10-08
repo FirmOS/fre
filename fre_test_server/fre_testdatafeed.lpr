@@ -125,7 +125,6 @@ begin
   Shutdown_Done;
   FeedClient.Free;
   GFRE_DB_DEFAULT_PS_LAYER.Finalize;
-  writeln('TERMINATED');
   Terminate;
 end;
 
