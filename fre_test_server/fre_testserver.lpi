@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-e FIRMBOX -U root -H 10.220.251.10 -u admin1@system -p a1234 -x -y -t -i -D"/>
+        <CommandLineParams Value="-x -y -t -i -e FIRMBOX -H 10.220.251.10 -U root -u city@system -p city"/>
       </local>
     </RunParams>
     <Units Count="6">
@@ -83,7 +83,7 @@
       </SyntaxOptions>
     </Parsing>
     <CodeGeneration>
-      <TargetCPU Value="x86_64"/>
+      <TargetCPU Value="i386"/>
     </CodeGeneration>
     <Other>
       <CompilerMessages>

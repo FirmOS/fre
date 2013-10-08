@@ -45,6 +45,7 @@ program fre_testdatafeed;
 // lazarus+debugger: => ./fre_testdatafeed -U root -H 10.220.251.10 -D
 
 uses
+  cmem,
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
@@ -123,6 +124,8 @@ begin
   TearDownAPS;
   Shutdown_Done;
   FeedClient.Free;
+  GFRE_DB_DEFAULT_PS_LAYER.Finalize;
+  writeln('TERMINATED');
   Terminate;
 end;
 

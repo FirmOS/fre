@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-U root -H 10.220.251.10 -D"/>
+        <CommandLineParams Value="-U root -H 10.220.251.10 -u feeder@system -p a1234"/>
       </local>
     </RunParams>
     <Units Count="4">
@@ -72,7 +72,7 @@
 //if TargetOS = 'darwin' then
 //   CustomOptions := '-dFOS_DEBUG';"/>
     <CodeGeneration>
-      <TargetCPU Value="x86_64"/>
+      <TargetCPU Value="i386"/>
     </CodeGeneration>
     <Other>
       <CompilerMessages>
