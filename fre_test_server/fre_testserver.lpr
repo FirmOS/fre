@@ -52,8 +52,8 @@ uses
   fos_artemes_testapp,
   fos_monitoring_app,
   fos_captiveportal_app,
-  fre_basecli_app,
-  fre_certificate_app
+  fre_basecli_app
+//  fre_certificate_app
   ;
 
 
