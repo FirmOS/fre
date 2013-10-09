@@ -88,7 +88,7 @@ type
     function        IMI_CacheStatusInit       (const input:IFRE_DB_Object):IFRE_DB_Object;
     function        IMI_RAW_UPDATE            (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
     function        IMI_RAW_UPDATE30          (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_RAW_DISK_UPDATE       (const data:IFRE_DB_Object):IFRE_DB_Object;
+    function        WEB_RAW_DISK_UPDATE       (const data:IFRE_DB_OBject ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD }
@@ -1052,7 +1052,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAW_DISK_UPDATE(const data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAW_DISK_UPDATE(const data: IFRE_DB_OBject; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var pool_disks : IFRE_DB_COLLECTION;
     dbc        : IFRE_DB_CONNECTION;
 
@@ -1060,6 +1060,7 @@ begin
   dbc := GetDBConnection(data);
   pool_disks := dbc.Collection('POOL_DISKS',false,true);
   UpdateDiskCollection(pool_disks,data.Field('DISK').AsObject);
+  result := GFRE_DB_NIL_DESC;
 end;
 
 { TFRE_FIRMBOX_APPLIANCE_APP }
