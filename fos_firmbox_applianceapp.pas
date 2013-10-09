@@ -506,16 +506,16 @@ var
   begin
     case obj.Field('name').AsString of
       'used' : begin
-                 obj.Field('value').AsReal32 := data.FieldPath('zones.used').AsInt64;
-                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('zones.used').AsInt64);
+                 obj.Field('value').AsReal32 := data.FieldPath('jbod.used').AsInt64;
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('jbod.used').AsInt64);
                end;
       'avail': begin
-                 obj.Field('value').AsReal32 := data.FieldPath('zones.available').AsInt64;
-                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('zones.available').AsInt64);
+                 obj.Field('value').AsReal32 := data.FieldPath('jbod.available').AsInt64;
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('jbod.available').AsInt64);
                end;
       'ref'  : begin
-                 obj.Field('value').AsReal32 := data.FieldPath('zones.referenced').AsInt64;
-                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('zones.referenced').AsInt64);
+                 obj.Field('value').AsReal32 := data.FieldPath('jbod.referenced').AsInt64;
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('jbod.referenced').AsInt64);
                end;
     end;
     CheckDbResult(coll.Update(obj),'Update pool space');
@@ -631,7 +631,7 @@ begin
     DC_CHARTDATA_ZONES := session.NewDerivedCollection('DC_ZONES_SPACE');
     with DC_CHARTDATA_ZONES do begin
       SetDeriveParent(CHARTDATA);
-      SetDisplayTypeChart('Space on diskpool zones',fdbct_pie,TFRE_DB_StringArray.Create('value'),True,True,nil,true);
+      SetDisplayTypeChart('Space on Diskpool',fdbct_pie,TFRE_DB_StringArray.Create('value'),True,True,nil,true);
     end;
 
     disks := session.GetDBConnection.Collection('POOL_DISKS',false);
@@ -648,12 +648,12 @@ begin
     rbw   := session.NewDerivedCollection('APP_POOL_RBW');
     rbw.SetDeriveParent(disks);
     rbw.AddOrderField('1','diskid',true);
-    rbw.SetDisplayTypeChart('Raw Disk Bandwidth Read (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('rbw'),false,false,labels,false,160000);
+    rbw.SetDisplayTypeChart('Raw Disk Bandwidth Read (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('rbw'),false,false,labels,false,400000);
 
     wbw   := session.NewDerivedCollection('APP_POOL_WBW');
     wbw.SetDeriveParent(disks);
     wbw.AddOrderField('1','diskid',true);
-    wbw.SetDisplayTypeChart('Raw Disk Bandwidth Write (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('wbw'),false,false,labels,false,160000);
+    wbw.SetDisplayTypeChart('Raw Disk Bandwidth Write (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('wbw'),false,false,labels,false,400000);
 
     busy  := session.NewDerivedCollection('APP_POOL_BUSY');
     busy.SetDeriveParent(disks);
@@ -676,8 +676,8 @@ begin
   inherited MyServerInitializeModule(admin_dbc);
 
   //FIXXME heli
-  FtotalRam:=134189056; //in kb
-  FtotalSwap:=68973712; //may change? mysessioninitializemodule better? feeder?
+  FtotalRam:=221242708; //in kb
+  FtotalSwap:=338566808; //may change? mysessioninitializemodule better? feeder?
   FtotalNet:=100*1024*1024*2;//100MB * 2 Devices
 
   coll := admin_dbc.Collection('ZONES_SPACE',true,true);
@@ -785,7 +785,7 @@ begin
         TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_cpu_system_legend').ShortText,app.FetchAppText(conn,'$overview_cpu_user_legend').ShortText),11,CSF(@IMI_CPUStatusInit));
   c3:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_net',2,CSF(@IMI_NetStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_net').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_net_receive_legend').ShortText,app.FetchAppText(conn,'$overview_net_transmit_legend').ShortText),11,CSF(@IMI_NetStatusInit));
-  c4:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_disk',2,CSF(@IMI_DiskStatusStopStart),0,20,app.FetchAppText(conn,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c4:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_disk',2,CSF(@IMI_DiskStatusStopStart),0,30,app.FetchAppText(conn,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_disk_write_legend').ShortText,app.FetchAppText(conn,'$overview_disk_read_legend').ShortText),11,CSF(@IMI_DiskStatusInit));
   c5:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_ram',2,CSF(@IMI_RAMStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_ram').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_ram_ram_legend').ShortText,app.FetchAppText(conn,'$overview_ram_swap_legend').ShortText),11,CSF(@IMI_RAMStatusInit));
@@ -1136,7 +1136,7 @@ begin
                       CreateAppText(conn,'$overview_caption_disk','Disk I/O (Device Aggregation)');
                       CreateAppText(conn,'$overview_disk_read_legend','Read [kIOPS]');
                       CreateAppText(conn,'$overview_disk_write_legend','Write [kIOPS]');
-                      CreateAppText(conn,'$overview_caption_ram','RAM Usage (128 GB Phys)');
+                      CreateAppText(conn,'$overview_caption_ram','Memory Usage (256GB RAM, 256GB Swap)');
                       CreateAppText(conn,'$overview_ram_ram_legend','RAM [%]');
                       CreateAppText(conn,'$overview_ram_swap_legend','Swap [%]');
                       CreateAppText(conn,'$overview_caption_cache','Cache (Adaptive Read Cache)');
