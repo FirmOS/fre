@@ -1218,9 +1218,9 @@ begin
                      admin_app_rg  := _CreateAppRole('ADMIN','MONSYS ADMIN','Monitoring System Administration Rights');
                      user_app_rg   := _CreateAppRole('USER','MONSYS USER','Monitoring System Default User Rights');
                      guest_app_rg  := _CreateAppRole('GUEST','MONSYS GUEST','Monitoring System Default User Rights');
-                     _AddAppRight(admin_app_rg,'ADMIN','MONSYS Admin','Administration of Monitoring System');
-                     _AddAppRight(user_app_rg ,'START','MONSYS Start','Startup of Monitoring System');
-                     _AddAppRight(guest_app_rg ,'START','MONSYS Start','Startup of Monitoring System');
+                     _AddAppRight(admin_app_rg,'ADMIN');
+                     _AddAppRight(user_app_rg ,'START');
+                     _AddAppRight(guest_app_rg ,'START');
 
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['monsysmod']));
                      conn.StoreRole(admin_app_rg,ObjectName,cSYS_DOMAIN);
