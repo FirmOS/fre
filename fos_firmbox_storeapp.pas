@@ -60,10 +60,10 @@ begin
                       admin_app_rg  := _CreateAppRole('ADMIN','firmbox STOREAPP ADMIN','firmbox STOREAPP Administration Rights');
                       user_app_rg   := _CreateAppRole('USER','firmbox STOREAPP USER','firmbox STOREAPP Default User Rights');
                       guest_app_rg  := _CreateAppRole('GUEST','firmbox STOREAPP GUEST','firmbox STOREAPP Default Guest User Rights');
-                      _AddAppRight(admin_app_rg ,'ADMIN'  ,'firmbox STOREAPP Admin','Administration of firmbox STOREAPP');
-                      _AddAppRight(user_app_rg  ,'START'  ,'firmbox STOREAPP Start','Startup of firmbox STOREAPP');
+                      _AddAppRight(admin_app_rg ,'ADMIN');
+                      _AddAppRight(user_app_rg  ,'START');
 
-                      _AddAppRight(guest_app_rg ,'START','firmbox STOREAPP Start','Startup of COREBORX STOREAPP');
+                      _AddAppRight(guest_app_rg ,'START');
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['main']));
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['modules']));
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['space']));

@@ -173,13 +173,13 @@ var
   role: IFRE_DB_ROLE;
 begin
   role := _CreateAppRole('view_vms','View VMs','Allowed to view VMs');
-  _AddAppRight(role,'view_vms','View VMs','Allowed to view VMs.');
+  _AddAppRight(role,'view_vms');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['vmcontroller']));
   CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
 
   role := _CreateAppRole('admin_vms','Admin VMs','Allowed to administer VMs');
-  _AddAppRight(role,'view_vms','View VMs','Allowed to view VMs.');
-  _AddAppRight(role,'admin_vms','Admin VMs','Allowed to administer VMs.');
+  _AddAppRight(role,'view_vms');
+  _AddAppRight(role,'admin_vms');
   _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['vmcontroller','vmresources','vmnetwork','interfaces','vmstatus']));//FIXXME - add more roles
   CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
 end;
@@ -188,8 +188,8 @@ function TFRE_FIRMBOX_VM_APP.InstallDomainGroupsAndRoles(const conn: IFRE_DB_SYS
 begin
   _AddSystemGroups(conn,domain);
 
-  CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_vms')])),'InstallDomainGroupsAndRoles');
-  CheckDbResult(conn.ModifyGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_vms'),Get_Rightname_App_Role_SubRole(ObjectName,'admin_vms')])),'InstallDomainGroupsAndRoles');
+  CheckDbResult(conn.SetGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_vms')])),'InstallDomainGroupsAndRoles');
+  CheckDbResult(conn.SetGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_vms'),Get_Rightname_App_Role_SubRole(ObjectName,'admin_vms')])),'InstallDomainGroupsAndRoles');
 end;
 
 procedure TFRE_FIRMBOX_VM_APP._UpdateSitemap( const session: TFRE_DB_UserSession);

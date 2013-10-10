@@ -64,8 +64,8 @@ begin
                      admin_app_rg  := _CreateAppRole('ADMIN','firmbox INFRASTRUCTUREAPP ADMIN','firmbox INFRASTRUCTUREAPP Administration Rights');
                      user_app_rg   := _CreateAppRole('USER','firmbox INFRASTRUCTUREAPP USER','firmbox INFRASTRUCTUREAPP Default User Rights');
                      guest_app_rg  := _CreateAppRole('GUEST','firmbox INFRASTRUCTUREAPP GUEST','firmbox INFRASTRUCTUREAPP Default Guest User Rights');
-                     _AddAppRight(admin_app_rg ,'ADMIN'  ,'firmbox INFRASTRUCTUREAPP Admin','Administration of firmbox INFRASTRUCTUREAPP');
-                     _AddAppRight(user_app_rg  ,'START'  ,'firmbox INFRASTRUCTUREAPP Start','Startup of firmbox INFRASTRUCTUREAPP');
+                     _AddAppRight(admin_app_rg ,'ADMIN');
+                     _AddAppRight(user_app_rg  ,'START');
 
  //                    _AddAppRight(guest_app_rg ,'START','firmbox INFRASTRUCTUREAPP Start','Startup of COREBORX INFRASTRUCTUREAPP');
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['main']));

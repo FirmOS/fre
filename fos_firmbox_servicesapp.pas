@@ -151,8 +151,8 @@ begin
                      admin_app_rg  := _CreateAppRole('ADMIN','firmbox SERVICESAPP ADMIN','firmbox SERVICESAPP Administration Rights');
                      user_app_rg   := _CreateAppRole('USER','firmbox SERVICESAPP USER','firmbox SERVICESAPP Default User Rights');
                      guest_app_rg  := _CreateAppRole('GUEST','firmbox SERVICESAPP GUEST','firmbox SERVICESAPP Default Guest User Rights');
-                     _AddAppRight(admin_app_rg ,'ADMIN'  ,'firmbox SERVICESAPP Admin','Administration of firmbox SERVICESAPP');
-                     _AddAppRight(user_app_rg  ,'START'  ,'firmbox SERVICESAPP Start','Startup of firmbox SERVICESAPP');
+                     _AddAppRight(admin_app_rg ,'ADMIN');
+                     _AddAppRight(user_app_rg  ,'START');
 
 //                     _AddAppRight(guest_app_rg ,'START','firmbox SERVICESAPP Start','Startup of COREBORX SERVICESAPP');
 
