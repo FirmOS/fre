@@ -1227,8 +1227,6 @@ begin
                      conn.StoreRole(guest_app_rg,ObjectName,cSYS_DOMAIN);
                      conn.StoreRole(user_app_rg,ObjectName,cSYS_DOMAIN);
 
-                     _AddSystemGroups(conn,cSYS_DOMAIN);
-
                      CreateAppText(conn,'$description','Monitoring','Monitoring','Monitoring');
                      CreateAppText(conn,'$monitoring_description','Monitoring','Monitoring','Monitoring');
                   end;
