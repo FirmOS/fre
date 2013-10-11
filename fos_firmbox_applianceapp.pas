@@ -506,16 +506,16 @@ var
   begin
     case obj.Field('name').AsString of
       'used' : begin
-                 obj.Field('value').AsReal32 := data.FieldPath('jbod.used').AsInt64;
-                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('jbod.used').AsInt64);
+                 obj.Field('value').AsReal32 := data.FieldPath(cDEBUG_ZPOOL_NAME+'.used').AsInt64;
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath(cDEBUG_ZPOOL_NAME+'.used').AsInt64);
                end;
       'avail': begin
-                 obj.Field('value').AsReal32 := data.FieldPath('jbod.available').AsInt64;
-                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('jbod.available').AsInt64);
+                 obj.Field('value').AsReal32 := data.FieldPath(cDEBUG_ZPOOL_NAME+'.available').AsInt64;
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath(cDEBUG_ZPOOL_NAME+'.available').AsInt64);
                end;
       'ref'  : begin
-                 obj.Field('value').AsReal32 := data.FieldPath('jbod.referenced').AsInt64;
-                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath('jbod.referenced').AsInt64);
+                 obj.Field('value').AsReal32 := data.FieldPath(cDEBUG_ZPOOL_NAME+'.referenced').AsInt64;
+                 obj.Field('value_lbl').AsString := GFRE_BT.ByteToString(data.FieldPath(cDEBUG_ZPOOL_NAME+'.referenced').AsInt64);
                end;
     end;
     CheckDbResult(coll.Update(obj),'Update pool space');
