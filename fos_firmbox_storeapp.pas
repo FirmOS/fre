@@ -75,8 +75,6 @@ begin
                       conn.StoreRole(user_app_rg,ObjectName,cSYS_DOMAIN);
                       conn.StoreRole(guest_app_rg,ObjectName,cSYS_DOMAIN);
 
-                      _AddSystemGroups(conn,cSYS_DOMAIN);
-
                       CreateAppText(conn,'$description','Store','Store','Store');
                    end;
     SameVersion  : begin

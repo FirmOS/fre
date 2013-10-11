@@ -289,11 +289,11 @@ begin
   conn:=GetDBConnection(input);
   app:=GetEmbeddingApp;
 
-  if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
+  //if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');  //FIXXXME - use right instead
 
   dc_datalink                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckRight(Get_Rightname('edit_settings')) then begin
+  if conn.CheckAppRight('edit_settings',app.ObjectName) then begin
     txt:=app.FetchAppText(conn,'$create_aggr');
     grid_datalink.AddButton.Describe(CSF(@IMI_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
   end;
@@ -414,7 +414,7 @@ var
   sclass        : TFRE_DB_NameType;
 begin
   Result:=GFRE_DB_NIL_DESC;
-  if conn.CheckRight(app.Get_Rightname('edit_settings')) then begin
+  if conn.CheckAppRight('edit_settings',app.ObjectName) then begin
     if input.Field('SELECTED').ValueCount=1  then begin
       sel_guid := input.Field('SELECTED').AsGUID;
       dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
@@ -443,7 +443,7 @@ begin
   exit;
   app:=GetEmbeddingApp;
   conn:=GetDBConnection(input);
-  if not conn.CheckRight(Get_Rightname('edit_settings')) then raise EFRE_DB_Exception.Create('No access to edit settings!');
+  if not conn.CheckAppRight('edit_settings',app.ObjectName) then raise EFRE_DB_Exception.Create('No access to edit settings!');
 
   GetSystemScheme(TFRE_DB_DATALINK_AGGR,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$aggr_add_diag_cap').Getshort,600,0,true,true,false);
@@ -523,7 +523,7 @@ var
 
 begin
   coll := conn.Collection('ZONES_SPACE',true,true);
-  coll.ForAll(@_addValues);
+  //coll.ForAll(@_addValues);
 end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
@@ -1192,7 +1192,9 @@ begin
     CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
   end;
 
-  _AddSystemGroups(conn,domain);
+  conn.AddAppGroup(ObjectName,'USER'+'@'+domain,ObjectName+' UG',ObjectName+' User');
+  conn.AddAppGroup(ObjectName,'ADMIN'+'@'+domain,ObjectName+' AG',ObjectName+' Admin');
+  conn.AddAppGroup(ObjectName,'GUEST'+'@'+domain,ObjectName+' GG',ObjectName+' Guest');
 
   CheckDbResult(conn.SetGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status')])),'InstallDomainGroupsandRoles');
   if domain=cSYS_DOMAIN then begin

@@ -80,8 +80,6 @@ begin
                      CheckDbResult(conn.StoreRole(user_app_rg,ObjectName,cSYS_DOMAIN),'Error creating default user role for '+Objectname);
                      CheckDbResult(conn.StoreRole(guest_app_rg,ObjectName,cSYS_DOMAIN),'Error creating default guest role for '+Objectname);
 
-                     _AddSystemGroups(conn,cSYS_DOMAIN);
-
                      CreateAppText(conn,'$description','Infrastructure','Infrastructure','Infrastructure');
                   end;
    SameVersion  : begin
