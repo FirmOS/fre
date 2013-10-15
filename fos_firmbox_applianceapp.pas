@@ -54,9 +54,9 @@ type
   public
     class procedure RegisterSystemScheme          (const scheme:IFRE_DB_SCHEMEOBJECT); override;
   published
-    function        IMI_RAW_DATA_FEED         (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_RAW_DATA_FEED30       (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_RAW_DISK_FEED           (const data:IFRE_DB_Object):IFRE_DB_Object;
+    function        WEB_RAW_DATA_FEED             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RAW_DATA_FEED30           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RAW_DISK_FEED             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_APPLIANCE_STATUS_MOD }
@@ -75,20 +75,20 @@ type
     procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
     procedure       UpdateDiskCollection      (const pool_disks : IFRE_DB_COLLECTION ; const data:IFRE_DB_Object);
   published
-    function        IMI_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_CPUStatusStopStart    (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_CPUStatusInit         (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_NetStatusStopStart    (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_NetStatusInit         (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_RAMStatusStopStart    (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_RAMStatusInit         (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_DiskStatusStopStart   (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_DiskStatusInit        (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_CacheStatusStopStart  (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_CacheStatusInit       (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_RAW_UPDATE            (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_RAW_UPDATE30          (const raw_data :IFRE_DB_Object):IFRE_DB_Object;
-    function        WEB_RAW_DISK_UPDATE       (const data:IFRE_DB_OBject ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CPUStatusStopStart    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CPUStatusInit         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NetStatusStopStart    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NetStatusInit         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RAMStatusStopStart    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RAMStatusInit         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DiskStatusStopStart   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DiskStatusInit        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CacheStatusStopStart  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CacheStatusInit       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RAW_UPDATE            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RAW_UPDATE30          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RAW_DISK_UPDATE       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD }
@@ -101,17 +101,17 @@ type
   public
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   published
-    function        IMI_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_ContentSystem         (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_ContentDatalink       (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_ContentFC             (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_SYSTEMContent         (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_SYSTEMMenu            (const input:IFRE_DB_OBject):IFRE_DB_Object;
-    function        IMI_DatalinkContent       (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        WEB_DatalinkMenu          (const input:IFRE_DB_OBject ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        IMI_DatalinkCreateAggr    (const input:IFRE_DB_OBject):IFRE_DB_Object;
-    function        IMI_FCContent             (const input:IFRE_DB_Object):IFRE_DB_Object;
-    function        IMI_FCMenu                (const input:IFRE_DB_OBject):IFRE_DB_Object;
+    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentSystem         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentDatalink       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentFC             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_SYSTEMContent         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_SYSTEMMenu            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DatalinkContent       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DatalinkMenu          (const input:IFRE_DB_OBject; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DatalinkCreateAggr    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_FCContent             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_FCMenu                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD }
@@ -124,7 +124,7 @@ type
   public
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   published
-    function        IMI_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
+    function        WEB_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
   end;
 
 procedure Register_DB_Extensions;
@@ -153,7 +153,7 @@ begin
   inherited MySessionInitializeModule(session);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.WEB_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
 begin
   result := GFRE_DB_NIL_DESC;
 end;
@@ -200,7 +200,7 @@ begin
       SetDeriveTransformation(datalink_tr_Grid);
 //      AddBooleanFieldFilter('zoned','zoned',false);
       AddBooleanFieldFilter('showglobal','showglobal',true,false);
-      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CSF(@IMI_DatalinkContent));
+      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
       SetChildToParentLinkField ('parentid');
     end;
 
@@ -213,7 +213,7 @@ begin
     with system_dc do begin
       SetDeriveParent(conn.Collection('setting'));
       SetDeriveTransformation(system_tr_Grid);
-      SetDisplayType(cdt_Listview,[],'',nil,'',CSF(@IMI_SYSTEMMenu),nil,CSF(@IMI_SYSTEMContent));
+      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_SYSTEMMenu),nil,CWSF(@WEB_SYSTEMContent));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,fc_tr_Grid);
@@ -227,131 +227,103 @@ begin
     with fc_dc do begin
       SetDeriveParent(conn.Collection('hba'));
       SetDeriveTransformation(fc_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CSF(@IMI_FCMenu),nil,CSF(@IMI_FCContent));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_FCMenu),nil,CWSF(@WEB_FCContent));
     end;
 
   end;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  app             : TFRE_DB_APPLICATION;
-  conn            : IFRE_DB_CONNECTION;
-
   sub_sec_s       : TFRE_DB_SUBSECTIONS_DESC;
-
 begin
-  conn:=GetDBConnection(input);
-  app:=GetEmbeddingApp;
-
   if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
 
   sub_sec_s        := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
 
-  sub_sec_s.AddSection.Describe(CSF(@IMI_ContentSystem),app.FetchAppText(conn,'$appliance_settings_system').Getshort,1,'system');
-  sub_sec_s.AddSection.Describe(CSF(@IMI_ContentDatalink),app.FetchAppText(conn,'$appliance_settings_datalink').Getshort,2,'datalink');
+  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentSystem),app.FetchAppText(ses,'$appliance_settings_system').Getshort,1,'system');
+  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentDatalink),app.FetchAppText(ses,'$appliance_settings_datalink').Getshort,2,'datalink');
 //  sub_sec_s.AddSection.Describe(TFRE_DB_HTML_DESC.create.Describe('iscsi'),app.FetchAppText(conn,'$appliance_settings_iscsi').Getshort,3,'iscsi');
-  sub_sec_s.AddSection.Describe(CSF(@IMI_ContentFC),app.FetchAppText(conn,'$appliance_settings_fibrechannel').Getshort,4,'fibrechannel');
+  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentFC),app.FetchAppText(ses,'$appliance_settings_fibrechannel').Getshort,4,'fibrechannel');
 
   result := sub_sec_s;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentSystem(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_ContentSystem(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  app             : TFRE_DB_APPLICATION;
-  conn            : IFRE_DB_CONNECTION;
   grid_system     : TFRE_DB_VIEW_LIST_DESC;
   dc_system       : IFRE_DB_DERIVED_COLLECTION;
   system_content  : TFRE_DB_FORM_PANEL_DESC;
-
 begin
-  conn:=GetDBConnection(input);
-  app:=GetEmbeddingApp;
-
   if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
 
   dc_system                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
   grid_system              := dc_system.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  system_content           :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$system_content_header').ShortText);
+  system_content           :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$system_content_header').ShortText);
   system_content.contentId :='SYSTEM_CONTENT';
   Result                   := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_system,system_content,nil,nil,nil,true,1,4);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentDatalink(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_ContentDatalink(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  app             : TFRE_DB_APPLICATION;
-  conn            : IFRE_DB_CONNECTION;
   grid_datalink   : TFRE_DB_VIEW_LIST_DESC;
   dc_datalink     : IFRE_DB_DERIVED_COLLECTION;
   datalink_content: TFRE_DB_FORM_PANEL_DESC;
   txt             : IFRE_DB_TEXT;
 begin
-  conn:=GetDBConnection(input);
-  app:=GetEmbeddingApp;
-
-  //if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');  //FIXXXME - use right instead
+  if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
 
   dc_datalink                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.CheckAppRight('edit_settings',app.ObjectName) then begin
-    txt:=app.FetchAppText(conn,'$create_aggr');
-    grid_datalink.AddButton.Describe(CSF(@IMI_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
+    txt:=app.FetchAppText(ses,'$create_aggr');
+    grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
   end;
 
-  datalink_content           := TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
+  datalink_content           := TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
   datalink_content.contentId :='DATALINK_CONTENT';
   Result                     := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_datalink,datalink_content,nil,nil,nil,true,1,1);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_ContentFC(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_ContentFC(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  app             : TFRE_DB_APPLICATION;
-  conn            : IFRE_DB_CONNECTION;
   grid_fc         : TFRE_DB_VIEW_LIST_DESC;
   dc_fc           : IFRE_DB_DERIVED_COLLECTION;
   fc_content      : TFRE_DB_FORM_PANEL_DESC;
 begin
-  conn:=GetDBConnection(input);
-  app:=GetEmbeddingApp;
-
   if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
 
   dc_fc               := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
   grid_fc             := dc_fc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  fc_content          :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$fc_content_header').ShortText);
+  fc_content          :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$fc_content_header').ShortText);
   fc_content.contentId:='FC_HBA_CONTENT';
   Result              := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_fc,fc_content,nil,nil,nil,true,2);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_SYSTEMContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_SYSTEMContent(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   panel         : TFRE_DB_FORM_PANEL_DESC;
   scheme        : IFRE_DB_SchemeObject;
-  app           : TFRE_DB_APPLICATION;
-  conn          : IFRE_DB_CONNECTION;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   so            : IFRE_DB_Object;
   sel_guid      : TGUID;
   menu          : TFRE_DB_MENU_DESC;
 
 begin
-  conn     := GetDBConnection(input);
-  app      := GetEmbeddingApp;
-
   if input.Field('SELECTED').ValueCount>0  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
     if dc.Fetch(sel_guid,so) then begin
       GetSystemSchemeByName(so.SchemeClass,scheme);
-      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$system_content_header').ShortText);
+      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$system_content_header').ShortText);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('setting'),GetSession(input));
       panel.FillWithObjectValues(so,GetSession(input));
       if so.SchemeClass=TFRE_DB_MACHINE_SETTING_POWER.ClassName then
         begin
           menu:=TFRE_DB_MENU_DESC.create.Describe;
-          menu.AddEntry.Describe(app.FetchAppText(conn,'$system_reboot').ShortText,'',TFRE_DB_SERVER_FUNC_DESC.create.Describe(so,'Reboot'));
-          menu.AddEntry.Describe(app.FetchAppText(conn,'$system_shutdown').ShortText,'',TFRE_DB_SERVER_FUNC_DESC.create.Describe(so,'Shutdown'));
+          menu.AddEntry.Describe(app.FetchAppText(ses,'$system_reboot').ShortText,'',TFRE_DB_SERVER_FUNC_DESC.create.Describe(so,'Reboot'));
+          menu.AddEntry.Describe(app.FetchAppText(ses,'$system_shutdown').ShortText,'',TFRE_DB_SERVER_FUNC_DESC.create.Describe(so,'Shutdown'));
           panel.SetMenu(menu);
         end
       else
@@ -360,45 +332,40 @@ begin
       Result:=panel;
     end;
   end else begin
-    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$system_content_header').ShortText);
+    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$system_content_header').ShortText);
     panel.contentId:='SYSTEM_CONTENT';
     Result:=panel;
   end;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_SYSTEMMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_SYSTEMMenu(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_DatalinkContent(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   panel         : TFRE_DB_FORM_PANEL_DESC;
   scheme        : IFRE_DB_SchemeObject;
-  app           : TFRE_DB_APPLICATION;
-  conn          : IFRE_DB_CONNECTION;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   dl            : IFRE_DB_Object;
   sel_guid      : TGUID;
 
 begin
-  conn     := GetDBConnection(input);
-  app      := GetEmbeddingApp;
-
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
     if dc.Fetch(sel_guid,dl) then begin
       GetSystemSchemeByName(dl.SchemeClass,scheme);
-      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
-      panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
-      panel.FillWithObjectValues(dl,GetSession(input));
+      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
+      panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+      panel.FillWithObjectValues(dl,ses);
       panel.contentId:='DATALINK_CONTENT';
       panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(dl,'saveOperation'),fdbbt_submit);
       Result:=panel;
     end;
   end else begin
-    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$datalink_content_header').ShortText);
+    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
     panel.contentId:='DATALINK_CONTENT';
     Result:=panel;
   end;
@@ -431,65 +398,54 @@ begin
   end;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_DatalinkCreateAggr(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_DatalinkCreateAggr(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
-  conn       : IFRE_DB_CONNECTION;
-  app        : TFRE_DB_APPLICATION;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  result :=  TFRE_DB_MESSAGE_DESC.create.Describe('','Feature disabled in Demo Mode',fdbmt_info,nil);
-  exit;
-  app:=GetEmbeddingApp;
-  conn:=GetDBConnection(input);
   if not conn.CheckAppRight('edit_settings',app.ObjectName) then raise EFRE_DB_Exception.Create('No access to edit settings!');
 
   GetSystemScheme(TFRE_DB_DATALINK_AGGR,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(conn,'$aggr_add_diag_cap').Getshort,600,0,true,true,false);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input),false,false);
+  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(ses,'$aggr_add_diag_cap').Getshort,600,0,true,true,false);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
   res.SetElementValue('objname','aggr');
 
   serverfunc := TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_DATALINK_AGGR.ClassName,'NewOperation');
   serverFunc.AddParam.Describe('collection','datalink');
-  res.AddButton.Describe(app.FetchAppText(conn,'$button_save').Getshort,serverfunc,fdbbt_submit);
+  res.AddButton.Describe(app.FetchAppText(ses,'$button_save').Getshort,serverfunc,fdbbt_submit);
   Result:=res;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_FCContent(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_FCContent(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   panel         : TFRE_DB_FORM_PANEL_DESC;
   scheme        : IFRE_DB_SchemeObject;
-  app           : TFRE_DB_APPLICATION;
-  conn          : IFRE_DB_CONNECTION;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   fc            : IFRE_DB_Object;
   sel_guid      : TGUID;
 
 begin
-  conn     := GetDBConnection(input);
-  app      := GetEmbeddingApp;
-
   if input.Field('SELECTED').ValueCount>0  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
     if dc.Fetch(sel_guid,fc) then begin
       GetSystemSchemeByName(fc.SchemeClass,scheme);
-      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$fc_content_header').ShortText);
-      panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
-      panel.FillWithObjectValues(fc,GetSession(input));
+      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$fc_content_header').ShortText);
+      panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+      panel.FillWithObjectValues(fc,ses);
       panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(fc,'saveOperation'),fdbbt_submit);
       panel.contentId:='FC_HBA_CONTENT';
       Result:=panel;
     end;
   end else begin
-    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(conn,'$fc_content_header').ShortText);
+    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$fc_content_header').ShortText);
     panel.contentId:='FC_HBA_CONTENT';
     Result:=panel;
   end;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.IMI_FCMenu(const input: IFRE_DB_OBject): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_FCMenu(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   result := GFRE_DB_NIL_DESC;
 end;
@@ -759,14 +715,11 @@ begin
 end;
 
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  app                : TFRE_DB_APPLICATION;
-  conn               : IFRE_DB_CONNECTION;
   res,sub1,sub2      : TFRE_DB_LAYOUT_DESC;
   c1                 : TFRE_DB_LAYOUT_DESC;
   c2,c3,c4,c5,c6     : TFRE_DB_LIVE_CHART_DESC;
-  session            : TFRE_DB_UserSession;
   main               : TFRE_DB_LAYOUT_DESC;
   sub3,sub4          : TFRE_DB_LAYOUT_DESC;
   left               : TFRE_DB_LAYOUT_DESC;
@@ -774,23 +727,19 @@ var
   sub1l              : TFRE_DB_LAYOUT_DESC;
   sub2l              : TFRE_DB_LAYOUT_DESC;
 begin
-  conn:=GetDBConnection(input);
-  app:=GetEmbeddingApp;
-
   if not app.CheckAppRightModule(conn,'status') then raise EFRE_DB_Exception.Create('No Access to Status!');
-  session:=GetSession(input);
 
-  c1:=TFRE_DB_LAYOUT_DESC.create.Describe(app.FetchAppText(conn,'$overview_caption_space').ShortText).SetLayout(nil,session.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
-  c2:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cpu',2,CSF(@IMI_CPUStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_cpu').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_cpu_system_legend').ShortText,app.FetchAppText(conn,'$overview_cpu_user_legend').ShortText),11,CSF(@IMI_CPUStatusInit));
-  c3:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_net',2,CSF(@IMI_NetStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_net').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_net_receive_legend').ShortText,app.FetchAppText(conn,'$overview_net_transmit_legend').ShortText),11,CSF(@IMI_NetStatusInit));
-  c4:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_disk',2,CSF(@IMI_DiskStatusStopStart),0,30,app.FetchAppText(conn,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_disk_write_legend').ShortText,app.FetchAppText(conn,'$overview_disk_read_legend').ShortText),11,CSF(@IMI_DiskStatusInit));
-  c5:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_ram',2,CSF(@IMI_RAMStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_ram').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_ram_ram_legend').ShortText,app.FetchAppText(conn,'$overview_ram_swap_legend').ShortText),11,CSF(@IMI_RAMStatusInit));
-  c6:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cache',2,CSF(@IMI_CacheStatusStopStart),0,100,app.FetchAppText(conn,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(conn,'$overview_cache_misses_legend').ShortText,app.FetchAppText(conn,'$overview_cache_hits_legend').ShortText),11,CSF(@IMI_CacheStatusInit));
+  c1:=TFRE_DB_LAYOUT_DESC.create.Describe(app.FetchAppText(ses,'$overview_caption_space').ShortText).SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
+  c2:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cpu',2,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cpu').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_cpu_system_legend').ShortText,app.FetchAppText(ses,'$overview_cpu_user_legend').ShortText),11,CWSF(@WEB_CPUStatusInit));
+  c3:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_net',2,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_net').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_net_receive_legend').ShortText,app.FetchAppText(ses,'$overview_net_transmit_legend').ShortText),11,CWSF(@WEB_NetStatusInit));
+  c4:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_disk',2,CWSF(@WEB_DiskStatusStopStart),0,30,app.FetchAppText(ses,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_disk_write_legend').ShortText,app.FetchAppText(ses,'$overview_disk_read_legend').ShortText),11,CWSF(@WEB_DiskStatusInit));
+  c5:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_ram',2,CWSF(@WEB_RAMStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_ram').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_ram_ram_legend').ShortText,app.FetchAppText(ses,'$overview_ram_swap_legend').ShortText),11,CWSF(@WEB_RAMStatusInit));
+  c6:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cache',2,CWSF(@WEB_CacheStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_cache_misses_legend').ShortText,app.FetchAppText(ses,'$overview_cache_hits_legend').ShortText),11,CWSF(@WEB_CacheStatusInit));
 
   sub1l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,nil,nil,nil,false,1,1);
   sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub1l,c1,nil,nil,nil,false,2,1);
@@ -810,9 +759,7 @@ begin
 
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_CPUStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
-var
-  session: TFRE_DB_UserSession;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_CPUStatusStopStart(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
       __idxCPU:=0
@@ -822,7 +769,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_CPUStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_CPUStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -844,7 +791,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_NetStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_NetStatusStopStart(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
       __idxNet:=0
@@ -854,7 +801,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_NetStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_NetStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -876,7 +823,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAMStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAMStatusStopStart(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
     __idxRAM:=0
@@ -886,7 +833,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAMStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAMStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -908,7 +855,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_DiskStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_DiskStatusStopStart(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
       __idxDisk:=0
@@ -918,7 +865,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_DiskStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_DiskStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -940,7 +887,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_CacheStatusStopStart(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_CacheStatusStopStart(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   if input.Field('action').AsString='start' then
       __idxCache:=0
@@ -950,7 +897,7 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_CacheStatusInit(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_CacheStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
@@ -972,7 +919,7 @@ begin
   Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAW_UPDATE(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAW_UPDATE(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var LIVE_DATA  : IFRE_DB_COLLECTION;
     LD         : IFRE_DB_Object;
     totalCache : Int64;
@@ -982,7 +929,7 @@ begin
       G_HACK_SHARE_OBJECT.Finalize;
       G_HACK_SHARE_OBJECT:=nil;
     end;
-  G_HACK_SHARE_OBJECT := raw_data.CloneToNewObject();
+  G_HACK_SHARE_OBJECT := input.CloneToNewObject();
   inc(G_AppliancePerformanceCurrentIdx);
   if G_AppliancePerformanceCurrentIdx>High(G_AppliancePerformanceBuffer) then
     G_AppliancePerformanceCurrentIdx:=0;
@@ -1041,25 +988,23 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.IMI_RAW_UPDATE30(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAW_UPDATE30(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  session: TFRE_DB_UserSession;
   coll   : IFRE_DB_COLLECTION;
 begin
    //TURN OFF SAFETY
-  session:=GetSession(raw_data);
-  _fillPoolCollection(session.GetDBConnection,raw_data.Field('zfs').AsObject);
+  _fillPoolCollection(ses.GetDBConnection,input.Field('zfs').AsObject);
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAW_DISK_UPDATE(const data: IFRE_DB_OBject; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAW_DISK_UPDATE(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var pool_disks : IFRE_DB_COLLECTION;
     dbc        : IFRE_DB_CONNECTION;
 
 begin
-  dbc := GetDBConnection(data);
+  dbc := GetDBConnection(input);
   pool_disks := dbc.Collection('POOL_DISKS',false,true);
-  UpdateDiskCollection(pool_disks,data.Field('DISK').AsObject);
+  UpdateDiskCollection(pool_disks,input.Field('DISK').AsObject);
   result := GFRE_DB_NIL_DESC;
 end;
 
@@ -1088,7 +1033,7 @@ begin
     NotInstalled : begin
                       _SetAppdataVersion(conn,_ActualVersion);
                       InstallRoles(conn);
-                      conn.ForAllDomains(@_InstallAllDomains);
+                      //conn.ForAllDomains(@_InstallAllDomains);
 
                       CreateAppText(conn,'$description','Appliance','Appliance','Appliance');
                       CreateAppText(conn,'$sitemap_main','Appliance','','Appliance');
@@ -1192,9 +1137,13 @@ begin
     CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
   end;
 
-  conn.AddAppGroup(ObjectName,'USER'+'@'+domain,ObjectName+' UG',ObjectName+' User');
-  conn.AddAppGroup(ObjectName,'ADMIN'+'@'+domain,ObjectName+' AG',ObjectName+' Admin');
-  conn.AddAppGroup(ObjectName,'GUEST'+'@'+domain,ObjectName+' GG',ObjectName+' Guest');
+  role := _CreateAppRole('view_status','View Status','Allowed to view the appliance status.');
+  _AddAppRight(role,'view_status');
+  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['status']));
+  CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
+
+  CheckDbResult(conn.AddAppGroup(ObjectName,'USER'+'@'+domain,ObjectName+' UG',ObjectName+' User'),'InstallAppGroup');
+  CheckDbResult(conn.AddAppGroup(ObjectName,'ADMIN'+'@'+domain,ObjectName+' AG',ObjectName+' Admin'),'InstallAppGroup');
 
   CheckDbResult(conn.SetGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status')])),'InstallDomainGroupsandRoles');
   if domain=cSYS_DOMAIN then begin
@@ -1253,19 +1202,19 @@ begin
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_APP.IMI_RAW_DATA_FEED(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DATA_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  result := DelegateInvoke('STATUS','RAW_UPDATE',raw_data);
+  result := DelegateInvoke('STATUS','RAW_UPDATE',input);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_APP.IMI_RAW_DATA_FEED30(const raw_data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DATA_FEED30(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  result := DelegateInvoke('STATUS','RAW_UPDATE30',raw_data);
+  result := DelegateInvoke('STATUS','RAW_UPDATE30',input);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_APP.IMI_RAW_DISK_FEED(const data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DISK_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  result := DelegateInvoke('STATUS','RAW_DISK_UPDATE',data);
+  result := DelegateInvoke('STATUS','RAW_DISK_UPDATE',input);
 //  result := DelegateInvoke('STORAGE_POOLS','RAW_DISK_FEED',data);
 end;
 

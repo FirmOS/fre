@@ -168,6 +168,8 @@ begin
                      conn.StoreRole(user_app_rg,ObjectName,cSYS_DOMAIN);
                      conn.StoreRole(guest_app_rg,ObjectName,cSYS_DOMAIN);
 
+                     // add preconfigured groups
+
                      CreateAppText(conn,'$description','Services','Services','Services');
                      CreateAppText(conn,'$mailserver_description','Mailserver','Mailserver','Mailserver');
                      CreateAppText(conn,'$webserver_description','Webserver','Webserver','Webserver');

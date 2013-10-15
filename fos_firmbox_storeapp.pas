@@ -51,7 +51,6 @@ end;
 function TFRE_FIRMBOX_STORE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
 var admin_app_rg : IFRE_DB_ROLE;
      user_app_rg : IFRE_DB_ROLE;
-    guest_app_rg : IFRE_DB_ROLE;
     old_version  : TFRE_DB_String;
 begin
   case _CheckVersion(conn,old_version) of
@@ -59,11 +58,9 @@ begin
                       _SetAppdataVersion(conn,_ActualVersion);
                       admin_app_rg  := _CreateAppRole('ADMIN','firmbox STOREAPP ADMIN','firmbox STOREAPP Administration Rights');
                       user_app_rg   := _CreateAppRole('USER','firmbox STOREAPP USER','firmbox STOREAPP Default User Rights');
-                      guest_app_rg  := _CreateAppRole('GUEST','firmbox STOREAPP GUEST','firmbox STOREAPP Default Guest User Rights');
                       _AddAppRight(admin_app_rg ,'ADMIN');
                       _AddAppRight(user_app_rg  ,'START');
 
-                      _AddAppRight(guest_app_rg ,'START');
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['main']));
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['modules']));
                       _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['space']));
@@ -73,7 +70,9 @@ begin
 
                       conn.StoreRole(admin_app_rg,ObjectName,cSYS_DOMAIN);
                       conn.StoreRole(user_app_rg,ObjectName,cSYS_DOMAIN);
-                      conn.StoreRole(guest_app_rg,ObjectName,cSYS_DOMAIN);
+
+                      conn.AddAppGroup(ObjectName,'USER'+'@'+cSYS_DOMAIN,ObjectName+' UG',ObjectName+' User');
+                      conn.AddAppGroup(ObjectName,'ADMIN'+'@'+cSYS_DOMAIN,ObjectName+' AG',ObjectName+' Admin');
 
                       CreateAppText(conn,'$description','Store','Store','Store');
                    end;

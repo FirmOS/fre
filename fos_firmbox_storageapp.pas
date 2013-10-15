@@ -37,7 +37,7 @@ type
   public
     class procedure RegisterSystemScheme        (const scheme:IFRE_DB_SCHEMEOBJECT); override;
   published
-    function        IMI_RAW_DISK_FEED           (const data:IFRE_DB_Object):IFRE_DB_Object;
+    function        WEB_RAW_DISK_FEED           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_STORAGE_POOLS_MOD }
@@ -93,7 +93,7 @@ type
     function        WEB_SaveConfig            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ResetConfig           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Replace               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        IMI_RAW_DISK_FEED         (const data:IFRE_DB_Object):IFRE_DB_Object;
+    function        WEB_RAW_DISK_FEED         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -364,15 +364,16 @@ begin
 
   true_icon  := FREDB_getThemedResource('images_apps/firmbox_storage/access_true.png');
   false_icon := FREDB_getThemedResource('images_apps/firmbox_storage/access_false.png');
-  if conn.CheckRightForGroup(rr,group_id) then
-    transformed_object.field('read').Asstring  := true_icon
-  else
-    transformed_object.field('read').Asstring  := false_icon;
-
-  if conn.CheckRightForGroup(wr,group_id) then
-    transformed_object.field('write').Asstring  := true_icon
-  else
-    transformed_object.field('write').Asstring  := false_icon;
+  abort;
+//  if conn.CheckRightForGroup(rr,group_id) then
+//  transformed_object.field('read').Asstring  := true_icon
+//else
+//  transformed_object.field('read').Asstring  := false_icon;
+//
+//if conn.CheckRightForGroup(wr,group_id) then
+//  transformed_object.field('write').Asstring  := true_icon
+//else
+//  transformed_object.field('write').Asstring  := false_icon;
 
 end;
 
@@ -632,7 +633,7 @@ begin
   sf:=CWSF(@WEB_VFSDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
   cap:=app.FetchAppText(ses,'$vfs_delete_diag_cap').Getshort;
-  msg:=_getVFSNames(input.Field('selected').AsStringArr,GetDBConnection(input));
+  msg:=_getVFSNames(input.Field('selected').AsStringArr,conn);
   msg:=StringReplace(app.FetchAppText(ses,'$vfs_delete_diag_msg').Getshort,'%vfs_str%',msg,[rfReplaceAll]);
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
@@ -741,7 +742,7 @@ begin
   sf:=CWSF(@WEB_VFSShareDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
   cap:=app.FetchAppText(ses,'$vfs_share_delete_diag_cap').Getshort;
-  msg:=_getShareNames(input.Field('selected').AsStringArr,GetDBConnection(input));
+  msg:=_getShareNames(input.Field('selected').AsStringArr,conn);
   msg:=StringReplace(app.FetchAppText(ses,'$vfs_share_delete_diag_msg').Getshort,'%share_str%',msg,[rfReplaceAll]);
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
@@ -966,7 +967,6 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   sub_sec_s     : TFRE_DB_SUBSECTIONS_DESC;
-
 begin
   if not app.CheckAppRightModule(conn,'storage_fileserver_global') then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
@@ -3041,12 +3041,11 @@ end;
 
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
-var
-  session : TFRE_DB_UserSession;
+var session : IFRE_DB_UserSession;
 begin
   session:=GetSession(input);
   if Assigned(ZPOOL_IOSTAT_UPDATE) then begin
-    session.SendServerClientRequest(ZPOOL_IOSTAT_UPDATE);
+    GetSession(input).SendServerClientRequest(ZPOOL_IOSTAT_UPDATE);
     ZPOOL_IOSTAT_UPDATE:=nil;
   end;
   __idx:=__idx+1;
@@ -3105,7 +3104,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Replace','Please implement me',fdbmt_info);
 end;
 
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD.IMI_RAW_DISK_FEED(const data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_RAW_DISK_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var pool_disks : IFRE_DB_COLLECTION;
     dbc        : IFRE_DB_CONNECTION;
     pools      : IFRE_DB_COLLECTION;
@@ -3135,13 +3134,13 @@ var pool_disks : IFRE_DB_COLLECTION;
   end;
 
 begin
-  dbc := GetDBConnection(data);
+  dbc := conn;
   pool_disks := dbc.Collection('POOL_DISKS',false,true);
-  UpdateDiskCollection(pool_disks,data.Field('DISK').AsObject);
+  UpdateDiskCollection(pool_disks,input.Field('DISK').AsObject);
 
   storeup:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store');
   pools := dbc.Collection('ZFS_POOLS');
-  data.Field('ZPOOLIO').AsObject.ForAllFields(@_updatePool);
+  input.Field('ZPOOLIO').AsObject.ForAllFields(@_updatePool);
   ZPOOL_IOSTAT_UPDATE:=storeup;
   result := GFRE_DB_NIL_DESC;
 end;
@@ -3302,7 +3301,7 @@ var
 
   procedure _InstallAllDomains(const obj:IFRE_DB_Object);
   begin
-    InstallDomainGroupsandRoles(conn,obj.Field('objname').asstring);
+    //InstallDomainGroupsandRoles(conn,obj.Field('objname').asstring);
   end;
 
 
@@ -3311,7 +3310,7 @@ begin
     NotInstalled : begin
                       _SetAppdataVersion(conn,_ActualVersion);
                       InstallRoles(conn);
-                      conn.ForAllDomains(@_InstallAllDomains);
+                      //conn.ForAllDomains(@_InstallAllDomains);
 
                       CreateAppText(conn,'$description','Storage','Storage','Storage');
                       CreateAppText(conn,'$pools_description','Pools','Pools','Pools');
@@ -3593,9 +3592,8 @@ begin
     CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
   end;
 
-  conn.AddAppGroup(ObjectName,'USER'+'@'+domain,ObjectName+' UG',ObjectName+' User');
-  conn.AddAppGroup(ObjectName,'ADMIN'+'@'+domain,ObjectName+' AG',ObjectName+' Admin');
-  conn.AddAppGroup(ObjectName,'GUEST'+'@'+domain,ObjectName+' GG',ObjectName+' Guest');
+  CheckDbResult(conn.AddAppGroup(ObjectName,'USER'+'@'+domain,ObjectName+' UG',ObjectName+' User'),'InstallAppGroup');
+  CheckDBResult(conn.AddAppGroup(ObjectName,'ADMIN'+'@'+domain,ObjectName+' AG',ObjectName+' Admin'),'InstallAppGroup');
 
   if domain=cSYS_DOMAIN then begin
     CheckDbResult(conn.SetGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_pools'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_fileserver_global'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_fileserver_virtual'),Get_Rightname_App_Role_SubRole(ObjectName,'view_vfs_share'),Get_Rightname_App_Role_SubRole(ObjectName,'view_backup')])),'InstallDomainGroupsandRoles');
@@ -3660,9 +3658,9 @@ begin
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
-function TFRE_FIRMBOX_STORAGE_APP.IMI_RAW_DISK_FEED(const data: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_APP.WEB_RAW_DISK_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  result := DelegateInvoke('STORAGE_POOLS','RAW_DISK_FEED',data);
+  result := DelegateInvoke('STORAGE_POOLS','RAW_DISK_FEED',input);
 end;
 
 

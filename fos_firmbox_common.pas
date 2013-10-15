@@ -54,7 +54,6 @@ var conn : IFRE_DB_SYS_CONNECTION;
     res  : TFRE_DB_Errortype;
     adminug : TFRE_DB_StringArray;
     userug  : TFRE_DB_StringArray;
-    guestug : TFRE_DB_StringArray;
 
     procedure _AddUserGroupToArray(const usergroup: string; var a: TFRE_DB_StringArray);
     begin
@@ -66,7 +65,6 @@ var conn : IFRE_DB_SYS_CONNECTION;
     begin
       _AddUserGroupToArray(Get_Groupname_App_Group_Subgroup(appname,'ADMIN'+'@'+domain),adminug);
       _AddUserGroupToArray(Get_Groupname_App_Group_Subgroup(appname,'USER'+'@'+domain),userug);
-      _AddUserGroupToArray(Get_Groupname_App_Group_Subgroup(appname,'GUEST'+'@'+domain),guestug);
     end;
 
     procedure _addUsertoGroupsforDomain(const obj: IFRE_DB_Object);
@@ -87,14 +85,13 @@ var conn : IFRE_DB_SYS_CONNECTION;
 
       setLength(adminug,0);
       setLength(userug,0);
-      setLength(guestug,0);
 
       CreateAppUserGroups('firmbox_appliance',domain);
-      //CreateAppUserGroups('accesscontrol',domain); //RZNORD
+      CreateAppUserGroups('accesscontrol',domain);
       //CreateAppUserGroups('firmbox_infrastructure');
       //CreateAppUserGroups('firmbox_services');
-      //CreateAppUserGroups('firmbox_storage',domain);// RZNORD
-      //CreateAppUserGroups('firmbox_vm',domain);   // RZNORD
+      CreateAppUserGroups('firmbox_storage',domain);
+      CreateAppUserGroups('firmbox_vm',domain);
       //CreateAppUserGroups('monsys');
       //CreateAppUserGroups('firmbox_store');
 
@@ -115,9 +112,6 @@ var conn : IFRE_DB_SYS_CONNECTION;
         _addUsertoGroup('demo1',userug);
         _addUsertoGroup('demo2',userug);
 
-        setLength(guestug,0);
-        CreateAppUserGroups('firmbox_vm',domain);
-        _addUsertoGroup('guest',guestug);
       end else begin
         _addUsertoGroup('myadmin',adminug);
         _addUsertoGroup('admin',adminug);
@@ -131,16 +125,16 @@ begin
   try
     res  := CONN.Connect('admin@'+cSYS_DOMAIN,'admin');
     if res<>edb_OK then gfre_bt.CriticalAbort('cannot connect system : %s',[CFRE_DB_Errortype[res]]);
-      conn.InstallAppDefaults('firmbox_appliance');
-      conn.InstallAppDefaults('accesscontrol');
-      conn.InstallAppDefaults('firmbox_storage');
-      conn.InstallAppDefaults('firmbox_vm');
+//      conn.InstallAppDefaults('firmbox_appliance');
+//      conn.InstallAppDefaults('accesscontrol');
+//      conn.InstallAppDefaults('firmbox_storage');
+//      conn.InstallAppDefaults('firmbox_vm');
       //conn.InstallAppDefaults('firmbox_infrastructure');
       //conn.InstallAppDefaults('firmbox_services');
       //conn.InstallAppDefaults('monsys');
       //conn.InstallAppDefaults('firmbox_store');
 
-      conn.ForAllDomains(@_addUsertoGroupsforDomain);
+      //conn.ForAllDomains(@_addUsertoGroupsforDomain);
   finally
     conn.Finalize;
   end;
@@ -379,8 +373,8 @@ var conn     : IFRE_DB_Connection;
       if conn.FetchDomainById(obj.Field('domainid').AsGUID,domain)<>edb_OK then
         raise EFRE_DB_Exception.Create('Domain '+obj.Field('domainid').asstring+' not found for machine '+obj.Field('objname').asstring);
 
-      _AddRolesForDomain(domain.GetName);
-      if (domain.GetName<>cSYS_DOMAIN) then
+      _AddRolesForDomain(domain.Domainname(false));
+      if (domain.Domainname(true)<>cSYS_DOMAIN) then
         _AddRolesForDomain(cSYS_DOMAIN);
 
       sz :=  20*(random(10)+1);
