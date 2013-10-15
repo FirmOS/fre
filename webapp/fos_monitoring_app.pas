@@ -184,8 +184,7 @@ begin
   try
     res  := CONN.Connect('admin@'+cSYS_DOMAIN,'admin');
     if res<>edb_OK then gfre_bt.CriticalAbort('cannot connect system : %s',[CFRE_DB_Errortype[res]]);
-      conn.InstallAppDefaults('monsys');
-      conn.ForAllDomains(@_addUsertoGroupsforDomain);
+      //conn.ForAllDomains(@_addUsertoGroupsforDomain);
   finally
     conn.Finalize;
   end;
@@ -1208,7 +1207,6 @@ end;
 function TFRE_DB_MONSYS.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
 var admin_app_rg  : IFRE_DB_ROLE;
      user_app_rg  : IFRE_DB_ROLE;
-     guest_app_rg : IFRE_DB_ROLE;
      old_version  : TFRE_DB_String;
 begin
 
@@ -1217,15 +1215,15 @@ begin
                      _SetAppdataVersion(conn,_ActualVersion);
                      admin_app_rg  := _CreateAppRole('ADMIN','MONSYS ADMIN','Monitoring System Administration Rights');
                      user_app_rg   := _CreateAppRole('USER','MONSYS USER','Monitoring System Default User Rights');
-                     guest_app_rg  := _CreateAppRole('GUEST','MONSYS GUEST','Monitoring System Default User Rights');
                      _AddAppRight(admin_app_rg,'ADMIN');
                      _AddAppRight(user_app_rg ,'START');
-                     _AddAppRight(guest_app_rg ,'START');
 
                      _AddAppRightModules(admin_app_rg,GFRE_DBI.ConstructStringArray(['monsysmod']));
                      conn.StoreRole(admin_app_rg,ObjectName,cSYS_DOMAIN);
-                     conn.StoreRole(guest_app_rg,ObjectName,cSYS_DOMAIN);
                      conn.StoreRole(user_app_rg,ObjectName,cSYS_DOMAIN);
+
+                     CheckDbResult(conn.AddAppGroup(ObjectName,'USER'+'@'+cSYS_DOMAIN,ObjectName+' UG',ObjectName+' User'),'InstallAppGroup');
+                     CheckDbResult(conn.AddAppGroup(ObjectName,'ADMIN'+'@'+cSYS_DOMAIN,ObjectName+' AG',ObjectName+' Admin'),'InstallAppGroup');
 
                      CreateAppText(conn,'$description','Monitoring','Monitoring','Monitoring');
                      CreateAppText(conn,'$monitoring_description','Monitoring','Monitoring','Monitoring');
