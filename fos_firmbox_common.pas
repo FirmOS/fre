@@ -50,97 +50,10 @@ procedure InitDB(const dbname: string; const user, pass: string);
 implementation
 
 procedure InitializeFirmbox(const dbname: string; const user, pass: string);
-var conn : IFRE_DB_SYS_CONNECTION;
-    res  : TFRE_DB_Errortype;
-    adminug : TFRE_DB_StringArray;
-    userug  : TFRE_DB_StringArray;
-
-    procedure _AddUserGroupToArray(const usergroup: string; var a: TFRE_DB_StringArray);
-    begin
-     setlength(a,length(a)+1);
-     a[high(a)] := usergroup;
-    end;
-
-    procedure CreateAppUserGroups(const appname : string;const domain: TFRE_DB_NameType);
-    begin
-      _AddUserGroupToArray(Get_Groupname_App_Group_Subgroup(appname,'ADMIN'+'@'+domain),adminug);
-      _AddUserGroupToArray(Get_Groupname_App_Group_Subgroup(appname,'USER'+'@'+domain),userug);
-    end;
-
-    procedure _addUsertoGroupsforDomain(const obj: IFRE_DB_Object);
-    var domain  : TFRE_DB_NameType;
-
-        procedure _addUsertoGroup(const user: string; const groupa: TFRE_DB_StringArray);
-        var i     : NativeInt;
-            login : string;
-        begin
-          login  := user+'@'+domain;
-          if conn.UserExists(login) then begin
-            CheckDbResult(conn.ModifyUserGroups(login,groupa,true),'cannot set usergroups '+login);
-          end;
-        end;
-
-    begin
-      domain := obj.Field('objname').asstring;
-
-      setLength(adminug,0);
-      setLength(userug,0);
-
-      CreateAppUserGroups('firmbox_appliance',domain);
-      CreateAppUserGroups('accesscontrol',domain);
-      //CreateAppUserGroups('firmbox_infrastructure');
-      //CreateAppUserGroups('firmbox_services');
-      CreateAppUserGroups('firmbox_storage',domain);
-      CreateAppUserGroups('firmbox_vm',domain);
-      //CreateAppUserGroups('monsys');
-      //CreateAppUserGroups('firmbox_store');
-
-      writeln(GFRE_DBI.StringArray2String(adminug));
-      writeln(GFRE_DBI.StringArray2String(userug));
-
-      if domain=cSYS_DOMAIN then begin
-        _addUsertoGroup('admin1',adminug);
-        _addUsertoGroup('admin2',adminug);
-        _addUsertoGroup('feeder',adminug);
-        _addUsertoGroup('city',adminug);
-
-        _addUsertoGroup('user1',userug);
-        _addUsertoGroup('user2',userug);
-
-        setLength(adminug,0);
-        CreateAppUserGroups('firmbox_vm',domain);
-        _addUsertoGroup('demo1',userug);
-        _addUsertoGroup('demo2',userug);
-
-      end else begin
-        _addUsertoGroup('myadmin',adminug);
-        _addUsertoGroup('admin',adminug);
-        _addUsertoGroup('user1',userug);
-        _addUsertoGroup('user2',userug);
-      end;
-    end;
-
 begin
-  CONN := GFRE_DBI.NewSysOnlyConnection;
-  try
-    res  := CONN.Connect('admin@'+cSYS_DOMAIN,'admin');
-    if res<>edb_OK then gfre_bt.CriticalAbort('cannot connect system : %s',[CFRE_DB_Errortype[res]]);
-//      conn.InstallAppDefaults('firmbox_appliance');
-//      conn.InstallAppDefaults('accesscontrol');
-//      conn.InstallAppDefaults('firmbox_storage');
-//      conn.InstallAppDefaults('firmbox_vm');
-      //conn.InstallAppDefaults('firmbox_infrastructure');
-      //conn.InstallAppDefaults('firmbox_services');
-      //conn.InstallAppDefaults('monsys');
-      //conn.InstallAppDefaults('firmbox_store');
+end;
 
-      //conn.ForAllDomains(@_addUsertoGroupsforDomain);
-  finally
-    conn.Finalize;
-  end;
- end;
-
-procedure GenerateTestData(const dbname: string; const user, pass: string);
+procedure FIRMBOX_MetaGenerateTestData(const dbname: string; const user, pass: string);
 var conn     : IFRE_DB_Connection;
     coll     : IFRE_DB_Collection;
     scoll    : IFRE_DB_Collection;
@@ -209,17 +122,17 @@ var conn     : IFRE_DB_Connection;
     share_id   := share.UID;
     CheckDbResult(SCOLL.Store(share),'Add Share');
 
-    rightname := FREDB_Get_Rightname_UID('FSWRITE',share_id);
-    CheckDbResult(CONN.NewRole(rightname,'Write Access to share '+sharename+' on NAS '+fsname,'Write Access to share '+sharename+' on NAS '+fsname,role),'Adding Write role');
-    right := GFRE_DBI.NewRight(rightname);
-    role.AddRight(right);
-    CheckDbResult(CONN.StoreRole('firmbox_storage',domain,role),'Saving Role');
-
-    rightname := FREDB_Get_Rightname_UID('FSREAD',share_id);
-    CheckDbResult(CONN.NewRole(rightname,'Read Access to share '+sharename+' on NAS '+fsname,'Read Access to share '+sharename+' on NAS '+fsname,role),'Adding Read role');
-    right := GFRE_DBI.NewRight(rightname);
-    role.AddRight(right);
-    CheckDbResult(CONN.StoreRole('firmbox_storage',domain,role),'Saving Role');
+    //rightname := FREDB_Get_Rightname_UID('FSWRITE',share_id);
+    //CheckDbResult(CONN.NewRole(rightname,'Write Access to share '+sharename+' on NAS '+fsname,'Write Access to share '+sharename+' on NAS '+fsname,role),'Adding Write role');
+    //right := GFRE_DBI.NewRight(rightname);
+    //role.AddRight(right);
+    //CheckDbResult(CONN.StoreRole('firmbox_storage',domain,role),'Saving Role');
+    //
+    //rightname := FREDB_Get_Rightname_UID('FSREAD',share_id);
+    //CheckDbResult(CONN.NewRole(rightname,'Read Access to share '+sharename+' on NAS '+fsname,'Read Access to share '+sharename+' on NAS '+fsname,role),'Adding Read role');
+    //right := GFRE_DBI.NewRight(rightname);
+    //role.AddRight(right);
+    //CheckDbResult(CONN.StoreRole('firmbox_storage',domain,role),'Saving Role');
 
     for i:=1 to 10 do begin
       snap :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZFS_SNAPSHOT);
@@ -337,45 +250,45 @@ var conn     : IFRE_DB_Connection;
         snap     : IFRE_DB_Object;
         sz       : UInt32;
 
-        procedure _AddRolesForDomain(const domainname:string);
-        var
-            role     : IFRE_DB_ROLE;
-            right    : IFRE_DB_RIGHT;
-            rolename : string;
-        begin
-          rolename := FREDB_Get_Rightname_UID('VMLIST',obj.UID);
-          CheckDbResult(CONN.NewRole(rolename,'List Virtual Machine '+obj.Field('objname').asstring,'List Virtual Machine '+obj.Field('objname').asstring,role),'Adding List role');
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
-          CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
-
-          rolename := FREDB_Get_Rightname_UID('VMUSE',obj.UID);
-          CheckDbResult(CONN.NewRole(rolename,'Use Virtual Machine '+obj.Field('objname').asstring,'Use Virtual Machine '+obj.Field('objname').asstring,role),'Adding Use role');
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMVIEWCONSOLE',obj.UID)); role.AddRight(right);
-          CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
-
-          conn.AddGroupRoles(Get_Groupname_App_Group_Subgroup('firmbox_vm','USER'+'@'+domainname),GFRE_DBI.ConstructStringArray([rolename+'@'+domainname]));
-
-          rolename := FREDB_Get_Rightname_UID('VMADMIN',obj.UID);
-          CheckDbResult(CONN.NewRole(rolename,'Admin Virtual Machine '+obj.Field('objname').asstring,'Admin Virtual Machine '+obj.Field('objname').asstring,role),'Adding Admin role');
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMVIEWCONSOLE',obj.UID)); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMUSECONSOLE',obj.UID)); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMSTART',obj.UID)); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMSTOP',obj.UID)); role.AddRight(right);
-          right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMCONFIGURE',obj.UID)); role.AddRight(right);
-          CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
-
-          conn.AddGroupRoles(Get_Groupname_App_Group_Subgroup('firmbox_vm','ADMIN'+'@'+domainname),GFRE_DBI.ConstructStringArray([rolename+'@'+domainname]));
-        end;
+        //procedure _AddRolesForDomain(const domainname:string);
+        //var
+        //    role     : IFRE_DB_ROLE;
+        //    right    : IFRE_DB_RIGHT;
+        //    rolename : string;
+        //begin
+        //  rolename := FREDB_Get_Rightname_UID('VMLIST',obj.UID);
+        //  CheckDbResult(CONN.NewRole(rolename,'List Virtual Machine '+obj.Field('objname').asstring,'List Virtual Machine '+obj.Field('objname').asstring,role),'Adding List role');
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
+        //  CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
+        //
+        //  rolename := FREDB_Get_Rightname_UID('VMUSE',obj.UID);
+        //  CheckDbResult(CONN.NewRole(rolename,'Use Virtual Machine '+obj.Field('objname').asstring,'Use Virtual Machine '+obj.Field('objname').asstring,role),'Adding Use role');
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMVIEWCONSOLE',obj.UID)); role.AddRight(right);
+        //  CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
+        //
+        //  conn.AddGroupRoles(Get_Groupname_App_Group_Subgroup('firmbox_vm','USER'+'@'+domainname),GFRE_DBI.ConstructStringArray([rolename+'@'+domainname]));
+        //
+        //  rolename := FREDB_Get_Rightname_UID('VMADMIN',obj.UID);
+        //  CheckDbResult(CONN.NewRole(rolename,'Admin Virtual Machine '+obj.Field('objname').asstring,'Admin Virtual Machine '+obj.Field('objname').asstring,role),'Adding Admin role');
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMLIST',obj.UID)); role.AddRight(right);
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMVIEWCONSOLE',obj.UID)); role.AddRight(right);
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMUSECONSOLE',obj.UID)); role.AddRight(right);
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMSTART',obj.UID)); role.AddRight(right);
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMSTOP',obj.UID)); role.AddRight(right);
+        //  right := GFRE_DBI.NewRight(FREDB_Get_Rightname_UID('VMCONFIGURE',obj.UID)); role.AddRight(right);
+        //  CheckDbResult(CONN.StoreRole('firmbox_vm',domainname,role),'Saving Role');
+        //
+        //  conn.AddGroupRoles(Get_Groupname_App_Group_Subgroup('firmbox_vm','ADMIN'+'@'+domainname),GFRE_DBI.ConstructStringArray([rolename+'@'+domainname]));
+        //end;
 
     begin
-      if conn.FetchDomainById(obj.Field('domainid').AsGUID,domain)<>edb_OK then
-        raise EFRE_DB_Exception.Create('Domain '+obj.Field('domainid').asstring+' not found for machine '+obj.Field('objname').asstring);
-
-      _AddRolesForDomain(domain.Domainname(false));
-      if (domain.Domainname(true)<>cSYS_DOMAIN) then
-        _AddRolesForDomain(cSYS_DOMAIN);
+      //if conn.FetchDomainById(obj.Field('domainid').AsGUID,domain)<>edb_OK then
+      //  raise EFRE_DB_Exception.Create('Domain '+obj.Field('domainid').asstring+' not found for machine '+obj.Field('objname').asstring);
+      //
+      //_AddRolesForDomain(domain.Domainname(false));
+      //if (domain.Domainname(true)<>CFRE_DB_SYS_DOMAIN_NAME) then
+      //  _AddRolesForDomain(CFRE_DB_SYS_DOMAIN_NAME);
 
       sz :=  20*(random(10)+1);
 
@@ -404,14 +317,13 @@ var conn     : IFRE_DB_Connection;
     coll := conn.Collection('virtualmachine');
     coll.DefineIndexOnField('Mkey',fdbft_String,true,true);
 
-    //STARTUP SPEED_ENHANCEMENT
-    //vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-    //try
-    //  vmc.VM_ListMachines(vmo);
-    //finally
-    //  vmc.Finalize;
-    //end;
-    //VM_UpdateCollection(conn,coll,vmo,TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
+    vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+    try
+      vmc.VM_ListMachines(vmo);
+    finally
+      vmc.Finalize;
+    end;
+    VM_UpdateCollection(conn,coll,vmo,TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
 
     // add root
 
@@ -421,7 +333,7 @@ var conn     : IFRE_DB_Connection;
     root.Field('MType').AsString      :='OS';
     root.Field('MState').AsString     := 'running';
     root.Field('MStateIcon').AsString := 'images_apps/hal/vm_running.png';
-    root.Field('domainid').asGUID     := conn.DomainId(cSYS_DOMAIN);
+    root.Field('domainid').asGUID     := conn.sys.DomainId(CFRE_DB_SYS_DOMAIN_NAME);
     root.Field('shell').AsString      := 'http://10.1.0.146:4200/global/';
     coll.Store(root);
 
@@ -430,9 +342,40 @@ var conn     : IFRE_DB_Connection;
     coll.ForAll(@AddVMAdditions);
   end;
 
+  procedure InitTestUser;
+  var login     : TFRE_DB_String;
+      res       : TFRE_DB_Errortype;
+      userdbo   : IFRE_DB_USER;
+      passwd    : TFRE_DB_String;
+  begin
+
+      login  :='firmfeeder@'+CFRE_DB_SYS_DOMAIN_NAME;
+      passwd :='x';
+
+      if conn.sys.UserExists(login) then
+        CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
+      CheckDbResult(conn.sys.AddUser(login,passwd,'Feeder','Feeder'),'cannot add user '+login);
+
+      writeln('Modify Groups for User '+login);
+      CheckDbResult(conn.sys.ModifyUserGroups(login,GFRE_DBI.ConstructStringArray(['VMFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'APPLIANCEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME]),true),'cannot set user groups '+login);
+      CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
+
+      login  :='firmviewer@'+CFRE_DB_SYS_DOMAIN_NAME;
+      passwd :='x';
+
+      if conn.sys.UserExists(login) then
+        CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
+      CheckDbResult(conn.sys.AddUser(login,passwd,'Firmviewer','Firmviewer'),'cannot add user '+login);
+
+      writeln('Modify Groups for User '+login);
+      CheckDbResult(conn.sys.ModifyUserGroups(login,GFRE_DBI.ConstructStringArray(['VMVIEWER'+'@'+CFRE_DB_SYS_DOMAIN_NAME]),true),'cannot set user groups '+login);
+      CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
+
+  end;
+
 begin
  CONN := GFRE_DBI.NewConnection;
- CONN.Connect(dbname,'admin@'+cSYS_DOMAIN,'admin');
+ CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
 
  COLL := CONN.Collection('service');
  SCOLL:= CONN.Collection('fileshare');
@@ -449,7 +392,7 @@ begin
  cob.Field('pool').asstring:='zones';
  fsname := 'Engineering';
  cob.Field('objname').asstring:= fsname;
- cob.Field('domainid').asguid := conn.DomainId('firmos');
+ cob.Field('domainid').asguid := conn.sys.DomainId('SYSTEM');
  cob.Field('domain').asstring := 'FIRMOS';
  cob.Field('ip').asstring:='10.1.0.148/24';
  fs := COB.UID;
@@ -465,7 +408,7 @@ begin
  cob.Field('pool').asstring:='zones';
  fsname := 'Business';
  cob.Field('objname').asstring:= fsname;
- cob.Field('domainid').asguid := conn.DomainId('demo');
+ cob.Field('domainid').asguid := conn.sys.DomainId('SYSTEM');
  cob.Field('domain').asstring := 'DEMO';
  cob.Field('ip').asstring:='10.1.0.147/24';
  fs := COB.UID;
@@ -584,7 +527,7 @@ begin
  cob.Field('mailto').asstring:='office@firmos.at';
  CheckDbResult(mCOLL.Store(cob),'Add Setting');
 
-
+ InitTestUser;
 
  CONN.Finalize;
 end;
@@ -592,7 +535,6 @@ end;
 procedure InitDB(const dbname: string; const user, pass: string);
 begin
   InitializeFirmbox(dbname,user,pass);
-  GenerateTestData(dbname,user,pass);
 end;
 
 procedure FIRMBOX_MetaRegister;
@@ -628,12 +570,6 @@ begin
   try
     res  := CONN.Connect('admin','admin');
     if res<>edb_OK then gfre_bt.CriticalAbort('cannot connect system : %s',[CFRE_DB_Errortype[res]]);
-    conn.RemoveApp('firmbox_appliance');
-    conn.RemoveApp('accesscontrol');
-    conn.RemoveApp('firmbox_infrastructure');
-    conn.RemoveApp('firmbox_services');
-    conn.RemoveApp('firmbox_storage');
-    conn.RemoveApp('firmbox_vm');
   finally
     conn.Finalize;
   end;
@@ -641,7 +577,7 @@ end;
 
 initialization
 
- GFRE_DBI_REG_EXTMGR.RegisterNewExtension('FIRMBOX',@FIRMBOX_MetaRegister,@FIRMBOX_MetaInitializeDatabase,@FIRMBOX_MetaRemove);
+ GFRE_DBI_REG_EXTMGR.RegisterNewExtension('FIRMBOX',@FIRMBOX_MetaRegister,@FIRMBOX_MetaInitializeDatabase,@FIRMBOX_MetaRemove,@FIRMBOX_MetaGenerateTestdata);
 
 
 end.

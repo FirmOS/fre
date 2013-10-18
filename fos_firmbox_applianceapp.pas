@@ -9,7 +9,6 @@ interface
 uses
   Classes, SysUtils,
   FOS_TOOL_INTERFACES,
-  FRE_DB_SYSRIGHT_CONSTANTS,
   fre_hal_schemes,
   FRE_DB_INTERFACE,fos_stats_control_interface,fos_firmbox_vm_machines_mod,
   fre_system,
@@ -42,17 +41,14 @@ type
   TFRE_FIRMBOX_APPLIANCE_APP=class(TFRE_DB_APPLICATION)
   private
     procedure       SetupApplicationStructure     ; override;
-    function        InstallAppDefaults            (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype; override;
-    function        InstallRoles                  (const conn : IFRE_DB_SYS_CONNECTION):TFRE_DB_Errortype;
-    function        InstallDomainGroupsandRoles   (const conn : IFRE_DB_SYS_CONNECTION; const domain : TFRE_DB_NameType):TFRE_DB_Errortype; override;
     procedure       _UpdateSitemap                (const session: TFRE_DB_UserSession);
   protected
     procedure       MySessionInitialize           (const session: TFRE_DB_UserSession);override;
     procedure       MySessionPromotion            (const session: TFRE_DB_UserSession); override;
-    function        CFG_ApplicationUsesRights     : boolean; override;
-    function        _ActualVersion                : TFRE_DB_String; override;
   public
     class procedure RegisterSystemScheme          (const scheme:IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects              (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallDBObjects4Domain       (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
   published
     function        WEB_RAW_DATA_FEED             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_RAW_DATA_FEED30           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -145,7 +141,7 @@ end;
 procedure TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('ANALYTICS','$analytics_description')
+  InitModuleDesc('$analytics_description')
 end;
 
 procedure TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -169,7 +165,7 @@ end;
 procedure TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('SETTINGS','$settings_description')
+  InitModuleDesc('$settings_description')
 end;
 
 procedure TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -190,9 +186,9 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,datalink_tr_Grid);
     with datalink_tr_Grid do begin
       //AddOneToOnescheme('icon','',app.FetchAppText(conn,'$datalink_icon').GetShort,dt_icon);
-      AddOneToOnescheme('objname','linkname',app.FetchAppText(conn,'$datalink_name').Getshort,dt_string,true,1,'icon');
+      AddOneToOnescheme('objname','linkname',app.FetchAppText(session,'$datalink_name').Getshort,dt_string,true,1,'icon');
 //      AddOneToOnescheme('zoned','zoned',app.FetchAppText(conn,'$datalink_zoned').Getshort);
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$datalink_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(session,'$datalink_desc').Getshort);
     end;
     datalink_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
     with datalink_dc do begin
@@ -206,8 +202,8 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,system_tr_Grid);
     with system_tr_Grid do begin
-      AddOneToOnescheme('objname','Name',app.FetchAppText(conn,'$system_name').Getshort);
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$system_desc').Getshort);
+      AddOneToOnescheme('objname','Name',app.FetchAppText(session,'$system_name').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(session,'$system_desc').Getshort);
     end;
     system_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
     with system_dc do begin
@@ -218,10 +214,10 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,fc_tr_Grid);
     with fc_tr_Grid do begin
-      AddOneToOnescheme('objname','wwn',app.FetchAppText(conn,'$fc_wwn').Getshort);
-      AddOneToOnescheme('targetmode','targetmode',app.FetchAppText(conn,'$fc_targetmode').Getshort);
-      AddOneToOnescheme('state','state',app.FetchAppText(conn,'$fc_state').Getshort);
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$fc_desc').Getshort);
+      AddOneToOnescheme('objname','wwn',app.FetchAppText(session,'$fc_wwn').Getshort);
+      AddOneToOnescheme('targetmode','targetmode',app.FetchAppText(session,'$fc_targetmode').Getshort);
+      AddOneToOnescheme('state','state',app.FetchAppText(session,'$fc_state').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(session,'$fc_desc').Getshort);
     end;
     fc_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
     with fc_dc do begin
@@ -237,7 +233,7 @@ function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_Content(const input:IFRE_DB_Obj
 var
   sub_sec_s       : TFRE_DB_SUBSECTIONS_DESC;
 begin
-  if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
+  CheckClassVisibility(ses);
 
   sub_sec_s        := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
 
@@ -255,7 +251,7 @@ var
   dc_system       : IFRE_DB_DERIVED_COLLECTION;
   system_content  : TFRE_DB_FORM_PANEL_DESC;
 begin
-  if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
+  CheckClassVisibility(ses);
 
   dc_system                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
   grid_system              := dc_system.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -271,11 +267,11 @@ var
   datalink_content: TFRE_DB_FORM_PANEL_DESC;
   txt             : IFRE_DB_TEXT;
 begin
-  if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
+  CheckClassVisibility(ses);
 
   dc_datalink                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckAppRight('edit_settings',app.ObjectName) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then begin
     txt:=app.FetchAppText(ses,'$create_aggr');
     grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
   end;
@@ -291,7 +287,7 @@ var
   dc_fc           : IFRE_DB_DERIVED_COLLECTION;
   fc_content      : TFRE_DB_FORM_PANEL_DESC;
 begin
-  if not app.CheckAppRightModule(conn,'settings') then raise EFRE_DB_Exception.Create('No Access to settings!');
+  CheckClassVisibility(ses);
 
   dc_fc               := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
   grid_fc             := dc_fc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -381,20 +377,28 @@ var
   sclass        : TFRE_DB_NameType;
 begin
   Result:=GFRE_DB_NIL_DESC;
-  if conn.CheckAppRight('edit_settings',app.ObjectName) then begin
-    if input.Field('SELECTED').ValueCount=1  then begin
-      sel_guid := input.Field('SELECTED').AsGUID;
-      dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
-      if dc.Fetch(sel_guid,dl) then begin
-        sclass := dl.SchemeClass;
-        writeln(schemeclass);
-        input.Field('add_vnic').AsString    := app.FetchAppText(ses,'$datalink_add_vnic').Getshort;
-        input.Field('delete_vnic').AsString := app.FetchAppText(ses,'$datalink_delete_vnic').Getshort;
-        input.Field('delete_aggr').AsString := app.FetchAppText(ses,'$datalink_delete_aggr').Getshort;
-        input.Field('delete_stub').AsString := app.FetchAppText(ses,'$datalink_delete_stub').Getshort;
-        result := dl.Invoke('Menu',input,ses,app,conn);
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_VNIC)
+    or conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_VNIC)
+    or conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_AGGR)
+    or conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_STUB) then
+    begin
+      if input.Field('SELECTED').ValueCount=1  then begin
+        sel_guid := input.Field('SELECTED').AsGUID;
+        dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
+        if dc.Fetch(sel_guid,dl) then begin
+          sclass := dl.SchemeClass;
+          writeln(schemeclass);
+          if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_VNIC) then
+            input.Field('add_vnic').AsString    := app.FetchAppText(ses,'$datalink_add_vnic').Getshort;
+          if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_VNIC) then
+            input.Field('delete_vnic').AsString := app.FetchAppText(ses,'$datalink_delete_vnic').Getshort;
+          if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_AGGR) then
+            input.Field('delete_aggr').AsString := app.FetchAppText(ses,'$datalink_delete_aggr').Getshort;
+          if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_STUB) then
+            input.Field('delete_stub').AsString := app.FetchAppText(ses,'$datalink_delete_stub').Getshort;
+          result := dl.Invoke('Menu',input,ses,app,conn);
+        end;
       end;
-    end;
   end;
 end;
 
@@ -404,7 +408,8 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.CheckAppRight('edit_settings',app.ObjectName) then raise EFRE_DB_Exception.Create('No access to edit settings!');
+  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then
+    raise EFRE_DB_Exception.Create('No access to edit settings!');
 
   GetSystemScheme(TFRE_DB_DATALINK_AGGR,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(ses,'$aggr_add_diag_cap').Getshort,600,0,true,true,false);
@@ -485,37 +490,37 @@ end;
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
 var
   session    : TFRE_DB_UserSession;
-  res        : TFRE_DB_LIVE_CHART_DATA_DESC;
+  res        : TFRE_DB_LIVE_CHART_DATA_AT_IDX_DESC;
   totalCache : Int64;
 begin
   session:=GetSession(Input);
   if __idxCPU>-1 then begin
     with G_AppliancePerformanceBuffer[G_AppliancePerformanceCurrentIdx] do
-      res:=TFRE_DB_LIVE_CHART_DATA_DESC.create.Describe('appl_stat_cpu',__idxCPU,TFRE_DB_Real32Array.create(cpu_aggr_sys,cpu_aggr_sys_user));
+      res:=TFRE_DB_LIVE_CHART_DATA_AT_IDX_DESC.create.Describe('appl_stat_cpu',__idxCPU,TFRE_DB_Real32Array.create(cpu_aggr_sys,cpu_aggr_sys_user));
     inc(__idxCPU);
     session.SendServerClientRequest(res);
   end;
   if __idxNet>-1 then begin
     with G_AppliancePerformanceBuffer[G_AppliancePerformanceCurrentIdx] do
-      res:=TFRE_DB_LIVE_CHART_DATA_DESC.create.Describe('appl_stat_net',__idxNet,TFRE_DB_Real32Array.create(net_aggr_rx_bytes,net_aggr_tx_bytes));
+      res:=TFRE_DB_LIVE_CHART_DATA_AT_IDX_DESC.create.Describe('appl_stat_net',__idxNet,TFRE_DB_Real32Array.create(net_aggr_rx_bytes,net_aggr_tx_bytes));
     inc(__idxNet);
     session.SendServerClientRequest(res);
   end;
   if __idxDisk>-1 then begin
     with G_AppliancePerformanceBuffer[G_AppliancePerformanceCurrentIdx] do
-      res:=TFRE_DB_LIVE_CHART_DATA_DESC.create.Describe('appl_stat_disk',__idxDisk,TFRE_DB_Real32Array.create(disk_aggr_wps,disk_aggr_rps));
+      res:=TFRE_DB_LIVE_CHART_DATA_AT_IDX_DESC.create.Describe('appl_stat_disk',__idxDisk,TFRE_DB_Real32Array.create(disk_aggr_wps,disk_aggr_rps));
     inc(__idxDisk);
     session.SendServerClientRequest(res);
   end;
   if __idxRAM>-1 then begin
     with G_AppliancePerformanceBuffer[G_AppliancePerformanceCurrentIdx] do
-      res:=TFRE_DB_LIVE_CHART_DATA_DESC.create.Describe('appl_stat_ram',__idxRAM,TFRE_DB_Real32Array.create(vmstat_memory_free,vmstat_memory_swap));
+      res:=TFRE_DB_LIVE_CHART_DATA_AT_IDX_DESC.create.Describe('appl_stat_ram',__idxRAM,TFRE_DB_Real32Array.create(vmstat_memory_free,vmstat_memory_swap));
     inc(__idxRAM);
     session.SendServerClientRequest(res);
   end;
   if __idxCache>-1 then begin
     with G_AppliancePerformanceBuffer[G_AppliancePerformanceCurrentIdx] do
-      res:=TFRE_DB_LIVE_CHART_DATA_DESC.create.Describe('appl_stat_cache',__idxCache,TFRE_DB_Real32Array.create(cache_relMisses,cache_relHits));
+      res:=TFRE_DB_LIVE_CHART_DATA_AT_IDX_DESC.create.Describe('appl_stat_cache',__idxCache,TFRE_DB_Real32Array.create(cache_relMisses,cache_relHits));
     inc(__idxCache);
     session.SendServerClientRequest(res);
   end;
@@ -550,7 +555,7 @@ end;
 procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('STATUS','$status_description')
+  InitModuleDesc('$status_description')
 end;
 
 procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -727,18 +732,18 @@ var
   sub1l              : TFRE_DB_LAYOUT_DESC;
   sub2l              : TFRE_DB_LAYOUT_DESC;
 begin
-  if not app.CheckAppRightModule(conn,'status') then raise EFRE_DB_Exception.Create('No Access to Status!');
+  CheckClassVisibility(ses);
 
   c1:=TFRE_DB_LAYOUT_DESC.create.Describe(app.FetchAppText(ses,'$overview_caption_space').ShortText).SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
-  c2:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cpu',2,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cpu').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c2:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cpu',2,120,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cpu').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_cpu_system_legend').ShortText,app.FetchAppText(ses,'$overview_cpu_user_legend').ShortText),11,CWSF(@WEB_CPUStatusInit));
-  c3:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_net',2,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_net').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c3:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_net',2,120,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_net').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_net_receive_legend').ShortText,app.FetchAppText(ses,'$overview_net_transmit_legend').ShortText),11,CWSF(@WEB_NetStatusInit));
-  c4:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_disk',2,CWSF(@WEB_DiskStatusStopStart),0,30,app.FetchAppText(ses,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c4:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_disk',2,120,CWSF(@WEB_DiskStatusStopStart),0,30,app.FetchAppText(ses,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_disk_write_legend').ShortText,app.FetchAppText(ses,'$overview_disk_read_legend').ShortText),11,CWSF(@WEB_DiskStatusInit));
-  c5:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_ram',2,CWSF(@WEB_RAMStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_ram').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c5:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_ram',2,120,CWSF(@WEB_RAMStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_ram').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_ram_ram_legend').ShortText,app.FetchAppText(ses,'$overview_ram_swap_legend').ShortText),11,CWSF(@WEB_RAMStatusInit));
-  c6:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cache',2,CWSF(@WEB_CacheStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c6:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cache',2,120,CWSF(@WEB_CacheStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_cache_misses_legend').ShortText,app.FetchAppText(ses,'$overview_cache_hits_legend').ShortText),11,CWSF(@WEB_CacheStatusInit));
 
   sub1l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,nil,nil,nil,false,1,1);
@@ -748,15 +753,12 @@ begin
   sub2:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub2l,c6,nil,nil,nil,false,2,1);
   left:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub2,nil,sub1,nil,false,-1,1,-1,1);
 
-  //RZNORD
-
   sub3:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(GetSession(input).FetchDerivedCollection('APP_POOL_BUSY').GetDisplayDescription,GetSession(input).FetchDerivedCollection('APP_POOL_AST').GetDisplayDescription,nil,nil,nil,false,1,1);
   sub4:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(GetSession(input).FetchDerivedCollection('APP_POOL_WBW').GetDisplayDescription,GetSession(input).FetchDerivedCollection('APP_POOL_RBW').GetDisplayDescription,nil,nil,nil,false,1,1);
   right:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub4,nil,sub3,nil,false,-1,1,-1,1);
 
   res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(left,right,nil,nil,nil,false,3,2);
   result := res;
-
 end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_CPUStatusStopStart(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -771,7 +773,7 @@ end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_CPUStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
+  data  : TFRE_DB_LIVE_CHART_DATA_ARRAY;
   i     : Integer;
   start : Integer;
   bufidx: Integer;
@@ -803,7 +805,7 @@ end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_NetStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
+  data  : TFRE_DB_LIVE_CHART_DATA_ARRAY;
   i     : Integer;
   start : Integer;
   bufidx: Integer;
@@ -835,7 +837,7 @@ end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAMStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
+  data  : TFRE_DB_LIVE_CHART_DATA_ARRAY;
   i     : Integer;
   start : Integer;
   bufidx: Integer;
@@ -867,7 +869,7 @@ end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_DiskStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
+  data  : TFRE_DB_LIVE_CHART_DATA_ARRAY;
   i     : Integer;
   start : Integer;
   bufidx: Integer;
@@ -899,24 +901,24 @@ end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_CacheStatusInit(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
+//  data  : TFRE_DB_LIVE_CHART_INIT_DATA_ARRAY;
   i     : Integer;
   start : Integer;
   bufidx: Integer;
 begin
-  SetLength(data,2);
-  SetLength(data[0],122);
-  SetLength(data[1],122);
-  start:=G_AppliancePerformanceCurrentIdx - 121;
-  if start<0 then begin
-    start:=Length(G_AppliancePerformanceBuffer) + start;
-  end;
-  for i := 0 to 121 do begin
-    bufidx := (start + i) mod Length(G_AppliancePerformanceBuffer);
-    data[0][i]:=G_AppliancePerformanceBuffer[bufidx].cache_relMisses;
-    data[1][i]:=G_AppliancePerformanceBuffer[bufidx].cache_relHits;
-  end;
-  Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
+  //SetLength(data,2);
+  //SetLength(data[0],122);
+  //SetLength(data[1],122);
+  //start:=G_AppliancePerformanceCurrentIdx - 121;
+  //if start<0 then begin
+  //  start:=Length(G_AppliancePerformanceBuffer) + start;
+  //end;
+  //for i := 0 to 121 do begin
+  //  bufidx := (start + i) mod Length(G_AppliancePerformanceBuffer);
+  //  data[0][i]:=G_AppliancePerformanceBuffer[bufidx].cache_relMisses;
+  //  data[1][i]:=G_AppliancePerformanceBuffer[bufidx].cache_relHits;
+  //end;
+  //Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
 end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAW_UPDATE(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -1013,144 +1015,10 @@ end;
 procedure TFRE_FIRMBOX_APPLIANCE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('firmbox_appliance','$description');
+  InitAppDesc('$description');
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.create);
-end;
-
-function TFRE_FIRMBOX_APPLIANCE_APP.InstallAppDefaults(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
-var
-  old_version  : TFRE_DB_String;
-
-  procedure _InstallAllDomains(const obj:IFRE_DB_Object);
-  begin
-    InstallDomainGroupsandRoles(conn,obj.Field('objname').asstring);
-  end;
-
-begin
-  case _CheckVersion(conn,old_version) of
-    NotInstalled : begin
-                      _SetAppdataVersion(conn,_ActualVersion);
-                      InstallRoles(conn);
-                      //conn.ForAllDomains(@_InstallAllDomains);
-
-                      CreateAppText(conn,'$description','Appliance','Appliance','Appliance');
-                      CreateAppText(conn,'$sitemap_main','Appliance','','Appliance');
-                      CreateAppText(conn,'$sitemap_status','Overview','','Overview');
-                      CreateAppText(conn,'$sitemap_settings','Settings','','Settings');
-                      CreateAppText(conn,'$sitemap_analytics','Analytics','','Analytics');
-                      CreateAppText(conn,'$status_description','Status','Appliance Status','Overall status of appliance');
-                      CreateAppText(conn,'$settings_description','Settings','Appliance Settings','Global settings of appliance');
-                      CreateAppText(conn,'$analytics_description','Analytics','Appliance Analytics','Analytics of appliance');
-
-                      CreateAppText(conn,'$appliance_settings_system','System');
-                      CreateAppText(conn,'$appliance_settings_datalink','Network');
-                      CreateAppText(conn,'$appliance_settings_iscsi','iSCSI');
-                      CreateAppText(conn,'$appliance_settings_fibrechannel','Fibre Channel');
-
-                      CreateAppText(conn,'$system_content_header','Details about the selected Setting');
-                      CreateAppText(conn,'$system_name','Setting');
-                      CreateAppText(conn,'$system_desc','Description');
-                      CreateAppText(conn,'$system_reboot','Reboot');
-                      CreateAppText(conn,'$system_shutdown','Shutdown');
-
-                      CreateAppText(conn,'$datalink_content_header','Details about the selected Network Interface');
-                      CreateAppText(conn,'$datalink_name','Name');
-                      CreateAppText(conn,'$datalink_zoned','Zoned');
-                      CreateAppText(conn,'$datalink_desc','Description');
-                      CreateAppText(conn,'$create_aggr','Create Aggregation');
-                      CreateAppText(conn,'$aggr_add_diag_cap','New Interface Aggregation');
-                      CreateAppText(conn,'$datalink_add_vnic','Add new Virtual Interface');
-                      CreateAppText(conn,'$datalink_delete_vnic','Delete Virtual Interface');
-                      CreateAppText(conn,'$datalink_delete_aggr','Delete Aggregation');
-                      CreateAppText(conn,'$datalink_delete_stub','Delete Virtual Switch');
-
-                      CreateAppText(conn,'$fc_content_header','Details about the selected Fibre Channel port');
-                      CreateAppText(conn,'$fc_wwn','Port WWN');
-                      CreateAppText(conn,'$fc_targetmode','Target Mode');
-                      CreateAppText(conn,'$fc_state','State');
-                      CreateAppText(conn,'$fc_desc','Description');
-
-                      CreateAppText(conn,'$overview_caption_space','Space');
-                      CreateAppText(conn,'$overview_caption_cpu','CPU Load (4 Intel E5-4620@2.20GHz)');
-                      CreateAppText(conn,'$overview_cpu_system_legend','System [%]');
-                      CreateAppText(conn,'$overview_cpu_user_legend','User [%]');
-                      CreateAppText(conn,'$overview_caption_net','Network');
-                      CreateAppText(conn,'$overview_net_receive_legend','Receive [%]');
-                      CreateAppText(conn,'$overview_net_transmit_legend','Transmit [%]');
-                      CreateAppText(conn,'$overview_caption_disk','Disk I/O (Device Aggregation)');
-                      CreateAppText(conn,'$overview_disk_read_legend','Read [kIOPS]');
-                      CreateAppText(conn,'$overview_disk_write_legend','Write [kIOPS]');
-                      CreateAppText(conn,'$overview_caption_ram','Memory Usage (256GB RAM, 256GB Swap)');
-                      CreateAppText(conn,'$overview_ram_ram_legend','RAM [%]');
-                      CreateAppText(conn,'$overview_ram_swap_legend','Swap [%]');
-                      CreateAppText(conn,'$overview_caption_cache','Cache (Adaptive Read Cache)');
-                      CreateAppText(conn,'$overview_cache_hits_legend','Hits [%]');
-                      CreateAppText(conn,'$overview_cache_misses_legend','Misses [%]');
-
-                      CreateAppText(conn,'$button_save','Save'); //global text?
-                   end;
-    SameVersion  : begin
-                      writeln('Version '+old_version+' already installed');
-                   end;
-    OtherVersion : begin
-                      writeln('Old Version '+old_version+' found, updateing');
-                      // do some update stuff
-                      _SetAppdataVersion(conn,_ActualVersion);
-                   end;
-  else
-    raise EFRE_DB_Exception.Create('Undefined App _CheckVersion result');
-  end;
-end;
-
-function TFRE_FIRMBOX_APPLIANCE_APP.InstallRoles(const conn: IFRE_DB_SYS_CONNECTION): TFRE_DB_Errortype;
-var
-  role         : IFRE_DB_ROLE;
-begin
-
-  role := _CreateAppRole('view_status','View Status','Allowed to see the appliance status.');
-  _AddAppRight(role,'view_status');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['status']));
-  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
-
-  role := _CreateAppRole('view_settings','View Settings','Allowed to see the appliance settings.');
-  _AddAppRight(role,'view_settings');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['settings']));
-  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
-
-  role := _CreateAppRole('view_analytics','View Analytics','Allowed to see the appliance analytics.');
-  _AddAppRight(role,'view_analytics');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['analytics']));
-  CheckDbResult(conn.StoreRole(role,ObjectName),'InstallRoles');
-end;
-
-function TFRE_FIRMBOX_APPLIANCE_APP.InstallDomainGroupsandRoles(const conn: IFRE_DB_SYS_CONNECTION; const domain: TFRE_DB_NameType): TFRE_DB_Errortype;
-var
-  role         : IFRE_DB_ROLE;
-begin
-  if domain=cSYS_DOMAIN then begin
-    role := _CreateAppRole('edit_settings','Edit Settings','Allowed to create/edit the appliance settings.');
-    _AddAppRight(role,'edit_settings');
-    _AddAppRight(role,'view_settings');
-    _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['settings']));
-    CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
-  end;
-
-  role := _CreateAppRole('view_status','View Status','Allowed to view the appliance status.');
-  _AddAppRight(role,'view_status');
-  _AddAppRightModules(role,GFRE_DBI.ConstructStringArray(['status']));
-  CheckDbResult(conn.StoreRole(role,ObjectName,domain),'InstallDomainGroupsandRoles');
-
-  CheckDbResult(conn.AddAppGroup(ObjectName,'USER'+'@'+domain,ObjectName+' UG',ObjectName+' User'),'InstallAppGroup');
-  CheckDbResult(conn.AddAppGroup(ObjectName,'ADMIN'+'@'+domain,ObjectName+' AG',ObjectName+' Admin'),'InstallAppGroup');
-
-  CheckDbResult(conn.SetGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'USER'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status')])),'InstallDomainGroupsandRoles');
-  if domain=cSYS_DOMAIN then begin
-    CheckDbResult(conn.SetGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'edit_settings'+'@'+domain),Get_Rightname_App_Role_SubRole(ObjectName,'view_status'),Get_Rightname_App_Role_SubRole(ObjectName,'view_analytics')])),'InstallDomainGroupsandRoles');
-  end else begin
-    CheckDbResult(conn.SetGroupRoles(Get_Groupname_App_Group_Subgroup(ObjectName,'ADMIN'+'@'+domain),GFRE_DBI.ConstructStringArray([Get_Rightname_App_Role_SubRole(ObjectName,'view_status')])),'InstallDomainGroupsandRoles');
-  end;
 end;
 
 procedure TFRE_FIRMBOX_APPLIANCE_APP._UpdateSitemap(const session: TFRE_DB_UserSession);
@@ -1160,16 +1028,12 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  if session.GetUsername='city@system' then begin  //RZNORD
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(conn,'$sitemap_status').Getshort,'images_apps/firmbox_appliance/status_white.svg','',0,CheckAppRightModule(conn,'status'));
-  end else begin
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(conn,'$sitemap_main').Getshort,'images_apps/firmbox_appliance/appliance_white.svg','',0,CheckAppRightModule(conn,'status') or CheckAppRightModule(conn,'settings') or CheckAppRightModule(conn,'analytics'));
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppText(conn,'$sitemap_status').Getshort,'images_apps/firmbox_appliance/status_white.svg','STATUS',0,CheckAppRightModule(conn,'status'));
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppText(conn,'$sitemap_settings').Getshort,'images_apps/firmbox_appliance/settings_white.svg','SETTINGS',0,CheckAppRightModule(conn,'settings'));
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppText(conn,'$sitemap_analytics').Getshort,'images_apps/firmbox_appliance/analytics_white.svg','ANALYTICS',0,CheckAppRightModule(conn,'analytics'));
-  end;
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(session,'$sitemap_main').Getshort,'images_apps/firmbox_appliance/appliance_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppText(session,'$sitemap_status').Getshort,'images_apps/firmbox_appliance/status_white.svg',TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_STATUS_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppText(session,'$sitemap_settings').Getshort,'images_apps/firmbox_appliance/settings_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppText(session,'$sitemap_analytics').Getshort,'images_apps/firmbox_appliance/analytics_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
-  session.GetSessionAppData(ObjectName).Field('SITEMAP').AsObject := SiteMapData;
+  session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;
 
 procedure TFRE_FIRMBOX_APPLIANCE_APP.MySessionInitialize(const session: TFRE_DB_UserSession);
@@ -1186,35 +1050,108 @@ begin
   _UpdateSitemap(session);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_APP.CFG_ApplicationUsesRights: boolean;
-begin
-  result := true;
-end;
-
-function TFRE_FIRMBOX_APPLIANCE_APP._ActualVersion: TFRE_DB_String;
-begin
-  Result := '1.0';
-end;
-
 class procedure TFRE_FIRMBOX_APPLIANCE_APP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
+class procedure TFRE_FIRMBOX_APPLIANCE_APP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  inherited;
+
+  newVersionId:='1.0';
+
+  if (currentVersionId='') then
+    begin
+      CreateAppText(conn,'$caption','Appliance','Appliance','Appliance');
+      CreateAppText(conn,'$sitemap_main','Appliance','','Appliance');
+      CreateAppText(conn,'$sitemap_status','Overview','','Overview');
+      CreateAppText(conn,'$sitemap_settings','Settings','','Settings');
+      CreateAppText(conn,'$sitemap_analytics','Analytics','','Analytics');
+      CreateAppText(conn,'$status_description','Status','Appliance Status','Overall status of appliance');
+      CreateAppText(conn,'$settings_description','Settings','Appliance Settings','Global settings of appliance');
+      CreateAppText(conn,'$analytics_description','Analytics','Appliance Analytics','Analytics of appliance');
+
+      CreateAppText(conn,'$appliance_settings_system','System');
+      CreateAppText(conn,'$appliance_settings_datalink','Network');
+      CreateAppText(conn,'$appliance_settings_iscsi','iSCSI');
+      CreateAppText(conn,'$appliance_settings_fibrechannel','Fibre Channel');
+
+      CreateAppText(conn,'$system_content_header','Details about the selected Setting');
+      CreateAppText(conn,'$system_name','Setting');
+      CreateAppText(conn,'$system_desc','Description');
+      CreateAppText(conn,'$system_reboot','Reboot');
+      CreateAppText(conn,'$system_shutdown','Shutdown');
+
+      CreateAppText(conn,'$datalink_content_header','Details about the selected Network Interface');
+      CreateAppText(conn,'$datalink_name','Name');
+      CreateAppText(conn,'$datalink_zoned','Zoned');
+      CreateAppText(conn,'$datalink_desc','Description');
+      CreateAppText(conn,'$create_aggr','Create Aggregation');
+      CreateAppText(conn,'$aggr_add_diag_cap','New Interface Aggregation');
+      CreateAppText(conn,'$datalink_add_vnic','Add new Virtual Interface');
+      CreateAppText(conn,'$datalink_delete_vnic','Delete Virtual Interface');
+      CreateAppText(conn,'$datalink_delete_aggr','Delete Aggregation');
+      CreateAppText(conn,'$datalink_delete_stub','Delete Virtual Switch');
+
+      CreateAppText(conn,'$fc_content_header','Details about the selected Fibre Channel port');
+      CreateAppText(conn,'$fc_wwn','Port WWN');
+      CreateAppText(conn,'$fc_targetmode','Target Mode');
+      CreateAppText(conn,'$fc_state','State');
+      CreateAppText(conn,'$fc_desc','Description');
+
+      CreateAppText(conn,'$overview_caption_space','Space');
+      CreateAppText(conn,'$overview_caption_cpu','CPU Load (4 Intel E5-4620@2.20GHz)');
+      CreateAppText(conn,'$overview_cpu_system_legend','System [%]');
+      CreateAppText(conn,'$overview_cpu_user_legend','User [%]');
+      CreateAppText(conn,'$overview_caption_net','Network');
+      CreateAppText(conn,'$overview_net_receive_legend','Receive [%]');
+      CreateAppText(conn,'$overview_net_transmit_legend','Transmit [%]');
+      CreateAppText(conn,'$overview_caption_disk','Disk I/O (Device Aggregation)');
+      CreateAppText(conn,'$overview_disk_read_legend','Read [kIOPS]');
+      CreateAppText(conn,'$overview_disk_write_legend','Write [kIOPS]');
+      CreateAppText(conn,'$overview_caption_ram','Memory Usage (256GB RAM, 256GB Swap)');
+      CreateAppText(conn,'$overview_ram_ram_legend','RAM [%]');
+      CreateAppText(conn,'$overview_ram_swap_legend','Swap [%]');
+      CreateAppText(conn,'$overview_caption_cache','Cache (Adaptive Read Cache)');
+      CreateAppText(conn,'$overview_cache_hits_legend','Hits [%]');
+      CreateAppText(conn,'$overview_cache_misses_legend','Misses [%]');
+
+      CreateAppText(conn,'$button_save','Save'); //global text?
+      currentVersionId:='1.0';
+    end;
+  if (currentVersionId='1.0') then
+    begin
+    //next update code
+    end;
+end;
+
+class procedure TFRE_FIRMBOX_APPLIANCE_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+begin
+  inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
+
+  CheckDbResult(conn.AddGroup('APPLIANCEFEEDER','Group for Appliance Data Feeder','VM Feeder',domainUID),'could not create Appliance feeder group');
+
+  CheckDbResult(conn.AddRolesToGroup('APPLIANCEFEEDER',domainUID,GFRE_DBI.ConstructStringArray(
+    [TFRE_FIRMBOX_APPLIANCE_APP.GetClassRoleNameFetch
+    ])),'could not add roles for group APPLIANCEFEEDER');
+
+end;
+
 function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DATA_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  result := DelegateInvoke('STATUS','RAW_UPDATE',input);
+  result := DelegateInvoke(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.ClassName,'RAW_UPDATE',input);
 end;
 
 function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DATA_FEED30(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  result := DelegateInvoke('STATUS','RAW_UPDATE30',input);
+  result := DelegateInvoke(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.ClassName,'RAW_UPDATE30',input);
 end;
 
 function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DISK_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  result := DelegateInvoke('STATUS','RAW_DISK_UPDATE',input);
+  result := DelegateInvoke(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.ClassName,'RAW_DISK_UPDATE',input);
 //  result := DelegateInvoke('STORAGE_POOLS','RAW_DISK_FEED',data);
 end;
 

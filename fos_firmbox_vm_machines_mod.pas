@@ -8,7 +8,6 @@ interface
 uses
   Classes, SysUtils,
   FOS_TOOL_INTERFACES,
-  FRE_DB_SYSRIGHT_CONSTANTS,
   FRE_DB_INTERFACE,
   FOS_VM_CONTROL_INTERFACE,
   fre_hal_schemes,
@@ -34,7 +33,9 @@ type
     procedure       SetupAppModuleStructure   ; override;
     procedure       MySessionInitializeModule (const session   : TFRE_DB_UserSession);override;
     procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
-    procedure       _GetSelectedVMData        (session : IFRE_DB_UserSession ; const selected : TGUID; var vmkey,vnc_port,vnc_host,vm_state: String);
+    procedure       _GetSelectedVMData        (const conn: IFRE_DB_CONNECTION ; const selected : TGUID; var vmkey,vnc_port,vnc_host,vm_state: String);
+  public
+    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   published
     function  WEB_VM_Feed_Update        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -59,6 +60,8 @@ type
     procedure       SetupAppModuleStructure   ; override;
     procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
+  public
+    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   published
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentDisks          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -76,6 +79,8 @@ type
     class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
+  public
+    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   published
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DatalinkContent       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -89,6 +94,8 @@ type
   protected
     class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
+  public
+    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   published
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
@@ -98,7 +105,7 @@ type
   TFRE_FIRMBOX_VM_DISK = class (TFRE_DB_ObjectEx)
   protected
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_FIRMBOX_VM_ISO }
@@ -106,7 +113,7 @@ type
   TFRE_FIRMBOX_VM_ISO = class (TFRE_DB_ObjectEx)
   protected
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
 
 
@@ -141,7 +148,7 @@ begin
   group.AddInput('name',GetTranslateableTextKey('scheme_name'));
 end;
 
-class procedure TFRE_FIRMBOX_VM_ISO.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
+class procedure TFRE_FIRMBOX_VM_ISO.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
   StoreTranslateableText(conn,'scheme_main_group','General Information');
@@ -164,7 +171,7 @@ begin
   group.AddInput('name',GetTranslateableTextKey('scheme_name'));
 end;
 
-class procedure TFRE_FIRMBOX_VM_DISK.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; out newVersionId: TFRE_DB_NameType);
+class procedure TFRE_FIRMBOX_VM_DISK.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
   StoreTranslateableText(conn,'scheme_main_group','General Information');
@@ -183,7 +190,7 @@ end;
 procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('VMRESOURCES','$vm_resources_description');
+  InitModuleDesc('$vm_resources_description');
 end;
 
 procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
@@ -239,11 +246,16 @@ begin
   end;
 end;
 
+class procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='1.0';
+end;
+
 function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   res : TFRE_DB_SUBSECTIONS_DESC;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  CheckClassVisibility(ses);
 
   res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
   res.AddSection.Describe(CWSF(@WEB_ContentDisks),app.FetchAppText(ses,'$vm_resources_disks').Getshort,1,'DISKS');
@@ -256,7 +268,8 @@ var
   coll: IFRE_DB_DERIVED_COLLECTION;
   res : TFRE_DB_VIEW_LIST_DESC;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_DISK)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   coll := ses.FetchDerivedCollection('VM_DISKS_DERIVED');
   res := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -270,7 +283,8 @@ var
   coll: IFRE_DB_DERIVED_COLLECTION;
   res : TFRE_DB_VIEW_LIST_DESC;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_ISO)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   coll := ses.FetchDerivedCollection('VM_ISOS_DERIVED');
   res := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -286,7 +300,8 @@ var
   scheme    : IFRE_DB_SchemeObject;
   serverFunc: TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_FIRMBOX_VM_DISK)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_DISK',scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(ses,'ADD_DISK').Getshort,600);
@@ -300,7 +315,8 @@ function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_DeleteDisk(const input: IFRE_DB_Objec
 var
   obj: IFRE_DB_Object;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_FIRMBOX_VM_DISK)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
   Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_DISK).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
@@ -312,7 +328,8 @@ var
   serverFunc: TFRE_DB_SERVER_FUNC_DESC;
   scheme: IFRE_DB_SchemeObject;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_FIRMBOX_VM_ISO)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_ISO',scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(ses,'UPLOAD_ISO').Getshort,600);
@@ -326,7 +343,8 @@ function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_DeleteISO(const input: IFRE_DB_Object
 var
   obj: IFRE_DB_Object;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_FIRMBOX_VM_ISO)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
   Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_ISO).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
@@ -343,13 +361,19 @@ end;
 procedure TFRE_FIRMBOX_VM_STATUS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('VMSTATUS','$status_description');
+  InitModuleDesc('$status_description');
+end;
+
+class procedure TFRE_FIRMBOX_VM_STATUS_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='1.0';
 end;
 
 
 function TFRE_FIRMBOX_VM_STATUS_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_STATUS_MOD)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   Result:=TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');//FIXXME: Please implement me
 end;
@@ -365,7 +389,7 @@ end;
 procedure TFRE_FIRMBOX_VM_NETWORK_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('VMNETWORK','$vnetwork_description');
+  InitModuleDesc('$vnetwork_description');
 end;
 
 procedure TFRE_FIRMBOX_VM_NETWORK_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -382,9 +406,9 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,datalink_tr_Grid);
     with datalink_tr_Grid do begin
       //AddOneToOnescheme('icon','',app.FetchAppText(conn,'$datalink_icon').GetShort,dt_icon);
-      AddOneToOnescheme('objname','linkname',app.FetchAppText(conn,'$datalink_name').Getshort,dt_string,true,1,'icon');
+      AddOneToOnescheme('objname','linkname',app.FetchAppText(session,'$datalink_name').Getshort,dt_string,true,1,'icon');
 //      AddOneToOnescheme('zoned','zoned',app.FetchAppText(conn,'$datalink_zoned').Getshort);
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(conn,'$datalink_desc').Getshort);
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(session,'$datalink_desc').Getshort);
     end;
     datalink_dc := session.NewDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
     with datalink_dc do begin
@@ -397,6 +421,11 @@ begin
   end;
 end;
 
+class procedure TFRE_FIRMBOX_VM_NETWORK_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='1.0';
+end;
+
 
 function TFRE_FIRMBOX_VM_NETWORK_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
@@ -405,7 +434,8 @@ var
   datalink_content: TFRE_DB_FORM_PANEL_DESC;
   txt             : IFRE_DB_TEXT;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   dc_datalink                := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -426,7 +456,8 @@ var
   sel_guid      : TGUID;
 
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
@@ -456,7 +487,8 @@ var
   sel_guid  : TGUID;
   sclass    : TFRE_DB_NameType;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_DATALINK)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   Result:=GFRE_DB_NIL_DESC;
   if input.Field('SELECTED').ValueCount=1  then begin
@@ -476,7 +508,8 @@ end;
 
 function TFRE_FIRMBOX_VM_NETWORK_MOD.WEB_DatalinkCreateStub(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_STUB)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   result :=  TFRE_DB_MESSAGE_DESC.create.Describe('','Feature disabled in Demo Mode',fdbmt_info,nil);//FIXXME: Please implement me
 end;
@@ -514,7 +547,7 @@ procedure TFRE_FIRMBOX_VM_MACHINES_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
   writeln('setup app module vm machines mod');
-  InitModuleDesc('VMCONTROLLER','$machines_description');
+  InitModuleDesc('$machines_description');
 end;
 
 procedure TFRE_FIRMBOX_VM_MACHINES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -545,13 +578,13 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     with tr_Grid do begin
-      AddOneToOnescheme('Objname','',app.FetchAppText(conn,'$gc_vm_name').Getshort,dt_string,true,4);
-      AddOneToOnescheme('MType','',app.FetchAppText(conn,'$gc_vm_type').Getshort);
-      AddOneToOnescheme('MStateIcon','',app.FetchAppText(conn,'$gc_vm_state').Getshort,dt_icon);
-      AddOneToOnescheme('PERFPCPU','',app.FetchAppText(conn,'$gc_vm_cpu').Getshort,dt_number,true,2);
-      AddOneToOnescheme('PERFPMEM','',app.FetchAppText(conn,'$gc_vm_used_mem').Getshort,dt_number,true,2);
-      AddOneToOnescheme('PERFRSS','',app.FetchAppText(conn,'$gc_vm_paged_mem').Getshort,dt_number,true,2);
-      AddOneToOnescheme('PERFVSZ','',app.FetchAppText(conn,'$gc_vm_virtual_mem').Getshort,dt_number,true,2);
+      AddOneToOnescheme('Objname','',app.FetchAppText(session,'$gc_vm_name').Getshort,dt_string,true,4);
+      AddOneToOnescheme('MType','',app.FetchAppText(session,'$gc_vm_type').Getshort);
+      AddOneToOnescheme('MStateIcon','',app.FetchAppText(session,'$gc_vm_state').Getshort,dt_icon);
+      AddOneToOnescheme('PERFPCPU','',app.FetchAppText(session,'$gc_vm_cpu').Getshort,dt_number,true,2);
+      AddOneToOnescheme('PERFPMEM','',app.FetchAppText(session,'$gc_vm_used_mem').Getshort,dt_number,true,2);
+      AddOneToOnescheme('PERFRSS','',app.FetchAppText(session,'$gc_vm_paged_mem').Getshort,dt_number,true,2);
+      AddOneToOnescheme('PERFVSZ','',app.FetchAppText(session,'$gc_vm_virtual_mem').Getshort,dt_number,true,2);
     end;
     vmcp := session.GetDBConnection.Collection('virtualmachine',false);
     vmc  := session.NewDerivedCollection('VMC');
@@ -718,12 +751,12 @@ begin
 end;
 
 
-procedure TFRE_FIRMBOX_VM_MACHINES_MOD._GetSelectedVMData(session: IFRE_DB_UserSession; const selected: TGUID; var vmkey, vnc_port, vnc_host, vm_state: String);
-var DC_VMC     : IFRE_DB_DERIVED_COLLECTION;
-      vmo        : IFRE_DB_Object;
+procedure TFRE_FIRMBOX_VM_MACHINES_MOD._GetSelectedVMData(const conn: IFRE_DB_CONNECTION; const selected: TGUID; var vmkey, vnc_port, vnc_host, vm_state: String);
+var coll     : IFRE_DB_COLLECTION;
+    vmo      : IFRE_DB_Object;
 begin
-  DC_VMC := session.FetchDerivedCollection('VMC');
-  if DC_VMC.Fetch(selected,vmo) then begin
+  coll := conn.Collection('virtualmachine');
+  if coll.Fetch(selected,vmo) then begin
     vmkey    := vmo.Field('MKEY').AsString;
     vnc_port := vmo.Field('VNC_PORT').AsString;
     vnc_host := vmo.Field('VNC_HOST').AsString;
@@ -732,14 +765,17 @@ begin
   end;
 end;
 
+class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='1.0';
+end;
+
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var// vmc     : IFOS_VM_HOST_CONTROL;
     vmo     : IFRE_DB_Object;
     vm      : IFRE_DB_Object;
     vmcc    : IFRE_DB_COLLECTION;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
-
   GFRE_DBI.LogInfo(dblc_APPLICATION,'START FEED UPDATE');
   conn.CollectionAsIntf('virtualmachine',IFRE_DB_COLLECTION,vmcc,false);
   VM_UpdateCollection(conn,vmcc,input.CloneToNewObject(),TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
@@ -754,10 +790,11 @@ var
   main   : TFRE_DB_LAYOUT_DESC;
   text   : IFRE_DB_TEXT;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  CheckClassVisibility(ses);
+
   coll := ses.FetchDerivedCollection('VMC');
   list := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.CheckAppRight('admin_vms',app.ObjectName) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE) then begin
     text:=app.FetchAppText(ses,'$machines_new_vm');
     list.AddButton.Describe(CWSF(@WEB_NewVM)         , '/images_apps/hal/add_vm.png',text.Getshort,text.GetHint);
   end;
@@ -779,7 +816,7 @@ var vmcc  : IFRE_DB_COLLECTION;
     vmkey : string;
       obj : IFRE_DB_Object;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  CheckClassVisibility(ses);
 
   vmkey := input.Field('vmkey').AsString;
   conn.CollectionAsIntf('virtualmachine',IFRE_DB_COLLECTION,VMCC,true,true);
@@ -800,7 +837,7 @@ var
   tmp                : String;
   i                  : Integer;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  CheckClassVisibility(ses);
 
   writeln('VNC INPUT ',input.DumpToString);
   vmkey  := input.Field('vmkey').AsString;
@@ -843,7 +880,7 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_ShowPerf(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  CheckClassVisibility(ses);
 
   result := TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.'); //FIXXME: please implement me
 end;
@@ -853,7 +890,8 @@ var
   load_func             : TFRE_DB_SERVER_FUNC_DESC;
   save_func             : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_NOTE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   writeln('CONTENTNOTE');
   writeln(input.DumpToString);
@@ -874,16 +912,20 @@ var   vm_sub       : TFRE_DB_SUBSECTIONS_DESC;
       vmkey,vncp,
       vnch,vmstate : string;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_VMACHINE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
-    _GetSelectedVMData(ses,sel_guid,vmkey,vncp,vnch,vmstate);
+    _GetSelectedVMData(conn,sel_guid,vmkey,vncp,vnch,vmstate);
     vm_sub := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
     sf := CWSF(@WEB_VM_ShowInfo); sf.AddParam.Describe('VMKEY',vmkey);
     vm_sub.AddSection.Describe(sf,app.FetchAppText(ses,'$vm_details_config').Getshort,2);
-    sf := CWSF(@WEB_VM_ShowVNC); sf.AddParam.Describe('VNC_PORT',vncp) ; sf.AddParam.Describe('VNC_HOST',vnch); sf.AddParam.Describe('VMKEY',vmkey);
-    vm_sub.AddSection.Describe(sf,app.FetchAppText(ses,'$vm_details_console').Getshort,1);
+    if vncp<>'' then
+      begin
+        sf := CWSF(@WEB_VM_ShowVNC); sf.AddParam.Describe('VNC_PORT',vncp) ; sf.AddParam.Describe('VNC_HOST',vnch); sf.AddParam.Describe('VMKEY',vmkey);
+        vm_sub.AddSection.Describe(sf,app.FetchAppText(ses,'$vm_details_console').Getshort,1);
+      end;
     vm_sub.AddSection.Describe(CWSF(@WEB_VM_ShowPerf),app.FetchAppText(ses,'$vm_details_perf').Getshort,3);
     sf := CWSF(@WEB_ContentNote); sf.AddParam.Describe('linkid',input.Field('SELECTED').asstring);
     vm_sub.AddSection.Describe(sf,app.FetchAppText(ses,'$vm_details_note').Getshort,4);
@@ -911,7 +953,8 @@ var
   isochooser           : TFRE_DB_INPUT_CHOOSER_DESC;
   group                : TFRE_DB_INPUT_GROUP_DESC;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   vm_isos := ses.FetchDerivedCollection('VM_CH_ISOS_DERIVED');
   vm_disks:= ses.FetchDerivedCollection('VM_CH_DISKS_DERIVED');
@@ -987,7 +1030,8 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.CheckAppRight('admin_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
   //FIXXME: please implement me
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
@@ -999,12 +1043,13 @@ var   vmc   : IFOS_VM_HOST_CONTROL;
       vnch  : string;
     vmstate : string;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','START VM',fdbmt_info);
   //exit;
   if input.FieldExists('SELECTED') then begin
-    _GetSelectedVMData(ses,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
+    _GetSelectedVMData(conn,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Start(vmkey);
     vmc.Finalize;
@@ -1019,12 +1064,13 @@ var   vmc     : IFOS_VM_HOST_CONTROL;
       vnch    : string;
       vmstate : string;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','STOP VM',fdbmt_info);
   //exit;
   if input.FieldExists('SELECTED') then begin
-    _GetSelectedVMData(ses,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
+    _GetSelectedVMData(conn,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Halt(vmkey);
     vmc.Finalize;
@@ -1039,10 +1085,11 @@ var   vmc     : IFOS_VM_HOST_CONTROL;
       vnch    : string;
       vmstate : string;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   if input.FieldExists('SELECTED') then begin
-    _GetSelectedVMData(ses,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
+    _GetSelectedVMData(conn,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     vmc.VM_Halt(vmkey,true);
     vmc.Finalize;
@@ -1056,7 +1103,8 @@ var
   vmo : IFRE_DB_Object;
   vmcc: IFRE_DB_COLLECTION;
 begin
-  if not conn.CheckAppRight('view_vms',app.ObjectName) then raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppText(ses,'$error_no_access').Getshort);
 
   writeln('GET - UPDATE DATA');
   vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
