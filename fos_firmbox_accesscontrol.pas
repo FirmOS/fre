@@ -10,7 +10,6 @@ interface
 
 uses
   Classes, SysUtils,fre_accesscontrol_common,FOS_TOOL_INTERFACES,
-  FRE_DB_SYSRIGHT_CONSTANTS,
   FRE_DB_INTERFACE,
   FRE_DBBASE,
   FRE_DB_COMMON;
