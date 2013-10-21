@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-x -y -t -i -e FIRMBOX -H 10.220.251.10 -U root -u city@system -p city"/>
+        <CommandLineParams Value="-x -y -t -i -e FIRMBOX -H 192.168.83.132 -U root -u city@system -p city -D"/>
       </local>
     </RunParams>
     <Units Count="6">
@@ -76,14 +76,16 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then
-   CustomOptions := '-WM10.6';"/>
+   CustomOptions := '-WM10.6';
+if TargetOS = 'solaris' then
+   CustomOptions := '-k-rpath=$ORIGIN/../lib/lib64rel/solaris';"/>
     <Parsing>
       <SyntaxOptions>
         <IncludeAssertionCode Value="True"/>
       </SyntaxOptions>
     </Parsing>
     <CodeGeneration>
-      <TargetCPU Value="i386"/>
+      <TargetCPU Value="x86_64"/>
     </CodeGeneration>
     <Other>
       <CompilerMessages>
