@@ -735,15 +735,15 @@ begin
   CheckClassVisibility(ses);
 
   c1:=TFRE_DB_LAYOUT_DESC.create.Describe(app.FetchAppText(ses,'$overview_caption_space').ShortText).SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
-  c2:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cpu',2,120,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cpu').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c2:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cpu',2,120,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cpu').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_cpu_system_legend').ShortText,app.FetchAppText(ses,'$overview_cpu_user_legend').ShortText),11,CWSF(@WEB_CPUStatusInit));
-  c3:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_net',2,120,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_net').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c3:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_net',2,120,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_net').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_net_receive_legend').ShortText,app.FetchAppText(ses,'$overview_net_transmit_legend').ShortText),11,CWSF(@WEB_NetStatusInit));
-  c4:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_disk',2,120,CWSF(@WEB_DiskStatusStopStart),0,30,app.FetchAppText(ses,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c4:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_disk',2,120,CWSF(@WEB_DiskStatusStopStart),0,30,app.FetchAppText(ses,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_disk_write_legend').ShortText,app.FetchAppText(ses,'$overview_disk_read_legend').ShortText),11,CWSF(@WEB_DiskStatusInit));
-  c5:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_ram',2,120,CWSF(@WEB_RAMStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_ram').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c5:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_ram',2,120,CWSF(@WEB_RAMStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_ram').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_ram_ram_legend').ShortText,app.FetchAppText(ses,'$overview_ram_swap_legend').ShortText),11,CWSF(@WEB_RAMStatusInit));
-  c6:=TFRE_DB_LIVE_CHART_DESC.create.Describe('appl_stat_cache',2,120,CWSF(@WEB_CacheStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
+  c6:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cache',2,120,CWSF(@WEB_CacheStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_cache_misses_legend').ShortText,app.FetchAppText(ses,'$overview_cache_hits_legend').ShortText),11,CWSF(@WEB_CacheStatusInit));
 
   sub1l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,nil,nil,nil,false,1,1);
