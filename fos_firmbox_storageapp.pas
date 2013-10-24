@@ -443,7 +443,7 @@ begin
     with groupin_dc do begin
       SetDeriveParent(session.GetDBConnection.AdmGetGroupCollection);
       SetDeriveTransformation(groupin_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_enableMultiselect],app.FetchAppText(session,'$share_group_in').Getshort,nil,'',CWSF(@WEB_VFSShareGroupMenu),nil,nil,nil,CWSF(@WEB_VFSShareGroupInDrop));
+      SetDisplayType(cdt_Listview,[cdgf_Multiselect],app.FetchAppText(session,'$share_group_in').Getshort,nil,'',CWSF(@WEB_VFSShareGroupMenu),nil,nil,nil,CWSF(@WEB_VFSShareGroupInDrop));
     end;
 
     //GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,groupout_tr_Grid);
@@ -1475,7 +1475,7 @@ begin
     with snap_dc do begin
       SetDeriveParent(conn.Collection('snapshot'));
       SetDeriveTransformation(snap_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable,cdgf_enableMultiselect],'',nil,'',CWSF(@WEB_SnapshotMenu),nil,CWSF(@WEB_ContentSnapshot));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable,cdgf_Multiselect],'',nil,'',CWSF(@WEB_SnapshotMenu),nil,CWSF(@WEB_ContentSnapshot));
     end;
   end;
 end;
@@ -2180,7 +2180,7 @@ begin
   glayout.AddDataElement.Describe('transfer_r','Read [MB/s]',dt_number);
   glayout.AddDataElement.Describe('transfer_w','Write [MB/s]',dt_number);
 
-  grid    := TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_enableMultiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
+  grid    := TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
   grid.SetDropGrid(grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
   grid.SetDragObjClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
 
