@@ -62,7 +62,7 @@ type
     FtotalSwap,FtotalRam : Integer; //in kb
     FtotalNet            : Integer; //in byte
     procedure       _fillPoolCollection       (const conn: IFRE_DB_CONNECTION; const data: IFRE_DB_Object);
-    function        _SendData                 (const Input:IFRE_DB_Object):IFRE_DB_Object;
+    procedure       _SendData                 (const session: IFRE_DB_UserSession);
     procedure       _HandleRegisterSend       (session : TFRE_DB_UserSession);
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -487,13 +487,11 @@ begin
   //coll.ForAll(@_addValues);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
+procedure TFRE_FIRMBOX_APPLIANCE_STATUS_MOD._SendData(const session: IFRE_DB_UserSession);
 var
-  session    : TFRE_DB_UserSession;
   res        : TFRE_DB_LIVE_CHART_DATA_AT_IDX_DESC;
   totalCache : Int64;
 begin
-  session:=GetSession(Input);
   if __idxCPU>-1 then begin
     with G_AppliancePerformanceBuffer[G_AppliancePerformanceCurrentIdx] do
       res:=TFRE_DB_LIVE_CHART_DATA_AT_IDX_DESC.create.Describe('appl_stat_cpu',__idxCPU,TFRE_DB_Real32Array.create(cpu_aggr_sys,cpu_aggr_sys_user));
@@ -532,7 +530,7 @@ begin
     begin
       if __SendAdded then
         begin
-          session.RemoveTaskMethod;
+          session.RemoveTaskMethod('ASM');
           __SendAdded := false;
           writeln('DISABLE SEND');
         end;
@@ -540,7 +538,7 @@ begin
   else
     if not __SendAdded then
       begin
-        session.RegisterTaskMethod(@_SendData,1000);
+        session.RegisterTaskMethod(@_SendData,1000,'ASM');
         __SendAdded := true;
         writeln('ENABLE SEND');
      end;

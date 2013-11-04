@@ -48,7 +48,7 @@ type
     function        _getUnassignedPool         (const conn: IFRE_DB_CONNECTION): TFRE_DB_ZFS_UNASSIGNED;
     function        _getTreeObj                (const zfsObj: TFRE_DB_ZFS_OBJ):IFRE_DB_Object;
     procedure       _unassignDisk              (const upool:TFRE_DB_ZFS_UNASSIGNED; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
-    function        _SendData                  (const Input:IFRE_DB_Object):IFRE_DB_Object;
+    procedure       _SendData                  (const session : IFRE_DB_UserSession);
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
@@ -2170,7 +2170,7 @@ begin
   secs.AddSection.Describe(CWSF(@WEB_PoolSpace),app.FetchAppText(ses,'$pool_status_tab').Getshort,2,'space');
   secs.AddSection.Describe(CWSF(@WEB_PoolNotes),app.FetchAppText(ses,'$pool_notes_tab').Getshort,4,'notes');
 
-  ses.RegisterTaskMethod(@_SendData,1000);
+  ses.RegisterTaskMethod(@_SendData,1000,'SPM');
 
   store    := TFRE_DB_STORE_DESC.create.Describe('id',CWSF(@WEB_TreeGridData),TFRE_DB_StringArray.create('caption'),nil,nil,'pools_store');
   glayout  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
@@ -3106,12 +3106,10 @@ begin
 end;
 
 
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD._SendData(const Input: IFRE_DB_Object): IFRE_DB_Object;
-var session : IFRE_DB_UserSession;
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._SendData(const session: IFRE_DB_UserSession);
 begin
-  session:=GetSession(input);
   if Assigned(ZPOOL_IOSTAT_UPDATE) then begin
-    GetSession(input).SendServerClientRequest(ZPOOL_IOSTAT_UPDATE);
+    session.SendServerClientRequest(ZPOOL_IOSTAT_UPDATE);
     ZPOOL_IOSTAT_UPDATE:=nil;
   end;
   __idx:=__idx+1;
