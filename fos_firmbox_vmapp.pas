@@ -82,7 +82,8 @@ end;
 procedure TFRE_FIRMBOX_VM_APP.MySessionPromotion(  const session: TFRE_DB_UserSession);
 begin
   inherited MySessionPromotion(session);
-  _UpdateSitemap(session);
+  if session.IsInteractiveSession then
+    _UpdateSitemap(session);
 end;
 
 
