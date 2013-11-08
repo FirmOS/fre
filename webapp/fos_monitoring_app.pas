@@ -1157,7 +1157,8 @@ end;
 procedure TFRE_DB_MONSYS.MySessionPromotion(const session: TFRE_DB_UserSession);
 begin
   inherited MySessionPromotion(session);
-  _UpdateSitemap(session);
+  if session.IsInteractiveSession then
+    _UpdateSitemap(session);
 end;
 
 function TFRE_DB_MONSYS.ShowInApplicationChooser(const session: IFRE_DB_UserSession): Boolean;
