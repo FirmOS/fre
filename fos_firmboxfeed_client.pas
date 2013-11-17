@@ -53,8 +53,7 @@ type
 
   TFRE_BOX_FEED_CLIENT=class(TFRE_BASE_CLIENT)
   private
-    FEED_Timer            : IFRE_APS_TIMER;
-    FEED_Timer30          : IFRE_APS_TIMER;
+    FEED_Timer            : IFRE_APSC_TIMER;
     FVM_Feeding           : Boolean;
     FDISK_Feeding         : Boolean;
     FAPP_Feeding          : Boolean;
@@ -67,19 +66,19 @@ type
     vmc                   : IFOS_VM_HOST_CONTROL; // Todo Move MVStats to Statscontroller
     statscontroller       : IFOS_STATS_CONTROL;
   public
-    procedure  MySessionEstablished    ; override;
-    procedure  MySessionDisconnected   ; override;
+    procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
+    procedure  MySessionDisconnected   (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  QueryUserPass           (out user, pass: string); override;
     procedure  MyInitialize            ; override;
     procedure  MyFinalize              ; override;
-    procedure  GenerateFeedDataTimer   (const ES:IFRE_APS_EVENTSOURCE;const TID:integer;const Data:Pointer;const cp:integer=0);
-    procedure  GenerateFeedDataTimer30 (const ES:IFRE_APS_EVENTSOURCE;const TID:integer;const Data:Pointer;const cp:integer=0);
+    procedure  MyConnectionTimer       ; override;
+    procedure  GenerateFeedDataTimer   (const TIM : IFRE_APSC_TIMER ; const flag1,flag2 : boolean); // Timout & CMD Arrived & Answer Arrived
   end;
 
 
 implementation
 
-procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished;
+procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 begin
   if Get_AppClassAndUid('TFRE_FIRMBOX_APPLIANCE_APP',FSTORAGE_FeedAppClass,FSTORAGE_FeedAppUid) then begin
     FDISK_Feeding := True;
@@ -96,10 +95,16 @@ begin
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_VM_APP APP NOT FOUND!');
   end;
+  FEED_Timer := chanman.AddTimer(30000); // Beside the "normal 1 sec" Timer a 5 sec timer in the channel context
+  FEED_Timer.TIM_SetID('FEED_'+inttostr(chanman.GetID));
+  writeln('Generated Feedtimer ',FEED_Timer.TIM_GetID);
+  FEED_Timer.TIM_SetCallback(@GenerateFeedDataTimer);
+  FEED_Timer.TIM_Start;
 end;
 
-procedure TFRE_BOX_FEED_CLIENT.MySessionDisconnected;
+procedure TFRE_BOX_FEED_CLIENT.MySessionDisconnected(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 begin
+  FEED_Timer.Finalize;
   FVM_Feeding   := false;
   FDISK_Feeding := false;
   FAPP_Feeding  := false;
@@ -113,8 +118,8 @@ end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyInitialize;
 begin
-  FEED_Timer      := GFRE_S.AddPeriodicTimer (1000,@GenerateFeedDataTimer);
-  FEED_Timer30    := GFRE_S.AddPeriodicTimer (30000,@GenerateFeedDataTimer30);
+//  FEED_Timer      := GFRE_S.AddPeriodicTimer (1000,@GenerateFeedDataTimer);
+//  FEED_Timer30    := GFRE_S.AddPeriodicTimer (30000,@GenerateFeedDataTimer30);
   //vmc             := Get_VM_Host_Control     (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   //vmc.VM_EnableVMMonitor                     (true);
   statscontroller := Get_Stats_Control       (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
@@ -129,15 +134,16 @@ end;
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;
 begin
   writeln('FEED CLIENT FINALIZE');
-  FEED_Timer.FinalizeIt;
-  FEED_Timer30.FinalizeIt;
+//  FEED_Timer.FinalizeIt;
+//  FEED_Timer30.FinalizeIt;
   //vmc.Finalize ;
   statscontroller.Finalize;
 end;
 
+
 var g_disc_delay : integer=0;
 
-procedure TFRE_BOX_FEED_CLIENT.GenerateFeedDataTimer(const ES: IFRE_APS_EVENTSOURCE; const TID: integer; const Data: Pointer; const cp: integer);
+procedure TFRE_BOX_FEED_CLIENT.MyConnectionTimer;
 var vmo : IFRE_DB_Object;
 begin
   if FAPP_Feeding then
@@ -180,7 +186,7 @@ begin
     end;
 end;
 
-procedure TFRE_BOX_FEED_CLIENT.GenerateFeedDataTimer30(const ES: IFRE_APS_EVENTSOURCE; const TID: integer; const Data: Pointer; const cp: integer);
+procedure TFRE_BOX_FEED_CLIENT.GenerateFeedDataTimer(const TIM: IFRE_APSC_TIMER; const flag1, flag2: boolean);
 var vmo : IFRE_DB_Object;
 begin
   if FAPP_Feeding then

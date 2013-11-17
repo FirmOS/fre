@@ -185,10 +185,10 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,datalink_tr_Grid);
     with datalink_tr_Grid do begin
-      //AddOneToOnescheme('icon','',app.FetchAppText(conn,'$datalink_icon').GetShort,dt_icon);
-      AddOneToOnescheme('objname','linkname',app.FetchAppText(session,'$datalink_name').Getshort,dt_string,true,1,'icon');
-//      AddOneToOnescheme('zoned','zoned',app.FetchAppText(conn,'$datalink_zoned').Getshort);
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(session,'$datalink_desc').Getshort);
+      //AddOneToOnescheme('icon','',app.FetchAppTextShort(conn,'$datalink_icon'),dt_icon);
+      AddOneToOnescheme('objname','linkname',app.FetchAppTextShort(session,'$datalink_name'),dt_string,true,1,'icon');
+//      AddOneToOnescheme('zoned','zoned',app.FetchAppTextShort(conn,'$datalink_zoned'));
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppTextShort(session,'$datalink_desc'));
     end;
     datalink_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
     with datalink_dc do begin
@@ -202,8 +202,8 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,system_tr_Grid);
     with system_tr_Grid do begin
-      AddOneToOnescheme('objname','Name',app.FetchAppText(session,'$system_name').Getshort);
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(session,'$system_desc').Getshort);
+      AddOneToOnescheme('objname','Name',app.FetchAppTextShort(session,'$system_name'));
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppTextShort(session,'$system_desc'));
     end;
     system_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
     with system_dc do begin
@@ -214,10 +214,10 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,fc_tr_Grid);
     with fc_tr_Grid do begin
-      AddOneToOnescheme('objname','wwn',app.FetchAppText(session,'$fc_wwn').Getshort);
-      AddOneToOnescheme('targetmode','targetmode',app.FetchAppText(session,'$fc_targetmode').Getshort);
-      AddOneToOnescheme('state','state',app.FetchAppText(session,'$fc_state').Getshort);
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppText(session,'$fc_desc').Getshort);
+      AddOneToOnescheme('objname','wwn',app.FetchAppTextShort(session,'$fc_wwn'));
+      AddOneToOnescheme('targetmode','targetmode',app.FetchAppTextShort(session,'$fc_targetmode'));
+      AddOneToOnescheme('state','state',app.FetchAppTextShort(session,'$fc_state'));
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppTextShort(session,'$fc_desc'));
     end;
     fc_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
     with fc_dc do begin
@@ -237,10 +237,10 @@ begin
 
   sub_sec_s        := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
 
-  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentSystem),app.FetchAppText(ses,'$appliance_settings_system').Getshort,1,'system');
-  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentDatalink),app.FetchAppText(ses,'$appliance_settings_datalink').Getshort,2,'datalink');
-//  sub_sec_s.AddSection.Describe(TFRE_DB_HTML_DESC.create.Describe('iscsi'),app.FetchAppText(conn,'$appliance_settings_iscsi').Getshort,3,'iscsi');
-  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentFC),app.FetchAppText(ses,'$appliance_settings_fibrechannel').Getshort,4,'fibrechannel');
+  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentSystem),app.FetchAppTextShort(ses,'$appliance_settings_system'),1,'system');
+  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentDatalink),app.FetchAppTextShort(ses,'$appliance_settings_datalink'),2,'datalink');
+//  sub_sec_s.AddSection.Describe(TFRE_DB_HTML_DESC.create.Describe('iscsi'),app.FetchAppTextShort(conn,'$appliance_settings_iscsi'),3,'iscsi');
+  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentFC),app.FetchAppTextShort(ses,'$appliance_settings_fibrechannel'),4,'fibrechannel');
 
   result := sub_sec_s;
 end;
@@ -255,7 +255,7 @@ begin
 
   dc_system                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
   grid_system              := dc_system.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  system_content           :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$system_content_header').ShortText);
+  system_content           :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$system_content_header'));
   system_content.contentId :='SYSTEM_CONTENT';
   Result                   := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_system,system_content,nil,nil,nil,true,1,4);
 end;
@@ -272,11 +272,12 @@ begin
   dc_datalink                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then begin
-    txt:=app.FetchAppText(ses,'$create_aggr');
-    grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
+    txt:=app.FetchAppTextFull(ses,'$create_aggr');
+    grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt,txt.GetHint);
+    txt.Finalize;
   end;
 
-  datalink_content           := TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
+  datalink_content           := TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$datalink_content_header'));
   datalink_content.contentId :='DATALINK_CONTENT';
   Result                     := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_datalink,datalink_content,nil,nil,nil,true,1,1);
 end;
@@ -291,7 +292,7 @@ begin
 
   dc_fc               := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
   grid_fc             := dc_fc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  fc_content          :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$fc_content_header').ShortText);
+  fc_content          :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$fc_content_header'));
   fc_content.contentId:='FC_HBA_CONTENT';
   Result              := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_fc,fc_content,nil,nil,nil,true,2);
 end;
@@ -311,15 +312,15 @@ begin
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
     if dc.Fetch(sel_guid,so) then begin
       GetSystemSchemeByName(so.SchemeClass,scheme);
-      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$system_content_header').ShortText);
+      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$system_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('setting'),GetSession(input));
       panel.FillWithObjectValues(so,GetSession(input));
       if so.SchemeClass=TFRE_DB_MACHINE_SETTING_POWER.ClassName then
         begin
           menu:=TFRE_DB_MENU_DESC.create.Describe;
-          menu.AddEntry.Describe(app.FetchAppText(ses,'$system_reboot').ShortText,'',TFRE_DB_SERVER_FUNC_DESC.create.Describe(so,'Reboot'));
-          menu.AddEntry.Describe(app.FetchAppText(ses,'$system_shutdown').ShortText,'',TFRE_DB_SERVER_FUNC_DESC.create.Describe(so,'Shutdown'));
+          menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$system_reboot'),'',TFRE_DB_SERVER_FUNC_DESC.create.Describe(so,'Reboot'));
+          menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$system_shutdown'),'',TFRE_DB_SERVER_FUNC_DESC.create.Describe(so,'Shutdown'));
           panel.SetMenu(menu);
         end
       else
@@ -328,7 +329,7 @@ begin
       Result:=panel;
     end;
   end else begin
-    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$system_content_header').ShortText);
+    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$system_content_header'));
     panel.contentId:='SYSTEM_CONTENT';
     Result:=panel;
   end;
@@ -353,7 +354,7 @@ begin
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
     if dc.Fetch(sel_guid,dl) then begin
       GetSystemSchemeByName(dl.SchemeClass,scheme);
-      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
+      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$datalink_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
       panel.FillWithObjectValues(dl,ses);
       panel.contentId:='DATALINK_CONTENT';
@@ -361,7 +362,7 @@ begin
       Result:=panel;
     end;
   end else begin
-    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$datalink_content_header').ShortText);
+    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$datalink_content_header'));
     panel.contentId:='DATALINK_CONTENT';
     Result:=panel;
   end;
@@ -389,13 +390,13 @@ begin
           sclass := dl.SchemeClass;
           writeln(schemeclass);
           if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_VNIC) then
-            input.Field('add_vnic').AsString    := app.FetchAppText(ses,'$datalink_add_vnic').Getshort;
+            input.Field('add_vnic').AsString    := app.FetchAppTextShort(ses,'$datalink_add_vnic');
           if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_VNIC) then
-            input.Field('delete_vnic').AsString := app.FetchAppText(ses,'$datalink_delete_vnic').Getshort;
+            input.Field('delete_vnic').AsString := app.FetchAppTextShort(ses,'$datalink_delete_vnic');
           if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_AGGR) then
-            input.Field('delete_aggr').AsString := app.FetchAppText(ses,'$datalink_delete_aggr').Getshort;
+            input.Field('delete_aggr').AsString := app.FetchAppTextShort(ses,'$datalink_delete_aggr');
           if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_STUB) then
-            input.Field('delete_stub').AsString := app.FetchAppText(ses,'$datalink_delete_stub').Getshort;
+            input.Field('delete_stub').AsString := app.FetchAppTextShort(ses,'$datalink_delete_stub');
           result := dl.Invoke('Menu',input,ses,app,conn);
         end;
       end;
@@ -412,13 +413,13 @@ begin
     raise EFRE_DB_Exception.Create('No access to edit settings!');
 
   GetSystemScheme(TFRE_DB_DATALINK_AGGR,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppText(ses,'$aggr_add_diag_cap').Getshort,600,0,true,true,false);
+  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$aggr_add_diag_cap'),600,0,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
   res.SetElementValue('objname','aggr');
 
   serverfunc := TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_DATALINK_AGGR.ClassName,'NewOperation');
   serverFunc.AddParam.Describe('collection','datalink');
-  res.AddButton.Describe(app.FetchAppText(ses,'$button_save').Getshort,serverfunc,fdbbt_submit);
+  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverfunc,fdbbt_submit);
   Result:=res;
 end;
 
@@ -436,7 +437,7 @@ begin
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
     if dc.Fetch(sel_guid,fc) then begin
       GetSystemSchemeByName(fc.SchemeClass,scheme);
-      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$fc_content_header').ShortText);
+      panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$fc_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
       panel.FillWithObjectValues(fc,ses);
       panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(fc,'saveOperation'),fdbbt_submit);
@@ -444,7 +445,7 @@ begin
       Result:=panel;
     end;
   end else begin
-    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppText(ses,'$fc_content_header').ShortText);
+    panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$fc_content_header'));
     panel.contentId:='FC_HBA_CONTENT';
     Result:=panel;
   end;
@@ -732,17 +733,17 @@ var
 begin
   CheckClassVisibility(ses);
 
-  c1:=TFRE_DB_LAYOUT_DESC.create.Describe(app.FetchAppText(ses,'$overview_caption_space').ShortText).SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
-  c2:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cpu',2,120,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cpu').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_cpu_system_legend').ShortText,app.FetchAppText(ses,'$overview_cpu_user_legend').ShortText),11,CWSF(@WEB_CPUStatusInit));
-  c3:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_net',2,120,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_net').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_net_receive_legend').ShortText,app.FetchAppText(ses,'$overview_net_transmit_legend').ShortText),11,CWSF(@WEB_NetStatusInit));
-  c4:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_disk',2,120,CWSF(@WEB_DiskStatusStopStart),0,30,app.FetchAppText(ses,'$overview_caption_disk').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_disk_write_legend').ShortText,app.FetchAppText(ses,'$overview_disk_read_legend').ShortText),11,CWSF(@WEB_DiskStatusInit));
-  c5:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_ram',2,120,CWSF(@WEB_RAMStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_ram').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_ram_ram_legend').ShortText,app.FetchAppText(ses,'$overview_ram_swap_legend').ShortText),11,CWSF(@WEB_RAMStatusInit));
-  c6:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cache',2,120,CWSF(@WEB_CacheStatusStopStart),0,100,app.FetchAppText(ses,'$overview_caption_cache').ShortText,TFRE_DB_StringArray.create('f00','0f0'),
-        TFRE_DB_StringArray.create(app.FetchAppText(ses,'$overview_cache_misses_legend').ShortText,app.FetchAppText(ses,'$overview_cache_hits_legend').ShortText),11,CWSF(@WEB_CacheStatusInit));
+  c1:=TFRE_DB_LAYOUT_DESC.create.Describe(app.FetchAppTextShort(ses,'$overview_caption_space')).SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
+  c2:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cpu',2,120,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppTextShort(ses,'$overview_caption_cpu'),TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppTextShort(ses,'$overview_cpu_system_legend'),app.FetchAppTextShort(ses,'$overview_cpu_user_legend')),11,CWSF(@WEB_CPUStatusInit));
+  c3:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_net',2,120,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppTextShort(ses,'$overview_caption_net'),TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppTextShort(ses,'$overview_net_receive_legend'),app.FetchAppTextShort(ses,'$overview_net_transmit_legend')),11,CWSF(@WEB_NetStatusInit));
+  c4:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_disk',2,120,CWSF(@WEB_DiskStatusStopStart),0,30,app.FetchAppTextShort(ses,'$overview_caption_disk'),TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppTextShort(ses,'$overview_disk_write_legend'),app.FetchAppTextShort(ses,'$overview_disk_read_legend')),11,CWSF(@WEB_DiskStatusInit));
+  c5:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_ram',2,120,CWSF(@WEB_RAMStatusStopStart),0,100,app.FetchAppTextShort(ses,'$overview_caption_ram'),TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppTextShort(ses,'$overview_ram_ram_legend'),app.FetchAppTextShort(ses,'$overview_ram_swap_legend')),11,CWSF(@WEB_RAMStatusInit));
+  c6:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cache',2,120,CWSF(@WEB_CacheStatusStopStart),0,100,app.FetchAppTextShort(ses,'$overview_caption_cache'),TFRE_DB_StringArray.create('f00','0f0'),
+        TFRE_DB_StringArray.create(app.FetchAppTextShort(ses,'$overview_cache_misses_legend'),app.FetchAppTextShort(ses,'$overview_cache_hits_legend')),11,CWSF(@WEB_CacheStatusInit));
 
   sub1l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,nil,nil,nil,false,1,1);
   sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub1l,c1,nil,nil,nil,false,2,1);
@@ -1026,10 +1027,10 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppText(session,'$sitemap_main').Getshort,'images_apps/firmbox_appliance/appliance_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_APP));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppText(session,'$sitemap_status').Getshort,'images_apps/firmbox_appliance/status_white.svg',TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_STATUS_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppText(session,'$sitemap_settings').Getshort,'images_apps/firmbox_appliance/settings_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppText(session,'$sitemap_analytics').Getshort,'images_apps/firmbox_appliance/analytics_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_appliance/appliance_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppTextShort(session,'$sitemap_status'),'images_apps/firmbox_appliance/status_white.svg',TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_STATUS_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppTextShort(session,'$sitemap_settings'),'images_apps/firmbox_appliance/settings_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppTextShort(session,'$sitemap_analytics'),'images_apps/firmbox_appliance/analytics_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;
