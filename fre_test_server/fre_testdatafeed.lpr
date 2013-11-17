@@ -53,106 +53,27 @@ uses
   FRE_SYSTEM,FOS_DEFAULT_IMPLEMENTATION,FOS_TOOL_INTERFACES,FOS_FCOM_TYPES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,
   FRE_DB_CORE,
 
-  FRE_APS_IMPL_LE, FOS_FCOM_DEFAULT, FRE_DB_EMBEDDED_IMPL,
+  FRE_DB_EMBEDDED_IMPL,
   FRE_CONFIGURATION,FRE_BASE_SERVER,
-  fre_base_client, fos_firmboxfeed_client
-  ;
+  fre_base_client, fos_firmboxfeed_client,fre_basefeed_app;
+
 
 {$I fos_version_helper.inc}
 
+
 type
 
-  { TFRE_TESTDATA_FEED }
 
-  TFRE_TESTDATA_FEED = class(TCustomApplication)
-  protected
-    procedure DoRun; override;
-  public
-    constructor Create(TheOwner: TComponent); override;
-    destructor  Destroy; override;
-    procedure   WriteHelp; virtual;
+  TFRE_FIRMBOX_FEED = class(TFRE_BASEDATA_FEED)
   end;
 
-{ TFRE_TESTDATA_FEED }
-
-procedure TFRE_TESTDATA_FEED.DoRun;
-var
-  ErrorMsg   : String;
-  FeedClient : TFRE_BOX_FEED_CLIENT;
-begin
-  ErrorMsg:=CheckOptions('hDU:H:u:p:',['help','debugger','remoteuser:','remotehost:','user:','pass:']);
-  if ErrorMsg<>'' then begin
-    ShowException(Exception.Create(ErrorMsg));
-    Terminate;
-    Exit;
-  end;
-
-  if HasOption('h','help') then begin
-    WriteHelp;
-    Terminate;
-    Exit;
-  end;
-
-  if HasOption('D','debugger') then
-    G_NO_INTERRUPT_FLAG:=true;
-
-  if HasOption('U','remoteuser') then begin
-    cFRE_REMOTE_USER := GetOptionValue('U','remoteuser');
-  end;
-
-  if HasOption('u','user') then begin
-    cFRE_Feed_User := GetOptionValue('u','user');
-  end;
-
-  if HasOption('p','pass') then begin
-    cFRE_Feed_Pass := GetOptionValue('p','pass');
-  end;
-
-  if HasOption('H','remotehost') then begin
-    cFRE_REMOTE_HOST:= GetOptionValue('H','remotehost');
-  end else begin
-    cFRE_REMOTE_HOST:= '127.0.0.1';
-  end;
-
-  Initialize_Read_FRE_CFG_Parameter;
-  InitEmbedded;
-  Init4Server;
-  SetupAPS;
-  FeedClient := TFRE_BOX_FEED_CLIENT.Create;
-  GFRE_S.Start(FeedClient);
-  GFRE_S.Run;
-  TearDownAPS;
-  Shutdown_Done;
-  FeedClient.Free;
-  GFRE_DB_DEFAULT_PS_LAYER.Finalize;
-  Terminate;
-end;
-
-constructor TFRE_TESTDATA_FEED.Create(TheOwner: TComponent);
-begin
-  inherited Create(TheOwner);
-  StopOnException:=True;
-end;
-
-destructor TFRE_TESTDATA_FEED.Destroy;
-begin
-  inherited Destroy;
-end;
-
-procedure TFRE_TESTDATA_FEED.WriteHelp;
-begin
-  { add your help code here }
-  writeln('Usage: ',ExeName,' -h');
-  writeln('  -U            | --remoteuser           : user for remote commands');
-  writeln('  -H            | --remotehost           : host for remote commands');
-end;
 
 var
-  Application : TFRE_TESTDATA_FEED;
+  Application : TFRE_FIRMBOX_FEED;
+
+
 begin
-  Application:=TFRE_TESTDATA_FEED.Create(nil);
-  Application.Title:='FRE_Testdatafeed';
+  Application:=TFRE_FIRMBOX_FEED.Create(nil,TFRE_BOX_FEED_CLIENT.Create);
   Application.Run;
   Application.Free;
 end.
-
