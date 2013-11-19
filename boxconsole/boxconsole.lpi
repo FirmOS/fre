@@ -33,7 +33,7 @@
         <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <Units Count="4">
+    <Units Count="5">
       <Unit0>
         <Filename Value="boxconsole.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -54,6 +54,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="fos_stats_control_interface"/>
       </Unit3>
+      <Unit4>
+        <Filename Value="../../core/fre_core/fos_ncurses_core.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fos_ncurses_core"/>
+      </Unit4>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -67,7 +72,7 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then
-   CustomOptions := '-WM10.6 -dFOS_LINK_STATIC';
+   CustomOptions := '-WM10.6';
    if TargetOS = 'solaris' then
    CustomOptions := '-k-rpath=$ORIGIN/../lib/lib64rel/solaris';"/>
     <Parsing>
@@ -76,7 +81,7 @@
       </SyntaxOptions>
     </Parsing>
     <CodeGeneration>
-      <TargetCPU Value="i386"/>
+      <TargetCPU Value="x86_64"/>
     </CodeGeneration>
     <Linking>
       <Debugging>

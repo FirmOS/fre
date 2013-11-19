@@ -55,14 +55,14 @@ uses
 
   FRE_DB_EMBEDDED_IMPL,
   FRE_CONFIGURATION,FRE_BASE_SERVER,
-  fre_base_client, fos_firmboxfeed_client,fre_basefeed_app,
-  oCrt;
+  fos_firmboxfeed_client,fre_basefeed_app,
+  fos_ncurses_core;
 
 
-const
-  cFrameBorder=Blue*16+Blue;
-  cMenuBack=Cyan;
-  cMenuFrame=Cyan;
+//const
+  //cFrameBorder=Blue*16+Blue;
+  //cMenuBack=Cyan;
+  //cMenuFrame=Cyan;
 
   //private
   //  cBannerHeader        : string;
@@ -298,6 +298,10 @@ const
 //  SecMenu.Done;
 //end;
 
+  procedure TestNcurses;
+  begin
+    GFOS_CONSOLE.Test;
+  end;
 
 type
 
@@ -310,8 +314,9 @@ var
   Application : TFRE_BOXCONSOLE_FEED;
 
 begin
-  Application:=TFRE_BOXCONSOLE_FEED.Create(nil,TFRE_BOX_FEED_CLIENT.Create);
-  Application.Run;
-  Application.Free;
+  TestNcurses;
+  //Application:=TFRE_BOXCONSOLE_FEED.Create(nil,TFRE_BOX_FEED_CLIENT.Create);
+  //Application.Run;
+  //Application.Free;
 end.
 
