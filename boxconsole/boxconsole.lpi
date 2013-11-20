@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-D"/>
+        <CommandLineParams Value="-U root -H 10.220.251.10"/>
         <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
@@ -83,11 +83,6 @@
     <CodeGeneration>
       <TargetCPU Value="x86_64"/>
     </CodeGeneration>
-    <Linking>
-      <Debugging>
-        <DebugInfoType Value="dsDwarf3"/>
-      </Debugging>
-    </Linking>
     <Other>
       <CompilerMessages>
         <MsgFileName Value=""/>
