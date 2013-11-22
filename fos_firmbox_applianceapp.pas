@@ -273,7 +273,7 @@ begin
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then begin
     txt:=app.FetchAppTextFull(ses,'$create_aggr');
-    grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt,txt.GetHint);
+    grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
 

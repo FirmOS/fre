@@ -41,7 +41,6 @@ end;
 procedure TFRE_FIRMBOX_INFRASTRUCTURE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  writeln('init appdesc firmbox_infrastructure');
 end;
 
 procedure TFRE_FIRMBOX_INFRASTRUCTURE_APP._UpdateSitemap( const session: TFRE_DB_UserSession);

@@ -440,7 +440,7 @@ begin
   dc_datalink                := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   txt:=app.FetchAppTextFull(ses,'$datalink_create_stub');
-  grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateStub),'images_apps/hal/create_stub.png',txt,txt.GetHint);
+  grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateStub),'images_apps/hal/create_stub.png',txt.Getshort,txt.GetHint);
   txt.Finalize;
 
   datalink_content           := TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$datalink_content_header'));
@@ -547,7 +547,6 @@ end;
 procedure TFRE_FIRMBOX_VM_MACHINES_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  writeln('setup app module vm machines mod');
   InitModuleDesc('$machines_description');
 end;
 
@@ -797,20 +796,20 @@ begin
   list := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE) then begin
     text:=app.FetchAppTextFull(ses,'$machines_new_vm');
-    list.AddButton.Describe(CWSF(@WEB_NewVM)         , '/images_apps/hal/add_vm.png',text,text.GetHint);
+    list.AddButton.Describe(CWSF(@WEB_NewVM)         , '/images_apps/hal/add_vm.png',text.Getshort,text.GetHint);
     text.Finalize;
   end;
   text:=app.FetchAppTextFull(ses,'$machines_start');
-  list.AddButton.Describe(CWSF(@WEB_StartVM)       , '/images_apps/hal/start_vm.png',text,text.GetHint,fdgbd_single);
+  list.AddButton.Describe(CWSF(@WEB_StartVM)       , '/images_apps/hal/start_vm.png',text.Getshort,text.GetHint,fdgbd_single);
   text.Finalize;
   text:=app.FetchAppTextFull(ses,'$machines_stop');
-  list.AddButton.Describe(CWSF(@WEB_StopVM)        , '/images_apps/hal/stop_vm.png',text,text.GetHint,fdgbd_single);
+  list.AddButton.Describe(CWSF(@WEB_StopVM)        , '/images_apps/hal/stop_vm.png',text.Getshort,text.GetHint,fdgbd_single);
   text.Finalize;
   text:=app.FetchAppTextFull(ses,'$machines_kill');
-  list.AddButton.Describe(CWSF(@WEB_StopVMF)       , '/images_apps/hal/stop_vm.png',text,text.GetHint,fdgbd_single);
+  list.AddButton.Describe(CWSF(@WEB_StopVMF)       , '/images_apps/hal/stop_vm.png',text.Getshort,text.GetHint,fdgbd_single);
   text.Finalize;
   text:=app.FetchAppTextFull(ses,'$machines_update');
-  list.AddButton.Describe(CWSF(@WEB_UpdateVM), '',text,text.GetHint);
+  list.AddButton.Describe(CWSF(@WEB_UpdateVM), '',text.Getshort,text.GetHint);
   text.Finalize;
   main := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(list,nil,nil,nil,nil,true,2);
 
@@ -844,12 +843,9 @@ var
   i                  : Integer;
 begin
   CheckClassVisibility(ses);
-
-  writeln('VNC INPUT ',input.DumpToString);
   vmkey  := input.Field('vmkey').AsString;
   VMCC := conn.Collection('virtualmachine',false);
   if vmcc.GetIndexedObj(vmkey,obj) then begin
-    writeln(':::',obj.DumpToString());
     if obj.Field('MSTATE').AsString='running' then begin
       if obj.Field('MTYPE').AsString='KVM' then begin
         result := TFRE_DB_VNC_DESC.create.Describe(input.Field('VNC_HOST').AsString,input.Field('VNC_PORT').AsUInt32);

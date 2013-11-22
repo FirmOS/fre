@@ -478,7 +478,7 @@ begin
 
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then begin
     txt:=app.FetchAppTextFull(ses,'$create_vfs');
-    grid_fs.AddButton.Describe(CWSF(@WEB_CreateVFS),'images_apps/firmbox_storage/create_vfs.png',txt,txt.GetHint);
+    grid_fs.AddButton.Describe(CWSF(@WEB_CreateVFS),'images_apps/firmbox_storage/create_vfs.png',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
 
@@ -539,7 +539,7 @@ begin
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then
     begin
       txt:=app.FetchAppTextFull(ses,'$create_vfs_share');
-      grid_share.AddButton.Describe(CWSF(@WEB_CreateVFSShare),'images_apps/firmbox_storage/create_vfs_share.png',txt,txt.GetHint);
+      grid_share.AddButton.Describe(CWSF(@WEB_CreateVFSShare),'images_apps/firmbox_storage/create_vfs_share.png',txt.Getshort,txt.GetHint);
       txt.Finalize;
     end;
 
@@ -1010,7 +1010,7 @@ begin
   grid_nfs     := dc_share_nfs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then begin
     txt:=app.FetchAppTextFull(ses,'$create_nfs_export');
-    grid_nfs.AddButton.Describe(CWSF(@WEB_CreateNFSExport),'images_apps/firmbox_storage/create_nfs_export.png',txt,txt.GetHint);
+    grid_nfs.AddButton.Describe(CWSF(@WEB_CreateNFSExport),'images_apps/firmbox_storage/create_nfs_export.png',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
 
@@ -1018,7 +1018,7 @@ begin
   grid_nfs_access     := dc_share_nfs_access.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if  conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then begin
     txt:=app.FetchAppTextFull(ses,'$create_nfs_access');
-    grid_nfs_access.AddButton.Describe(CWSF(@WEB_CreateNFSAccess),'images_apps/firmbox_storage/create_nfs_access.png',txt,txt.GetHint);
+    grid_nfs_access.AddButton.Describe(CWSF(@WEB_CreateNFSAccess),'images_apps/firmbox_storage/create_nfs_access.png',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
 
@@ -1047,7 +1047,7 @@ begin
   grid_lun   := dc_lun.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN) then begin
     txt:=app.FetchAppTextFull(ses,'$create_lun');
-    grid_lun.AddButton.Describe(CWSF(@WEB_CreateLUN),'images_apps/firmbox_storage/create_lun.png',txt,txt.GetHint);
+    grid_lun.AddButton.Describe(CWSF(@WEB_CreateLUN),'images_apps/firmbox_storage/create_lun.png',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
 
@@ -1055,7 +1055,7 @@ begin
   grid_lun_view := dc_lun_view.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN)  then begin
     txt:=app.FetchAppTextFull(ses,'$create_lun_view');
-    grid_lun_view.AddButton.Describe(CWSF(@WEB_CreateLUNView),'images_apps/firmbox_storage/create_lun_view.png',txt,txt.GetHint);
+    grid_lun_view.AddButton.Describe(CWSF(@WEB_CreateLUNView),'images_apps/firmbox_storage/create_lun_view.png',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
 
@@ -1508,7 +1508,7 @@ begin
 
   if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then begin
     txt:=app.FetchAppTextFull(ses,'$backup_snapshot_delete');
-    grid_snap.AddButton.Describe(CWSF(@WEB_DeleteSnapshot),'images_apps/firmbox_storage/delete_snapshot.png',txt,txt.GetHint,fdgbd_multi);
+    grid_snap.AddButton.Describe(CWSF(@WEB_DeleteSnapshot),'images_apps/firmbox_storage/delete_snapshot.png',txt.Getshort,txt.GetHint,fdgbd_multi);
     txt.Finalize;
   end;
 

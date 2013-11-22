@@ -337,7 +337,6 @@ var conn     : IFRE_DB_Connection;
     coll.Store(root);
 
     // add roles
-    writeln ('Machines in Collection:',coll.Count);
     coll.ForAll(@AddVMAdditions);
   end;
 
@@ -355,7 +354,6 @@ var conn     : IFRE_DB_Connection;
         CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
       CheckDbResult(conn.sys.AddUser(login,passwd,'Feeder','Feeder'),'cannot add user '+login);
 
-      writeln('Modify Groups for User '+login);
       CheckDbResult(conn.sys.ModifyUserGroups(login,GFRE_DBI.ConstructStringArray(['VMFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'APPLIANCEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME]),true),'cannot set user groups '+login);
       CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
 
@@ -366,7 +364,6 @@ var conn     : IFRE_DB_Connection;
         CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
       CheckDbResult(conn.sys.AddUser(login,passwd,'Firmviewer','Firmviewer'),'cannot add user '+login);
 
-      writeln('Modify Groups for User '+login);
       CheckDbResult(conn.sys.ModifyUserGroups(login,GFRE_DBI.ConstructStringArray(['VMVIEWER'+'@'+CFRE_DB_SYS_DOMAIN_NAME]),true),'cannot set user groups '+login);
       CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
 
