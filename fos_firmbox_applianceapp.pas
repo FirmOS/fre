@@ -120,7 +120,7 @@ type
   public
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   published
-    function        WEB_Content               (const input:IFRE_DB_Object):IFRE_DB_Object;
+    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 procedure Register_DB_Extensions;
@@ -149,7 +149,7 @@ begin
   inherited MySessionInitializeModule(session);
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.WEB_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+function TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   result := GFRE_DB_NIL_DESC;
 end;
@@ -918,6 +918,7 @@ begin
   //  data[1][i]:=G_AppliancePerformanceBuffer[bufidx].cache_relHits;
   //end;
   //Result:=TFRE_DB_LIVE_CHART_INIT_DATA_DESC.create.Describe(data);
+  RESULT := TFRE_DB_MESSAGE_DESC.create.Describe('FIX','IT - CACHESTATUSINIT',fdbmt_info);
 end;
 
 function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAW_UPDATE(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
