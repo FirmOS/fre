@@ -191,7 +191,6 @@ type
   published
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentSnapshot       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentSchedule       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_SnapshotMenu          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DeleteSnapshot        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
@@ -1513,7 +1512,6 @@ begin
   end;
 
   sub_sec.AddSection.Describe(CWSF(@WEB_ContentSnapshot),app.FetchAppTextShort(ses,'$backup_snapshot_properties'),1,'backup_properties');
-  sub_sec.AddSection.Describe(CWSF(@WEB_ContentSchedule),app.FetchAppTextShort(ses,'$backup_schedule_properties'),2,'backup_schedule');
 
   //    CSF(@WEB_ContentSnapshot)
   backup  := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_snap,sub_sec,nil,nil,nil,true,1,1);
@@ -1547,11 +1545,6 @@ begin
     panel.contentId:='BACKUP_SNAP_CONTENT';
     Result:=panel;
   end;
-end;
-
-function TFRE_FIRMBOX_BACKUP_MOD.WEB_ContentSchedule(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  result := TFRE_DB_HTML_DESC.Create.Describe('Definition of backup schedules')
 end;
 
 function TFRE_FIRMBOX_BACKUP_MOD.WEB_SnapshotMenu(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2174,7 +2167,7 @@ begin
 
   secs:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
   secs.AddSection.Describe(CWSF(@WEB_PoolLayout),app.FetchAppTextShort(ses,'$pool_layout_tab'),1,'layout');
-  secs.AddSection.Describe(CWSF(@WEB_PoolSpace),app.FetchAppTextShort(ses,'$pool_status_tab'),2,'space');
+  //secs.AddSection.Describe(CWSF(@WEB_PoolSpace),app.FetchAppTextShort(ses,'$pool_status_tab'),2,'space');
   secs.AddSection.Describe(CWSF(@WEB_PoolNotes),app.FetchAppTextShort(ses,'$pool_notes_tab'),4,'notes');
 
   ses.RegisterTaskMethod(@_SendData,1000,'SPM');
@@ -3377,7 +3370,7 @@ begin
   SiteMapData  := GFRE_DBI.NewObject;
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_storage/files_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_APP));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools',FetchAppTextShort(session,'$sitemap_pools'),'images_apps/firmbox_storage/disk_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Status',FetchAppTextShort(session,'$sitemap_pools_status'),'images_apps/firmbox_storage/monitor_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname+':status',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
+  //FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Status',FetchAppTextShort(session,'$sitemap_pools_status'),'images_apps/firmbox_storage/monitor_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname+':status',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Space',FetchAppTextShort(session,'$sitemap_pools_space'),'images_apps/firmbox_storage/piechart_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname+':space',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Layout',FetchAppTextShort(session,'$sitemap_pools_layout'),'images_apps/firmbox_storage/piechart_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname+':layout',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Global',FetchAppTextShort(session,'$sitemap_fileserver_global'),'images_apps/firmbox_storage/files_global_white.svg',TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD));
@@ -3603,7 +3596,6 @@ begin
       CreateAppText(conn,'$backup_used','Used [MB]');
       CreateAppText(conn,'$backup_refer','Refer [MB]');
       CreateAppText(conn,'$backup_snapshot_properties','Snapshot Properties');
-      CreateAppText(conn,'$backup_schedule_properties','Schedule Properties');
       CreateAppText(conn,'$backup_content_header','Details about the selected snapshot.');
       CreateAppText(conn,'$backup_snapshot_delete','Delete');
       CreateAppText(conn,'$backup_snapshot_delete_diag_cap','Confirm: Delete snapshot(s)');

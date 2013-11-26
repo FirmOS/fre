@@ -240,7 +240,7 @@ begin
   sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentSystem),app.FetchAppTextShort(ses,'$appliance_settings_system'),1,'system');
   sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentDatalink),app.FetchAppTextShort(ses,'$appliance_settings_datalink'),2,'datalink');
 //  sub_sec_s.AddSection.Describe(TFRE_DB_HTML_DESC.create.Describe('iscsi'),app.FetchAppTextShort(conn,'$appliance_settings_iscsi'),3,'iscsi');
-  sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentFC),app.FetchAppTextShort(ses,'$appliance_settings_fibrechannel'),4,'fibrechannel');
+  //sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentFC),app.FetchAppTextShort(ses,'$appliance_settings_fibrechannel'),4,'fibrechannel');
 
   result := sub_sec_s;
 end;
@@ -1018,7 +1018,7 @@ begin
   InitAppDesc('$description');
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.create);
-  AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.create);
+  //AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.create);
 end;
 
 procedure TFRE_FIRMBOX_APPLIANCE_APP._UpdateSitemap(const session: TFRE_DB_UserSession);
@@ -1031,7 +1031,7 @@ begin
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_appliance/appliance_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_APP));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppTextShort(session,'$sitemap_status'),'images_apps/firmbox_appliance/status_white.svg',TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_STATUS_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppTextShort(session,'$sitemap_settings'),'images_apps/firmbox_appliance/settings_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppTextShort(session,'$sitemap_analytics'),'images_apps/firmbox_appliance/analytics_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD));
+  //FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppTextShort(session,'$sitemap_analytics'),'images_apps/firmbox_appliance/analytics_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;

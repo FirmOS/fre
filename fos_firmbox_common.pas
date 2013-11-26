@@ -13,11 +13,8 @@ uses
   FRE_DBBUSINESS,
   fre_accesscontrol_common,
   fos_firmbox_fileserver,
-  fos_firmbox_infrastructureapp,
-  fos_firmbox_servicesapp,
   fos_firmbox_storageapp,
   fos_firmbox_vmapp,
-  fos_firmbox_storeapp,
   fos_firmbox_applianceapp,
   fos_firmbox_vm_machines_mod,
   fre_hal_schemes,
@@ -540,14 +537,11 @@ begin
   FRE_DBBUSINESS.Register_DB_Extensions;
   fos_firmbox_applianceapp.Register_DB_Extensions;
   fre_accesscontrol_common.Register_DB_Extensions;
-  fos_firmbox_infrastructureapp.Register_DB_Extensions;
   fre_testcase.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
   fos_firmbox_fileserver.Register_DB_Extensions;
-  fos_firmbox_servicesapp.Register_DB_Extensions;
   fos_firmbox_storageapp.Register_DB_Extensions;
   fos_firmbox_vmapp.Register_DB_Extensions;
-  fos_firmbox_storeapp.Register_DB_Extensions;
   FRE_ZFS.Register_DB_Extensions;
 end;
 

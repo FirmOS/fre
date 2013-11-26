@@ -49,7 +49,6 @@ type
     function  WEB_StartVM               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StopVM                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StopVMF               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_UpdateVM              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_VM_RESOURCES_MOD }
@@ -88,18 +87,6 @@ type
     function        WEB_DatalinkCreateStub    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
-  { TFRE_FIRMBOX_VM_STATUS_MOD }
-
-  TFRE_FIRMBOX_VM_STATUS_MOD = class (TFRE_DB_APPLICATION_MODULE)
-  protected
-    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
-    procedure       SetupAppModuleStructure   ; override;
-  public
-    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  published
-    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-  end;
-
   { TFRE_FIRMBOX_VM_DISK }
 
   TFRE_FIRMBOX_VM_DISK = class (TFRE_DB_ObjectEx)
@@ -125,7 +112,6 @@ procedure Register_DB_Extensions;
 begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_MACHINES_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_RESOURCES_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_STATUS_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_NETWORK_MOD);
 
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_DISK);
@@ -348,34 +334,6 @@ begin
 
   conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
   Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_ISO).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
-end;
-
-{ TFRE_FIRMBOX_VM_STATUS_MOD }
-
-class procedure TFRE_FIRMBOX_VM_STATUS_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-begin
-  inherited RegisterSystemScheme(scheme);
-  scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
-end;
-
-procedure TFRE_FIRMBOX_VM_STATUS_MOD.SetupAppModuleStructure;
-begin
-  inherited SetupAppModuleStructure;
-  InitModuleDesc('$status_description');
-end;
-
-class procedure TFRE_FIRMBOX_VM_STATUS_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
-begin
-  newVersionId:='1.0';
-end;
-
-
-function TFRE_FIRMBOX_VM_STATUS_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_STATUS_MOD)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
-
-  Result:=TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');//FIXXME: Please implement me
 end;
 
 { TFRE_FIRMBOX_VM_NETWORK_MOD }
@@ -808,9 +766,6 @@ begin
   text:=app.FetchAppTextFull(ses,'$machines_kill');
   list.AddButton.Describe(CWSF(@WEB_StopVMF)       , '/images_apps/hal/stop_vm.png',text.Getshort,text.GetHint,fdgbd_single);
   text.Finalize;
-  text:=app.FetchAppTextFull(ses,'$machines_update');
-  list.AddButton.Describe(CWSF(@WEB_UpdateVM), '',text.Getshort,text.GetHint);
-  text.Finalize;
   main := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(list,nil,nil,nil,nil,true,2);
 
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe(app.FetchAppTextShort(ses,'$machines_content_header')));
@@ -1097,28 +1052,6 @@ begin
     vmc.Finalize;
   end;
   result := GFRE_DB_NIL_DESC;
-end;
-
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_UpdateVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-var
-  vmc : IFOS_VM_HOST_CONTROL;
-  vmo : IFRE_DB_Object;
-  vmcc: IFRE_DB_COLLECTION;
-begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
-
-  writeln('GET - UPDATE DATA');
-  vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-  vmc.VM_ListMachines(vmo);
-  writeln('GOT - UPDATE DATA1');
-  vmc.Finalize;
-  writeln('GOT - UPDATE DATA2');
-  vmcc := conn.Collection('virtualmachine',false);
-  writeln('START COLL UPDATE');
-  VM_UpdateCollection(conn,vmcc,vmo,TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
-  writeln('DONE COLL UPDATE');
-  Result := GFRE_DB_NIL_DESC;
 end;
 
 end.

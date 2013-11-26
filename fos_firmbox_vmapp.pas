@@ -49,7 +49,6 @@ begin
   AddApplicationModule(TFRE_FIRMBOX_VM_NETWORK_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VM_MACHINES_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VM_RESOURCES_MOD.create);
-  AddApplicationModule(TFRE_FIRMBOX_VM_STATUS_MOD.create);
 end;
 
 procedure TFRE_FIRMBOX_VM_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
@@ -66,7 +65,6 @@ begin
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources/ISOs',FetchAppTextShort(session,'$vm_iso_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname+':ISOS',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch',FetchAppTextShort(session,'$vnetwork_description'),'images_apps/firmbox_vm/network_white.svg',TFRE_FIRMBOX_VM_NETWORK_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD));
 //  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch/Interfaces','Interfaces','images_apps/firmbox_vm/plug_white.svg','',0,CheckAppRightModule(conn,'interfaces'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/Status',FetchAppTextShort(session,'$status_description'),'images_apps/firmbox_vm/monitor_white.svg',TFRE_FIRMBOX_VM_STATUS_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_STATUS_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(ClassName).Field('SITEMAP').AsObject := SiteMapData;
 end;
@@ -102,7 +100,6 @@ begin
   if (currentVersionId='') then
     begin
       CreateAppText(conn,'$caption','Virtualization','Virtualization','Virtualization');
-      CreateAppText(conn,'$status_description','Status','Status','Status');
       CreateAppText(conn,'$vnetwork_description','Virtual Network','Virtual Network','Virtual Network');
       CreateAppText(conn,'$machines_description','Machines','Machines','Machines');
       CreateAppText(conn,'$vm_resources_description','VM Resources','VM Resources','VM Resources');
@@ -128,7 +125,6 @@ begin
       CreateAppText(conn,'$machines_start','Start','','Start the selected VM');
       CreateAppText(conn,'$machines_stop','Stop','','Stop the selected VM');
       CreateAppText(conn,'$machines_kill','Kill','','Stop the selected VM (FORCED)');
-      CreateAppText(conn,'$machines_update','Update','','Update list');
 
       CreateAppText(conn,'$vm_details_config','Configuration');
       CreateAppText(conn,'$vm_details_console','Console');
