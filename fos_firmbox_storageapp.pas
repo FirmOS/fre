@@ -59,6 +59,7 @@ type
     function        WriteBW                   (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
     procedure       UpdateDiskCollection      (const pool_disks : IFRE_DB_COLLECTION ; const data:IFRE_DB_Object);
     procedure       UpdateZpool               (const zpool: TFRE_DB_ZFS_ROOTOBJ; const data:IFRE_DB_Object; const updateDescr: TFRE_DB_UPDATE_STORE_DESC);
+    procedure       EmbeddedZpoolObjToDB      (const zpoolObj: IFRE_DB_OBject; const conn: IFRE_DB_CONNECTION);
   public
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
     procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
@@ -2121,10 +2122,15 @@ var
       zfs.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR + '/ssl/user/id_rsa'));
     end;
     zfs_res:=zfs.GetPoolStatus('zones',zfs_error,pool);
+//    writeln(pool.DumpToString());
     zfs.Free;
-    //zfs_pool.ClearCollection; //FIXME
-    CheckDbResult(zfs_pool.Store(pool),'Store current pool configuration');
 
+    writeln('poolcount ',zfs_pool.Count);
+//    zfs_pool.ClearCollection; //FIXME
+//    writeln(pool.DumpToString);
+    EmbeddedZpoolObjToDB(pool,admin_dbc);  //NEW ZPOOL
+    // OR !!!
+//    CheckDbResult(zfs_pool.Store(pool),'Store current pool configuration');   //OLD ZPOOL
 
     disks_unassigned:=TFRE_DB_ZFS_UNASSIGNED.create;
     disks_unassigned.caption:='Unassigned';
@@ -2150,7 +2156,7 @@ begin
   //// Used to fix display in startup case, when no feeder has made initial data
   UpdateDiskCollection(pool_disks,DISKI_HACK.Get_Disk_Data_Once);
 
-  //_buildPoolsCollection(); //FIXME: Must be done over feeder
+  _buildPoolsCollection(); //FIXME: Must be done over feeder
 
 end;
 
@@ -3325,6 +3331,124 @@ var
 
 begin
   data.ForAllFields(@_updateZfsObject);
+end;
+
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.EmbeddedZpoolObjToDB(const zpoolObj: IFRE_DB_OBject; const conn: IFRE_DB_CONNECTION);
+var poolcolletion        : IFRE_DB_COLLECTION;
+    vdevcollection       : IFRE_DB_COLLECTION;
+    blockcollection      : IFRE_DB_COLLECTION;
+    dbpool_obj           : IFRE_DB_OBJECT;
+    dbvdevcontainer_obj  : IFRE_DB_OBJECT;
+    dbvdev_obj           : IFRE_DB_OBJECT;
+    dbblockdevice_obj    : IFRE_DB_Object;
+
+    vdevcontainer        : IFRE_DB_Object;
+    vdev                 : IFRE_DB_Object;
+    disk                 : IFRE_DB_Object;
+
+    db_pool_uid            : TGUID;
+    db_vdev_container_uid  : TGUID;
+    db_vdev_uid            : TGUID;
+
+    i           : NativeInt;
+    j           : NativeInt;
+
+
+    procedure _AddBlockdevice(const disk:IFRE_DB_Object; const parent_id:TGUID);
+    begin
+      dbblockdevice_obj   := disk.CloneToNewObject(true);
+      dbblockdevice_obj.Field('zfs_guid').asstring := zpoolObj.Field('pool').asstring+'-'+disk.Field('name').asstring;         //FIXME FAKE
+      dbblockdevice_obj.Field('parent_in_pool_uid').AsObjectLink := parent_id;
+      CheckDbResult(blockcollection.Store(dbblockdevice_obj),'could not store blockdevice');
+    end;
+
+    procedure _AddDisksofVdev(const vdev:IFRE_DB_Object; const parent_id:TGUID);
+    var i     : NativeInt;
+    begin
+      for i:= 0 to vdev.Field('vdev').ValueCount-1 do
+        begin
+          disk := vdev.Field('vdev').AsObjectItem[i];
+          _AddBlockdevice(disk,parent_id);
+        end;
+    end;
+
+    function _StoreVdevContainer(const vdev:IFRE_DB_Object; const parent_id:TGUID) : TGUID;
+    begin
+      dbvdevcontainer_obj   := vdev.CloneToNewObject(true);
+      dbvdevcontainer_obj.DeleteField('vdev');
+      dbvdevcontainer_obj.Field('zfs_guid').asstring := zpoolObj.Field('pool').asstring+'-'+vdev.Field('name').asstring;        //FIXME FAKE
+      dbvdevcontainer_obj.Field('parent_in_pool_uid').AsObjectLink:=parent_id;
+
+      result := dbvdevcontainer_obj.UID;
+      CheckDbResult(vdevcollection.Store(dbvdevcontainer_obj),'could not store vdev container');
+    end;
+
+   procedure _dump(const obj:IFRE_DB_Object);
+   begin
+    writeln(obj.DumpToString());
+   end;
+
+begin
+   poolcolletion  := conn.Collection('pool',false);
+   vdevcollection  := conn.Collection('vdev',false);
+   blockcollection := conn.Collection('blockdevice',false);
+
+
+   // Add to DB
+   dbpool_obj        := zpoolObj.CloneToNewObject(true);
+   dbpool_obj.DeleteField('vdev');
+   dbpool_obj.Field('zfs_guid').asstring := zpoolObj.Field('pool').asstring;     // FIXME FAKE
+   db_pool_uid   := dbpool_obj.UID;
+
+//   writeln(dbpool_obj.DumpToString);
+   CheckDbResult(poolcolletion.Store(dbpool_obj),'could not store pool');
+   for i    := 0 to zpoolObj.Field('vdev').ValueCount-1 do
+     begin
+       vdevcontainer := zpoolObj.Field('vdev').AsObjectItem[i];
+       if (vdevcontainer.Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) or
+           (vdevcontainer.Implementor_HC is TFRE_DB_ZFS_LOG) then
+         begin
+           db_vdev_container_uid := _StoreVdevcontainer(vdevcontainer,db_pool_uid);
+
+           for j:=0 to vdevcontainer.Field('vdev').ValueCount-1 do
+             begin
+               vdev := vdevcontainer.Field('vdev').AsObjectItem[j];
+               if (vdev.Implementor_HC is TFRE_DB_ZFS_VDEV) then
+                 begin
+                   dbvdev_obj := vdev.CloneToNewObject(true);
+                   dbvdev_obj.DeleteField('vdev');
+                   dbvdev_obj.Field('zfs_guid').asstring := zpoolObj.Field('pool').asstring+'-'+vdev.Field('name').asstring;         //FIXME FAKE
+                   dbvdev_obj.Field('parent_in_pool_uid').AsObjectLink:=db_vdev_container_uid;
+
+                   db_vdev_uid := dbvdev_obj.UID;
+                   CheckDbResult(vdevcollection.Store(dbvdev_obj),'could not store vdev');
+                   _AddDisksofVdev(vdev,db_vdev_uid);
+                 end
+               else
+                 _AddBlockdevice(vdev,db_vdev_container_uid);
+             end;
+         end
+       else
+         if (vdevcontainer.Implementor_HC is TFRE_DB_ZFS_SPARE) then
+           begin
+             _AddDisksofVdev(vdevcontainer,db_vdev_container_uid);
+           end
+         else
+           if (vdevcontainer.Implementor_HC is TFRE_DB_ZFS_CACHE) then
+             begin
+               _AddDisksofVdev(vdevcontainer,db_vdev_container_uid);
+             end
+           else
+             raise EFRE_DB_Exception.Create('UNKNOWN VDEV CONTAINER IN EmbeddedZPoolObjectToDB');
+     end;
+
+  writeln('POOL');
+  poolcolletion.ForAll(@_dump);
+  writeln('VDEV');
+  vdevcollection.ForAll(@_dump);
+  writeln('BLOCK');
+  blockcollection.ForAll(@_dump);
+  writeln('dumped');
 end;
 
 { TFRE_FIRMBOX_STORAGE_SYNC_MOD }

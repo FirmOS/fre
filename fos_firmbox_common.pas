@@ -46,7 +46,25 @@ procedure InitDB(const dbname: string; const user, pass: string);
 implementation
 
 procedure InitializeFirmbox(const dbname: string; const user, pass: string);
+var collection   : IFRE_DB_COLLECTION;
+    conn         : IFRE_DB_CONNECTION;
 begin
+
+  CONN := GFRE_DBI.NewConnection;
+  CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
+  try
+    collection  := conn.Collection('pool');  // ZFS GUID for pool => zdb
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',false);
+
+    collection  := conn.Collection('vdev');  // ZFS GUID for VDEV => zdb
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',false);
+
+    collection  := conn.Collection('blockdevice');  // ZFS GUID / WWN
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',true);
+
+  finally
+    conn.Finalize;
+  end;
 end;
 
 procedure FIRMBOX_MetaGenerateTestData(const dbname: string; const user, pass: string);
