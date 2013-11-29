@@ -2530,6 +2530,7 @@ begin
   end; //FIXXME - remove store update
 
   dstore:=newPool.createDatastorage;
+  dstore.caption:=newPool.caption;
   dstore.setIsNew;
 
   storeup:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store'); //FIXXME - remove store update

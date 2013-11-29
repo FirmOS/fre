@@ -54,13 +54,13 @@ begin
   CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
   try
     collection  := conn.Collection('pool');  // ZFS GUID for pool => zdb
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',false);
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
 
     collection  := conn.Collection('vdev');  // ZFS GUID for VDEV => zdb
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',false);
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
 
     collection  := conn.Collection('blockdevice');  // ZFS GUID / WWN
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',true);
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
 
   finally
     conn.Finalize;
