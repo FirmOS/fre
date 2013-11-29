@@ -3246,7 +3246,7 @@ var poolcolletion        : IFRE_DB_COLLECTION;
       dbblockdevice_obj    : TFRE_DB_ZFS_BLOCKDEVICE;
     begin
       dbblockdevice_obj   := disk.CloneToNewObject(true).Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE;
-      dbblockdevice_obj.Field('zfs_guid').asstring := zpoolObj.Field('pool').asstring+'-'+disk.Field('name').asstring;         //FIXME FAKE
+      dbblockdevice_obj.setZFSGuid(zpoolObj.Field('pool').asstring+'-'+disk.Field('name').asstring);         //FIXME FAKE
       dbblockdevice_obj.parentInZFSId := parent_id;
       dbblockdevice_obj.poolId        := zpoolObj.UID;
       CheckDbResult(blockcollection.Store(dbblockdevice_obj),'could not store blockdevice');
@@ -3267,7 +3267,7 @@ var poolcolletion        : IFRE_DB_COLLECTION;
     begin
       dbvdevcontainer_obj   := vdev.CloneToNewObject(true).Implementor_HC as TFRE_DB_ZFS_VDEVCONTAINER;
       dbvdevcontainer_obj.DeleteField('vdev');
-      dbvdevcontainer_obj.Field('zfs_guid').asstring := zpoolObj.Field('pool').asstring+'-'+vdev.Field('name').asstring;        //FIXME FAKE
+      dbvdevcontainer_obj.setZFSGuid(zpoolObj.Field('pool').asstring+'-'+vdev.Field('name').asstring);        //FIXME FAKE
       dbvdevcontainer_obj.parentInZFSId := parent_id;
       dbvdevcontainer_obj.poolId        := zpoolObj.UID;
 
@@ -3289,7 +3289,7 @@ begin
    // Add to DB
    dbpool_obj        := zpoolObj.CloneToNewObject(true).Implementor_HC as TFRE_DB_ZFS_POOL;
    dbpool_obj.DeleteField('vdev');
-   dbpool_obj.Field('zfs_guid').asstring := zpoolObj.Field('pool').asstring;     // FIXME FAKE
+   dbpool_obj.setZFSGuid(zpoolObj.Field('pool').asstring);     // FIXME FAKE
    db_pool_uid       := dbpool_obj.UID;
 
 //   writeln(dbpool_obj.DumpToString);
@@ -3309,7 +3309,7 @@ begin
                  begin
                    dbvdev_obj := vdev.CloneToNewObject(true).Implementor_HC as TFRE_DB_ZFS_VDEV;
                    dbvdev_obj.DeleteField('vdev');
-                   dbvdev_obj.Field('zfs_guid').asstring := zpoolObj.Field('pool').asstring+'-'+vdev.Field('name').asstring;         //FIXME FAKE
+                   dbvdev_obj.setZFSGuid(zpoolObj.Field('pool').asstring+'-'+vdev.Field('name').asstring);         //FIXME FAKE
                    dbvdev_obj.parentInZFSId := db_vdev_container_uid;
                    dbvdev_obj.poolId        := zpoolObj.UID;
 
