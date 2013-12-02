@@ -65,6 +65,8 @@ begin
     collection.DefineIndexOnField('deviceIdentifier',fdbft_String,false,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX,true);
     collection.DefineIndexOnField('devicename',fdbft_String,true,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_NAME_INDEX,false);
 
+    collection  := conn.Collection('virtualmachine');
+    collection.DefineIndexOnField('Mkey',fdbft_String,true,true);
 
   finally
     conn.Finalize;
@@ -332,8 +334,6 @@ var conn     : IFRE_DB_Connection;
     end;
 
   begin
-    coll := conn.Collection('virtualmachine');
-    coll.DefineIndexOnField('Mkey',fdbft_String,true,true);
 
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
     try
@@ -399,7 +399,7 @@ begin
  TCOLL:= CONN.Collection('note');
  tcoll.DefineIndexOnField('link',fdbft_String,true,true);
 
- InitVirtualMachines;
+ // InitVirtualMachines;
 
  COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_VIRTUAL_FILESERVER);
 // cob.Field('machineid').AsObjectLink:=wlan_machine_uid;

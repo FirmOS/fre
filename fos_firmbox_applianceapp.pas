@@ -660,8 +660,8 @@ begin
   CheckDbResult(coll.Store(space),'Add zones space');
 
   //FIRMBOX TESTMODE STARTUP SPEED ENHANCEMENT
-  DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);    //RZNORD
-  _fillPoolCollection(admin_dbc,DISKI_HACK.Get_ZFS_Data_Once);
+  //DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);    //RZNORD
+  //_fillPoolCollection(admin_dbc,DISKI_HACK.Get_ZFS_Data_Once);
 
   coll := admin_dbc.Collection('LIVE_STATUS',true,true);
   coll.DefineIndexOnField('feedname',fdbft_String,true,true);

@@ -70,15 +70,10 @@ type
     statscontroller       : IFOS_STATS_CONTROL;
     disk_hal              : TFRE_HAL_DISK;
 
-    disk_information      : IFRE_DB_Object;
-    pool_information      : IFRE_DB_Object;
     disks_sent            : boolean;
     pools_sent            : boolean;
 
   private
-    procedure               _QuereInitialDiskInformation;
-    procedure               _QuereInitialPoolInformation;
-
 
   public
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
@@ -94,48 +89,7 @@ type
 implementation
 
 
-procedure TFRE_BOX_FEED_CLIENT._QuereInitialDiskInformation;
-var
-    disks    : IFRE_DB_Object;
 
-begin
-  // send disk data once
-  disks := disk_hal.GetDiskInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'),false);
-  if disks.Field('resultcode').AsInt32<>0 then
-    GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT GET DISK INFORMATION %d %s',[disks.Field('resultcode').AsInt32,disks.Field('error').AsString])
-  else
-    disk_information := disks;
-
-end;
-
-procedure TFRE_BOX_FEED_CLIENT._QuereInitialPoolInformation;
-var
-    pools    : IFRE_DB_Object;
-    pool     : IFRE_DB_Object;
-    i        : NativeInt;
-    poolname : TFRE_DB_String;
-    pool_res : IFRE_DB_Object;
-
-begin
-  pool_res   := GFRE_DBI.NewObject;
-
-  // send all pool data once
-  pools := disk_hal.GetPools(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-  if pools.Field('resultcode').AsInt32<>0 then
-    GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT GET POOL CONFIGURATION %d %s',[pools.Field('resultcode').AsInt32,pools.Field('error').AsString])
-  else
-    begin
-      for i := 0 to pools.Field('data').ValueCount-1 do
-        begin
-          poolname := pools.Field('data').AsObjectItem[i].Field('name').asstring;
-          pool     := disk_hal.GetPoolConfiguration(poolname,cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-          (pool.Field('data').asobject.Implementor_HC as TFRE_DB_ZFS_POOL).setZFSGuid(pools.Field('data').AsObjectItem[i].Field('zpool_guid').asstring);
-          pool_res.Field('data').AddObject(pool.Field('data').asobject);
-        end;
-      pool_information := pool_res;
-    end;
-
-end;
 
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 begin
@@ -158,20 +112,9 @@ begin
   end;
 
   if Get_AppClassAndUid('TFRE_FIRMBOX_STORAGE_APP',FStorage_FeedAppClass,FSTORAGE_FeedAppUid) then begin
-    // FStorage_Feeding   := True;
+    FStorage_Feeding   := True;
     disks_sent         := false;
     pools_sent         := false;
-
-    // direct query debug mode
-    _QuereInitialDiskInformation;
-    _QuereInitialPoolInformation;
-
-    SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_information);
-    disk_information := nil;
-
-    SendServerCommand(FSTORAGE_FeedAppClass,'POOL_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),pool_information);
-    pool_information := nil;
-
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_STORAGE_APP APP NOT FOUND!');
   end;
@@ -195,6 +138,7 @@ begin
   FStorage_Feeding:= false;
   pools_sent      := false;
   disks_sent      := false;
+  inherited;
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.QueryUserPass(out user, pass: string);
@@ -223,12 +167,12 @@ begin
   statscontroller.StartZFSParser(true);
   statscontroller.StartZpoolIostatParser(true);
 
+
   disk_hal   := TFRE_HAL_DISK.Create;
   disks_sent := false;
-
-  _QuereInitialDiskInformation;
-  _QuereInitialPoolInformation;
-
+  pools_sent := false;
+  disk_hal.InitializeDiskInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
+  disk_hal.InitializePoolInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;
@@ -249,7 +193,6 @@ var g_disc_delay : integer=0;
 procedure TFRE_BOX_FEED_CLIENT.MyConnectionTimer;
 var vmo : IFRE_DB_Object;
 begin
-  writeln('CONN TIMER');
   if FAPP_Feeding then
     begin
       try
@@ -293,14 +236,14 @@ begin
     begin
  //     writeln('disks_sent',disks_sent);
  //     writeln('pools_sent',pools_sent);
-      if (Assigned(disk_information)) and (not disks_sent) then
+      if (disk_hal.IsDiskInformationAvailable) and (not disks_sent) then
         begin
-          SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_information.CloneToNewObject);
+          SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetDiskInformation);
           disks_sent:=true;
         end;
-      if (Assigned(pool_information)) and (disks_sent) and (not pools_sent) then
+      if (disk_hal.IsPoolInformationAvailable) and (disks_sent) and (not pools_sent) then
         begin
-          SendServerCommand(FSTORAGE_FeedAppClass,'POOL_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),pool_information.CloneToNewObject);
+          SendServerCommand(FSTORAGE_FeedAppClass,'POOL_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetPoolsInformation);
           pools_sent:=true;
         end;
     end;

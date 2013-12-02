@@ -2109,7 +2109,7 @@ begin
   inherited MyServerInitializeModule(admin_dbc);
 
   //STARTUP SPEED_ENHANCEMENT
-  DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  //DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   //VM_HACK    := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
 
   pool_disks := admin_dbc.Collection('POOL_DISKS',true,true);
