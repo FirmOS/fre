@@ -87,7 +87,6 @@
       <CompilerMessages>
         <MsgFileName Value=""/>
       </CompilerMessages>
-      <CustomOptions Value="-gt"/>
       <CompilerPath Value="$(CompPath)"/>
     </Other>
   </CompilerOptions>
