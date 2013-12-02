@@ -373,7 +373,7 @@ var conn     : IFRE_DB_Connection;
         CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
       CheckDbResult(conn.sys.AddUser(login,passwd,'Feeder','Feeder'),'cannot add user '+login);
 
-      CheckDbResult(conn.sys.ModifyUserGroups(login,GFRE_DBI.ConstructStringArray(['VMFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'APPLIANCEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'STORAGEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME]),true),'cannot set user groups '+login);
+      CheckDbResult(conn.sys.ModifyUserGroups(login,TFRE_DB_StringArray.create('VMFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'APPLIANCEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'STORAGEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME),true),'cannot set user groups '+login);
       CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
 
       login  :='firmviewer@'+CFRE_DB_SYS_DOMAIN_NAME;
@@ -383,7 +383,7 @@ var conn     : IFRE_DB_Connection;
         CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
       CheckDbResult(conn.sys.AddUser(login,passwd,'Firmviewer','Firmviewer'),'cannot add user '+login);
 
-      CheckDbResult(conn.sys.ModifyUserGroups(login,GFRE_DBI.ConstructStringArray(['VMVIEWER'+'@'+CFRE_DB_SYS_DOMAIN_NAME]),true),'cannot set user groups '+login);
+      CheckDbResult(conn.sys.ModifyUserGroups(login,TFRE_DB_StringArray.Create('VMVIEWER'+'@'+CFRE_DB_SYS_DOMAIN_NAME),true),'cannot set user groups '+login);
       CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
 
   end;

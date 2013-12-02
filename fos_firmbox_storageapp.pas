@@ -3501,9 +3501,9 @@ begin
 
   CheckDbResult(conn.AddGroup('STORAGEFEEDER','Group for Storage Data Feeder','Storage Feeder',domainUID),'could not create Storage feeder group');
 
-  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID,GFRE_DBI.ConstructStringArray(
-    [TFRE_FIRMBOX_STORAGE_APP.GetClassRoleNameFetch
-    ])),'could not add roles for group STORAGEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID,TFRE_DB_StringArray.Create(
+    TFRE_FIRMBOX_STORAGE_APP.GetClassRoleNameFetch
+    )),'could not add roles for group STORAGEFEEDER');
 
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_POOL.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_POOL for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_BLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_BLOCKDEVICE for group STORAGEFEEDER');

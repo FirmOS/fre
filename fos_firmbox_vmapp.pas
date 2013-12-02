@@ -196,14 +196,14 @@ begin
   CheckDbResult(conn.AddGroup('VMFEEDER','Group for VM Data Feeder','VM Feeder',domainUID),'could not create VM feeder group');
   CheckDbResult(conn.AddGroup('VMVIEWER','Group for VM Viewer','VM Viewer',domainUID),'could not create VM viewer group');
 
-  CheckDbResult(conn.AddRolesToGroup('VMFEEDER',domainUID,GFRE_DBI.ConstructStringArray(
-    [TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch
-    ])),'could not add roles for group VMFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('VMFEEDER',domainUID,TFRE_DB_StringArray.Create(
+    TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch
+    )),'could not add roles for group VMFEEDER');
 
-  CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID,GFRE_DBI.ConstructStringArray(
-    [ TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch,
+  CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID,TFRE_DB_StringArray.Create(
+     TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch,
       TFRE_FIRMBOX_VM_MACHINES_MOD.GetClassRoleNameFetch
-    ])),'could not add GUI roles for group VMVIEWER');
+    )),'could not add GUI roles for group VMVIEWER');
 
   CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID, TFRE_DB_VMACHINE.GetClassStdRoles(false,false,false,true)),'could not add roles of TFRE_DB_VMACHINE to group VMVIEWER');
 

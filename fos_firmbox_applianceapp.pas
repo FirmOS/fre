@@ -1134,9 +1134,9 @@ begin
 
   CheckDbResult(conn.AddGroup('APPLIANCEFEEDER','Group for Appliance Data Feeder','VM Feeder',domainUID),'could not create Appliance feeder group');
 
-  CheckDbResult(conn.AddRolesToGroup('APPLIANCEFEEDER',domainUID,GFRE_DBI.ConstructStringArray(
-    [TFRE_FIRMBOX_APPLIANCE_APP.GetClassRoleNameFetch
-    ])),'could not add roles for group APPLIANCEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('APPLIANCEFEEDER',domainUID,TFRE_DB_StringArray.Create(
+    TFRE_FIRMBOX_APPLIANCE_APP.GetClassRoleNameFetch
+    )),'could not add roles for group APPLIANCEFEEDER');
 
 end;
 
