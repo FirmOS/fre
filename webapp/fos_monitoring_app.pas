@@ -433,14 +433,14 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         StoreAndAddToMachine(p);
       end;
 
-      procedure AddZFSReplication(const jobkey: string; const desc : string; const sourcehost: string; const desthost:string; const sourceds:string; const destds: string;const checkperiod_sec: integer);
+      procedure AddZFSReplication(const jobkey: string; const desc : string; const sourcehost: string; const desthost:string; const sourceds:string; const destds: string;const checkperiod_sec: integer;const snapshotkey:string='AUTO');
        var
          zf     : TFRE_DB_ZFSJob;
        begin
          zf    :=TFRE_DB_ZFSJob.CreateForDB;
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
-         zf.SetReplicate(sourceds,destds,'AUTO',desthost,'zfsback',GetbackupKeyFileName,'/zones/firmos/zfsback/.ssh/id_rsa');
+         zf.SetReplicate(sourceds,destds,snapshotkey,desthost,'zfsback',GetbackupKeyFileName,'/zones/firmos/zfsback/.ssh/id_rsa');
          zf.SetPeriodic(everyDay);
          Troubleshooting(zf,'Check Replication ! ');
          StoreAndAddToMachine(zf);
@@ -449,6 +449,27 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey+'_CHECK',desc);
          zf.SetRemoteSSH(cremoteuser, desthost, Getremotekeyfilename);
          zf.SetSnapshotCheck(destds,'AUTO',checkperiod_sec*2,checkperiod_sec*4);
+         zf.SetPeriodic(everyHour);
+         Troubleshooting(zf,'Check Snapshot ! ');
+         StoreAndAddToMachine(zf);
+      end;
+
+      procedure AddZFSSnapshot(const jobkey: string; const desc : string; const sourcehost: string; const sourceds:string; const checkperiod_sec: integer;const snapshotkey:string='AUTO');
+       var
+         zf     : TFRE_DB_ZFSJob;
+       begin
+         zf    :=TFRE_DB_ZFSJob.CreateForDB;
+         zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
+         zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
+         zf.SetSnapshot(sourceds,snapshotkey);
+         zf.SetPeriodic(everyDay);
+         Troubleshooting(zf,'Check Do Snapshot! ');
+         StoreAndAddToMachine(zf);
+
+         zf    :=TFRE_DB_ZFSJob.CreateForDB;
+         zf.SetJobkeyDescription(mon_key+'_'+jobkey+'_CHECK',desc);
+         zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
+         zf.SetSnapshotCheck(sourceds,'AUTO',checkperiod_sec*2,checkperiod_sec*4);
          zf.SetPeriodic(everyHour);
          Troubleshooting(zf,'Check Snapshot ! ');
          StoreAndAddToMachine(zf);
@@ -642,6 +663,7 @@ begin
         AddMachine('Gateway','91.114.28.42',tmFOSServ);
         AddInternetTestcase(true);
         AddProcessTestCase('10.1.0.1','OFFICE_GW_PROCESS','Processes on FirmOS Office Gateway',TFRE_DB_StringArray.Create('openvpn','named','dhcpd'),TFRE_DB_UInt32Array.Create(4,1,1));
+        AddMachine('kamera','10.1.0.69',tmFosLab,'');
       AddService('Storage');
         AddMachine('FirmOSStorage','10.1.0.116',tmFOSLab);
           AddCPUTestCase('10.1.0.116','CPU_FOSDATA','CPU Load FirmOS Office Storage',5,10);
@@ -704,6 +726,8 @@ begin
           AddCPUTestCase('10.220.251.10','CPU_SMARTSTORAGE','CPU Load SmartStorage',10,15);
           AddZpoolStatusTestCase('10.220.251.10','ZPOOL_FOS_SMARTSTORAGE','Diskpool FirmOS SmartStorage');
           AddZFSSpaceTestCase('10.220.251.10','ZFS_SPACE_SMARTSTORAGE','Zones FirmOS SmartStorage');
+          AddZFSSnapshot('ZFS_SNAPSHOT_SMARTSTORAGE','Snapshot Smartstorage','smartstore.firmos.at','zones',86400,'FULLSNAP');
+
           AddMachine('firmgit.firmos.at','10.220.252.120',tmFOSMB,'7b161e9f-36a4-4abf-925d-45c1b09ca1dc');
           AddHTTPTestCase('http://fosbuild.firmos.at','HTTP_FOSBUILD','FirmOS Building System (Jenkins)','','Jenkins');
           AddMachine('ns1int.firmos.at','10.220.252.11',tmFOSMB);
@@ -762,7 +786,9 @@ begin
           AddMachine('franzdata','10.220.252.149',tmFOSMB,'5c1eae31-67bc-4f19-a148-9ede039d7ad8');
 
           AddMachine('webext','10.220.252.150',tmFOSMB,'');
-      AddService('Artemes');
+
+
+     AddService('Artemes');
           AddMachine('Artemes','10.220.249.10',tmFOSMB,'',true);
           AddZpoolStatusTestCase('10.220.249.10','ZPOOL_ARTEMES','Diskpool Artemes');
           AddZFSSpaceTestCase('10.220.249.10','ZFS_SPACE_ARTEMES','Zones Artemes');
@@ -772,7 +798,10 @@ begin
                             'zones/backup/artemes/infra_test',86400);
           AddZFSReplication('ZFS_REPL_ARTEMES_INFRA_LIVE','Replication Artemes Infra_Live','10.220.249.10','smartstore.firmos.at','zones/infra_live',
                             'zones/backup/artemes/infra_live',86400);
-
+          AddZFSReplication('ZFS_REPL_ARTEMES_SVN','Replication Artemes SVN','10.220.249.10','smartstore.firmos.at','zones/svn',
+                            'zones/backup/artemes/svn',86400);
+          AddZFSReplication('ZFS_REPL_ARTEMES','Replication Artemes Complete','10.220.249.10','smartstore.firmos.at','zones',
+                            'zones/backup/artemes/complete',86400,'COMPLETE');
  AddServiceGroup('Citycom');
       AddService('Cityaccess');
         AddMachine('WlanController','109.73.148.178',tmCC);
