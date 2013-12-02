@@ -19,6 +19,7 @@ uses
   fos_firmbox_vm_machines_mod,
   fre_hal_schemes,
   FRE_ZFS,
+  fre_scsi,
   fre_testcase,
   fre_system,
   fos_vm_control_interface
@@ -53,14 +54,17 @@ begin
   CONN := GFRE_DBI.NewConnection;
   CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
   try
-    collection  := conn.Collection('pool');  // ZFS GUID for pool => zdb
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
+    collection  := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);  // ZFS GUID for pool => zdb
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',true);
 
-    collection  := conn.Collection('vdev');  // ZFS GUID for VDEV => zdb
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
+    collection  := conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);  // ZFS GUID for VDEV => zdb
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',true);
 
-    collection  := conn.Collection('blockdevice');  // ZFS GUID / WWN
+    collection  := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);  // ZFS GUID / WWN
     collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
+    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,false,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX,true);
+    collection.DefineIndexOnField('devicename',fdbft_String,true,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_NAME_INDEX,false);
+
 
   finally
     conn.Finalize;
@@ -369,7 +373,7 @@ var conn     : IFRE_DB_Connection;
         CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
       CheckDbResult(conn.sys.AddUser(login,passwd,'Feeder','Feeder'),'cannot add user '+login);
 
-      CheckDbResult(conn.sys.ModifyUserGroups(login,GFRE_DBI.ConstructStringArray(['VMFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'APPLIANCEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME]),true),'cannot set user groups '+login);
+      CheckDbResult(conn.sys.ModifyUserGroups(login,GFRE_DBI.ConstructStringArray(['VMFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'APPLIANCEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'STORAGEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME]),true),'cannot set user groups '+login);
       CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
 
       login  :='firmviewer@'+CFRE_DB_SYS_DOMAIN_NAME;
@@ -553,14 +557,16 @@ begin
   // Base Registrations
   FRE_DBBASE.Register_DB_Extensions;
   FRE_DBBUSINESS.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  FRE_ZFS.Register_DB_Extensions;
+  fre_scsi.Register_DB_Extensions;
   fos_firmbox_applianceapp.Register_DB_Extensions;
   fre_accesscontrol_common.Register_DB_Extensions;
   fre_testcase.Register_DB_Extensions;
-  fre_hal_schemes.Register_DB_Extensions;
   fos_firmbox_fileserver.Register_DB_Extensions;
   fos_firmbox_storageapp.Register_DB_Extensions;
   fos_firmbox_vmapp.Register_DB_Extensions;
-  FRE_ZFS.Register_DB_Extensions;
+  GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 procedure FIRMBOX_MetaInitializeDatabase(const dbname: string; const user, pass: string);

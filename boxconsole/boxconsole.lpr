@@ -44,6 +44,9 @@ program boxconsole;
 // ./fre_testdatafeed -U root -H 10.220.251.10 -u feeder@system -p a1234
 // lazarus+debugger: => ./fre_testdatafeed -U root -H 10.220.251.10 -D
 
+{.$DEFINE FOS_WITH_CONSOLE}
+
+
 uses
   //cmem,
   {$IFDEF UNIX}
@@ -52,13 +55,13 @@ uses
   Classes, SysUtils, CustApp,
   FRE_SYSTEM,FOS_DEFAULT_IMPLEMENTATION,FOS_TOOL_INTERFACES,FOS_FCOM_TYPES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,
   FRE_DB_CORE,
-
+  {$IFDEF FOS_WITH_CONSOLE}
+  fos_ocrt,
+  {$ENDIF}
   FRE_DB_EMBEDDED_IMPL,
   FRE_CONFIGURATION,FRE_BASE_SERVER,
-  fos_firmboxfeed_client,fre_basefeed_app,
-  fos_ocrt;
+  fos_firmboxfeed_client,fre_basefeed_app;
 
-{$DEFINE FOS_WITH_CONSOLE}
 
 {$IFDEF FOS_WITH_CONSOLE}
 const

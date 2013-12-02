@@ -995,7 +995,7 @@ var
   coll   : IFRE_DB_COLLECTION;
 begin
    //TURN OFF SAFETY
-  _fillPoolCollection(ses.GetDBConnection,input.Field('zfs').AsObject);
+  //_fillPoolCollection(ses.GetDBConnection,input.Field('zfs').AsObject);
   result := GFRE_DB_NIL_DESC;
 end;
 
