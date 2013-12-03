@@ -58,7 +58,7 @@ begin
     collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',true);
 
     collection  := conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);  // ZFS GUID for VDEV => zdb
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',true);
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
 
     collection  := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);  // ZFS GUID / WWN
     collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);

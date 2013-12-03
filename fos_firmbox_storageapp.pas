@@ -46,11 +46,11 @@ type
   private
     function        _addDisksToPool            (const pool: TFRE_DB_ZFS_ROOTOBJ; const target:TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession):TFRE_DB_MENU_DESC;
     function        _getZFSObj                 (const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_OBJ;
-    function        _getPoolForZFSObj          (const conn: IFRE_DB_CONNECTION; const obj: TFRE_DB_ZFS_OBJ): TFRE_DB_ZFS_ROOTOBJ;
     function        _getPoolByName             (const conn: IFRE_DB_CONNECTION; const name: String): TFRE_DB_ZFS_ROOTOBJ;
     function        _getUnassignedPool         (const conn: IFRE_DB_CONNECTION): TFRE_DB_ZFS_UNASSIGNED;
     function        _getTreeObj                (const conn: IFRE_DB_CONNECTION; const zfsObj: TFRE_DB_ZFS_OBJ):IFRE_DB_Object;
     procedure       _unassignDisk              (const upool:TFRE_DB_ZFS_UNASSIGNED; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
+    function        _getNextVdevNum            (const siblings: IFRE_DB_ObjectArray): Integer;
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
@@ -65,6 +65,9 @@ type
     procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
   published
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolStructureSC       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_BDAssign              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ToggleBDOnlineMode    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolLayout            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolSpace             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolNotes             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -1757,10 +1760,10 @@ var
 
   procedure _addVdevMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_VDEV);
   var
-    parent : IFRE_DB_Object;
+    parent : TFRE_DB_ZFS_OBJ;
     sf     : TFRE_DB_SERVER_FUNC_DESC;
   begin
-    parent:=target.Parent;
+    parent:=target.getZFSParent(conn);
     if parent.Implementor_HC is TFRE_DB_ZFS_LOG then begin
       sf:=CWSF(@WEB_AssignLogDisk);
     end else
@@ -1897,11 +1900,11 @@ begin
       if target.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
         res:=TFRE_DB_MENU_DESC.create.Describe;
         disk:=_getZFSObj(conn,disks[0]);
-        res.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png',CWSF(@WEB_Replace),(target.Parent.Implementor_HC as TFRE_DB_ZFS_OBJ).getId=(disk.Parent.Implementor_HC as TFRE_DB_ZFS_OBJ).getId);
+        res.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png',CWSF(@WEB_Replace),target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
         Result:=res;
       end else begin
         res:=TFRE_DB_MENU_DESC.create.Describe;
-        _addPoolMenu(res,pool,target as TFRE_DB_ZFS_DISKCONTAINER);
+        _addPoolMenu(res,pool,target as TFRE_DB_ZFS_OBJ);
         Result:=res;
       end;
     end;
@@ -1929,14 +1932,6 @@ var
 begin
   conn.Fetch(GFRE_BT.HexString_2_GUID(id),dbObj);
   Result:=dbObj.Implementor_HC as TFRE_DB_ZFS_OBJ;
-end;
-
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getPoolForZFSObj(const conn: IFRE_DB_CONNECTION; const obj: TFRE_DB_ZFS_OBJ): TFRE_DB_ZFS_ROOTOBJ;
-var
-  dbObj: IFRE_DB_Object;
-begin
-  CheckDbResult(conn.Fetch(obj.Field('pool_guid').AsGUID,dbObj),'TFRE_FIRMBOX_STORAGE_POOLS_MOD._getPoolForZFSObj');
-  Result:=dbObj.Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getPoolByName(const conn: IFRE_DB_CONNECTION; const name: String): TFRE_DB_ZFS_ROOTOBJ;
@@ -1991,15 +1986,18 @@ begin
     entry.Field('children').AsString:='UNCHECKED';
     entry.Field('_disabledrop_').AsBoolean:=not zfsObj.acceptsNewChildren(conn);
   end else begin
-    //if not ((zfsObj.Implementor_HC is TFRE_DB_ZFS_POOL) or (zfsObj.Parent.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) or zfsObj.isNew) then begin
-    if not ((zfsObj.Implementor_HC is TFRE_DB_ZFS_POOL) or zfsObj.getIsNew) then begin
+    if not ((zfsObj.getPool(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) or zfsObj.getIsNew) then begin
       entry.Field('_disabledrag_').AsBoolean:=true;
     end;
   end;
   entry.Field('uidpath').AsStringArr:=Self.GetUIDPath;
   entry.Field('_funcclassname_').AsString:=ClassName;
   entry.Field('_childrenfunc_').AsString:='TreeGridData';
-  entry.Field('objectclass').AsString:=zfsObj.ClassName;
+  if zfsObj.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
+    entry.Field('dndclass').AsString:='TFRE_DB_ZFS_BLOCKDEVICE';
+  end else begin
+    entry.Field('dndclass').AsString:=zfsObj.ClassName;
+  end;
   entry.Field('id').AsString:=zfsObj.getId;
   entry.Field('caption').AsString:=zfsObj.caption;
   entry.Field('iops_r').AsString:=zfsObj.iopsR;
@@ -2144,18 +2142,47 @@ begin
   glayout.AddDataElement.Describe('transfer_r','Read [MB/s]',dt_number);
   glayout.AddDataElement.Describe('transfer_w','Write [MB/s]',dt_number);
 
-  grid    := TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
-  grid.SetDropGrid(grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
-  grid.SetDragObjClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
+  grid    := TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_Multiselect],nil,CWSF(@WEB_PoolStructureSC),nil,CWSF(@WEB_TreeDrop));
+  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
+    grid.SetDropGrid(grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
+    grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
 
-  grid.AddButton.Describe(CWSF(@WEB_CreatePoolDiag),'images_apps/firmbox_storage/create_pool.png',app.FetchAppTextShort(ses,'$create_pool'));
-  grid.AddButton.Describe(CWSF(@WEB_ImportPoolDiag),'images_apps/firmbox_storage/import_pool.png',app.FetchAppTextShort(ses,'$import_pool'));
-  grid.AddButton.DescribeManualType('pool_save',CWSF(@WEB_SaveConfig),'images_apps/firmbox_storage/save_config.png',app.FetchAppTextShort(ses,'$save_config'),'',true);
-  grid.AddButton.DescribeManualType('pool_reset',CWSF(@WEB_ResetConfig),'images_apps/firmbox_storage/reset_config.png',app.FetchAppTextShort(ses,'$reset_config'),'',true);
-  //grid.AddButton.Describe(CSF(@WEB_UpdatePoolsTree),'images_apps/firmbox_storage/update.png','Update');
+    grid.AddButton.Describe(CWSF(@WEB_CreatePoolDiag),'images_apps/firmbox_storage/create_pool.png',app.FetchAppTextShort(ses,'$create_pool'));
+    grid.AddButton.Describe(CWSF(@WEB_ImportPoolDiag),'images_apps/firmbox_storage/import_pool.png',app.FetchAppTextShort(ses,'$import_pool'));
+
+    grid.AddButton.DescribeManualType('pool_struc_toggle',CWSF(@WEB_ToggleBDOnlineMode),'',app.FetchAppTextShort(ses,'$bd_switch_offline'),'',true);
+    grid.AddButton.DescribeManualType('pool_assign',CWSF(@WEB_BDAssign),'',app.FetchAppTextShort(ses,'$bd_assign'),'',true);
+
+    grid.AddButton.DescribeManualType('pool_save',CWSF(@WEB_SaveConfig),'images_apps/firmbox_storage/save_config.png',app.FetchAppTextShort(ses,'$save_config'),'',true);
+    grid.AddButton.DescribeManualType('pool_reset',CWSF(@WEB_ResetConfig),'images_apps/firmbox_storage/reset_config.png',app.FetchAppTextShort(ses,'$reset_config'),'',true);
+  end;
+
   main    := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid,secs,nil,nil,nil,true,2);
-  //main    := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(coll.GetDisplayDescription,secs,nil,nil,nil,true,2);
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of disks and pools and their status. Update interval: 10s. The average IO size is 128kByte.</b>'));
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolStructureSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  //FIXXME handle grid buttons
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_BDAssign(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  //FIXXME implement me
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_ToggleBDOnlineMode(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  //FIXXME implement me
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolLayout(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2325,7 +2352,7 @@ begin
 
       for i := 0 to input.Field('selected').ValueCount - 1 do begin
         zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
-        pool:=_getPoolForZFSObj(conn,zfsObj);
+        pool:=zfsObj.getPool(conn);
         if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin //check if all selected objects are disks
           if (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
             fnSwitchOfflineDisabled:=true;
@@ -2403,7 +2430,7 @@ begin
         sf:=CWSF(@WEB_RemoveNew);
         sf.AddParam.Describe('selected',input.Field('selected').AsString);
         res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_remove'),'images_apps/firmbox_storage/cm_remove.png',sf);
-        if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.Parent.Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
+        if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
           sub:=res.AddMenu.Describe(app.FetchAppTextShort(ses,'$cm_change_raid_level'),'images_apps/firmbox_storage/cm_change_raid_level.png');
           rl:=(zfsObj as TFRE_DB_ZFS_VDEV).raidLevel;
           if rl<>zfs_rl_mirror then begin
@@ -2653,7 +2680,6 @@ var
   i       : Integer;
   disk    : TFRE_DB_ZFS_OBJ;
   children: IFRE_DB_ObjectArray;
-  num     : Integer;
   vdevs   : IFRE_DB_COLLECTION;
 
   res     : TFRE_DB_UPDATE_STORE_DESC; //FIXXME - remove store update
@@ -2675,14 +2701,7 @@ begin
         vdev:=tlog;
       end else begin
         vdev:=tlog.createVdev;
-        num:=1;
-        children:=tlog.getChildren(conn);
-        for i := 0 to Length(children) - 1 do begin
-          if (children[i].Implementor_HC is TFRE_DB_ZFS_VDEV) and (children[i].Implementor_HC as TFRE_DB_ZFS_VDEV).getIsNew then begin
-            num:=num+1;
-          end;
-        end;
-        vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(num),[rfReplaceAll]);
+        vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tlog.getChildren(conn))),[rfReplaceAll]);
         vdev.setIsNew;
         vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
         res.addNewEntry(_getTreeObj(conn,vdev),lastIdx,tlog.getId); //FIXXME - remove store update
@@ -2714,7 +2733,7 @@ begin
       vdev:=tlog.createVdev;
       vdev.setIsNew;
       vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
-      vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%','1',[rfReplaceAll]);
+      vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%','0',[rfReplaceAll]);
       res.addNewEntry(_getTreeObj(conn,vdev),'',tlog.getId); //FIXXME - remove store update
       CheckDbResult(vdevs.Store(vdev.CloneToNewObject()),'Assign log');
     end;
@@ -2741,18 +2760,17 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_AssignStorageDisk(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  tpool   : TFRE_DB_ZFS_POOL;
-  spool   : TFRE_DB_ZFS_ROOTOBJ;
-  tstorage: TFRE_DB_ZFS_DATASTORAGE;
-  vdev    : TFRE_DB_ZFS_DISKCONTAINER;
-  i       : Integer;
-  disk    : TFRE_DB_ZFS_OBJ;
-  children: IFRE_DB_ObjectArray;
-  num     : Integer;
-  vdevs   : IFRE_DB_COLLECTION;
+  tpool      : TFRE_DB_ZFS_POOL;
+  spool      : TFRE_DB_ZFS_ROOTOBJ;
+  tstorage   : TFRE_DB_ZFS_DATASTORAGE;
+  vdev       : TFRE_DB_ZFS_DISKCONTAINER;
+  i          : Integer;
+  disk       : TFRE_DB_ZFS_OBJ;
+  children   : IFRE_DB_ObjectArray;
+  vdevs      : IFRE_DB_COLLECTION;
 
-  res     : TFRE_DB_UPDATE_STORE_DESC; //FIXXME - remove store update
-  lastIdx : String; //FIXXME - remove store update
+  res        : TFRE_DB_UPDATE_STORE_DESC; //FIXXME - remove store update
+  lastIdx    : String; //FIXXME - remove store update
 
 begin
   vdevs:=conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
@@ -2770,14 +2788,7 @@ begin
       if input.FieldExists('expand') and input.Field('expand').AsBoolean then begin
         lastIdx  := tstorage.getLastChildId(conn); //FIXXME - remove store update
         vdev     := tstorage.createVdev;
-        num      := 1;
-        children := tstorage.getChildren(conn);
-        for i := 0 to Length(children) - 1 do begin
-          if (children[i].Implementor_HC is TFRE_DB_ZFS_VDEV) and (children[i].Implementor_HC as TFRE_DB_ZFS_VDEV).getIsNew then begin
-            num:=num+1;
-          end;
-        end;
-        vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(num),[rfReplaceAll]);
+        vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tstorage.getChildren(conn))),[rfReplaceAll]);
         vdev.setIsNew;
         vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
         res.addNewEntry(_getTreeObj(conn,vdev),lastIdx,tstorage.getId); //FIXXME - remove store update
@@ -2791,10 +2802,10 @@ begin
           end;
         end;
         if not Assigned(vdev) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_assign_vdev_not_found'));
+        vdev.setIsModified;
+        res.addUpdatedEntry(_getTreeObj(conn,vdev)); //FIXXME - remove store update
+        CheckDbResult(conn.Update(vdev.CloneToNewObject),'Assign storage disk');
       end;
-      vdev.setIsModified;
-      res.addUpdatedEntry(_getTreeObj(conn,vdev)); //FIXXME - remove store update
-      CheckDbResult(conn.Update(vdev.CloneToNewObject),'Assign storage disk');
     end;
   end else begin
     lastIdx:=tpool.getLastChildId(conn); //FIXXME - remove store update
@@ -2809,7 +2820,7 @@ begin
       vdev:=tstorage.createVdev;
       vdev.setIsNew;
       vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
-      vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%','1',[rfReplaceAll]);
+      vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%','0',[rfReplaceAll]);
       res.addNewEntry(_getTreeObj(conn,vdev),'',tstorage.getId); //FIXXME - remove store update
       CheckDbResult(vdevs.store(vdev.CloneToNewObject),'Assign storage disk');
     end;
@@ -2897,21 +2908,14 @@ var
   i,num    : Integer;
   vdev     : TFRE_DB_ZFS_VDEV;
   res      : TFRE_DB_UPDATE_STORE_DESC;
-  zfsParent: TFRE_DB_ZFS_OBJ;
-  siblings : IFRE_DB_ObjectArray;
+  idx      : SizeInt;
 begin
   res:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store'); //FIXXME - remove store update
   vdev:=_getZFSObj(conn,input.Field('selected').AsString).Implementor_HC as TFRE_DB_ZFS_VDEV;
   if not vdev.getIsNew then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_change_rl_not_new'));
   vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
-  zfsParent:=vdev.getZFSParent(conn);
-  siblings:=zfsParent.getChildren(conn);
-  for i := 0 to Length(siblings) - 1 do begin
-    if (siblings[i].Implementor_HC as TFRE_DB_ZFS_OBJ).getId=vdev.getId then begin
-      num:=i+1;
-      break;
-    end;
-  end;
+  idx:=Pos('-',vdev.caption)+1;
+  num:=StrToInt(Copy(vdev.caption,idx,Length(vdev.caption)-idx+1));
   vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(num),[rfReplaceAll]);
   res.addUpdatedEntry(_getTreeObj(conn,vdev)); //FIXXME - remove store update
   CheckDbResult(conn.Update(vdev),'Change raid level');
@@ -3047,10 +3051,10 @@ begin
 
   for i := 0 to Length(disks) - 1 do begin
     disk:=_getZFSObj(conn,disks[i]);
-    if not disk.getIsNew then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(session,'$error_unassign_not_new'));
-
     spool:=disk.getPool(conn);
     if spool.getId=upool.getId then continue; //skip: already unassigned
+    if not disk.getIsNew then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(session,'$error_unassign_not_new'));
+
     update.addDeletedEntry(disk.getId);
     lastIdx:=upool.getLastChildId(conn); //FIXXME - remove store update
     disk.removeFromPool;
@@ -3067,6 +3071,28 @@ begin
   session.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
   session.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
   session.SendServerClientRequest(update); //FIXXME - remove store update
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getNextVdevNum(const siblings: IFRE_DB_ObjectArray): Integer;
+var
+  num         : Integer;
+  sibling_cap : TFRE_DB_String;
+  idx         : SizeInt;
+  sibling_num : Integer;
+  i           : Integer;
+begin
+  num:=0;
+  for i := 0 to Length(siblings) - 1 do begin
+    if (siblings[i].Implementor_HC is TFRE_DB_ZFS_VDEV) then begin
+      sibling_cap:=(siblings[i].Implementor_HC as TFRE_DB_ZFS_VDEV).caption;
+      idx:=Pos('-',sibling_cap)+1;
+      sibling_num:=StrToInt(Copy(sibling_cap,idx,Length(sibling_cap)-idx+1));
+      if sibling_num>num then begin
+        num:=sibling_num;
+      end;
+    end;
+  end;
+  Result:=num+1;
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_SaveConfig(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -3204,8 +3230,6 @@ begin
   end;
 end;
 
-
-
 { TFRE_FIRMBOX_STORAGE_SYNC_MOD }
 
 class procedure TFRE_FIRMBOX_STORAGE_SYNC_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -3327,15 +3351,18 @@ begin
       CreateAppText(conn,'$import_pool_diag_cap','Import Pool');
       CreateAppText(conn,'$import_pool_diag_msg','Feature disabled in Demo Mode.');
       CreateAppText(conn,'$save_config','Save');
+      CreateAppText(conn,'$bd_switch_offline','Switch offline');
+      CreateAppText(conn,'$bd_switch_online','Switch online');
+      CreateAppText(conn,'$bd_assign','Assign');
       CreateAppText(conn,'$reset_config','Reset');
       CreateAppText(conn,'$new_spare_caption','spare');
       CreateAppText(conn,'$new_log_caption','log');
-      CreateAppText(conn,'$log_vdev_caption_rl_mirror','mirror (%num%)');
+      CreateAppText(conn,'$log_vdev_caption_rl_mirror','mirror-%num%');
       CreateAppText(conn,'$new_cache_caption','cache');
-      CreateAppText(conn,'$storage_vdev_caption_rl_mirror','mirror (%num%)');
-      CreateAppText(conn,'$storage_vdev_caption_rl_z1','raid-z1 (%num%)');
-      CreateAppText(conn,'$storage_vdev_caption_rl_z2','raid-z2 (%num%)');
-      CreateAppText(conn,'$storage_vdev_caption_rl_z3','raid-z3 (%num%)');
+      CreateAppText(conn,'$storage_vdev_caption_rl_mirror','mirror-%num%');
+      CreateAppText(conn,'$storage_vdev_caption_rl_z1','raidz1-%num%');
+      CreateAppText(conn,'$storage_vdev_caption_rl_z2','raidz2-%num%');
+      CreateAppText(conn,'$storage_vdev_caption_rl_z3','raidz3-%num%');
       CreateAppText(conn,'$error_assign_not_new','You can only assign disks which are not in use yet.');
       CreateAppText(conn,'$error_unassign_not_new','You can only unassign disks which are not in use yet.');
       CreateAppText(conn,'$error_assign_vdev_not_found','Assign disks: Vdev not found.');
