@@ -55,14 +55,14 @@ begin
   CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
   try
     collection  := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);  // ZFS GUID for pool => zdb
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true,'def',true);
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true);
 
     collection  := conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);  // ZFS GUID for VDEV => zdb
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true);
 
     collection  := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);  // ZFS GUID / WWN
-    collection.DefineIndexOnField('zfs_guid',fdbft_String,false,true,'def',true);
-    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,false,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX,true);
+    collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true);
+    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,false,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX);
     collection.DefineIndexOnField('devicename',fdbft_String,true,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_NAME_INDEX,false);
 
     collection  := conn.Collection('virtualmachine');
