@@ -2650,6 +2650,10 @@ var
   res     : TFRE_DB_UPDATE_STORE_DESC; //FIXXME - remove store update
   lastIdx : String; //FIXXME - remove store update
 begin
+  if input.Field('disks').ValueCount=0 then begin
+    input.Field('disks').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  end;
+
   tpool:=_getZFSObj(conn,input.Field('pool').AsString) as TFRE_DB_ZFS_POOL;
   res:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store'); //FIXXME - remove store update
   tspare:=tpool.GetSpare(conn);
@@ -2683,6 +2687,8 @@ begin
   end;
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
+
+  _updateToolbarAssignEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2698,6 +2704,10 @@ var
   res     : TFRE_DB_UPDATE_STORE_DESC; //FIXXME - remove store update
   lastIdx : String; //FIXXME - remove store update
 begin
+  if input.Field('disks').ValueCount=0 then begin
+    input.Field('disks').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  end;
+
   res:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store'); //FIXXME - remove store update
   tpool:=_getZFSObj(conn,input.Field('pool').AsString) as TFRE_DB_ZFS_POOL;
   tcache:=tpool.GetCache(conn);
@@ -2728,9 +2738,10 @@ begin
     res.addNewEntry(_getTreeObj(conn,disk),lastIdx,tcache.getId); //FIXXME - remove store update
     CheckDbResult(conn.Update(disk),'Assign cache');
   end;
-  CheckDbResult(conn.Update(tpool),'Assign cache');
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
+
+  _updateToolbarAssignEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2749,6 +2760,10 @@ var
   lastIdx : String; //FIXXME - remove store update
 
 begin
+  if input.Field('disks').ValueCount=0 then begin
+    input.Field('disks').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  end;
+
   vdevs:=conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
 
   tpool:=_getZFSObj(conn,input.Field('pool').AsString) as TFRE_DB_ZFS_POOL;
@@ -2818,6 +2833,8 @@ begin
   CheckDbResult(conn.Update(tpool),'Assign log');
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
+
+  _updateToolbarAssignEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2836,6 +2853,10 @@ var
   lastIdx    : String; //FIXXME - remove store update
 
 begin
+  if input.Field('disks').ValueCount=0 then begin
+    input.Field('disks').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  end;
+
   vdevs:=conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
 
   tpool    := _getZFSObj(conn,input.Field('pool').AsString) as TFRE_DB_ZFS_POOL;
@@ -2905,6 +2926,8 @@ begin
   CheckDbResult(conn.Update(tpool),'Assign storage disk');
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
+
+  _updateToolbarAssignEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2963,6 +2986,8 @@ begin
   end;
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
+
+  _updateToolbarAssignEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2985,6 +3010,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   _updateToolbar(conn,ses);
+  _updateToolbarAssignEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -3010,6 +3036,8 @@ begin
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
+
+  _updateToolbarAssignEntry(conn,ses,app);
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Destroy Pool confirmed','Please implement me',fdbmt_info);
 end;
 
