@@ -44,7 +44,7 @@ type
 
   TFRE_FIRMBOX_STORAGE_POOLS_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
-    function        _addDisksToPool            (const pool: TFRE_DB_ZFS_ROOTOBJ; const target:TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession):TFRE_DB_MENU_DESC;
+    procedure       _addDisksToPool            (const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target:TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
     function        _getZFSObj                 (const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_OBJ;
     function        _getPoolByName             (const conn: IFRE_DB_CONNECTION; const name: String): TFRE_DB_ZFS_ROOTOBJ;
     function        _getUnassignedPool         (const conn: IFRE_DB_CONNECTION): TFRE_DB_ZFS_UNASSIGNED;
@@ -53,6 +53,7 @@ type
     function        _getNextVdevNum            (const siblings: IFRE_DB_ObjectArray): Integer;
     procedure       _getMultiselectionActions  (const conn: IFRE_DB_CONNECTION; const selected :TFRE_DB_StringArray;var fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled:Boolean);
     procedure       _updateToolbar             (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
+    procedure       _updateToolbarAssignEntry  (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
@@ -1582,9 +1583,8 @@ end;
 
 { TFRE_FIRMBOX_STORAGE_POOLS_MOD }
 
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD._addDisksToPool(const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession): TFRE_DB_MENU_DESC;
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._addDisksToPool(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
 var
-  res      : TFRE_DB_MENU_DESC;
   count    : Integer;
   firstPool: IFRE_DB_Object;
   disk     : TFRE_DB_ZFS_OBJ;
@@ -1894,7 +1894,7 @@ var
   begin
     if obj.Implementor_HC is TFRE_DB_ZFS_POOL then begin
       pool:=obj.Implementor_HC as TFRE_DB_ZFS_POOL;
-      sub:=res.AddMenu.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_pool'),'%pool%',pool.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_pool_disks.png');
+      sub:=menu.AddMenu.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_pool'),'%pool%',pool.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_pool_disks.png');
       _addPoolMenu(sub,pool,pool);
     end;
   end;
@@ -1903,34 +1903,27 @@ begin
   if Assigned(target) then begin
     if target.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED then begin
       _unassignDisk(target.Implementor_HC as TFRE_DB_ZFS_UNASSIGNED,disks,app,conn,session);
-      Result:=TFRE_DB_MENU_DESC.create.Describe;
     end else begin
       if target.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
-        res:=TFRE_DB_MENU_DESC.create.Describe;
         disk:=_getZFSObj(conn,disks[0]);
-        res.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png',CWSF(@WEB_Replace),target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
-        Result:=res;
+        menu.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png',CWSF(@WEB_Replace),target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
       end else begin
-        res:=TFRE_DB_MENU_DESC.create.Describe;
-        _addPoolMenu(res,pool,target as TFRE_DB_ZFS_OBJ);
-        Result:=res;
+        _addPoolMenu(menu,pool,target as TFRE_DB_ZFS_OBJ);
       end;
     end;
   end else begin
     pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
     count:=0;
     pools.ForAllBreak(@_countPools);
-    res:=TFRE_DB_MENU_DESC.create.Describe;
     case count of
       0: ; //return empty menu
       1: begin
-          _addPoolMenu(res,firstPool.Implementor_HC as TFRE_DB_ZFS_POOL,firstPool.Implementor_HC as TFRE_DB_ZFS_POOL);
+          _addPoolMenu(menu,firstPool.Implementor_HC as TFRE_DB_ZFS_POOL,firstPool.Implementor_HC as TFRE_DB_ZFS_POOL);
          end;
       else begin
         pools.ForAll(@_addPools);
       end;
     end;
-    Result:=res;
   end;
 end;
 
@@ -2175,7 +2168,7 @@ begin
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'pool_switch_offline');
 
     assign_menu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',true,'pool_assign');
-    _addDisksToPool(nil,nil,TFRE_DB_StringArray.create(''),app,conn,ses);
+    _addDisksToPool(assign_menu,nil,nil,TFRE_DB_StringArray.create(''),app,conn,ses);
 
 
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_change_rl'),'');
@@ -2405,6 +2398,7 @@ var
   disk       : TFRE_DB_ZFS_OBJ;
   target     : TFRE_DB_ZFS_OBJ;
   tpool      : TFRE_DB_ZFS_ROOTOBJ;
+  res        : TFRE_DB_MENU_DESC;
 
   storeup    : TFRE_DB_UPDATE_STORE_DESC;
 begin
@@ -2419,7 +2413,9 @@ begin
   target:=_getZFSObj(conn,input.Field('target').AsString).Implementor_HC as TFRE_DB_ZFS_OBJ;
   tpool :=target.getPool(conn);
 
-  Result:=_AddDisksToPool(tpool,target,input.Field('selected').AsStringArr,app,conn,ses);
+  res:=TFRE_DB_MENU_DESC.create.Describe;
+  _AddDisksToPool(res,tpool,target,input.Field('selected').AsStringArr,app,conn,ses);
+  Result:=res;
 
 //  storeup:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store');
 //  storeup.addDeletedEntry(disk.getId);
@@ -2445,7 +2441,7 @@ begin
     if input.Field('selected').ValueCount>1 then begin //multiselection
       _getMultiselectionActions(conn,input.Field('selected').AsStringArr,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
       if fnAssign then begin;
-        res:=_addDisksToPool(nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
+        _addDisksToPool(res,nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
       end;
       if fnRemove then begin
         sf:=CWSF(@WEB_RemoveNew);
@@ -2477,7 +2473,7 @@ begin
       zfsObj:=_getZFSObj(conn,input.Field('selected').AsString);
       pool:=zfsObj.getPool(conn);
       if (pool is TFRE_DB_ZFS_UNASSIGNED) and (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) then begin
-        res:=_addDisksToPool(nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
+        _addDisksToPool(res,nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
       end else begin
         if (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) and not zfsObj.getIsNew then begin
           if (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
@@ -2611,10 +2607,12 @@ begin
 
   CheckDbResult(pools.Store(newPool),'Add new pool');
   CheckDbResult(vdevs.Store(dstore),'Add new pool');
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
 
   ses.SendServerClientRequest(storeup);
+
+  _updateToolbarAssignEntry(conn,ses,app);
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
@@ -2683,8 +2681,8 @@ begin
     res.addNewEntry(_getTreeObj(conn,disk),lastIdx,tspare.getId); //FIXXME - remove store update
     CheckDbResult(conn.Update(disk),'Assign spare');
   end;
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   Result:=res;
 end;
 
@@ -2731,8 +2729,8 @@ begin
     CheckDbResult(conn.Update(disk),'Assign cache');
   end;
   CheckDbResult(conn.Update(tpool),'Assign cache');
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   Result:=res;
 end;
 
@@ -2818,8 +2816,8 @@ begin
   tpool.setIsModified;
   res.addUpdatedEntry(_getTreeObj(conn,tpool)); //FIXXME - remove store update
   CheckDbResult(conn.Update(tpool),'Assign log');
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   Result:=res;
 end;
 
@@ -2905,8 +2903,8 @@ begin
   tpool.setIsModified;
   res.addUpdatedEntry(_getTreeObj(conn,tpool)); //FIXXME - remove store update
   CheckDbResult(conn.Update(tpool),'Assign storage disk');
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   Result:=res;
 end;
 
@@ -2963,8 +2961,8 @@ begin
     if not zfsObj.getIsNew then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_remove_not_new'));
     _handleObj(zfsObj);
   end;
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   Result:=res;
 end;
 
@@ -2984,8 +2982,8 @@ begin
   vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(num),[rfReplaceAll]);
   res.addUpdatedEntry(_getTreeObj(conn,vdev)); //FIXXME - remove store update
   CheckDbResult(conn.Update(vdev),'Change raid level');
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   _updateToolbar(conn,ses);
   Result:=res;
 end;
@@ -3135,8 +3133,8 @@ begin
     update.addNewEntry(_getTreeObj(conn,disk),lastIdx,upool.getId); //FIXXME - remove store update
     CheckDbResult(conn.Update(disk),'Unassign Disk');
   end;
-  session.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
-  session.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  session.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
+  session.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   session.SendServerClientRequest(update); //FIXXME - remove store update
 end;
 
@@ -3265,18 +3263,29 @@ begin
     end;
   end;
 
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_switch_online',fnSwitchOnlineDisabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_switch_offline',fnSwitchOfflineDisabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_iden_on',not fnIdentifyOn));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_iden_off',not fnIdentifyOff));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_assign',not fnAssign));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_remove',not fnRemove));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_destroy',not fnDestroy));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_mirror',fnRLMirrorDisabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z1',fnRLZ1Disabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z2',fnRLZ2Disabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z3',fnRLZ3Disabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_remove',not fnRemove));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_switch_online',fnSwitchOnlineDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_switch_offline',fnSwitchOfflineDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_iden_on',not fnIdentifyOn));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_iden_off',not fnIdentifyOff));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_assign',not fnAssign));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_remove',not fnRemove));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_destroy',not fnDestroy));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_mirror',fnRLMirrorDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_z1',fnRLZ1Disabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_z2',fnRLZ2Disabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_z3',fnRLZ3Disabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_remove',not fnRemove));
+end;
+
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbarAssignEntry(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
+var
+  menu: TFRE_DB_MENU_DESC;
+  res : TFRE_DB_UPDATE_UI_ELEMENT_DESC;
+begin
+  menu:=TFRE_DB_MENU_DESC.create.Describe;
+  _addDisksToPool(menu,nil,nil,TFRE_DB_StringArray.create(''),app,conn,ses);
+  res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_assign',menu);
+  ses.SendServerClientRequest(res);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_SaveConfig(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -3284,8 +3293,8 @@ begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',true));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',true));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',true));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',true));
   result:=TFRE_DB_MESSAGE_DESC.create.Describe('SAVE','Save Config',fdbmt_info);
 end;
 
