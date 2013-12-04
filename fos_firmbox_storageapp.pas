@@ -2168,7 +2168,7 @@ begin
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'pool_switch_offline');
 
     assign_menu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',true,'pool_assign');
-    _addDisksToPool(assign_menu,nil,nil,TFRE_DB_StringArray.create(''),app,conn,ses);
+    _addDisksToPool(assign_menu,nil,nil,nil,app,conn,ses);
 
 
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_change_rl'),'');
@@ -2667,8 +2667,8 @@ begin
     CheckDbResult(vdevs.Store(tspare.CloneToNewObject()),'Assign spare');
   end;
   tpool.setIsModified;
-  CheckDbResult(conn.Update(tpool),'Assign spare');
   res.addUpdatedEntry(_getTreeObj(conn,tpool)); //FIXXME - remove store update
+  CheckDbResult(conn.Update(tpool),'Assign spare');
   for i := 0 to input.Field('disks').ValueCount - 1 do begin
     lastIdx:=tspare.getLastChildId(conn); //FIXXME - remove store update
     disk:=_getZFSObj(conn,input.Field('disks').AsStringArr[i]);
@@ -2715,8 +2715,8 @@ begin
     CheckDbResult(vdevs.Store(tcache.CloneToNewObject()),'Assign cache');
   end;
   tpool.setIsModified;
-  CheckDbResult(conn.Update(tpool),'Assign spare');
   res.addUpdatedEntry(_getTreeObj(conn,tpool)); //FIXXME - remove store update
+  CheckDbResult(conn.Update(tpool),'Assign spare');
   for i := 0 to input.Field('disks').ValueCount - 1 do begin
     lastIdx:=tcache.getLastChildId(conn); //FIXXME - remove store update
     disk:=_getZFSObj(conn,input.Field('disks').AsStringItem[i]);
@@ -3283,7 +3283,7 @@ var
   res : TFRE_DB_UPDATE_UI_ELEMENT_DESC;
 begin
   menu:=TFRE_DB_MENU_DESC.create.Describe;
-  _addDisksToPool(menu,nil,nil,TFRE_DB_StringArray.create(''),app,conn,ses);
+  _addDisksToPool(menu,nil,nil,nil,app,conn,ses);
   res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_assign',menu);
   ses.SendServerClientRequest(res);
 end;
