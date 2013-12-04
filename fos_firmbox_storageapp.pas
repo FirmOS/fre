@@ -51,7 +51,8 @@ type
     function        _getTreeObj                (const conn: IFRE_DB_CONNECTION; const zfsObj: TFRE_DB_ZFS_OBJ):IFRE_DB_Object;
     procedure       _unassignDisk              (const upool:TFRE_DB_ZFS_UNASSIGNED; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
     function        _getNextVdevNum            (const siblings: IFRE_DB_ObjectArray): Integer;
-    procedure       _getMultiselectionActions  (const conn: IFRE_DB_CONNECTION; const input :IFRE_DB_Object;var fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled:Boolean);
+    procedure       _getMultiselectionActions  (const conn: IFRE_DB_CONNECTION; const selected :TFRE_DB_StringArray;var fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled:Boolean);
+    procedure       _updateToolbar             (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
@@ -68,7 +69,8 @@ type
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolStructureSC       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBAssign              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBToggleOnlineMode    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBSwitchOnline        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBSwitchOffline       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBIdentifyOn          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBIdentifyOff         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBRemoveNew           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -94,8 +96,8 @@ type
     function        WEB_ChangeRaidLevel       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DestroyPool           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DestroyPoolConfirmed  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_Identify_on           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_Identify_off          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_IdentifyOn            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_IdentifyOff           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_SwitchOffline         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_SwitchOnline          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_SaveConfig            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2126,14 +2128,16 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  main      : TFRE_DB_LAYOUT_DESC;
-  grid      : TFRE_DB_VIEW_LIST_DESC;
-  store     : TFRE_DB_STORE_DESC;
-  glayout   : TFRE_DB_VIEW_LIST_LAYOUT_DESC;
-  secs      : TFRE_DB_SUBSECTIONS_DESC;
-  coll      : IFRE_DB_DERIVED_COLLECTION;
-  menu      : TFRE_DB_MENU_DESC;
-  submenu   : TFRE_DB_SUBMENU_DESC;
+  main       : TFRE_DB_LAYOUT_DESC;
+  grid       : TFRE_DB_VIEW_LIST_DESC;
+  store      : TFRE_DB_STORE_DESC;
+  glayout    : TFRE_DB_VIEW_LIST_LAYOUT_DESC;
+  secs       : TFRE_DB_SUBSECTIONS_DESC;
+  coll       : IFRE_DB_DERIVED_COLLECTION;
+  menu       : TFRE_DB_MENU_DESC;
+  submenu    : TFRE_DB_SUBMENU_DESC;
+  sf         : TFRE_DB_SERVER_FUNC_DESC;
+  assign_menu: TFRE_DB_SUBMENU_DESC;
 begin
   CheckClassVisibility(ses);
 
@@ -2155,20 +2159,6 @@ begin
     grid.SetDropGrid(grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
     grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
 
-    //grid.AddButton.DescribeManualType('pool_save',CWSF(@WEB_SaveConfig),'',app.FetchAppTextShort(ses,'$tb_save_config'),'',true);
-    //grid.AddButton.DescribeManualType('pool_reset',CWSF(@WEB_ResetConfig),'',app.FetchAppTextShort(ses,'$tb_reset_config'),'',true);
-    //
-    //grid.AddButton.Describe(CWSF(@WEB_CreatePoolDiag),'',app.FetchAppTextShort(ses,'$tb_create_pool'));
-    //grid.AddButton.Describe(CWSF(@WEB_ImportPoolDiag),'',app.FetchAppTextShort(ses,'$tb_import_pool'));
-    //
-    //grid.AddButton.DescribeManualType('pool_iden_on',CWSF(@WEB_TBIdentifyOn),'',app.FetchAppTextShort(ses,'$tb_identify_on'),'',true);
-    //grid.AddButton.DescribeManualType('pool_iden_off',CWSF(@WEB_TBIdentifyOff),'',app.FetchAppTextShort(ses,'$tb_identify_off'),'',true);
-    //grid.AddButton.DescribeManualType('pool_online_toggle',CWSF(@WEB_TBToggleOnlineMode),'',app.FetchAppTextShort(ses,'$tb_switch_offline'),'',true);
-    //grid.AddButton.DescribeManualType('pool_assign',CWSF(@WEB_TBAssign),'',app.FetchAppTextShort(ses,'$tb_assign'),'',true);
-    //grid.AddButton.DescribeManualType('pool_remove',CWSF(@WEB_TBRemoveNew),'',app.FetchAppTextShort(ses,'$tb_remove'),'',true);
-    //grid.AddButton.DescribeManualType('pool_destroy',CWSF(@WEB_TBDestroyPool),'',app.FetchAppTextShort(ses,'$tb_destroy'),'',true);
-    //grid.AddButton.DescribeManualType('pool_change_rl',CWSF(@WEB_TBChangeRL),'',app.FetchAppTextShort(ses,'$tb_change_rl'),'',true);
-
     menu:=TFRE_DB_MENU_DESC.create.Describe;
     menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_save_config'),'',CWSF(@WEB_SaveConfig),true,'pool_save');
     menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_reset_config'),'',CWSF(@WEB_ResetConfig),true,'pool_reset');
@@ -2181,14 +2171,28 @@ begin
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_blockdevices'),'');
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_on'),'',CWSF(@WEB_TBIdentifyOn),true,'pool_iden_on');
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_off'),'',CWSF(@WEB_TBIdentifyOff),true,'pool_iden_off');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_online_offline'),'',CWSF(@WEB_TBToggleOnlineMode),true,'pool_online_toggle');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',CWSF(@WEB_TBAssign),true,'pool_assign');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_online'),'',CWSF(@WEB_TBSwitchOnline),true,'pool_switch_online');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'pool_switch_offline');
+
+    assign_menu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',true,'pool_assign');
+    _addDisksToPool(nil,nil,TFRE_DB_StringArray.create(''),app,conn,ses);
+
 
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_change_rl'),'');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_mirror'),'',CWSF(@WEB_TBChangeRaidLevel),true,'pool_rl_mirror');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z1'),'',CWSF(@WEB_TBChangeRaidLevel),true,'pool_rl_z1');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z2'),'',CWSF(@WEB_TBChangeRaidLevel),true,'pool_rl_z2');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z3'),'',CWSF(@WEB_TBChangeRaidLevel),true,'pool_rl_z3');
+    sf:=CWSF(@WEB_TBChangeRaidLevel);
+    sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_mirror'),'',sf,true,'pool_rl_mirror');
+    sf:=CWSF(@WEB_TBChangeRaidLevel);
+    sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z1'),'',sf,true,'pool_rl_z1');
+    sf:=CWSF(@WEB_TBChangeRaidLevel);
+    sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z2'),'',sf,true,'pool_rl_z2');
+    sf:=CWSF(@WEB_TBChangeRaidLevel);
+    sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z3'),'',sf,true,'pool_rl_z3');
+
+    menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_remove'),'',CWSF(@WEB_TBRemoveNew),true,'pool_remove');
 
     grid.SetMenu(menu);
   end;
@@ -2198,78 +2202,17 @@ begin
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolStructureSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  fnIdentifyOn,fnIdentifyOff, fnRemove, fnAssign, fnSwitchOffline, fnSwitchOnline: Boolean;
-  fnSwitchOfflineDisabled, fnSwitchOnlineDisabled: Boolean;
-  fnDestroy: Boolean;
-  fnRLMirrorDisabled,fnRLZ1Disabled,fnRLZ2Disabled,fnRLZ3Disabled: Boolean;
-  zfsObj: TFRE_DB_ZFS_OBJ;
-  vdev: TFRE_DB_ZFS_VDEV;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  fnIdentifyOn:=false;
-  fnIdentifyOff:=false;
-  fnAssign:=false;
-  fnSwitchOfflineDisabled:=true;
-  fnSwitchOnlineDisabled:=true;
-  fnRemove:=false;
-  fnDestroy:=false;
-  fnRLMirrorDisabled:=true;
-  fnRLZ1Disabled:=true;
-  fnRLZ2Disabled:=true;
-  fnRLZ3Disabled:=true;
-  if input.Field('selected').ValueCount>1 then begin
-    _getMultiselectionActions(conn,input,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
+    ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr:=input.Field('selected').AsStringArr;
   end else begin
-    if input.Field('selected').ValueCount=1 then begin
-      zfsObj:=_getZFSObj(conn,input.Field('selected').AsString);
-      if zfsObj.getisNew then begin
-        fnRemove:=true;
-        if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
-           vdev:=zfsObj as TFRE_DB_ZFS_VDEV;
-           fnRLMirrorDisabled:=(vdev.raidLevel=zfs_rl_mirror);
-           fnRLZ1Disabled:=(vdev.raidLevel=zfs_rl_z1);
-           fnRLZ2Disabled:=(vdev.raidLevel=zfs_rl_z2);
-           fnRLZ3Disabled:=(vdev.raidLevel=zfs_rl_z3);
-        end;
-      end else begin
-        if zfsObj is TFRE_DB_ZFS_POOL then begin
-          fnDestroy:=true;
-        end;
-        if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin
-          fnSwitchOfflineDisabled:=(zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline;
-          fnSwitchOnlineDisabled:=not fnSwitchOfflineDisabled;
-          if (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then begin
-            fnAssign:=true;
-          end;
-        end;
-      end;
-      fnIdentifyOn:=zfsObj.canIdentify;
-      fnIdentifyOff:=fnIdentifyOn;
-    end;
-  end;
-  if fnSwitchOnlineDisabled and fnSwitchOfflineDisabled then begin
-    ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_online_toggle',true,app.FetchAppTextShort(ses,'$tb_switch_online_offline')));
-  end else begin
-    if fnSwitchOnlineDisabled then begin
-      ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_online_toggle',false,app.FetchAppTextShort(ses,'$tb_switch_offline')));
-    end else begin
-      ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_online_toggle',false,app.FetchAppTextShort(ses,'$tb_switch_online')));
-    end;
+    ses.GetSessionModuleData(ClassName).DeleteField('selectedZfsObjs')
   end;
 
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_iden_on',not fnIdentifyOn));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_iden_off',not fnIdentifyOff));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_assign',not fnAssign));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_remove',not fnRemove));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_destroy',not fnDestroy));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_mirror',fnRLMirrorDisabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z1',fnRLZ1Disabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z2',fnRLZ2Disabled));
-  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z3',fnRLZ3Disabled));
-
+  _updateToolbar(conn,ses);
   Result:=GFRE_DB_NIL_DESC;
 end;
 
@@ -2281,52 +2224,67 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBToggleOnlineMode(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBSwitchOnline(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
-  //FIXXME implement me
-  Result:=GFRE_DB_NIL_DESC;
+
+  input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  Result:=WEB_SwitchOnline(input,ses,app,conn);
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBSwitchOffline(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  Result:=WEB_SwitchOffline(input,ses,app,conn);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBIdentifyOn(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
-  //FIXXME implement me
-  Result:=GFRE_DB_NIL_DESC;
+
+  input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  Result:=WEB_IdentifyOn(input,ses,app,conn);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBIdentifyOff(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
-  //FIXXME implement me
-  Result:=GFRE_DB_NIL_DESC;
+
+  input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  Result:=WEB_IdentifyOff(input,ses,app,conn);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBRemoveNew(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
-  //FIXXME implement me
-  Result:=GFRE_DB_NIL_DESC;
+
+  input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  Result:=WEB_RemoveNew(input,ses,app,conn);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBChangeRaidLevel(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
-  //FIXXME implement me
-  Result:=GFRE_DB_NIL_DESC;
+
+  input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  Result:=WEB_ChangeRaidLevel(input,ses,app,conn);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBDestroyPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
-  //FIXXME implement me
-  Result:=GFRE_DB_NIL_DESC;
+
+  input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  Result:=WEB_DestroyPool(input,ses,app,conn);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolLayout(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2485,7 +2443,7 @@ begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
     if input.Field('selected').ValueCount>1 then begin //multiselection
-      _getMultiselectionActions(conn,input,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
+      _getMultiselectionActions(conn,input.Field('selected').AsStringArr,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
       if fnAssign then begin;
         res:=_addDisksToPool(nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
       end;
@@ -2495,12 +2453,12 @@ begin
         res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_multiple_remove'),'%num%',IntToStr(input.field('selected').ValueCount),[rfReplaceAll]),'images_apps/firmbox_storage/cm_multiple_remove.png',sf);
       end;
       if fnIdentifyOn then begin
-        sf:=CWSF(@WEB_Identify_on);
+        sf:=CWSF(@WEB_IdentifyOn);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
         res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_on'),'images_apps/firmbox_storage/cm_identify.png',sf);
       end;
       if fnIdentifyOff then begin
-        sf:=CWSF(@WEB_Identify_off);
+        sf:=CWSF(@WEB_IdentifyOff);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
         res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_off'),'images_apps/firmbox_storage/cm_identify.png',sf);
       end;
@@ -2573,10 +2531,10 @@ begin
         end;
       end;
       if zfsObj.canIdentify then begin
-        sf:=CWSF(@WEB_Identify_on);
+        sf:=CWSF(@WEB_IdentifyOn);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
         res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_on'),'images_apps/firmbox_storage/cm_identify.png',sf);
-        sf:=CWSF(@WEB_Identify_off);
+        sf:=CWSF(@WEB_IdentifyOff);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
         res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_off'),'images_apps/firmbox_storage/cm_identify.png',sf);
       end;
@@ -3028,6 +2986,7 @@ begin
   CheckDbResult(conn.Update(vdev),'Change raid level');
   ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_reset',false));
+  _updateToolbar(conn,ses);
   Result:=res;
 end;
 
@@ -3056,7 +3015,7 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Destroy Pool confirmed','Please implement me',fdbmt_info);
 end;
 
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_Identify_on(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_IdentifyOn(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   disk   : TFRE_DB_ZFS_OBJ;
@@ -3076,7 +3035,7 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_Identify_off(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_IdentifyOff(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   disk   : TFRE_DB_ZFS_OBJ;
@@ -3141,6 +3100,7 @@ begin
       CheckDbResult(conn.Update(disk),'Switch online');
     end;
   end;
+  _updateToolbar(conn,ses);
   ses.SendServerClientRequest(update); //FIXXME - remove store update
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Online','Switch online (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
 end;
@@ -3202,7 +3162,7 @@ begin
   Result:=num+1;
 end;
 
-procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._getMultiselectionActions(const conn: IFRE_DB_CONNECTION; const input: IFRE_DB_Object; var fnIdentifyOn, fnIdentifyOff, fnRemove, fnAssign, fnSwitchOffline, fnSwitchOnline, fnSwitchOfflineDisabled, fnSwitchOnlineDisabled: Boolean);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._getMultiselectionActions(const conn: IFRE_DB_CONNECTION; const selected: TFRE_DB_StringArray; var fnIdentifyOn, fnIdentifyOff, fnRemove, fnAssign, fnSwitchOffline, fnSwitchOnline, fnSwitchOfflineDisabled, fnSwitchOnlineDisabled: Boolean);
 var
   i     : Integer;
   zfsObj: TFRE_DB_ZFS_OBJ;
@@ -3217,8 +3177,8 @@ begin
   fnSwitchOfflineDisabled:=false;
   fnSwitchOnlineDisabled:=false;
 
-  for i := 0 to input.Field('selected').ValueCount - 1 do begin
-    zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
+  for i := 0 to Length(selected) - 1 do begin
+    zfsObj:=_getZFSObj(conn,selected[i]);
     fnIdentifyOn:=fnIdentifyOn and zfsObj.canIdentify;
     pool:=zfsObj.getPool(conn);
     if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin //check if all selected objects are disks
@@ -3248,6 +3208,75 @@ begin
     end;
   end;
   fnIdentifyOff:=fnIdentifyOn;
+end;
+
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbar(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
+var
+  fnIdentifyOn,fnIdentifyOff, fnRemove, fnAssign, fnSwitchOffline, fnSwitchOnline: Boolean;
+  fnSwitchOfflineDisabled, fnSwitchOnlineDisabled: Boolean;
+  fnDestroy: Boolean;
+  fnRLMirrorDisabled,fnRLZ1Disabled,fnRLZ2Disabled,fnRLZ3Disabled: Boolean;
+  zfsObj: TFRE_DB_ZFS_OBJ;
+  vdev: TFRE_DB_ZFS_VDEV;
+  selected: TFRE_DB_StringArray;
+begin
+  fnIdentifyOn:=false;
+  fnIdentifyOff:=false;
+  fnAssign:=false;
+  fnSwitchOfflineDisabled:=true;
+  fnSwitchOnlineDisabled:=true;
+  fnRemove:=false;
+  fnDestroy:=false;
+  fnRLMirrorDisabled:=true;
+  fnRLZ1Disabled:=true;
+  fnRLZ2Disabled:=true;
+  fnRLZ3Disabled:=true;
+  fnRemove:=false;
+
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedZfsObjs') then begin
+    selected:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+    if Length(selected)>1 then begin
+      _getMultiselectionActions(conn,selected,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
+    end else begin
+      zfsObj:=_getZFSObj(conn,selected[0]);
+      if zfsObj.getisNew then begin
+        fnRemove:=true;
+        if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
+           vdev:=zfsObj as TFRE_DB_ZFS_VDEV;
+           fnRLMirrorDisabled:=(vdev.raidLevel=zfs_rl_mirror);
+           fnRLZ1Disabled:=(vdev.raidLevel=zfs_rl_z1);
+           fnRLZ2Disabled:=(vdev.raidLevel=zfs_rl_z2);
+           fnRLZ3Disabled:=(vdev.raidLevel=zfs_rl_z3);
+        end;
+      end else begin
+        if zfsObj is TFRE_DB_ZFS_POOL then begin
+          fnDestroy:=true;
+        end;
+        if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin
+          fnSwitchOfflineDisabled:=(zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline;
+          fnSwitchOnlineDisabled:=not fnSwitchOfflineDisabled;
+          if (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then begin
+            fnAssign:=true;
+          end;
+        end;
+      end;
+      fnIdentifyOn:=zfsObj.canIdentify;
+      fnIdentifyOff:=fnIdentifyOn;
+    end;
+  end;
+
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_switch_online',fnSwitchOnlineDisabled));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_switch_offline',fnSwitchOfflineDisabled));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_iden_on',not fnIdentifyOn));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_iden_off',not fnIdentifyOff));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_assign',not fnAssign));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_remove',not fnRemove));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_destroy',not fnDestroy));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_mirror',fnRLMirrorDisabled));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z1',fnRLZ1Disabled));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z2',fnRLZ2Disabled));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_rl_z3',fnRLZ3Disabled));
+  ses.SendServerClientRequest(TFRE_DB_SET_BUTTON_STATE_DESC.create.Describe('pool_remove',not fnRemove));
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_SaveConfig(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -3511,7 +3540,6 @@ begin
       CreateAppText(conn,'$tb_blockdevices','Disk');
       CreateAppText(conn,'$tb_switch_offline','Switch offline');
       CreateAppText(conn,'$tb_switch_online','Switch online');
-      CreateAppText(conn,'$tb_switch_online_offline','Switch online/offline');
       CreateAppText(conn,'$tb_identify_on','Identify on');
       CreateAppText(conn,'$tb_identify_off','Identify off');
       CreateAppText(conn,'$tb_assign','Assign');
