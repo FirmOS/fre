@@ -45,7 +45,7 @@ type
   TFRE_FIRMBOX_STORAGE_POOLS_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     procedure       _addDisksToPool                     (const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target:TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
-    procedure       _replaceDisks                       (const menu: TFRE_DB_MENU_DESC; const conn: IFRE_DB_CONNECTION);
+    procedure       _replaceDisks                       (const menu: TFRE_DB_MENU_DESC; const newId: String; const conn: IFRE_DB_CONNECTION);
     function        _getZFSObj                          (const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_OBJ;
     function        _getPoolByName                      (const conn: IFRE_DB_CONNECTION; const name: String): TFRE_DB_ZFS_ROOTOBJ;
     function        _getUnassignedPool                  (const conn: IFRE_DB_CONNECTION): TFRE_DB_ZFS_UNASSIGNED;
@@ -1932,7 +1932,7 @@ begin
   end;
 end;
 
-procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._replaceDisks(const menu: TFRE_DB_MENU_DESC; const conn: IFRE_DB_CONNECTION);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._replaceDisks(const menu: TFRE_DB_MENU_DESC; const newId: String; const conn: IFRE_DB_CONNECTION);
 var
   blockdevicecollection: IFRE_DB_COLLECTION;
 
@@ -1946,6 +1946,9 @@ var
       if (bd.getPool(conn).Implementor_HC is TFRE_DB_ZFS_POOL) then begin
         sf:=CWSF(@WEB_Replace);
         sf.AddParam.Describe('old',bd.getId);
+        if newId<>'' then begin
+          sf.AddParam.Describe('new',newId);
+        end;
         menu.AddEntry.Describe(bd.caption,'',sf);
       end;
     end;
@@ -2200,7 +2203,7 @@ begin
     _addDisksToPool(subsubmenu,nil,nil,nil,app,conn,ses);
 
     subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_replace'),'',true,'pool_replace');
-    _replaceDisks(subsubmenu,conn);
+    _replaceDisks(subsubmenu,'',conn);
 
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_change_rl'),'');
     sf:=CWSF(@WEB_TBChangeRaidLevel);
@@ -2505,6 +2508,8 @@ begin
       pool:=zfsObj.getPool(conn);
       if (pool is TFRE_DB_ZFS_UNASSIGNED) and (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) then begin
         _addDisksToPool(res,nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
+        sub:=res.AddMenu.Describe(app.FetchAppTextShort(ses,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png');
+        _replaceDisks(sub,input.Field('selected').AsString,conn);
       end else begin
         if (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) and not zfsObj.getIsNew then begin
           if (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
@@ -3349,7 +3354,7 @@ begin
   res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_assign',menu);
   ses.SendServerClientRequest(res);
   menu:=TFRE_DB_MENU_DESC.create.Describe;
-  _replaceDisks(menu,conn);
+  _replaceDisks(menu,'',conn);
   res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_replace',menu);
   ses.SendServerClientRequest(res);
 end;
