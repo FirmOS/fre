@@ -44,66 +44,67 @@ type
 
   TFRE_FIRMBOX_STORAGE_POOLS_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
-    procedure       _addDisksToPool            (const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target:TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
-    function        _getZFSObj                 (const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_OBJ;
-    function        _getPoolByName             (const conn: IFRE_DB_CONNECTION; const name: String): TFRE_DB_ZFS_ROOTOBJ;
-    function        _getUnassignedPool         (const conn: IFRE_DB_CONNECTION): TFRE_DB_ZFS_UNASSIGNED;
-    function        _getTreeObj                (const conn: IFRE_DB_CONNECTION; const zfsObj: TFRE_DB_ZFS_OBJ):IFRE_DB_Object;
-    procedure       _unassignDisk              (const upool:TFRE_DB_ZFS_UNASSIGNED; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
-    function        _getNextVdevNum            (const siblings: IFRE_DB_ObjectArray): Integer;
-    procedure       _getMultiselectionActions  (const conn: IFRE_DB_CONNECTION; const selected :TFRE_DB_StringArray;var fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled:Boolean);
-    procedure       _updateToolbar             (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
-    procedure       _updateToolbarAssignEntry  (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
+    procedure       _addDisksToPool                     (const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target:TFRE_DB_ZFS_OBJ; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
+    procedure       _replaceDisks                       (const menu: TFRE_DB_MENU_DESC; const conn: IFRE_DB_CONNECTION);
+    function        _getZFSObj                          (const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_OBJ;
+    function        _getPoolByName                      (const conn: IFRE_DB_CONNECTION; const name: String): TFRE_DB_ZFS_ROOTOBJ;
+    function        _getUnassignedPool                  (const conn: IFRE_DB_CONNECTION): TFRE_DB_ZFS_UNASSIGNED;
+    function        _getTreeObj                         (const conn: IFRE_DB_CONNECTION; const zfsObj: TFRE_DB_ZFS_OBJ):IFRE_DB_Object;
+    procedure       _unassignDisk                       (const upool:TFRE_DB_ZFS_UNASSIGNED; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
+    function        _getNextVdevNum                     (const siblings: IFRE_DB_ObjectArray): Integer;
+    procedure       _getMultiselectionActions           (const conn: IFRE_DB_CONNECTION; const selected :TFRE_DB_StringArray;var fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled:Boolean);
+    procedure       _updateToolbar                      (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
+    procedure       _updateToolbarAssignAndReplaceEntry (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
   protected
-    class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    procedure       SetupAppModuleStructure   ; override;
-    function        Usage                     (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
-    function        ServiceTime               (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
-    function        BusyTime                  (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
-    function        ReadBW                    (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
-    function        WriteBW                   (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
-    procedure       UpdateDiskCollection      (const pool_disks : IFRE_DB_COLLECTION ; const data:IFRE_DB_Object);
+    class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    procedure       SetupAppModuleStructure             ; override;
+    function        Usage                               (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
+    function        ServiceTime                         (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
+    function        BusyTime                            (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
+    function        ReadBW                              (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
+    function        WriteBW                             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession):TFRE_DB_CONTENT_DESC;
+    procedure       UpdateDiskCollection                (const pool_disks : IFRE_DB_COLLECTION ; const data:IFRE_DB_Object);
   public
-    procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
-    procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
+    procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
+    procedure       MyServerInitializeModule            (const admin_dbc : IFRE_DB_CONNECTION); override;
   published
-    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolStructureSC       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBAssign              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBSwitchOnline        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBSwitchOffline       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBIdentifyOn          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBIdentifyOff         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBRemoveNew           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBChangeRaidLevel     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TBDestroyPool         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolLayout            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolSpace             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolNotes             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolNotesLoad         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolNotesSave         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TreeGridData          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_TreeDrop              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_GridMenu              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_UpdatePoolsTree       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_CreatePool            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_CreatePoolDiag        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ImportPoolDiag        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_AssignSpareDisk       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_AssignCacheDisk       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_AssignLogDisk         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_AssignStorageDisk     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_RemoveNew             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ChangeRaidLevel       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DestroyPool           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DestroyPoolConfirmed  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_IdentifyOn            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_IdentifyOff           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_SwitchOffline         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_SwitchOnline          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_SaveConfig            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ResetConfig           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_Replace               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolStructureSC                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBAssign                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBSwitchOnline                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBSwitchOffline                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBIdentifyOn                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBIdentifyOff                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBRemoveNew                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBChangeRaidLevel               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBDestroyPool                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolLayout                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolSpace                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolNotes                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolNotesLoad                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolNotesSave                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TreeGridData                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TreeDrop                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_GridMenu                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_UpdatePoolsTree                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CreatePool                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CreatePoolDiag                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ImportPoolDiag                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AssignSpareDisk                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AssignCacheDisk                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AssignLogDisk                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AssignStorageDisk               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RemoveNew                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ChangeRaidLevel                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DestroyPool                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DestroyPoolConfirmed            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_IdentifyOn                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_IdentifyOff                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_SwitchOffline                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_SwitchOnline                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_SaveConfig                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ResetConfig                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Replace                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -1589,6 +1590,7 @@ var
   firstPool: IFRE_DB_Object;
   disk     : TFRE_DB_ZFS_OBJ;
   pools    : IFRE_DB_COLLECTION;
+  sf       : TFRE_DB_SERVER_FUNC_DESC;
 
   procedure _addDatastorageMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const expandStorage: Boolean; const storageRL: TFRE_DB_ZFS_RAID_LEVEL; const addStorage: IFRE_DB_ObjectArray);
   var
@@ -1906,7 +1908,10 @@ begin
     end else begin
       if target.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
         disk:=_getZFSObj(conn,disks[0]);
-        menu.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png',CWSF(@WEB_Replace),target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
+        sf:=CWSF(@WEB_Replace);
+        sf.AddParam.Describe('old',target.getId);
+        sf.AddParam.Describe('new',disk.getId);
+        menu.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png',sf,target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
       end else begin
         _addPoolMenu(menu,pool,target as TFRE_DB_ZFS_OBJ);
       end;
@@ -1925,6 +1930,30 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._replaceDisks(const menu: TFRE_DB_MENU_DESC; const conn: IFRE_DB_CONNECTION);
+var
+  blockdevicecollection: IFRE_DB_COLLECTION;
+
+  procedure _checkBD(const obj: IFRE_DB_Object);
+  var
+    bd : TFRE_DB_ZFS_BLOCKDEVICE;
+    sf : TFRE_DB_SERVER_FUNC_DESC;
+  begin
+    if (obj.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE) then begin
+      bd:=obj.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE;
+      if (bd.getPool(conn).Implementor_HC is TFRE_DB_ZFS_POOL) then begin
+        sf:=CWSF(@WEB_Replace);
+        sf.AddParam.Describe('old',bd.getId);
+        menu.AddEntry.Describe(bd.caption,'',sf);
+      end;
+    end;
+  end;
+
+begin
+  blockdevicecollection:=conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
+  blockdevicecollection.ForAll(@_checkBD);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getZFSObj(const conn: IFRE_DB_CONNECTION; const id: String): TFRE_DB_ZFS_OBJ;
@@ -2130,7 +2159,7 @@ var
   menu       : TFRE_DB_MENU_DESC;
   submenu    : TFRE_DB_SUBMENU_DESC;
   sf         : TFRE_DB_SERVER_FUNC_DESC;
-  assign_menu: TFRE_DB_SUBMENU_DESC;
+  subsubmenu : TFRE_DB_SUBMENU_DESC;
 begin
   CheckClassVisibility(ses);
 
@@ -2167,9 +2196,11 @@ begin
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_online'),'',CWSF(@WEB_TBSwitchOnline),true,'pool_switch_online');
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'pool_switch_offline');
 
-    assign_menu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',true,'pool_assign');
-    _addDisksToPool(assign_menu,nil,nil,nil,app,conn,ses);
+    subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',true,'pool_assign');
+    _addDisksToPool(subsubmenu,nil,nil,nil,app,conn,ses);
 
+    subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_replace'),'',true,'pool_replace');
+    _replaceDisks(subsubmenu,conn);
 
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_change_rl'),'');
     sf:=CWSF(@WEB_TBChangeRaidLevel);
@@ -2612,7 +2643,7 @@ begin
 
   ses.SendServerClientRequest(storeup);
 
-  _updateToolbarAssignEntry(conn,ses,app);
+  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
@@ -2688,7 +2719,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
 
-  _updateToolbarAssignEntry(conn,ses,app);
+  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2741,7 +2772,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
 
-  _updateToolbarAssignEntry(conn,ses,app);
+  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2834,7 +2865,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
 
-  _updateToolbarAssignEntry(conn,ses,app);
+  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2927,7 +2958,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
 
-  _updateToolbarAssignEntry(conn,ses,app);
+  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -2987,7 +3018,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
 
-  _updateToolbarAssignEntry(conn,ses,app);
+  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -3010,7 +3041,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
   _updateToolbar(conn,ses);
-  _updateToolbarAssignEntry(conn,ses,app);
+  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
   Result:=res;
 end;
 
@@ -3037,7 +3068,7 @@ begin
 
   pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
 
-  _updateToolbarAssignEntry(conn,ses,app);
+  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Destroy Pool confirmed','Please implement me',fdbmt_info);
 end;
 
@@ -3240,7 +3271,7 @@ procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbar(const conn: IFRE_DB_CONN
 var
   fnIdentifyOn,fnIdentifyOff, fnRemove, fnAssign, fnSwitchOffline, fnSwitchOnline: Boolean;
   fnSwitchOfflineDisabled, fnSwitchOnlineDisabled: Boolean;
-  fnDestroy: Boolean;
+  fnDestroy,fnReplace: Boolean;
   fnRLMirrorDisabled,fnRLZ1Disabled,fnRLZ2Disabled,fnRLZ3Disabled: Boolean;
   zfsObj: TFRE_DB_ZFS_OBJ;
   vdev: TFRE_DB_ZFS_VDEV;
@@ -3249,6 +3280,7 @@ begin
   fnIdentifyOn:=false;
   fnIdentifyOff:=false;
   fnAssign:=false;
+  fnReplace:=false;
   fnSwitchOfflineDisabled:=true;
   fnSwitchOnlineDisabled:=true;
   fnRemove:=false;
@@ -3283,6 +3315,7 @@ begin
           fnSwitchOnlineDisabled:=not fnSwitchOfflineDisabled;
           if (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then begin
             fnAssign:=true;
+            fnReplace:=true;
           end;
         end;
       end;
@@ -3296,6 +3329,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_iden_on',not fnIdentifyOn));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_iden_off',not fnIdentifyOff));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_assign',not fnAssign));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_replace',not fnReplace));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_remove',not fnRemove));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_destroy',not fnDestroy));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_mirror',fnRLMirrorDisabled));
@@ -3305,7 +3339,7 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_remove',not fnRemove));
 end;
 
-procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbarAssignEntry(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbarAssignAndReplaceEntry(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
 var
   menu: TFRE_DB_MENU_DESC;
   res : TFRE_DB_UPDATE_UI_ELEMENT_DESC;
@@ -3313,6 +3347,10 @@ begin
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   _addDisksToPool(menu,nil,nil,nil,app,conn,ses);
   res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_assign',menu);
+  ses.SendServerClientRequest(res);
+  menu:=TFRE_DB_MENU_DESC.create.Describe;
+  _replaceDisks(menu,conn);
+  res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_replace',menu);
   ses.SendServerClientRequest(res);
 end;
 
@@ -3357,7 +3395,11 @@ begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Replace','Please implement me',fdbmt_info);
+  if not input.FieldExists('new') then begin
+    input.Field('new').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr[0];
+  end;
+
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Replace','Please implement me ('+input.Field('new').AsString+'=>'+input.Field('old').AsString+')',fdbmt_info);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.Usage(const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession): TFRE_DB_CONTENT_DESC;
@@ -3580,6 +3622,7 @@ begin
       CreateAppText(conn,'$tb_identify_on','Identify on');
       CreateAppText(conn,'$tb_identify_off','Identify off');
       CreateAppText(conn,'$tb_assign','Assign');
+      CreateAppText(conn,'$tb_replace','Replace');
       CreateAppText(conn,'$tb_remove','Remove');
       CreateAppText(conn,'$tb_change_rl','Change RL');
       CreateAppText(conn,'$tb_rl_mirror','Mirror');
