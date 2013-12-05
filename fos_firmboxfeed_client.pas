@@ -171,7 +171,7 @@ begin
   disk_hal   := TFRE_HAL_DISK.Create;
   disks_sent := false;
   pools_sent := false;
-  disk_hal.InitializeDiskInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
+  disk_hal.InitializeDiskandEnclosureInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
   disk_hal.InitializePoolInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
 end;
 
@@ -236,9 +236,9 @@ begin
     begin
  //     writeln('disks_sent',disks_sent);
  //     writeln('pools_sent',pools_sent);
-      if (disk_hal.IsDiskInformationAvailable) and (not disks_sent) then
+      if (disk_hal.IsDiskandEnclosureInformationAvailable) and (not disks_sent) then
         begin
-          SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetDiskInformation);
+          SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetDiskandEnclosureInformation);
           disks_sent:=true;
         end;
       if (disk_hal.IsPoolInformationAvailable) and (disks_sent) and (not pools_sent) then
