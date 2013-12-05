@@ -78,6 +78,8 @@ type
     function        WEB_TBRemoveNew                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBChangeRaidLevel               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBDestroyPool                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBExportPool                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_TBScrubPool                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolLayout                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolSpace                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolNotes                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -98,6 +100,8 @@ type
     function        WEB_ChangeRaidLevel                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DestroyPool                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DestroyPoolConfirmed            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ScrubPool                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ExportPool                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_IdentifyOn                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_IdentifyOff                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_SwitchOffline                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2191,7 +2195,9 @@ begin
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_pools'),'');
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_create_pool'),'',CWSF(@WEB_CreatePoolDiag));
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_import_pool'),'',CWSF(@WEB_ImportPoolDiag));
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_destroy'),'',CWSF(@WEB_TBDestroyPool),true,'pool_destroy');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_export_pool'),'',CWSF(@WEB_TBExportPool),true,'pool_export');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_scrub_pool'),'',CWSF(@WEB_TBScrubPool),true,'pool_scrub');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_destroy_pool'),'',CWSF(@WEB_TBDestroyPool),true,'pool_destroy');
 
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_blockdevices'),'');
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_on'),'',CWSF(@WEB_TBIdentifyOn),true,'pool_iden_on');
@@ -2312,6 +2318,24 @@ begin
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
   Result:=WEB_DestroyPool(input,ses,app,conn);
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBExportPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  input.Field('pool').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsString;
+  Result:=WEB_ExportPool(input,ses,app,conn);
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBScrubPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  input.Field('pool').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsString;
+  Result:=WEB_ScrubPool(input,ses,app,conn);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolLayout(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2557,6 +2581,12 @@ begin
         end;
       end else begin
         if zfsObj is TFRE_DB_ZFS_POOL then begin
+          sf:=CWSF(@WEB_ScrubPool);
+          sf.AddParam.Describe('pool',input.Field('selected').AsString);
+          res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_scrub_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
+          sf:=CWSF(@WEB_ExportPool);
+          sf.AddParam.Describe('pool',input.Field('selected').AsString);
+          res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_export_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
           sf:=CWSF(@WEB_DestroyPool);
           sf.AddParam.Describe('pool',input.Field('selected').AsString);
           res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_destroy_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'images_apps/firmbox_storage/cm_destroy_pool.png',sf,zfsObj.getIsModified);
@@ -3077,6 +3107,29 @@ begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Destroy Pool confirmed','Please implement me',fdbmt_info);
 end;
 
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_ScrubPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  pool: TFRE_DB_ZFS_ROOTOBJ;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Scrub Pool','Please implement me',fdbmt_info);
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_ExportPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  pool: TFRE_DB_ZFS_ROOTOBJ;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Export Pool','Please implement me',fdbmt_info);
+end;
+
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_IdentifyOn(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
@@ -3276,7 +3329,7 @@ procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbar(const conn: IFRE_DB_CONN
 var
   fnIdentifyOn,fnIdentifyOff, fnRemove, fnAssign, fnSwitchOffline, fnSwitchOnline: Boolean;
   fnSwitchOfflineDisabled, fnSwitchOnlineDisabled: Boolean;
-  fnDestroy,fnReplace: Boolean;
+  fnDestroy,fnExport,fnScrub,fnReplace: Boolean;
   fnRLMirrorDisabled,fnRLZ1Disabled,fnRLZ2Disabled,fnRLZ3Disabled: Boolean;
   zfsObj: TFRE_DB_ZFS_OBJ;
   vdev: TFRE_DB_ZFS_VDEV;
@@ -3290,6 +3343,8 @@ begin
   fnSwitchOnlineDisabled:=true;
   fnRemove:=false;
   fnDestroy:=false;
+  fnExport:=false;
+  fnScrub:=false;
   fnRLMirrorDisabled:=true;
   fnRLZ1Disabled:=true;
   fnRLZ2Disabled:=true;
@@ -3312,8 +3367,10 @@ begin
            fnRLZ3Disabled:=(vdev.raidLevel=zfs_rl_z3);
         end;
       end else begin
-        if zfsObj is TFRE_DB_ZFS_POOL then begin
+        if (zfsObj is TFRE_DB_ZFS_POOL) and not zfsObj.getIsModified then begin
           fnDestroy:=true;
+          fnScrub:=true;
+          fnExport:=true;
         end;
         if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin
           fnSwitchOfflineDisabled:=(zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline;
@@ -3337,6 +3394,8 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_replace',not fnReplace));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_remove',not fnRemove));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_destroy',not fnDestroy));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_scrub',not fnScrub));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_export',not fnExport));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_mirror',fnRLMirrorDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_z1',fnRLZ1Disabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_z2',fnRLZ2Disabled));
@@ -3618,6 +3677,8 @@ begin
       CreateAppText(conn,'$tb_import_pool','Import Pool');
       CreateAppText(conn,'$import_pool_diag_cap','Import Pool');
       CreateAppText(conn,'$import_pool_diag_msg','Feature disabled in Demo Mode.');
+      CreateAppText(conn,'$tb_export_pool','Export Pool');
+      CreateAppText(conn,'$tb_scrub_pool','Scrub Pool');
       CreateAppText(conn,'$tb_save_config','Save');
       CreateAppText(conn,'$tb_reset_config','Reset');
       CreateAppText(conn,'$tb_pools','Pool');
@@ -3634,7 +3695,7 @@ begin
       CreateAppText(conn,'$tb_rl_z1','Raid-Z1');
       CreateAppText(conn,'$tb_rl_z2','Raid-Z2');
       CreateAppText(conn,'$tb_rl_z3','Raid-Z3');
-      CreateAppText(conn,'$tb_destroy','Destroy');
+      CreateAppText(conn,'$tb_destroy_pool','Destroy');
       CreateAppText(conn,'$new_spare_caption','spare');
       CreateAppText(conn,'$new_log_caption','log');
       CreateAppText(conn,'$log_vdev_caption_rl_mirror','mirror-%num%');
@@ -3685,6 +3746,8 @@ begin
       CreateAppText(conn,'$cm_rl_z2','Raid-Z2');
       CreateAppText(conn,'$cm_rl_z3','Raid-Z3');
       CreateAppText(conn,'$cm_destroy_pool','Destroy pool %pool%');
+      CreateAppText(conn,'$cm_export_pool','Export pool %pool%');
+      CreateAppText(conn,'$cm_scrub_pool','Scrub pool %pool%');
 
       CreateAppText(conn,'$storage_global_filer_nfs','NFS Exports','NFS Exports','NFS Exports');
       CreateAppText(conn,'$storage_global_filer_lun','LUN Targets','LUN Targets','LUN Targets');
