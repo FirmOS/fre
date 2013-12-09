@@ -733,8 +733,7 @@ var
   sel_guid      : TGUID;
 
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_VIRTUAL_FILESHARE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  CheckClassVisibility(ses);
 
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
@@ -1056,8 +1055,7 @@ var
   lun_rightside : TFRE_DB_LAYOUT_DESC;
   lun           : TFRE_DB_LAYOUT_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_GLOBAL_FILESERVER) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  CheckClassVisibility(ses);
 
   dc_lun     := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
   grid_lun   := dc_lun.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -2026,6 +2024,9 @@ begin
     if not ((zfsObj.getPool(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) or zfsObj.getIsNew) then begin
       entry.Field('_disabledrag_').AsBoolean:=true;
     end;
+    if (zfsObj.getPool(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then begin
+      entry.Field('_disabledrop_').AsBoolean:=true;
+    end;
   end;
   entry.Field('uidpath').AsStringArr:=Self.GetUIDPath;
   entry.Field('_funcclassname_').AsString:=ClassName;
@@ -2158,7 +2159,8 @@ end;
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   main       : TFRE_DB_LAYOUT_DESC;
-  grid       : TFRE_DB_VIEW_LIST_DESC;
+  pool_grid  : TFRE_DB_VIEW_LIST_DESC;
+  layout_grid: TFRE_DB_VIEW_LIST_DESC;
   store      : TFRE_DB_STORE_DESC;
   glayout    : TFRE_DB_VIEW_LIST_LAYOUT_DESC;
   secs       : TFRE_DB_SUBSECTIONS_DESC;
@@ -2183,10 +2185,17 @@ begin
   glayout.AddDataElement.Describe('transfer_r','Read [MB/s]',dt_number);
   glayout.AddDataElement.Describe('transfer_w','Write [MB/s]',dt_number);
 
-  grid    := TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_Multiselect],nil,CWSF(@WEB_PoolStructureSC),nil,CWSF(@WEB_TreeDrop));
+  pool_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_Multiselect],nil,CWSF(@WEB_PoolStructureSC),nil,CWSF(@WEB_TreeDrop));
+
+  glayout  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
+  glayout.AddDataElement.Describe('caption','Caption',dt_string,2,true,false,'icon');
+  layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,nil,'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
+
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
-    grid.SetDropGrid(grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
-    grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
+    pool_grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
+    layout_grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
+    pool_grid.SetDropGrid(pool_grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
+    layout_grid.SetDropGrid(pool_grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
 
     menu:=TFRE_DB_MENU_DESC.create.Describe;
     menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_save_config'),'',CWSF(@WEB_SaveConfig),true,'pool_save');
@@ -2227,17 +2236,17 @@ begin
 
     menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_remove'),'',CWSF(@WEB_TBRemoveNew),true,'pool_remove');
 
-    grid.SetMenu(menu);
+    pool_grid.SetMenu(menu);
+    layout_grid.SetMenu(TFRE_DB_MENU_DESC.create.Describe);
   end;
 
-  main    := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid,secs,nil,nil,nil,true,2);
+  main    := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(layout_grid,pool_grid,secs,nil,nil,true,1,3,3);
   result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of disks and pools and their status. Update interval: 10s. The average IO size is 128kByte.</b>'));
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolStructureSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZFS_POOL) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  CheckClassVisibility(ses);
 
   if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
     ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr:=input.Field('selected').AsStringArr;
@@ -2340,8 +2349,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolLayout(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,  TFRE_DB_ZFS_POOL) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  CheckClassVisibility(ses);
   Result:=TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');
 end;
 
@@ -2350,8 +2358,7 @@ var
   res,center,top,bottom : TFRE_DB_LAYOUT_DESC;
   html                  : TFRE_DB_HTML_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZFS_POOL) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  CheckClassVisibility(ses);
 
   html:=TFRE_DB_HTML_DESC.create.Describe('<strong>Pool Company Data</strong> ONLINE (optimal health)<br />Full dataintegrity is verified. Currently there are no optimizations necessary.');
   //top:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(Usage(input),ServiceTime(input),nil,nil,nil,false,1,1);
@@ -2421,9 +2428,7 @@ var
   end;
 
 begin
-
-  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZFS_POOL) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  CheckClassVisibility(ses);
 
   if input.FieldExists('parentid') then begin
     writeln('Parent: ',input.Field('parentid').asstring);
@@ -3136,8 +3141,7 @@ var
   disk   : TFRE_DB_ZFS_OBJ;
   i      : Integer;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZFS_POOL) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  CheckClassVisibility(ses);
 
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
@@ -3156,8 +3160,7 @@ var
   disk   : TFRE_DB_ZFS_OBJ;
   i      : Integer;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZFS_POOL) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  CheckClassVisibility(ses);
 
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
