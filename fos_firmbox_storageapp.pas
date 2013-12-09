@@ -2160,7 +2160,9 @@ var
   pool_grid  : TFRE_DB_VIEW_LIST_DESC;
   layout_grid: TFRE_DB_VIEW_LIST_DESC;
   store      : TFRE_DB_STORE_DESC;
+  store_l    : TFRE_DB_STORE_DESC;
   glayout    : TFRE_DB_VIEW_LIST_LAYOUT_DESC;
+  glayout_l  : TFRE_DB_VIEW_LIST_LAYOUT_DESC;
   secs       : TFRE_DB_SUBSECTIONS_DESC;
   coll       : IFRE_DB_DERIVED_COLLECTION;
   menu       : TFRE_DB_MENU_DESC;
@@ -2185,9 +2187,10 @@ begin
 
   pool_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_Multiselect],nil,CWSF(@WEB_PoolStructureSC),nil,CWSF(@WEB_TreeDrop));
 
-  glayout  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
-  glayout.AddDataElement.Describe('caption','Caption',dt_string,2,true,false,'icon');
-  layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout,nil,'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
+  store_l    := TFRE_DB_STORE_DESC.create.Describe('id',CWSF(@WEB_TreeGridData),TFRE_DB_StringArray.create('caption'),nil,nil,'pools_store');
+  glayout_l  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
+  glayout_l.AddDataElement.Describe('caption','Caption',dt_string,2,true,false,'icon');
+  layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout_l,nil,'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
 
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
     pool_grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
