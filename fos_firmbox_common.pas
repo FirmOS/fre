@@ -62,13 +62,20 @@ begin
 
     collection  := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);  // ZFS GUID / WWN
     collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true);
-    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,false,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX);
+    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,true,false,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX,false);
     collection.DefineIndexOnField('devicename',fdbft_String,true,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_NAME_INDEX,false);
 
     collection  := conn.Collection(CFRE_DB_ENCLOSURE_COLLECTION);
-    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,false,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX,true);
+    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,true,false,CFRE_DB_ENCLOSURE_ID_INDEX,false);
 
     collection  := conn.Collection(CFRE_DB_SAS_EXPANDER_COLLECTION);
+    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,true,false,CFRE_DB_EXPANDER_ID_INDEX,false);
+
+    collection  := conn.Collection(CFRE_DB_DRIVESLOT_COLLECTION);
+    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,true,false,CFRE_DB_DRIVESLOT_ID_INDEX,false);
+    collection.DefineIndexOnField('targetport_1',fdbft_String,false,false,CFRE_DB_DRIVESLOT_TP1_INDEX,false);
+    collection.DefineIndexOnField('targetport_2',fdbft_String,false,false,CFRE_DB_DRIVESLOT_TP2_INDEX,false);
+
 
     collection  := conn.Collection('virtualmachine');
     collection.DefineIndexOnField('Mkey',fdbft_String,true,true);

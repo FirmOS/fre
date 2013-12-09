@@ -36,8 +36,6 @@ type
   published
     function        WEB_RAW_DISK_FEED           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DISK_DATA_FEED          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_POOL_DATA_FEED          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-
   end;
 
   { TFRE_FIRMBOX_STORAGE_POOLS_MOD }
@@ -2611,8 +2609,8 @@ var disk_data   : IFRE_DB_Object;
 begin
   //FIXXXME - please implement me!
   pool_disks := GetDBConnection(input).Collection('POOL_DISKS',false,true);
-  disk_data := DISKI_HACK.Get_Disk_Data;
-  UpdateDiskCollection(pool_disks,disk_data);
+//  disk_data := DISKI_HACK.Get_Disk_Data;
+//  UpdateDiskCollection(pool_disks,disk_data);
   result := GFRE_DB_NIL_DESC;
 end;
 
@@ -3887,6 +3885,9 @@ begin
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_PHYS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_PHYS_DISK for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SAS_DISK for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SATA_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SATA_DISK for group STORAGEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ENCLOSURE.GetClassStdRoles),'could not add roles TFRE_DB_ENCLOSURE for group STORAGEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_EXPANDER.GetClassStdRoles),'could not add roles TFRE_DB_SAS_EXPANDER for group STORAGEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_DRIVESLOT.GetClassStdRoles),'could not add roles TFRE_DB_DRIVESLOT for group STORAGEFEEDER');
 
 end;
 
@@ -3900,20 +3901,188 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
     ua_obj               : IFRE_DB_Object;
     poolcollection       : IFRE_DB_COLLECTION;
     blockdevicecollection: IFRE_DB_COLLECTION;
+    enclosurecollection  : IFRE_DB_COLLECTION;
+    expandercollection   : IFRE_DB_COLLECTION;
+    driveslotcollection  : IFRE_DB_COLLECTION;
+
     unassigned_uid       : TGUID;
-    i                    : NativeInt;
-    devices              : IFRE_DB_Field;
-    device               : TFRE_DB_PHYS_DISK;
-    db_device            : IFRE_DB_Object;
+    devices              : IFRE_DB_Object;
+    enclosures           : IFRE_DB_Object;
+    pools                : IFRE_DB_Object;
+
+    procedure            _DumpCollection(const obj:IFRE_DB_Object);
+    begin
+      writeln(obj.DumpToString);
+    end;
+
+    procedure            _UpdateEnclosures(const obj:IFRE_DB_Object);
+    var enclosure        : TFRE_DB_ENCLOSURE;
+        db_enclosure     : TFRE_DB_ENCLOSURE;
+        dbo              : IFRE_DB_Object;
+
+      procedure _UpdateDriveSlots(const obj:IFRE_DB_Object);
+      var driveslot      : TFRE_DB_DRIVESLOT;
+          db_driveslot   : TFRE_DB_DRIVESLOT;
+      begin
+        driveslot        := (obj.Implementor_HC as TFRE_DB_DRIVESLOT);
+        if driveslotcollection.GetIndexedObj(driveslot.DeviceIdentifier,dbo,CFRE_DB_DRIVESLOT_ID_INDEX) then
+          begin
+            db_driveslot.SetAllSimpleObjectFieldsFromObject(driveslot);
+            db_driveslot.ParentInEnclosureUID  := enclosure.UID;
+            CheckDbResult(driveslotcollection.Update(db_driveslot),'could not update driveslot');
+          end
+        else
+          begin
+            db_driveslot                      := driveslot.CloneToNewObject(false).Implementor_HC as TFRE_DB_DRIVESLOT;
+            db_driveslot.ParentInEnclosureUID := enclosure.UID;
+            CheckDbResult(driveslotcollection.Store(db_driveslot),'could not store driveslot');
+          end;
+      end;
+
+      procedure _UpdateExpanders(const obj:IFRE_DB_Object);
+      var expander       : TFRE_DB_SAS_EXPANDER;
+          db_expander    : TFRE_DB_SAS_EXPANDER;
+      begin
+        expander         := (obj.Implementor_HC as TFRE_DB_SAS_EXPANDER);
+        if expandercollection.GetIndexedObj(expander.DeviceIdentifier,dbo,CFRE_DB_EXPANDER_ID_INDEX) then
+          begin
+            db_expander.SetAllSimpleObjectFieldsFromObject(expander);
+            db_expander.ParentInEnclosureUID  := enclosure.UID;
+            CheckDbResult(expandercollection.Update(db_expander),'could not update expander');
+          end
+        else
+          begin
+            db_expander                       := expander.CloneToNewObject(false).Implementor_HC as TFRE_DB_SAS_EXPANDER;
+            db_expander.ParentInEnclosureUID  := enclosure.UID;
+            CheckDbResult(expandercollection.Store(db_expander),'could not store expander');
+          end;
+      end;
+
+    begin
+      enclosure      := (obj.Implementor_HC as TFRE_DB_ENCLOSURE);
+      if enclosurecollection.GetIndexedObj(enclosure.DeviceIdentifier,dbo,CFRE_DB_ENCLOSURE_ID_INDEX) then
+        begin
+          db_enclosure := dbo.Implementor_HC as TFRE_DB_ENCLOSURE;
+          db_enclosure.SetAllSimpleObjectFieldsFromObject(enclosure);
+          CheckDbResult(enclosurecollection.Update(db_enclosure),'could not update enclosure');
+        end
+      else
+        begin
+          db_enclosure := TFRE_DB_ENCLOSURE.CreateForDB;
+          db_enclosure.Field('UID').asGuid := enclosure.UID;
+          db_enclosure.SetAllSimpleObjectFieldsFromObject(enclosure);
+          CheckDbResult(enclosurecollection.Store(db_enclosure),'could not store enclosure');
+        end;
+      enclosure.Field('slots').AsObject.ForAllObjects(@_UpdateDriveSlots);
+      enclosure.Field('expanders').AsObject.ForAllObjects(@_UpdateExpanders);
+    end;
+
+
+    procedure            _UpdateDisks(const obj:IFRE_DB_Object);
+    var  disk               : TFRE_DB_PHYS_DISK;
+         db_disk            : TFRE_DB_PHYS_DISK;
+         dbo                : IFRE_DB_Object;
+    begin
+      disk := (obj.Implementor_HC as TFRE_DB_PHYS_DISK);
+      if blockdevicecollection.GetIndexedObj(disk.DeviceIdentifier,dbo,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX) then
+        begin
+          db_disk  := dbo.Implementor_HC as TFRE_DB_PHYS_DISK;
+          db_disk.Fw_revision := disk.Fw_revision;
+          db_disk.DeviceName  := disk.DeviceName;
+          if db_disk.FieldExists('target_port') then
+            db_disk.Field('target_port').AsStringArr := disk.Field('target_port').asstringArr;
+          CheckDbResult(blockdevicecollection.Update(db_disk),'could not update disk');
+        end
+      else
+        begin
+          writeln(disk.DeviceIdentifier,' ',disk.DeviceName);
+          dbo      := disk.CloneToNewObject;
+          db_disk  := dbo.Implementor_HC as TFRE_DB_PHYS_DISK;
+          db_disk.caption :=  disk.Devicename; // device.WWN+' ('+device.Manufacturer+' '+device.Model_number+' '+device.Serial_number+')';
+          unassigned_disks.addBlockdevice(db_disk);
+          CheckDbResult(blockdevicecollection.Store(db_disk),'store blockdevice in disk');
+        end;
+    end;
+
+    procedure _InsertDisksIntoSlots(const obj:IFRE_DB_Object);
+    var disk           : TFRE_DB_PHYS_DISK;
+        targetports    : TFRE_DB_StringArray;
+        i              : integer;
+        guida          : TFRE_DB_GUIDArray;
+        slotguid       : TGUID;
+        index_name     : string;
+        db_disk        : IFRE_DB_Object;
+
+        procedure _CheckSlot;
+        begin
+          if slotguid=CFRE_DB_NullGUID then
+            begin
+              if length(guida)<>1 then
+                raise EFRE_DB_Exception.Create(edb_ERROR,'index for driveslot delivered more than on driveslot for targetport '+targetports[i])
+              else
+                begin
+                  slotguid := guida[0];
+                end;
+            end
+          else
+            begin
+              if length(guida)<>1 then
+                raise EFRE_DB_Exception.Create(edb_ERROR,'index for driveslot delivered more than on driveslot for targetport '+targetports[i]);
+              if slotguid <> guida[0] then
+                raise EFRE_DB_Exception.Create(edb_ERROR,'index for driveslot delivered different driveslots for targetport '+targetports[i]);
+            end;
+        end;
+
+    begin
+      if (obj.Implementor_HC is TFRE_DB_PHYS_DISK) then
+        begin
+          disk        := (obj.Implementor_HC as TFRE_DB_PHYS_DISK);
+          targetports := disk.GetTargetPorts;
+          slotguid    := CFRE_DB_NullGUID;
+          for i:=low(targetports) to high(targetports) do
+            begin
+              if driveslotcollection.GetIndexedUIDs(targetports[i],guida,CFRE_DB_DRIVESLOT_TP1_INDEX) then
+                _CheckSlot
+              else
+                if driveslotcollection.GetIndexedUIDs(targetports[i],guida,CFRE_DB_DRIVESLOT_TP2_INDEX) then
+                  _CheckSlot;
+            end;
+          if slotguid<>CFRE_DB_NullGUID then
+            begin
+              if not blockdevicecollection.Fetch(disk.UID,db_disk) then
+                 raise EFRE_DB_Exception.Create(edb_ERROR,'could not fetch disk '+disk.UID_String);
+              (db_disk.Implementor_HC as TFRE_DB_PHYS_DISK).ParentInEnclosureUID:=slotguid;
+              CheckDbResult(blockdevicecollection.Update(db_disk),'update blockdevice with slot information');
+            end;
+        end;
+    end;
+
+    procedure _UpdatePools(const obj:IFRE_DB_Object);
+    var pool : TFRE_DB_ZFS_POOL;
+    begin
+      pool := (obj.Implementor_HC as TFRE_DB_ZFS_POOL);
+      pool.FlatEmbeddedAndStoreInCollections(conn);
+    end;
+
 begin
   writeln('DISKANDENCLOSUREDATAFEED');
 
   poolcollection         := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
-  blockdevicecollection   := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
+  blockdevicecollection  := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
+  enclosurecollection    := conn.Collection(CFRE_DB_ENCLOSURE_COLLECTION);
+  expandercollection     := conn.Collection(CFRE_DB_SAS_EXPANDER_COLLECTION);
+  driveslotcollection    := conn.Collection(CFRE_DB_DRIVESLOT_COLLECTION);
 
+//  writeln('DIENC',input.DumpToString());
+  enclosures             := input.Field('enclosures').AsObject;
+  enclosures.ForAllObjects(@_UpdateEnclosures);
 
-  devices := input.Field('data').AsObject.Field('enclosures');
-
+  writeln('DUMPENC');
+  enclosurecollection.ForAll(@_DumpCollection);
+  writeln('DUMPDRIVESLOTS');
+  driveslotcollection.ForAll(@_DumpCollection);
+  writeln('DUMPEXP');
+  expandercollection.ForAll(@_DumpCollection);
 
   if not poolcollection.GetIndexedObj('UNASSIGNED',ua_obj) then
     begin
@@ -3925,38 +4094,23 @@ begin
       CheckDbResult(poolcollection.Store(unassigned_disks),'could not store pool for unassigned disks');
       poolcollection.Fetch(unassigned_uid,ua_obj);
     end;
-
-
   unassigned_disks := (ua_obj.Implementor_HC as TFRE_DB_ZFS_UNASSIGNED);
-  devices := input.Field('data').AsObject.Field('disks');
-  for i := 0 to devices.ValueCount-1 do
-    begin
-      device := (devices.AsObjectItem[i].Implementor_HC as TFRE_DB_PHYS_DISK);
-      if not blockdevicecollection.ExistsIndexed(device.DeviceIdentifier,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX) then
-        begin
-          writeln(device.DeviceIdentifier,' ',device.DeviceName);
-          db_device  := device.CloneToNewObject;
-          (db_device.Implementor_HC as TFRE_DB_PHYS_DISK).caption :=  device.Devicename; // device.WWN+' ('+device.Manufacturer+' '+device.Model_number+' '+device.Serial_number+')';
-          unassigned_disks.addBlockdevice((db_device.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE));
-//          writeln(db_device.DumpToString());
-          CheckDbResult(blockdevicecollection.Store(db_device),'store blockdevice in disk data feed failed');
-        end;
-    end;
+
+  devices := input.Field('disks').AsObject;
+  devices.ForAllObjects(@_UpdateDisks);
+
+  // assign disks to driveslots
+
+  blockdevicecollection.ForAll(@_InsertDisksIntoSlots);
+  writeln('DUMPDRIVESWITHSLOT');
+  blockdevicecollection.ForAll(@_DumpCollection);
+
+  pools := input.Field('pools').AsObject;
+  pools.ForAllObjects(@_UpdatePools);
+
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_STORAGE_APP.WEB_POOL_DATA_FEED(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var i    : NativeInt;
-    pool : TFRE_DB_ZFS_POOL;
-begin
-  writeln('POOLDATAFEED');
-  for i:=0 to input.Field('data').ValueCount-1 do
-    begin
-      pool := (input.Field('data').AsObjectItem[i].Implementor_HC as TFRE_DB_ZFS_POOL);
-      pool.FlatEmbeddedAndStoreInCollections(conn);
-    end;
-  result := GFRE_DB_NIL_DESC;
-end;
 
 
 end.
