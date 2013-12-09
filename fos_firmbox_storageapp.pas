@@ -3887,7 +3887,7 @@ begin
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_CACHE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_CACHE for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_SPARE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_SPARE for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_UNASSIGNED.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_SPARE for group STORAGEFEEDER');
-  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SCSI_DEVICE.GetClassStdRoles),'could not add roles TFRE_DB_SCSI_DEVICE for group STORAGEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_PHYS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_PHYS_DISK for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SAS_DISK for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SATA_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SATA_DISK for group STORAGEFEEDER');
 
@@ -3906,13 +3906,17 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
     unassigned_uid       : TGUID;
     i                    : NativeInt;
     devices              : IFRE_DB_Field;
-    device               : TFRE_DB_SCSI_Device;
+    device               : TFRE_DB_PHYS_DISK;
     db_device            : IFRE_DB_Object;
 begin
-  writeln('DISKDATAFEED');
+  writeln('DISKANDENCLOSUREDATAFEED');
 
   poolcollection         := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
   blockdevicecollection   := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
+
+
+  devices := input.Field('data').AsObject.Field('enclosures');
+
 
   if not poolcollection.GetIndexedObj('UNASSIGNED',ua_obj) then
     begin
@@ -3925,17 +3929,17 @@ begin
       poolcollection.Fetch(unassigned_uid,ua_obj);
     end;
 
-  unassigned_disks := (ua_obj.Implementor_HC as TFRE_DB_ZFS_UNASSIGNED);
 
+  unassigned_disks := (ua_obj.Implementor_HC as TFRE_DB_ZFS_UNASSIGNED);
   devices := input.Field('data').AsObject.Field('disks');
   for i := 0 to devices.ValueCount-1 do
     begin
-      device := (devices.AsObjectItem[i].Implementor_HC as TFRE_DB_SCSI_DEVICE);
+      device := (devices.AsObjectItem[i].Implementor_HC as TFRE_DB_PHYS_DISK);
       if not blockdevicecollection.ExistsIndexed(device.DeviceIdentifier,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX) then
         begin
           writeln(device.DeviceIdentifier,' ',device.DeviceName);
           db_device  := device.CloneToNewObject;
-          (db_device.Implementor_HC as TFRE_DB_SCSI_DEVICE).caption :=  device.Devicename; // device.WWN+' ('+device.Manufacturer+' '+device.Model_number+' '+device.Serial_number+')';
+          (db_device.Implementor_HC as TFRE_DB_PHYS_DISK).caption :=  device.Devicename; // device.WWN+' ('+device.Manufacturer+' '+device.Model_number+' '+device.Serial_number+')';
           unassigned_disks.addBlockdevice((db_device.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE));
 //          writeln(db_device.DumpToString());
           CheckDbResult(blockdevicecollection.Store(db_device),'store blockdevice in disk data feed failed');
