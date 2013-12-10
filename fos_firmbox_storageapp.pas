@@ -1804,14 +1804,14 @@ var
     raid_str        : String;
     sf              : TFRE_DB_SERVER_FUNC_DESC;
   begin
-    children:=pool.getChildren(conn);
+    children:=pool.getZFSChildren(conn);
     expandStorage:=false;
     expandLog:=false;
     storageRL:=zfs_rl_undefined;
     for i := 0 to length(children) - 1 do begin
       if children[i].Implementor_HC is TFRE_DB_ZFS_DATASTORAGE then begin
         storage:=children[i].Implementor_HC as TFRE_DB_ZFS_DATASTORAGE;
-        storageChildren:=storage.getChildren(conn);
+        storageChildren:=storage.getZFSChildren(conn);
         if Length(storageChildren)>0 then begin
           expandStorage:=True;
           if (storageChildren[0].Implementor_HC is TFRE_DB_ZFS_VDEV) then begin
@@ -1825,7 +1825,7 @@ var
               if storageRL<>vdev.raidLevel then begin
                 storageRL:=zfs_rl_undefined;
               end;
-              if vdev.acceptsNewChildren(conn) then begin
+              if vdev.acceptsNewZFSChildren(conn) then begin
                 SetLength(addStorage,Length(addStorage)+1);
                 addStorage[Length(addStorage)-1]:=storageChildren[j];
               end;
@@ -1838,11 +1838,11 @@ var
         end;
       end else
       if children[i].Implementor_HC is TFRE_DB_ZFS_LOG then begin
-        logChildren:=(children[i].Implementor_HC as TFRE_DB_ZFS_LOG).getChildren(conn);
+        logChildren:=(children[i].Implementor_HC as TFRE_DB_ZFS_LOG).getZFSChildren(conn);
         for j := 0 to Length(logChildren) - 1 do begin
           expandLog:=true;
           if (logChildren[j].Implementor_HC is TFRE_DB_ZFS_VDEV) then begin
-            if (logChildren[j].Implementor_HC as TFRE_DB_ZFS_VDEV).acceptsNewChildren(conn) then begin
+            if (logChildren[j].Implementor_HC as TFRE_DB_ZFS_VDEV).acceptsNewZFSChildren(conn) then begin
               SetLength(addLog,Length(addLog)+1);
               addLog[Length(addLog)-1]:=logChildren[j];
             end;
@@ -1861,7 +1861,7 @@ var
       _addDatastorageMenu(menu,pool,expandStorage,storageRL,addStorage);
     end else
     if target is TFRE_DB_ZFS_VDEV then begin
-      if target.acceptsNewChildren(conn) then begin
+      if target.acceptsNewZFSChildren(conn) then begin
         _addVdevMenu(menu,pool,target as TFRE_DB_ZFS_VDEV);
       end;
     end else
@@ -2015,9 +2015,9 @@ var
   entry : IFRE_DB_Object;
 begin
   entry:=GFRE_DBI.NewObject;
-  if zfsObj.mayHaveChildren then begin
+  if zfsObj.mayHaveZFSChildren then begin
     entry.Field('children').AsString:='UNCHECKED';
-    entry.Field('_disabledrop_').AsBoolean:=not zfsObj.acceptsNewChildren(conn);
+    entry.Field('_disabledrop_').AsBoolean:=not zfsObj.acceptsNewZFSChildren(conn);
   end else begin
     if not ((zfsObj.getPool(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) or zfsObj.getIsNew) then begin
       entry.Field('_disabledrag_').AsBoolean:=true;
@@ -2029,30 +2029,14 @@ begin
   entry.Field('uidpath').AsStringArr:=Self.GetUIDPath;
   entry.Field('_funcclassname_').AsString:=ClassName;
   entry.Field('_childrenfunc_').AsString:='TreeGridData';
-  if zfsObj.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
-    entry.Field('dndclass').AsString:='TFRE_DB_ZFS_BLOCKDEVICE';
-  end else begin
-    entry.Field('dndclass').AsString:=zfsObj.ClassName;
-  end;
+  entry.Field('dndclass').AsString:=zfsObj.Field('dndclass').AsString;
   entry.Field('id').AsString:=zfsObj.getId;
   entry.Field('caption').AsString:=zfsObj.caption;
   entry.Field('iops_r').AsString:=zfsObj.iopsR;
   entry.Field('iops_w').AsString:=zfsObj.iopsW;
   entry.Field('transfer_r').AsString:=zfsObj.transferR;
   entry.Field('transfer_w').AsString:=zfsObj.transferW;
-  if zfsObj.getIsNew then begin
-    entry.Field('icon').AsString:=FREDB_getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_new.png');
-  end else begin
-    if zfsObj.getIsModified then begin
-      entry.Field('icon').AsString:=FREDB_getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_mod.png');
-    end else begin
-      if (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) and (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
-        entry.Field('icon').AsString:=FREDB_getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'_offline.png');
-      end else begin
-        entry.Field('icon').AsString:=FREDB_getThemedResource('images_apps/firmbox_storage/'+zfsObj.ClassName+'.png');
-      end;
-    end;
-  end;
+  entry.Field('icon').AsString:=zfsObj.Field('icon').AsString;
   Result:=entry;
 end;
 
@@ -2190,7 +2174,7 @@ begin
   store_l    := TFRE_DB_STORE_DESC.create.Describe('id',CWSF(@WEB_TreeGridData),TFRE_DB_StringArray.create('caption'),nil,nil,'pools_store');
   glayout_l  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
   glayout_l.AddDataElement.Describe('caption','Caption',dt_string,2,true,false,'icon');
-  layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store,glayout_l,nil,'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
+  layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store_l,glayout_l,nil,'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
 
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
     pool_grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
@@ -2420,11 +2404,11 @@ var
     zfsObj: TFRE_DB_ZFS_OBJ;
   begin
     zfsObj:=obj.Implementor_HC as TFRE_DB_ZFS_OBJ;
-    if zfsObj is TFRE_DB_ZFS_UNASSIGNED then begin
-      ua:=_getTreeObj(conn,zfsObj);
-    end else begin
+    //if zfsObj is TFRE_DB_ZFS_UNASSIGNED then begin
+    //  ua:=_getTreeObj(conn,zfsObj);
+    //end else begin
       res.addEntry(_getTreeObj(conn,zfsObj));
-    end;
+    //end;
     count:=count+1;
   end;
 
@@ -2432,11 +2416,10 @@ begin
   CheckClassVisibility(ses);
 
   if input.FieldExists('parentid') then begin
-    writeln('Parent: ',input.Field('parentid').asstring);
     parentObj:=_getZFSObj(conn,input.Field('parentid').AsString);
 
     if not Assigned(parentObj) then raise EFRE_DB_Exception.Create('Parent object not found.');
-    children:=parentObj.getChildren(conn);
+    children:=parentObj.getZFSChildren(conn);
     res:=TFRE_DB_STORE_DATA_DESC.create.Describe(Length(children));
     for i := 0 to Length(children) - 1 do begin
       zfs_obj:=children[i].Implementor_HC as TFRE_DB_ZFS_OBJ;
@@ -2444,13 +2427,13 @@ begin
     end;
   end else begin
     count:=0;
-    pools := conn.Collection('pool');
+    pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
     res:=TFRE_DB_STORE_DATA_DESC.create;
-    ua := nil;
+    //ua := nil;
     pools.ForAll(@_ProcessPools);
-    if Assigned(ua) then begin
-      res.addEntry(ua);
-    end;
+    //if Assigned(ua) then begin
+    //  res.addEntry(ua);
+    //end;
     res.Describe(count);
   end;
   Result:=res;
@@ -2851,14 +2834,14 @@ begin
         vdev:=tlog;
       end else begin
         vdev:=tlog.createVdev;
-        vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tlog.getChildren(conn))),[rfReplaceAll]);
+        vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tlog.getZFSChildren(conn))),[rfReplaceAll]);
         vdev.setIsNew;
         vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
         res.addNewEntry(_getTreeObj(conn,vdev),lastIdx,tlog.getId); //FIXXME - remove store update
         CheckDbResult(vdevs.Store(vdev.CloneToNewObject()),'Assign log');
       end;
     end else begin
-      children:=tlog.getChildren(conn);
+      children:=tlog.getZFSChildren(conn);
       vdev:=nil;
       for i := 0 to Length(children) - 1 do begin
         if (children[i].Implementor_HC is TFRE_DB_ZFS_VDEV) and ((children[i].Implementor_HC as TFRE_DB_ZFS_VDEV).getId=input.Field('add').AsString) then begin
@@ -2944,13 +2927,13 @@ begin
       if input.FieldExists('expand') and input.Field('expand').AsBoolean then begin
         lastIdx  := tstorage.getLastChildId(conn); //FIXXME - remove store update
         vdev     := tstorage.createVdev;
-        vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tstorage.getChildren(conn))),[rfReplaceAll]);
+        vdev.caption:=StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tstorage.getZFSChildren(conn))),[rfReplaceAll]);
         vdev.setIsNew;
         vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
         res.addNewEntry(_getTreeObj(conn,vdev),lastIdx,tstorage.getId); //FIXXME - remove store update
         CheckDbResult(vdevs.store(vdev.CloneToNewObject),'Assign storage disk');
       end else begin
-        children:=tstorage.getChildren(conn);
+        children:=tstorage.getZFSChildren(conn);
         vdev:=nil;
         for i := 0 to Length(children) - 1 do begin
           if (children[i].Implementor_HC is TFRE_DB_ZFS_VDEV) and ((children[i].Implementor_HC as TFRE_DB_ZFS_VDEV).getId=input.Field('add').AsString) then begin
@@ -3019,7 +3002,7 @@ var
     vdevs    : IFRE_DB_COLLECTION;
     lastIdx  : String; //FIXXME - remove store update
   begin
-    children:=zfsObj.getChildren(conn);
+    children:=zfsObj.getZFSChildren(conn);
     for i := 0 to Length(children) - 1 do begin
       _handleObj(children[i].Implementor_HC as TFRE_DB_ZFS_OBJ);
     end;
