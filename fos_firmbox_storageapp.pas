@@ -4017,7 +4017,10 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
         guida          : TFRE_DB_GUIDArray;
         slotguid       : TGUID;
         index_name     : string;
-        db_disk        : IFRE_DB_Object;
+        dbo            : IFRE_DB_Object;
+        db_disk        : TFRE_DB_PHYS_DISK;
+        sdbo           : IFRE_DB_Object;
+        db_slot        : TFRE_DB_DRIVESLOT;
 
         procedure _CheckSlot;
         begin
@@ -4055,10 +4058,18 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
             end;
           if slotguid<>CFRE_DB_NullGUID then
             begin
-              if not blockdevicecollection.Fetch(disk.UID,db_disk) then
+              if not blockdevicecollection.Fetch(disk.UID,dbo) then
                  raise EFRE_DB_Exception.Create(edb_ERROR,'could not fetch disk '+disk.UID_String);
-              (db_disk.Implementor_HC as TFRE_DB_PHYS_DISK).ParentInEnclosureUID:=slotguid;
-              CheckDbResult(blockdevicecollection.Update(db_disk),'update blockdevice with slot information');
+              if not driveslotcollection.Fetch(slotguid,sdbo) then
+                 raise EFRE_DB_Exception.Create(edb_ERROR,'could not fetch driveslot '+GFRE_BT.GUID_2_HexString(slotguid));
+              db_slot := sdbo.Implementor_HC as TFRE_DB_DRIVESLOT;
+              db_disk := dbo.Implementor_HC as TFRE_DB_PHYS_DISK;
+              db_disk.ParentInEnclosureUID:= slotguid;
+              db_disk.EnclosureUID        := db_slot.ParentInEnclosureUID;
+              db_disk.EnclosureNr         := db_slot.EnclosureNr;
+              db_disk.SlotNr              := db_slot.SlotNr;
+              CheckDbResult(blockdevicecollection.Update(dbo),'update blockdevice with slot information');
+              sdbo.Finalize;
             end;
         end;
     end;
@@ -4083,12 +4094,12 @@ begin
   enclosures             := input.Field('enclosures').AsObject;
   enclosures.ForAllObjects(@_UpdateEnclosures);
 
-  writeln('DUMPENC');
-  enclosurecollection.ForAll(@_DumpCollection);
-  writeln('DUMPDRIVESLOTS');
-  driveslotcollection.ForAll(@_DumpCollection);
-  writeln('DUMPEXP');
-  expandercollection.ForAll(@_DumpCollection);
+  //writeln('DUMPENC');
+  //enclosurecollection.ForAll(@_DumpCollection);
+  //writeln('DUMPDRIVESLOTS');
+  //driveslotcollection.ForAll(@_DumpCollection);
+  //writeln('DUMPEXP');
+  //expandercollection.ForAll(@_DumpCollection);
 
   if not poolcollection.GetIndexedObj('UNASSIGNED',ua_obj) then
     begin
