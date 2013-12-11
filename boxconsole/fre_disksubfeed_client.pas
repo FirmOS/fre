@@ -165,10 +165,10 @@ begin
   inherited Setup;
 //  GFRE_SC.AddTimer('FAKEPARSE',1000,@DataParsed);
 
-  StartDiskAndEnclosureThread;
-  StartIostatParser;
+//  StartDiskAndEnclosureThread;
+//  StartIostatParser;
   StartZpoolStatusParser;
-  StartZpoolIOStatParser;
+//  StartZpoolIOStatParser;
 end;
 
 destructor TFRE_DISKSUB_FEED_SERVER.Destroy;
@@ -402,6 +402,7 @@ begin
 //      writeln('SAVE');
 //      resdbo.SaveToFile('DISKENC');
       fsubfeeder.PushDataToClients(resdbo);
+      sleep(5000);
     finally
       so.Free;
     end;
