@@ -81,6 +81,8 @@ type
     procedure  MyFinalize              ; override;
     procedure  MyConnectionTimer       ; override;
     procedure  GenerateFeedDataTimer   (const TIM : IFRE_APSC_TIMER ; const flag1,flag2 : boolean); // Timout & CMD Arrived & Answer Arrived
+    procedure  SubfeederEvent          (const id:string; const dbo:IFRE_DB_Object);override;
+
   end;
 
 
@@ -160,14 +162,15 @@ begin
   statscontroller.StartNetworkParser(true);
   statscontroller.StartCacheParser(true);
   statscontroller.StartZFSParser(true);
-  statscontroller.StartZpoolIostatParser(true);
 
 
   disk_hal   := TFRE_HAL_DISK.Create;
   disks_sent := false;
-  disk_hal.InitializeDiskandEnclosureInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-  disk_hal.InitializePoolInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-  disk_hal.StartIostatMonitor(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
+//  disk_hal.InitializeDiskandEnclosureInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
+//  disk_hal.InitializePoolInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
+
+  AddSubFeederEventViaUX('disksub');
+
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;
@@ -228,9 +231,9 @@ begin
   if FStorage_Feeding then
     begin
  //     writeln('disks_sent',disks_sent);
-      if (disk_hal.IsInformationAvailable) and (not disks_sent) then
+      if (disk_hal.IsDataAvailable) and (not disks_sent) then
         begin
-          SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetInformation);
+          SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetData);
           disks_sent:=true;
         end;
     end;
@@ -251,6 +254,11 @@ begin
         writeln('FEED EXCEPTION : ',e.Message);
       end;end;
     end;
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.SubfeederEvent(const id: string; const dbo: IFRE_DB_Object);
+begin
+  disk_hal.ReceivedDBO(dbo);
 end;
 
 end.

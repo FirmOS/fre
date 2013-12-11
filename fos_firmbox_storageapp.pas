@@ -4102,11 +4102,12 @@ begin
   // assign disks to driveslots
 
   blockdevicecollection.ForAll(@_InsertDisksIntoSlots);
-  writeln('DUMPDRIVESWITHSLOT');
-  blockdevicecollection.ForAll(@_DumpCollection);
 
   pools := input.Field('pools').AsObject;
   pools.ForAllObjects(@_UpdatePools);
+
+  writeln('DUMPDRIVESWITHSLOT');
+  blockdevicecollection.ForAll(@_DumpCollection);
 
   result := GFRE_DB_NIL_DESC;
 end;
