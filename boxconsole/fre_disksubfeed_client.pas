@@ -160,8 +160,8 @@ begin
 
   FCfg.SpecialFile := cFRE_UX_SOCKS_DIR+'disksub';
   FCfg.Id          := 'DiskSub';
-  FCfg.Port        := '44100';
-  FCfg.IP          := '127.0.0.1';
+  FCfg.Port        := '44101';
+  FCfg.IP          := '0.0.0.0';
   inherited Setup;
 //  GFRE_SC.AddTimer('FAKEPARSE',1000,@DataParsed);
 

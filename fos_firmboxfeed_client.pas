@@ -169,7 +169,10 @@ begin
 //  disk_hal.InitializeDiskandEnclosureInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
 //  disk_hal.InitializePoolInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
 
-  AddSubFeederEventViaUX('disksub');
+  if cFRE_SUBFEEDER_IP='' then
+    AddSubFeederEventViaUX('disksub')
+  else
+    AddSubFeederEventViaTCP(cFRE_SUBFEEDER_IP,'44101','disksub');
 
 end;
 
