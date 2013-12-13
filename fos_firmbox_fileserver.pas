@@ -239,6 +239,7 @@ end;
 
 class procedure TFRE_DB_ZFS_DATASET_FILE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
+  inherited InstallDBObjects(conn, currentVersionId, newVersionId);
   newVersionId:='1.0';
   StoreTranslateableText(conn,'scheme_file_group','File Properties');
   StoreTranslateableText(conn,'scheme_refer','Refer [MB]');
@@ -376,6 +377,7 @@ end;
 
 class procedure TFRE_DB_NFS_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
+  inherited InstallDBObjects(conn, currentVersionId, newVersionId);
   newVersionId:='1.0';
   StoreTranslateableText(conn,'scheme_NFS_group','NFS Properties');
   StoreTranslateableText(conn,'scheme_export','Export name');
@@ -399,8 +401,7 @@ begin
 
   group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('objname',GetTranslateableTextKey('scheme_fileservername'),false);
-  group.AddInput('pool',GetTranslateableTextKey('scheme_pool'),false);
-  //group.AddInput('pool',GetTranslateableTextKey('scheme_pool'),true); -> FISH TO FIX FOR CHRIS
+  group.AddInput('pool',GetTranslateableTextKey('scheme_pool'),true);
   group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
   group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
   group.AddInput('interface',GetTranslateableTextKey('scheme_interface'));
@@ -410,7 +411,7 @@ end;
 class procedure TFRE_DB_VIRTUAL_FILESERVER.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_in_group','Virtual Fileserver Properties');
+  StoreTranslateableText(conn,'scheme_main_group','Virtual Fileserver Properties');
   StoreTranslateableText(conn,'scheme_fileservername','Servername');
   StoreTranslateableText(conn,'scheme_pool','Diskpool');
   StoreTranslateableText(conn,'scheme_description','Description');
@@ -460,7 +461,7 @@ begin
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('fileserver','',true,true);
   group.AddInput('pool',GetTranslateableTextKey('scheme_pool'),true);
-  group.AddInput('desc.txt',GetTranslateableTextKey('gzscheme_description'));
+  group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
   group:=scheme.AddInputGroup('advanced').Setup(GetTranslateableTextKey('scheme_advanced_group'));
   group.AddInput('reservation_mb',GetTranslateableTextKey('scheme_reservation'));
   group.AddInput('refres_mb',GetTranslateableTextKey('scheme_refres'));

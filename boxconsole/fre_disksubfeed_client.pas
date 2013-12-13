@@ -165,8 +165,8 @@ begin
   inherited Setup;
 //  GFRE_SC.AddTimer('FAKEPARSE',1000,@DataParsed);
 
-//  StartDiskAndEnclosureThread;
-//  StartIostatParser;
+  StartDiskAndEnclosureThread;
+  StartIostatParser;
   StartZpoolStatusParser;
 //  StartZpoolIOStatParser;
 end;

@@ -135,27 +135,29 @@ type
   public
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   published
-    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentFilerNFS       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentFilerLUN       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_CreateNFSExport       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_CreateNFSAccess       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NFSContent            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NFSMenu               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NFSDelete             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NFSDeleteConfirmed    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NFSAccessMenu         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NFSAccessDelete       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NFSAccessModify       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_CreateLUN             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_CreateLUNView         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_LUNMenu               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_LUNContent            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_LUNDelete             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_LUNDeleteConfirmed    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_LUNViewMenu           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_LUNViewDelete         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_LUNViewModify         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentFilerNFS          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentFilerLUN          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CreateNFSExport          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSAccessCreate          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSContent               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSMenu                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSDelete                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSDeleteConfirmed       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSAccessMenu            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSAccessDelete          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSAccessDeleteConfirmed (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NFSAccessModify          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CreateLUN                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CreateLUNView            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LUNMenu                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LUNContent               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LUNDelete                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LUNDeleteConfirmed       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LUNViewMenu              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LUNViewDelete            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LUNViewDeleteConfirmed   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LUNViewModify            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD }
@@ -667,11 +669,15 @@ begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  for i:= 0 to input.Field('selected').ValueCount-1 do begin
-    //FIXXME: Errorhandling
-    CheckDbResult(conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i])),'The object is referenced');
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      //FIXXME: Errorhandling
+      CheckDbResult(conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i])),'The object is referenced');
+    end;
+    result := GFRE_DB_NIL_DESC;
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
   end;
-  result := GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_CreateVFSShare(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -780,11 +786,15 @@ begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  for i:= 0 to input.Field('selected').ValueCount-1 do begin
-    //FIXXME: Errorhandling
-    conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      //FIXXME: Errorhandling
+      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+    end;
+    result := GFRE_DB_NIL_DESC;
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
   end;
-  result := GFRE_DB_NIL_DESC;
 end;
 
 
@@ -1024,16 +1034,31 @@ begin
   dc_share_nfs := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_GRID');
   grid_nfs     := dc_share_nfs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then begin
-    txt:=app.FetchAppTextFull(ses,'$create_nfs_export');
-    grid_nfs.AddButton.Describe(CWSF(@WEB_CreateNFSExport),'images_apps/firmbox_storage/create_nfs_export.png',txt.Getshort,txt.GetHint);
+    txt:=app.FetchAppTextFull(ses,'$tb_create_nfs_export');
+    grid_nfs.AddButton.Describe(CWSF(@WEB_CreateNFSExport),'',txt.Getshort,txt.GetHint);
+    txt.Finalize;
+  end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_delete_nfs_export');
+    grid_nfs.AddButton.Describe(CWSF(@WEB_NFSDelete),'',txt.Getshort,txt.GetHint,fdgbd_multi);
     txt.Finalize;
   end;
 
   dc_share_nfs_access := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_ACCESS_GRID');
   grid_nfs_access     := dc_share_nfs_access.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if  conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then begin
-    txt:=app.FetchAppTextFull(ses,'$create_nfs_access');
-    grid_nfs_access.AddButton.Describe(CWSF(@WEB_CreateNFSAccess),'images_apps/firmbox_storage/create_nfs_access.png',txt.Getshort,txt.GetHint);
+  if  conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_ACCESS) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_create_nfs_access');
+    grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessCreate),'',txt.Getshort,txt.GetHint);
+    txt.Finalize;
+  end;
+  if  conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_delete_nfs_access');
+    grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessDelete),'',txt.Getshort,txt.GetHint);
+    txt.Finalize;
+  end;
+  if  conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_modify_nfs_access');
+    grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessModify),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
 
@@ -1097,7 +1122,7 @@ begin
   res.AddSchemeFormGroup(scheme.GetInputGroup('file'),ses,true,true);
   res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
 
-  res.SetElementValue('pool','zones');
+  //res.SetElementValue('pool','zones'); //FIXXME - get a pool
   res.SetElementValue('logbias','latency');
   res.SetElementValue('compression','on');
   res.SetElementValue('aclinheritance','restricted');
@@ -1113,7 +1138,7 @@ begin
   Result:=res;
 end;
 
-function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_CreateNFSAccess(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessCreate(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
@@ -1174,7 +1199,7 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_NFSDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$nfs_delete'),'images_apps/firmbox_storage/delete_nfs.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_delete_nfs_export'),'',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1204,11 +1229,15 @@ begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then
      raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  for i:= 0 to input.Field('selected').ValueCount-1 do begin
-    //FIXXME: Errorhandling
-    conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      //FIXXME: Errorhandling
+      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+    end;
+    result := GFRE_DB_NIL_DESC;
+  end else begin
+    result := GFRE_DB_NIL_DESC;
   end;
-  result := GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessMenu(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -1223,13 +1252,13 @@ begin
       begin
         func:=CWSF(@WEB_NFSAccessDelete);
         func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$nfsaccess_delete'),'images_apps/firmbox_storage/delete_nfsaccess.png',func);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_delete_nfs_access'),'',func);
       end;
     if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then
       begin
         func:=CWSF(@WEB_NFSAccessModify);
         func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$nfsaccess_modify'),'images_apps/firmbox_storage/modify_nfsaccess.png',func);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_modify_nfs_access'),'',func);
       end;
     Result:=res;
   end else begin
@@ -1239,16 +1268,42 @@ end;
 
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessDelete(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  i      : NativeInt;
+  sf : TFRE_DB_SERVER_FUNC_DESC;
+  cap: TFRE_DB_String;
+  msg: String;
+  obj: IFRE_DB_Object;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS)
+  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  for i:= 0 to input.Field('selected').ValueCount-1 do begin
-    //FIXXME: Errorhandling
-    conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+  if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_delete_single_select'));
+
+  sf:=CWSF(@WEB_NFSAccessDeleteConfirmed);
+  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+  cap:=app.FetchAppTextShort(ses,'$nfs_access_delete_diag_cap');
+  CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[0]),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessDelete');
+
+  msg:=StringReplace(app.FetchAppTextShort(ses,'$nfs_access_delete_diag_msg'),'%access_type%',obj.Field('accesstype').AsString,[rfReplaceAll]);
+  msg:=StringReplace(msg,'%access_host%',obj.Field('subnet').AsString,[rfReplaceAll]);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
+end;
+
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessDeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  i: Integer;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      //FIXXME: Errorhandling
+      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+    end;
+    result := GFRE_DB_NIL_DESC;
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
   end;
-  result := GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessModify(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -1257,7 +1312,7 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS)
+  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_NFS_ACCESS,scheme);
@@ -1276,7 +1331,7 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN)
+  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_LUN,scheme);
@@ -1304,7 +1359,7 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN_VIEW)
+  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN_VIEW)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_LUN_VIEW,scheme);
@@ -1322,7 +1377,7 @@ var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_LUNDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1370,11 +1425,12 @@ var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
 begin
-
   if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  sf:=CWSF(@WEB_NFSDeleteConfirmed);
+  if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_delete_single_select'));
+
+  sf:=CWSF(@WEB_LUNDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
   cap:=app.FetchAppTextShort(ses,'$lun_delete_diag_cap');
   msg:=_getShareNames(input.Field('selected').AsStringArr,GetDBConnection(input));
@@ -1389,11 +1445,15 @@ begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  for i:= 0 to input.Field('selected').ValueCount-1 do begin
-    //FIXXME: Errorhandling
-    conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      //FIXXME: Errorhandling
+      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+    end;
+    result := GFRE_DB_NIL_DESC;
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
   end;
-  result := GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewMenu(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -1424,15 +1484,39 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewDelete(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   i      : NativeInt;
+  sf     : TFRE_DB_SERVER_FUNC_DESC;
+  cap    : TFRE_DB_String;
+  msg    : String;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  for i:= 0 to input.Field('selected').ValueCount-1 do begin
-    //FIXXME: Errorhandling
-    conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+  if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_delete_single_select'));
+
+  sf:=CWSF(@WEB_LUNViewDeleteConfirmed);
+  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+  cap:=app.FetchAppTextShort(ses,'$lunview_delete_diag_cap');
+  msg:=_getShareNames(input.Field('selected').AsStringArr,GetDBConnection(input));
+  msg:=StringReplace(app.FetchAppTextShort(ses,'$lunview_delete_diag_msg'),'%guid_str%',msg,[rfReplaceAll]);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
+end;
+
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewDeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  i: Integer;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      //FIXXME: Errorhandling
+      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+    end;
+    result := GFRE_DB_NIL_DESC;
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
   end;
-  result := GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewModify(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -3163,10 +3247,14 @@ begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
+  if input.field('confirmed').AsBoolean then begin
+    pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
 
-  _updateToolbarAssignAndReplaceEntry(conn,ses,app);
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Destroy Pool confirmed','Please implement me',fdbmt_info);
+    _updateToolbarAssignAndReplaceEntry(conn,ses,app);
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Destroy Pool confirmed','Please implement me',fdbmt_info);
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
+  end;
 end;
 
 
@@ -3663,9 +3751,6 @@ begin
   SiteMapData  := GFRE_DBI.NewObject;
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_storage/files_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_APP));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools',FetchAppTextShort(session,'$sitemap_pools'),'images_apps/firmbox_storage/disk_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
-  //FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Status',FetchAppTextShort(session,'$sitemap_pools_status'),'images_apps/firmbox_storage/monitor_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname+':status',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Space',FetchAppTextShort(session,'$sitemap_pools_space'),'images_apps/firmbox_storage/piechart_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname+':space',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools/Layout',FetchAppTextShort(session,'$sitemap_pools_layout'),'images_apps/firmbox_storage/piechart_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname+':layout',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Global',FetchAppTextShort(session,'$sitemap_fileserver_global'),'images_apps/firmbox_storage/files_global_white.svg',TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Virtual',FetchAppTextShort(session,'$sitemap_fileserver_virtual'),'images_apps/firmbox_storage/files_virtual_white.svg',TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup',FetchAppTextShort(session,'$sitemap_backup'),'images_apps/firmbox_storage/clock_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
@@ -3715,9 +3800,6 @@ begin
 
       CreateAppText(conn,'$sitemap_main','Storage','','Storage');
       CreateAppText(conn,'$sitemap_pools','Pools','','Pools');
-      CreateAppText(conn,'$sitemap_pools_layout','Layout','','Layout');
-      CreateAppText(conn,'$sitemap_pools_status','Status','','Status');
-      CreateAppText(conn,'$sitemap_pools_space','Space','','Space');
       CreateAppText(conn,'$sitemap_synchronize','Synchronize','','Synchronize');
       CreateAppText(conn,'$sitemap_synchronize_fc','FibreChannel','','FibreChannel');
       CreateAppText(conn,'$sitemap_synchronize_iscsi','iSCSI','','iSCSI');
@@ -3731,6 +3813,8 @@ begin
       CreateAppText(conn,'$pool_status_tab','Status');
       CreateAppText(conn,'$pool_space_tab','Space');
       CreateAppText(conn,'$pool_notes_tab','Note');
+
+      CreateAppText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');
 
       CreateAppText(conn,'$tb_create_pool','Create Pool');
       CreateAppText(conn,'$create_pool_diag_cap','Create Pool');
@@ -3826,14 +3910,20 @@ begin
       CreateAppText(conn,'$nfs_access','NFS Access');
       CreateAppText(conn,'$nfs_accesstype','Accesstype');
       CreateAppText(conn,'$nfs_accesssubnet','Host/Subnet');
-      CreateAppText(conn,'$create_nfs_access','Create Access');
-      CreateAppText(conn,'$nfsaccess_delete','Delete Access');
-      CreateAppText(conn,'$nfsaccess_modify','Modify Access');
+      CreateAppText(conn,'$tb_create_nfs_access','Create access');
+      CreateAppText(conn,'$tb_delete_nfs_access','Delete access');
+      CreateAppText(conn,'$tb_modify_nfs_access','Modify access');
+      CreateAppText(conn,'$cm_delete_nfs_access','Delete access');
+      CreateAppText(conn,'$cm_modify_nfs_access','Modify access');
 
-      CreateAppText(conn,'$create_nfs_export','Create Export');
-      CreateAppText(conn,'$nfs_delete','Delete share');
-      CreateAppText(conn,'$nfs_delete_diag_cap','Confirm: Delete share(s)');
-      CreateAppText(conn,'$nfs_delete_diag_msg','The share(s) %share_str% will be deleted permanently! Please confirm to continue.');
+      CreateAppText(conn,'$nfs_access_delete_diag_cap','Confirm: Delete NFS access');
+      CreateAppText(conn,'$nfs_access_delete_diag_msg','The NFS %access_type% access for %access_host% will be deleted permanently! Please confirm to continue.');
+
+      CreateAppText(conn,'$tb_create_nfs_export','Create export');
+      CreateAppText(conn,'$tb_delete_nfs_export','Delete export');
+      CreateAppText(conn,'$cm_delete_nfs_export','Delete share');
+      CreateAppText(conn,'$nfs_delete_diag_cap','Confirm: Delete share');
+      CreateAppText(conn,'$nfs_delete_diag_msg','The share %share_str% will be deleted permanently! Please confirm to continue.');
       CreateAppText(conn,'$nfs_add_diag_cap','New NFS Share');
       CreateAppText(conn,'$nfsaccess_add_diag_cap','New NFS Access');
       CreateAppText(conn,'$nfsaccess_modify_diag_cap','Modify NFS Access');
@@ -3845,14 +3935,16 @@ begin
       CreateAppText(conn,'$lun_desc','Description');
       CreateAppText(conn,'$lun_size','Size [MB]');
       CreateAppText(conn,'$lun_delete','Delete LUN');
-      CreateAppText(conn,'$lun_delete_diag_cap','Confirm: Delete LUN(s)');
-      CreateAppText(conn,'$lun_delete_diag_msg','The LUN(s) %guid_str% will be deleted permanently! Please confirm to continue.');
+      CreateAppText(conn,'$lun_delete_diag_cap','Confirm: Delete LUN');
+      CreateAppText(conn,'$lun_delete_diag_msg','The LUN %guid_str% will be deleted permanently! Please confirm to continue.');
       CreateAppText(conn,'$lun_content_header','Details about the selected LUN');
       CreateAppText(conn,'$lun_add_diag_cap','New LUN');
 
       CreateAppText(conn,'$lun_view_initiatorgroup','Initiators');
       CreateAppText(conn,'$lun_view_targetgroup','Targets');
       CreateAppText(conn,'$create_lun_view','Create View');
+      CreateAppText(conn,'$lunview_delete_diag_cap','Confirm: Delete View');
+      CreateAppText(conn,'$lunview_delete_diag_msg','The Views %guid_str% will be deleted permanently! Please confirm to continue.');
       CreateAppText(conn,'$lunview_delete','Delete View');
       CreateAppText(conn,'$lunview_modify','Modify View');
       CreateAppText(conn,'$lunview_add_diag_cap','New LUN View');

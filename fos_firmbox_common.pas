@@ -62,7 +62,7 @@ begin
 
     collection  := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);  // ZFS GUID / WWN
     collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true);
-    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,true,false,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX,false);
+    collection.DefineIndexOnField('deviceIdentifier',fdbft_String,true,false,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX,true);
     collection.DefineIndexOnField('devicename',fdbft_String,true,true,CFRE_DB_ZFS_BLOCKDEVICE_DEV_NAME_INDEX,false);
 
     collection  := conn.Collection(CFRE_DB_ENCLOSURE_COLLECTION);
