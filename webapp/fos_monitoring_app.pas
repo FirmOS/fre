@@ -1338,12 +1338,12 @@ var
   actmon        : IFRE_DB_Object;
   coll_mon      : IFRE_DB_COLLECTION;
   mon           : IFRE_DB_Object;
+  hlt           : boolean;
 
 
-  function _getmon(const obj:IFRE_DB_Object):boolean;
+  procedure _getmon(const obj:IFRE_DB_Object ; var halt : boolean);
   begin
-    mon    := obj;
-    result := true;
+    mon   := obj;
   end;
 
 begin
@@ -1351,7 +1351,8 @@ begin
 
   coll_mon  := CONN.Collection('monitoring');
 //  writeln ('COUNT:',coll_mon.Count);
-  coll_mon.ForAllBreak(@_getmon);
+  hlt := true; // get first
+  coll_mon.ForAllBreak(@_getmon,hlt);
 //  writeln(mon.DumpToString);
 
   abort;
