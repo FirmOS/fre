@@ -871,20 +871,20 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD._GetFileServerID(conn: IFRE_DB_CONNECTION): TGuid;
 var coll  : IFRE_DB_COLLECTION;
     id    : TGuid;
+    hlt   : boolean;
 
-  function _get(const obj:IFRE_DB_Object):boolean;
+  procedure _get(const obj:IFRE_DB_Object ; var halt : boolean);
   begin
     if obj.IsA(TFRE_DB_GLOBAL_FILESERVER.ClassName) then begin
-      id     := obj.UID;
-      result := true;
-    end else begin
-      result := false;
+      id   := obj.UID;
+      halt := true;
     end;
   end;
 
 begin
+  abort; // HH: -> Service not found and then ?
   coll   := conn.Collection('service');
-  coll.ForAllBreak(@_get);
+  coll.ForAllBreak(@_get,hlt);
   result := id;
 end;
 
@@ -1677,6 +1677,8 @@ var
   disk     : TFRE_DB_ZFS_OBJ;
   pools    : IFRE_DB_COLLECTION;
   sf       : TFRE_DB_SERVER_FUNC_DESC;
+  hlt      : boolean;
+
 
   procedure _addDatastorageMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const expandStorage: Boolean; const storageRL: TFRE_DB_ZFS_RAID_LEVEL; const addStorage: IFRE_DB_ObjectArray);
   var
@@ -1962,17 +1964,16 @@ var
     end;
   end;
 
-  function _countPools(const obj: IFRE_DB_Object):Boolean;
+  procedure  _countPools(const obj: IFRE_DB_Object ; var halt : boolean);
   begin
-    Result:=false;
-    if obj.Implementor_HC is TFRE_DB_ZFS_POOL then begin
-      count:=count+1;
-      if count=1 then begin
-        firstPool:=obj;
-      end else begin
-        Result:=true;
+    if obj.Implementor_HC is TFRE_DB_ZFS_POOL then
+      begin
+        count:=count+1;
+        if count=1 then
+          firstPool:=obj
+        else
+          halt := true;
       end;
-    end;
   end;
 
   procedure _addPools(const obj: IFRE_DB_Object);
@@ -2004,8 +2005,9 @@ begin
     end;
   end else begin
     pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
-    count:=0;
-    pools.ForAllBreak(@_countPools);
+    count := 0;
+    hlt   := false;
+    pools.ForAllBreak(@_countPools,hlt);
     case count of
       0: ; //return empty menu
       1: begin
@@ -2057,21 +2059,21 @@ function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getPoolByName(const conn: IFRE_DB_CONNE
 var
   pools : IFRE_DB_COLLECTION;
   pool  : TFRE_DB_ZFS_ROOTOBJ;
+  hlt   : boolean;
 
-  function _checkPool(const obj: IFRE_DB_Object):Boolean;
+  procedure _checkPool(const obj: IFRE_DB_Object ; var halt : boolean);
   begin
-    if (obj.Implementor_HC as TFRE_DB_ZFS_ROOTOBJ).getPoolName=LowerCase(name) then begin
-      Result:=true;
+    if lowercase((obj.Implementor_HC as TFRE_DB_ZFS_ROOTOBJ).getPoolName)=LowerCase(name) then begin
+      halt:=true;
       pool:=obj.Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
-    end else begin
-      Result:=false;
     end;
   end;
 
 begin
-  pool := nil;
+  pool  := nil;
   pools := conn.Collection('pool');
-  pools.ForAllBreak(@_checkPool);
+  hlt   := false;
+  pools.ForAllBreak(@_checkPool,hlt);
   Result:=pool;
 end;
 
@@ -2079,20 +2081,21 @@ function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getUnassignedPool(const conn: IFRE_DB_C
 var
   pools : IFRE_DB_COLLECTION;
   ua    : TFRE_DB_ZFS_UNASSIGNED;
+  hlt   : boolean;
 
-  function _checkPool(const obj: IFRE_DB_Object):Boolean;
+  procedure _checkPool(const obj: IFRE_DB_Object ; var halt : boolean);
   begin
-    if obj.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED then begin
-      Result:=true;
-      ua:=obj.Implementor_HC as TFRE_DB_ZFS_UNASSIGNED;
-    end else begin
-      Result:=false;
-    end;
+    if obj.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED then
+      begin
+        halt := true;
+        ua:=obj.Implementor_HC as TFRE_DB_ZFS_UNASSIGNED;
+      end;
   end;
 
 begin
   pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
-  pools.ForAllBreak(@_checkPool);
+  hlt   := false;
+  pools.ForAllBreak(@_checkPool,hlt);
   Result:=ua;
 end;
 
