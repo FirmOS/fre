@@ -882,9 +882,11 @@ var coll  : IFRE_DB_COLLECTION;
   end;
 
 begin
-  abort; // HH: -> Service not found and then ?
-  coll   := conn.Collection('service');
+  coll := conn.Collection('service');
+  hlt  := false;
   coll.ForAllBreak(@_get,hlt);
+  if not hlt then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'GLOBAL FILESERVER ID NOT FOUND ????');
   result := id;
 end;
 
