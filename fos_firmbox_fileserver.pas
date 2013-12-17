@@ -195,6 +195,7 @@ end;
 
 class procedure TFRE_DB_ZFS_DATASET_ZVOL.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
+  inherited InstallDBObjects(conn,currentVersionId,newVersionId);
   newVersionId:='1.0';
   StoreTranslateableText(conn,'scheme_volume_group','Volume Properties');
   StoreTranslateableText(conn,'scheme_primarycache','Primary Cache');
@@ -272,6 +273,7 @@ end;
 
 class procedure TFRE_DB_LUN.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
+  inherited InstallDBObjects(conn,currentVersionId,newVersionId);
   newVersionId:='1.0';
   StoreTranslateableText(conn,'scheme_lun_group','LUN Parameter');
   StoreTranslateableText(conn,'scheme_writeback','Writeback');

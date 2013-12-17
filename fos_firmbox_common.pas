@@ -204,13 +204,13 @@ var conn     : IFRE_DB_Connection;
 
     access :=  GFRE_DBI.NewObjectScheme(TFRE_DB_NFS_ACCESS);
     access.Field('fileshare').AsObjectLink := share_id;
-    access.Field('accesstype').AsString    := 'ro';
+    access.Field('accesstype').AsString    := 'RO';
     access.Field('subnet').Asstring        := '192.168.0.0/24';
     CheckDbResult(ACOLL.Store(access),'Add Access');
 
     access :=  GFRE_DBI.NewObjectScheme(TFRE_DB_NFS_ACCESS);
     access.Field('fileshare').AsObjectLink := share_id;
-    access.Field('accesstype').AsString    := 'rw';
+    access.Field('accesstype').AsString    := 'RW';
     access.Field('subnet').Asstring        := '10.0.0.0/24';
     CheckDbResult(ACOLL.Store(access),'Add Access');
 

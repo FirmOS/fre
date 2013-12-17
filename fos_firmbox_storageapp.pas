@@ -952,7 +952,7 @@ begin
       AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT,false);
       AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_NFS_FILESHARE.ClassName));
       SetDeriveTransformation(nfs_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_NFSMenu),nil,CWSF(@WEB_NFSContent));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NFSMenu),nil,CWSF(@WEB_NFSContent));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,nfs_access_tr_Grid);
@@ -1053,14 +1053,14 @@ begin
     grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessCreate),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
-  if  conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then begin
-    txt:=app.FetchAppTextFull(ses,'$tb_delete_nfs_access');
-    grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessDelete),'',txt.Getshort,txt.GetHint);
-    txt.Finalize;
-  end;
   if  conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_modify_nfs_access');
-    grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessModify),'',txt.Getshort,txt.GetHint);
+    grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessModify),'',txt.Getshort,txt.GetHint,fdgbd_single);
+    txt.Finalize;
+  end;
+  if  conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_delete_nfs_access');
+    grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
   end;
 
@@ -1087,16 +1087,31 @@ begin
   dc_lun     := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
   grid_lun   := dc_lun.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN) then begin
-    txt:=app.FetchAppTextFull(ses,'$create_lun');
-    grid_lun.AddButton.Describe(CWSF(@WEB_CreateLUN),'images_apps/firmbox_storage/create_lun.png',txt.Getshort,txt.GetHint);
+    txt:=app.FetchAppTextFull(ses,'$tb_create_lun');
+    grid_lun.AddButton.Describe(CWSF(@WEB_CreateLUN),'',txt.Getshort,txt.GetHint);
+    txt.Finalize;
+  end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_delete_lun');
+    grid_lun.AddButton.Describe(CWSF(@WEB_LUNDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
   end;
 
   dc_lun_view   := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_VIEW_GRID');
   grid_lun_view := dc_lun_view.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN)  then begin
-    txt:=app.FetchAppTextFull(ses,'$create_lun_view');
-    grid_lun_view.AddButton.Describe(CWSF(@WEB_CreateLUNView),'images_apps/firmbox_storage/create_lun_view.png',txt.Getshort,txt.GetHint);
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN_VIEW)  then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_create_lun_view');
+    grid_lun_view.AddButton.Describe(CWSF(@WEB_CreateLUNView),'',txt.Getshort,txt.GetHint);
+    txt.Finalize;
+  end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW)  then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_lunview_modify');
+    grid_lun_view.AddButton.Describe(CWSF(@WEB_LUNViewModify),'',txt.Getshort,txt.GetHint,fdgbd_single);
+    txt.Finalize;
+  end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW)  then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_lunview_delete');
+    grid_lun_view.AddButton.Describe(CWSF(@WEB_LUNViewDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
   end;
 
@@ -1250,17 +1265,17 @@ var
 begin
   if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) or conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
-    if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then
-      begin
-        func:=CWSF(@WEB_NFSAccessDelete);
-        func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_delete_nfs_access'),'',func);
-      end;
     if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then
       begin
         func:=CWSF(@WEB_NFSAccessModify);
         func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
         res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_modify_nfs_access'),'',func);
+      end;
+    if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then
+      begin
+        func:=CWSF(@WEB_NFSAccessDelete);
+        func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_delete_nfs_access'),'',func);
       end;
     Result:=res;
   end else begin
@@ -1313,16 +1328,21 @@ var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
+  obj        : IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
+  if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_modify_single_select'));
+
   GetSystemScheme(TFRE_DB_NFS_ACCESS,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$nfsaccess_modify_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
-//  res.SetElementValue('fileshare','');
 
-serverfunc :=TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_NFS_FILESHARE.ClassName,'SaveOperation');
+  CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsString),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessModify');
+  res.FillWithObjectValues(obj,ses);
+
+  serverfunc :=TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_NFS_FILESHARE.ClassName,'SaveOperation');
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverfunc,fdbbt_submit);
   Result:=res;
 end;
@@ -1379,11 +1399,11 @@ var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_LUNDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$lun_delete'),'images_apps/firmbox_storage/delete_lun.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_delete_lun'),'',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1465,17 +1485,17 @@ var
 begin
   if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) or conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
-    if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
-      begin
-        func:=CWSF(@WEB_LUNViewDelete);
-        func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$lunview_delete'),'images_apps/firmbox_storage/delete_lunview.png',func);
-      end;
     if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then
       begin
         func:=CWSF(@WEB_LUNViewModify);
         func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$lunview_modify'),'images_apps/firmbox_storage/modify_lunview.png',func);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_lunview_modify'),'',func);
+      end;
+    if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
+      begin
+        func:=CWSF(@WEB_LUNViewDelete);
+        func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_lunview_delete'),'',func);
       end;
     Result:=res;
   end else begin
@@ -1526,15 +1546,19 @@ var
   scheme     : IFRE_DB_SchemeObject;
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
+  obj        : IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
+  if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_modify_single_select'));
 
   GetSystemScheme(TFRE_DB_LUN_VIEW,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$lunview_modify_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
-//  res.SetElementValue('fileshare','');
+
+  CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsString),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewModify');
+  res.FillWithObjectValues(obj,ses);
 
   serverfunc :=TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_LUN_VIEW.ClassName,'SaveOperation');
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverfunc,fdbbt_submit);
@@ -3820,6 +3844,7 @@ begin
       CreateAppText(conn,'$pool_notes_tab','Note');
 
       CreateAppText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');
+      CreateAppText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');
 
       CreateAppText(conn,'$tb_create_pool','Create Pool');
       CreateAppText(conn,'$create_pool_diag_cap','Create Pool');
@@ -3933,13 +3958,14 @@ begin
       CreateAppText(conn,'$nfsaccess_add_diag_cap','New NFS Access');
       CreateAppText(conn,'$nfsaccess_modify_diag_cap','Modify NFS Access');
 
-      CreateAppText(conn,'$create_lun','Create LUN');
+      CreateAppText(conn,'$tb_create_lun','Create LUN');
+      CreateAppText(conn,'$tb_delete_lun','Delete LUN');
+      CreateAppText(conn,'$cm_delete_lun','Delete LUN');
       CreateAppText(conn,'$lun_view','LUN Views');
       CreateAppText(conn,'$lun_guid','GUID');
       CreateAppText(conn,'$lun_pool','Diskpool');
       CreateAppText(conn,'$lun_desc','Description');
       CreateAppText(conn,'$lun_size','Size [MB]');
-      CreateAppText(conn,'$lun_delete','Delete LUN');
       CreateAppText(conn,'$lun_delete_diag_cap','Confirm: Delete LUN');
       CreateAppText(conn,'$lun_delete_diag_msg','The LUN %guid_str% will be deleted permanently! Please confirm to continue.');
       CreateAppText(conn,'$lun_content_header','Details about the selected LUN');
@@ -3947,11 +3973,13 @@ begin
 
       CreateAppText(conn,'$lun_view_initiatorgroup','Initiators');
       CreateAppText(conn,'$lun_view_targetgroup','Targets');
-      CreateAppText(conn,'$create_lun_view','Create View');
+      CreateAppText(conn,'$tb_create_lun_view','Create View');
+      CreateAppText(conn,'$tb_lunview_delete','Delete View');
+      CreateAppText(conn,'$tb_lunview_modify','Modify View');
+      CreateAppText(conn,'$cm_lunview_delete','Delete View');
+      CreateAppText(conn,'$cm_lunview_modify','Modify View');
       CreateAppText(conn,'$lunview_delete_diag_cap','Confirm: Delete View');
-      CreateAppText(conn,'$lunview_delete_diag_msg','The Views %guid_str% will be deleted permanently! Please confirm to continue.');
-      CreateAppText(conn,'$lunview_delete','Delete View');
-      CreateAppText(conn,'$lunview_modify','Modify View');
+      CreateAppText(conn,'$lunview_delete_diag_msg','The View %guid_str% will be deleted permanently! Please confirm to continue.');
       CreateAppText(conn,'$lunview_add_diag_cap','New LUN View');
       CreateAppText(conn,'$lunview_modify_diag_cap','Modify LUN View');
 
