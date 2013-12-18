@@ -108,18 +108,6 @@ type
     function        WEB_Replace                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
-
-  { TFRE_FIRMBOX_STORAGE_SYNC_MOD }
-
-  TFRE_FIRMBOX_STORAGE_SYNC_MOD = class (TFRE_DB_APPLICATION_MODULE)
-  private
-  protected
-    class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    procedure       SetupAppModuleStructure   ; override;
-  published
-    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-  end;
-
   { TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD }
 
   TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
@@ -180,11 +168,13 @@ type
     function        WEB_CreateVFS              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSMenu                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSContent             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSDelete              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSDeleteConfirmed     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_CreateVFSShare         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSShareMenu           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSShareContent        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareSC             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSShareDelete         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSShareDeleteConfirmed(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSShareGroupMenu      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -224,7 +214,6 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_BACKUP_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_POOLS_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_SYNC_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_APP);
   GFRE_DBI.Initialize_Extension_Objects;
 end;
@@ -354,7 +343,7 @@ var sel_guid,rr,wr : string;
     true_icon      : string;
     false_icon     : string;
 begin
-  sel_guid  := dependency_input.FieldPath('UIDS_REF.FILTERVALUES').AsString;
+  sel_guid  := dependency_input.FieldPath('UIDS_REF.FILTERVALUES').AsString; //FIXXME - may not be set
   sel_guidg := GFRE_BT.HexString_2_GUID(sel_guid);
   group_id  := input_object.uid;
 
@@ -396,7 +385,7 @@ begin
       SetDeriveParent(conn.Collection('service'));
       AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_VIRTUAL_FILESERVER.ClassName));
       SetDeriveTransformation(fs_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_VFSMenu),nil,CWSF(@WEB_VFSContent));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSMenu),nil,CWSF(@WEB_VFSSC));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,share_tr_Grid);
@@ -414,7 +403,7 @@ begin
       SetReferentialLinkMode('TFRE_DB_VIRTUAL_FILESHARE|FILESERVER',false);
       //AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_VIRTUAL_FILESHARE.ClassName));
       SetDeriveTransformation(share_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_VFSShareMenu),nil,CWSF(@WEB_VFSShareContent));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSShareMenu),nil,CWSF(@WEB_VFSShareSC));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,groupin_tr_Grid);
@@ -423,7 +412,7 @@ begin
       AddOneToOnescheme('read','',app.FetchAppTextShort(session,'$share_group_read'),dt_Icon);
       AddOneToOnescheme('write','',app.FetchAppTextShort(session,'$share_group_write'),dt_Icon);
 //      AddOneToOnescheme('objname','group',app.FetchAppTextShort(session,'$share_group_group'));
-      SetCustomTransformFunction(@CalculateReadWriteAccess);
+      //SetCustomTransformFunction(@CalculateReadWriteAccess);
     end;
     groupin_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
     with groupin_dc do begin
@@ -463,11 +452,15 @@ begin
   grid_fs     := dc_fs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then begin
-    txt:=app.FetchAppTextFull(ses,'$create_vfs');
-    grid_fs.AddButton.Describe(CWSF(@WEB_CreateVFS),'images_apps/firmbox_storage/create_vfs.png',txt.Getshort,txt.GetHint);
+    txt:=app.FetchAppTextFull(ses,'$tb_create_vfs');
+    grid_fs.AddButton.Describe(CWSF(@WEB_CreateVFS),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
-
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_delete_vfs');
+    grid_fs.AddButton.Describe(CWSF(@WEB_VFSDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
+    txt.Finalize;
+  end;
 
   dc_share    := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
   //FIXXME Heli - make it working
@@ -484,6 +477,7 @@ end;
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_ContentShareGroups(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   dc_group_in   : IFRE_DB_DERIVED_COLLECTION;
+  grid          : TFRE_DB_VIEW_LIST_DESC;
   //grid_group_in : TFRE_DB_VIEW_LIST_DESC;
   //dc_group_out  : IFRE_DB_DERIVED_COLLECTION;
   //grid_group_out: TFRE_DB_VIEW_LIST_DESC;
@@ -492,7 +486,18 @@ begin
   CheckClassVisibility(ses);
 
   dc_group_in   := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
-  result        := dc_group_in.GetDisplayDescription;
+  grid          := dc_group_in.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+
+  //share_id = ses.GetSessionModuleData(ClassName).Field('selectedVFSShare')
+
+  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+    grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupSetRead),'',app.FetchAppTextShort(ses,'$tb_share_group_setread_on'),app.FetchAppTextHint(ses,'$tb_share_group_setread_on'),fdgbd_single);
+    grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupSetWrite),'',app.FetchAppTextShort(ses,'$tb_share_group_setwrite_on'),app.FetchAppTextHint(ses,'$tb_share_group_setwrite_on'),fdgbd_single);
+    grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupClearRead),'',app.FetchAppTextShort(ses,'$tb_share_group_setread_off'),app.FetchAppTextHint(ses,'$tb_share_group_setread_off'),fdgbd_single);
+    grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupClearWrite),'',app.FetchAppTextShort(ses,'$tb_share_group_setwrite_off'),app.FetchAppTextHint(ses,'$tb_share_group_setwrite_off'),fdgbd_single);
+  end;
+  Result:=grid;
+
 
   //dc_group_out  := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_OUT_GRID');
   //grid_group_out:= dc_group_out.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -522,12 +527,16 @@ begin
 
   dc_share    := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
   grid_share  := dc_share.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then
-    begin
-      txt:=app.FetchAppTextFull(ses,'$create_vfs_share');
-      grid_share.AddButton.Describe(CWSF(@WEB_CreateVFSShare),'images_apps/firmbox_storage/create_vfs_share.png',txt.Getshort,txt.GetHint);
-      txt.Finalize;
-    end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_create_vfs_share');
+    grid_share.AddButton.Describe(CWSF(@WEB_CreateVFSShare),'',txt.Getshort,txt.GetHint);
+    txt.Finalize;
+  end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+    txt:=app.FetchAppTextFull(ses,'$tb_delete_vfs_share');
+    grid_share.AddButton.Describe(CWSF(@WEB_VFSShareDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
+    txt.Finalize;
+  end;
 
   sub_sec_share := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
   sub_sec_share.AddSection.Describe(CWSF(@WEB_VFSShareContent),app.FetchAppTextShort(ses,'$storage_virtual_filer_share_properties'),1,'shareproperties');
@@ -556,7 +565,7 @@ begin
   GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESERVER,scheme);
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$vfs_add_diag_cap'),600,0,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
-  res.SetElementValue('pool','zones');
+  //res.SetElementValue('pool','zones'); //FIXXME - get a pool
   serverfunc := CSCF(TFRE_DB_VIRTUAL_FILESERVER.ClassName,'NewOperation','collection','service');
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverfunc,fdbbt_submit);
   Result:=res;
@@ -568,11 +577,11 @@ var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESERVER) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_VFSDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$vfs_delete'),'images_apps/firmbox_storage/delete_vfs.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_delete_vfs'),'',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -588,16 +597,13 @@ var
   vfs           : IFRE_DB_Object;
   sel_guid      : TGUID;
   dom_guid      : TGUID;
-  dc_groupin    : IFRE_DB_DERIVED_COLLECTION;
 begin
-  if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
-    sel_guid := input.Field('SELECTED').AsGUID;
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedVFS') and (ses.GetSessionModuleData(ClassName).Field('selectedVFS').ValueCount>0)  then begin
+    sel_guid := ses.GetSessionModuleData(ClassName).Field('selectedVFS').AsGUID;
     dc       := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
     if dc.Fetch(sel_guid,vfs) then begin
       GFRE_DBI.GetSystemSchemeByName(vfs.SchemeClass,scheme);
       dom_guid := vfs.Field('domainid').AsGUID;
-      dc_groupin := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
-      dc_groupin.AddUIDFieldFilter('*domain*','domainid',TFRE_DB_GUIDArray.Create(dom_guid),dbnf_EXACT,false);
 
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$vfs_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -610,6 +616,21 @@ begin
     panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$vfs_content_header'));
     panel.contentId:='VIRTUAL_FS_CONTENT';
     Result:=panel;
+  end;
+end;
+
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
+    ses.GetSessionModuleData(ClassName).Field('selectedVFS').AsStringArr:=input.Field('selected').AsStringArr;
+  end else begin
+    ses.GetSessionModuleData(ClassName).DeleteField('selectedVFS')
+  end;
+
+  if ses.isUpdatableContentVisible('VIRTUAL_FS_CONTENT') then begin
+    Result:=WEB_VFSContent(input,ses,app,conn);
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
   end;
 end;
 
@@ -689,7 +710,7 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_VFSShareDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$vfs_share_delete'),'images_apps/firmbox_storage/delete_vfs_share.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_delete_vfs_share'),'',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -708,8 +729,8 @@ var
 begin
   CheckClassVisibility(ses);
 
-  if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
-    sel_guid := input.Field('SELECTED').AsGUID;
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedVFSShare') and (ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').ValueCount>0)  then begin
+    sel_guid := ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').AsGUID;
     dc       := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
     if dc.Fetch(sel_guid,share) then begin
       GFRE_DBI.GetSystemSchemeByName(share.SchemeClass,scheme);
@@ -727,6 +748,21 @@ begin
     panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$vfs_share_content_header'));
     panel.contentId:='VIRTUAL_SHARE_CONTENT';
     Result:=panel;
+  end;
+end;
+
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
+    ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').AsStringArr:=input.Field('selected').AsStringArr;
+  end else begin
+    ses.GetSessionModuleData(ClassName).DeleteField('selectedVFSShare')
+  end;
+
+  if ses.isUpdatableContentVisible('VIRTUAL_SHARE_CONTENT') then begin
+    Result:=WEB_VFSShareContent(input,ses,app,conn);
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
   end;
 end;
 
@@ -784,19 +820,19 @@ begin
     func:=CWSF(@WEB_VFSShareGroupSetRead);
     func.AddParam.Describe('share_id',share_id);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$share_group_setread_on'),'images_apps/firmbox_storage/share_access_set_on.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_share_group_setread_on'),'',func);
     func:=CWSF(@WEB_VFSShareGroupSetWrite);
     func.AddParam.Describe('share_id',share_id);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$share_group_setwrite_on'),'images_apps/firmbox_storage/share_access_set_on.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_share_group_setwrite_on'),'',func);
     func:=CWSF(@WEB_VFSShareGroupClearRead);
     func.AddParam.Describe('share_id',share_id);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$share_group_setread_off'),'images_apps/firmbox_storage/share_access_set_off.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_share_group_setread_off'),'',func);
     func:=CWSF(@WEB_VFSShareGroupClearWrite);
     func.AddParam.Describe('share_id',share_id);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$share_group_setwrite_off'),'images_apps/firmbox_storage/share_access_set_off.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_share_group_setwrite_off'),'',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -3651,7 +3687,7 @@ var       debugs   : string;
           pool_disks.Store(disk);
         end;
       except on e:exception do begin
-        writeln('>UPDATE DISK ERROR : ',e.Message);
+        GFRE_DBI.LogError(dblc_APPLICATION,'>UPDATE DISK ERROR : '+e.Message);
       end;end;
     end;
   end;
@@ -3666,27 +3702,6 @@ begin
   end;
 end;
 
-{ TFRE_FIRMBOX_STORAGE_SYNC_MOD }
-
-class procedure TFRE_FIRMBOX_STORAGE_SYNC_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-begin
-  inherited RegisterSystemScheme(scheme);
-  scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
-end;
-
-procedure TFRE_FIRMBOX_STORAGE_SYNC_MOD.SetupAppModuleStructure;
-begin
-  inherited SetupAppModuleStructure;
-  InitModuleDesc('$synch_description')
-end;
-
-
-function TFRE_FIRMBOX_STORAGE_SYNC_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me.');
-end;
-
-
 { TFRE_FIRMBOX_STORAGE_APP }
 
 procedure TFRE_FIRMBOX_STORAGE_APP.SetupApplicationStructure;
@@ -3694,7 +3709,6 @@ begin
   inherited SetupApplicationStructure;
   InitAppDesc('$description');
   AddApplicationModule(TFRE_FIRMBOX_STORAGE_POOLS_MOD.create);
-  AddApplicationModule(TFRE_FIRMBOX_STORAGE_SYNC_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_BACKUP_MOD.create);
@@ -3713,9 +3727,6 @@ begin
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Virtual',FetchAppTextShort(session,'$sitemap_fileserver_virtual'),'images_apps/firmbox_storage/files_virtual_white.svg',TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup',FetchAppTextShort(session,'$sitemap_backup'),'images_apps/firmbox_storage/clock_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup/Filebrowser',FetchAppTextShort(session,'$sitemap_filebrowser'),'images_apps/firmbox_storage/filebrowser_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize',FetchAppTextShort(session,'$sitemap_synchronize'),'images_apps/firmbox_storage/sync_white.svg',TFRE_FIRMBOX_STORAGE_SYNC_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_SYNC_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize/FibreChannel',FetchAppTextShort(session,'$sitemap_synchronize_fc'),'images_apps/firmbox_storage/sync_white.svg',TFRE_FIRMBOX_STORAGE_SYNC_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_SYNC_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Synchronize/iSCSI',FetchAppTextShort(session,'$sitemap_synchronize_iscsi'),'images_apps/firmbox_storage/sync_white.svg',TFRE_FIRMBOX_STORAGE_SYNC_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_SYNC_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;
@@ -3763,9 +3774,6 @@ begin
 
       CreateAppText(conn,'$sitemap_main','Storage','','Storage');
       CreateAppText(conn,'$sitemap_pools','Pools','','Pools');
-      CreateAppText(conn,'$sitemap_synchronize','Synchronize','','Synchronize');
-      CreateAppText(conn,'$sitemap_synchronize_fc','FibreChannel','','FibreChannel');
-      CreateAppText(conn,'$sitemap_synchronize_iscsi','iSCSI','','iSCSI');
       CreateAppText(conn,'$sitemap_fileserver','SAN/NAS','','SAN/NAS');
       CreateAppText(conn,'$sitemap_fileserver_global','Global SAN/NAS','','Global NFS, iSCSI, FC');
       CreateAppText(conn,'$sitemap_fileserver_virtual','Virtual NAS','','Virtual Fileserver');
@@ -3917,8 +3925,9 @@ begin
       CreateAppText(conn,'$lunview_add_diag_cap','New LUN View');
       CreateAppText(conn,'$lunview_modify_diag_cap','Modify LUN View');
 
-      CreateAppText(conn,'$create_vfs','Create Virtual NAS');
-      CreateAppText(conn,'$vfs_delete','Delete Virtual NAS');
+      CreateAppText(conn,'$tb_create_vfs','Create');
+      CreateAppText(conn,'$tb_delete_vfs','Delete');
+      CreateAppText(conn,'$cm_delete_vfs','Delete');
       CreateAppText(conn,'$vfs_name','Fileserver');
       CreateAppText(conn,'$vfs_pool','Diskpool');
       CreateAppText(conn,'$vfs_desc','Description');
@@ -3928,8 +3937,8 @@ begin
       CreateAppText(conn,'$storage_virtual_filer_content','Virtual NAS Properties');
       CreateAppText(conn,'$vfs_content_header','Details about the selected virtual NAS.');
       CreateAppText(conn,'$vfs_add_diag_cap','New Virtual Fileserver');
-      CreateAppText(conn,'$vfs_delete_diag_cap','Confirm: Delete Virtual Fileserver(s)');
-      CreateAppText(conn,'$vfs_delete_diag_msg','The virtual fileserver(s) %vfs_str% will be deleted permanently! Please confirm to continue.');
+      CreateAppText(conn,'$vfs_delete_diag_cap','Confirm: Delete Virtual Fileserver');
+      CreateAppText(conn,'$vfs_delete_diag_msg','The virtual fileserver %vfs_str% will be deleted permanently! Please confirm to continue.');
 
       CreateAppText(conn,'$vfs_share','Share');
       CreateAppText(conn,'$vfs_share_desc','Description');
@@ -3937,16 +3946,17 @@ begin
       CreateAppText(conn,'$vfs_share_used','Used');
       CreateAppText(conn,'$vfs_share_avail','Avail');
       CreateAppText(conn,'$vfs_share_icon','Sharing');
-      CreateAppText(conn,'$create_vfs_share','Create Share');
-      CreateAppText(conn,'$vfs_share_delete','Delete Share');
+      CreateAppText(conn,'$tb_create_vfs_share','Create Share');
+      CreateAppText(conn,'$tb_delete_vfs_share','Delete Share');
+      CreateAppText(conn,'$cm_delete_vfs_share','Delete Share');
       CreateAppText(conn,'$storage_virtual_filer_share_properties','Share Properties');
       CreateAppText(conn,'$storage_virtual_filer_share_groups','Groups');
       CreateAppText(conn,'$storage_virtual_filer_share_user','User');
       CreateAppText(conn,'$vfs_share_content_header','Details about the selected share.');
       CreateAppText(conn,'$vfs_share_add_diag_cap','New Fileshare');
       CreateAppText(conn,'$vfs_share_add_no_fs_msg','Please select a virtual NAS first before adding a share.');
-      CreateAppText(conn,'$vfs_share_delete_diag_cap','Confirm: Delete share(s)');
-      CreateAppText(conn,'$vfs_share_delete_diag_msg','The share(s) %share_str% will be deleted permanently! Please confirm to continue.');
+      CreateAppText(conn,'$vfs_share_delete_diag_cap','Confirm: Delete share');
+      CreateAppText(conn,'$vfs_share_delete_diag_msg','The share %share_str% will be deleted permanently! Please confirm to continue.');
       CreateAppText(conn,'$share_group_in_diag_cap','Adding Access to Group');
       CreateAppText(conn,'$share_group_in_no_share_msg','Please select a share first before adding group access.');
 
@@ -3957,10 +3967,15 @@ begin
       CreateAppText(conn,'$share_group_group','Group');
       CreateAppText(conn,'$share_group_desc','Description');
 
-      CreateAppText(conn,'$share_group_setread_on','Set Read Access');
-      CreateAppText(conn,'$share_group_setread_off','Clear Read Access');
-      CreateAppText(conn,'$share_group_setwrite_on','Set Write Access');
-      CreateAppText(conn,'$share_group_setwrite_off','Clear Write Access');
+      CreateAppText(conn,'$tb_share_group_setread_on','Set Read Access');
+      CreateAppText(conn,'$tb_share_group_setread_off','Clear Read Access');
+      CreateAppText(conn,'$tb_share_group_setwrite_on','Set Write Access');
+      CreateAppText(conn,'$tb_share_group_setwrite_off','Clear Write Access');
+
+      CreateAppText(conn,'$cm_share_group_setread_on','Set Read Access');
+      CreateAppText(conn,'$cm_share_group_setread_off','Clear Read Access');
+      CreateAppText(conn,'$cm_share_group_setwrite_on','Set Write Access');
+      CreateAppText(conn,'$cm_share_group_setwrite_off','Clear Write Access');
 
       CreateAppText(conn,'$backup_share','Source');
       CreateAppText(conn,'$backup_snapshot','ZFS Snapshot');
@@ -3971,7 +3986,7 @@ begin
       CreateAppText(conn,'$backup_snapshot_properties','Snapshot Properties');
       CreateAppText(conn,'$backup_content_header','Details about the selected snapshot.');
       CreateAppText(conn,'$backup_snapshot_delete','Delete');
-      CreateAppText(conn,'$backup_snapshot_delete_diag_cap','Confirm: Delete snapshot(s)');
+      CreateAppText(conn,'$backup_snapshot_delete_diag_cap','Confirm: Delete snapshot');
       CreateAppText(conn,'$backup_snapshot_delete_diag_msg','Feature disabled in Demo Mode.');
 
       //FIXXME - CHECK

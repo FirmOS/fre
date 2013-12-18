@@ -326,7 +326,8 @@ end;
 
 class procedure TFRE_DB_VIRTUAL_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='1.0';
+ inherited InstallDBObjects(conn,currentVersionId,newVersionId);
+ newVersionId:='1.0';
   StoreTranslateableText(conn,'scheme_share','Share Properties');
   StoreTranslateableText(conn,'scheme_sharename','Share Name');
   StoreTranslateableText(conn,'scheme_cifs','CIFS (Windows File Sharing)');
