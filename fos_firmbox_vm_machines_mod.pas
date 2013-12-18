@@ -364,7 +364,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,datalink_tr_Grid);
     with datalink_tr_Grid do begin
       //AddOneToOnescheme('icon','',app.FetchAppTextShort(conn,'$datalink_icon'),dt_icon);
-      AddOneToOnescheme('objname','linkname',app.FetchAppTextShort(session,'$datalink_name'),dt_string,true,1,'icon');
+      AddOneToOnescheme('objname','linkname',app.FetchAppTextShort(session,'$datalink_name'),dt_string,true,false,false,1,'icon');
 //      AddOneToOnescheme('zoned','zoned',app.FetchAppTextShort(conn,'$datalink_zoned'));
       AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppTextShort(session,'$datalink_desc'));
     end;
@@ -536,13 +536,13 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     with tr_Grid do begin
-      AddOneToOnescheme('Objname','',app.FetchAppTextShort(session,'$gc_vm_name'),dt_string,true,4);
+      AddOneToOnescheme('Objname','',app.FetchAppTextShort(session,'$gc_vm_name'),dt_string,true,false,false,4);
       AddOneToOnescheme('MType','',app.FetchAppTextShort(session,'$gc_vm_type'));
       AddOneToOnescheme('MStateIcon','',app.FetchAppTextShort(session,'$gc_vm_state'),dt_icon);
-      AddOneToOnescheme('PERFPCPU','',app.FetchAppTextShort(session,'$gc_vm_cpu'),dt_number,true,2);
-      AddOneToOnescheme('PERFPMEM','',app.FetchAppTextShort(session,'$gc_vm_used_mem'),dt_number,true,2);
-      AddOneToOnescheme('PERFRSS','',app.FetchAppTextShort(session,'$gc_vm_paged_mem'),dt_number,true,2);
-      AddOneToOnescheme('PERFVSZ','',app.FetchAppTextShort(session,'$gc_vm_virtual_mem'),dt_number,true,2);
+      AddOneToOnescheme('PERFPCPU','',app.FetchAppTextShort(session,'$gc_vm_cpu'),dt_number,true,false,false,2);
+      AddOneToOnescheme('PERFPMEM','',app.FetchAppTextShort(session,'$gc_vm_used_mem'),dt_number,true,false,false,2);
+      AddOneToOnescheme('PERFRSS','',app.FetchAppTextShort(session,'$gc_vm_paged_mem'),dt_number,true,false,false,2);
+      AddOneToOnescheme('PERFVSZ','',app.FetchAppTextShort(session,'$gc_vm_virtual_mem'),dt_number,true,false,false,2);
     end;
     vmcp := session.GetDBConnection.Collection('virtualmachine',false);
     vmc  := session.NewDerivedCollection('VMC');

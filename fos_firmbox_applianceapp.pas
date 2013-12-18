@@ -186,7 +186,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,datalink_tr_Grid);
     with datalink_tr_Grid do begin
       //AddOneToOnescheme('icon','',app.FetchAppTextShort(conn,'$datalink_icon'),dt_icon);
-      AddOneToOnescheme('objname','linkname',app.FetchAppTextShort(session,'$datalink_name'),dt_string,true,1,'icon');
+      AddOneToOnescheme('objname','linkname',app.FetchAppTextShort(session,'$datalink_name'),dt_string,true,false,false,1,'icon');
 //      AddOneToOnescheme('zoned','zoned',app.FetchAppTextShort(conn,'$datalink_zoned'));
       AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppTextShort(session,'$datalink_desc'));
     end;

@@ -80,10 +80,7 @@ type
     function        WEB_TBExportPool                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBScrubPool                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolLayout                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolSpace                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolNotes                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolNotesLoad                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolNotesSave                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ZFSTreeGridData                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_LayoutTreeGridData              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TreeDrop                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -307,7 +304,6 @@ begin
   for i := 0 to input.Field('selected').ValueCount-1 do begin
     groupid := GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]);
     if (conn.sys.FetchGroupById(groupid,group)<>edb_OK) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'Group not found!'));
-//    writeln( group.ObjectName,'->',GFRE_DBI.StringArray2String(group.GetRoleNames));
 
     rrole := _getRolename(share_s,rtRead);
     if conn.sys.RoleExists(rrole+'@'+group.GetDomain(conn))=false then raise EFRE_DB_Exception.Create('No Read Role for Fileshare !');
@@ -358,43 +354,15 @@ var sel_guid,rr,wr : string;
     true_icon      : string;
     false_icon     : string;
 begin
-  //writeln('MY OWN TRANSFORM');
-  //writeln('------');
-  //writeln(dependency_input.DumpToString());
-  //writeln('------');
-  //writeln(input_object.DumpToString());
-  //writeln('------');
-  //transformed_object.field('read').AsBoolean:=true;
-  //transformed_object.field('write').AsBoolean:=false;
-  //writeln('------');
-  //writeln(transformed_object.DumpToString());
-  //writeln('------');
-  //
   sel_guid  := dependency_input.FieldPath('UIDS_REF.FILTERVALUES').AsString;
   sel_guidg := GFRE_BT.HexString_2_GUID(sel_guid);
   group_id  := input_object.uid;
-    //begin
-    //  writeln('-------------- SHARE ----');
-    //  writeln(obj.DumpToString());
-    //  writeln('-------------- SHARE ----');
-    //end;
 
   rr := FREDB_Get_Rightname_UID_STR('FSREAD',sel_guid);
   wr := FREDB_Get_Rightname_UID_STR('FSWRITE',sel_guid);
 
   true_icon  := FREDB_getThemedResource('images_apps/firmbox_storage/access_true.png');
   false_icon := FREDB_getThemedResource('images_apps/firmbox_storage/access_false.png');
-  abort;
-//  if conn.CheckRightForGroup(rr,group_id) then
-//  transformed_object.field('read').Asstring  := true_icon
-//else
-//  transformed_object.field('read').Asstring  := false_icon;
-//
-//if conn.CheckRightForGroup(wr,group_id) then
-//  transformed_object.field('write').Asstring  := true_icon
-//else
-//  transformed_object.field('write').Asstring  := false_icon;
-
 end;
 
 procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -510,7 +478,7 @@ begin
 
   vfs          := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_fs,sub_sec_fs,nil,nil,nil,true,1,3);
 
-  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,vfs,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of virtual NAS fileservers and shares.</b>'));
+  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,vfs,nil,TFRE_DB_HTML_DESC.create.Describe('<b>'+app.FetchAppTextShort(ses,'$virtual_info')+'</b>'));
 end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_ContentShareGroups(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -628,7 +596,6 @@ begin
     if dc.Fetch(sel_guid,vfs) then begin
       GFRE_DBI.GetSystemSchemeByName(vfs.SchemeClass,scheme);
       dom_guid := vfs.Field('domainid').AsGUID;
-      writeln('DOMAINID :',GFRE_BT.GUID_2_HexString(dom_guid));
       dc_groupin := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
       dc_groupin.AddUIDFieldFilter('*domain*','domainid',TFRE_DB_GUIDArray.Create(dom_guid),dbnf_EXACT,false);
 
@@ -1014,7 +981,7 @@ begin
   sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentFilerNFS),app.FetchAppTextShort(ses,'$storage_global_filer_nfs'),1,'nfs');
   sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentFilerLUN),app.FetchAppTextShort(ses,'$storage_global_filer_lun'),1,'lun');
 
-  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,sub_sec_s,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of global SAN/NAS shares and LUNs.</b>'));
+  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,sub_sec_s,nil,TFRE_DB_HTML_DESC.create.Describe('<b>'+app.FetchAppTextShort(ses,'$global_info')+'</b>'));
 
 end;
 
@@ -1640,7 +1607,7 @@ begin
 
   //    CSF(@WEB_ContentSnapshot)
   backup  := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_snap,sub_sec,nil,nil,nil,true,1,1);
-  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,backup,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of backup snapshots of shares, block devices and virtual machines.</b>'));
+  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,backup,nil,TFRE_DB_HTML_DESC.create.Describe('<b>'+app.FetchAppTextShort(ses,'$backup_info')+'</b>'));
 end;
 
 function TFRE_FIRMBOX_BACKUP_MOD.WEB_ContentSnapShot(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2282,12 +2249,11 @@ begin
 
   secs:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
   secs.AddSection.Describe(CWSF(@WEB_PoolLayout),app.FetchAppTextShort(ses,'$pool_layout_tab'),1,'layout');
-  //secs.AddSection.Describe(CWSF(@WEB_PoolSpace),app.FetchAppTextShort(ses,'$pool_status_tab'),2,'space');
-  secs.AddSection.Describe(CWSF(@WEB_PoolNotes),app.FetchAppTextShort(ses,'$pool_notes_tab'),4,'notes');
+  secs.AddSection.Describe(CWSF(@WEB_PoolNotes),app.FetchAppTextShort(ses,'$pool_notes_tab'),2,'notes');
 
   store    := TFRE_DB_STORE_DESC.create.Describe('id',CWSF(@WEB_ZFSTreeGridData),TFRE_DB_StringArray.create('caption'),nil,nil,'pools_store');
   glayout  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
-  glayout.AddDataElement.Describe('caption','Caption',dt_string,2,true,false,'icon');
+  glayout.AddDataElement.Describe('caption','Caption',dt_string,false,false,2,true,false,'icon');
   glayout.AddDataElement.Describe('iops_r','IOPS R [1/s]',dt_number);
   glayout.AddDataElement.Describe('iops_w','IOPS W [1/s]',dt_number);
   glayout.AddDataElement.Describe('transfer_r','Read [MB/s]',dt_number);
@@ -2297,7 +2263,7 @@ begin
 
   store_l    := TFRE_DB_STORE_DESC.create.Describe('id',CWSF(@WEB_LayoutTreeGridData),TFRE_DB_StringArray.create('caption'),nil,nil,'layout_store');
   glayout_l  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
-  glayout_l.AddDataElement.Describe('caption','Caption',dt_string,2,true,false,'icon');
+  glayout_l.AddDataElement.Describe('caption','Caption',dt_string,false,false,2,true,false,'icon');
   layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store_l,glayout_l,nil,'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
 
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
@@ -2350,7 +2316,7 @@ begin
   end;
 
   main    := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(layout_grid,pool_grid,secs,nil,nil,true,1,3,3);
-  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>Overview of disks and pools and their status. Update interval: 10s. The average IO size is 128kByte.</b>'));
+  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe('<b>'+app.FetchAppTextShort(ses,'$pools_info')+'</b>'));
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolStructureSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -2462,22 +2428,6 @@ begin
   Result:=TFRE_DB_HTML_DESC.create.Describe('Feature disabled in Demo Mode.');
 end;
 
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolSpace(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-var
-  res,center,top,bottom : TFRE_DB_LAYOUT_DESC;
-  html                  : TFRE_DB_HTML_DESC;
-begin
-  CheckClassVisibility(ses);
-
-  html:=TFRE_DB_HTML_DESC.create.Describe('<strong>Pool Company Data</strong> ONLINE (optimal health)<br />Full dataintegrity is verified. Currently there are no optimizations necessary.');
-  //top:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(Usage(input),ServiceTime(input),nil,nil,nil,false,1,1);
-  top:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(BusyTime(input,ses),ServiceTime(input,ses),nil,nil,nil,false,1,1);
-  bottom:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(ReadBW(input,ses),WriteBW(input,ses),nil,nil,nil,false,1,1);
-  center:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(nil,bottom,nil,top,nil,false,-1,1,-1,1);
-  res:=TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,center,nil,html);
-  Result:=res;
-end;
-
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolNotes(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   load_func             : TFRE_DB_SERVER_FUNC_DESC;
@@ -2488,27 +2438,11 @@ begin
 
   load_func   := CWSF(@WEB_NoteLoad);
   save_func   := CWSF(@WEB_NoteSave);
-//  load_func.AddParam.Describe('linkid',input.Field('SELECTED').asstring);
-//  save_func.AddParam.Describe('linkid',input.Field('SELECTED').asstring);
 
   load_func.AddParam.Describe('linkid','zones');
   save_func.AddParam.Describe('linkid','zones');
 
   Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CWSF(@WEB_NoteStartEdit),CWSF(@WEB_NoteStopEdit));
-end;
-
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolNotesLoad(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  writeln('LOAD EDITOR DATA');
-  writeln('----------------------------------------');
-  writeln(input.DumpToString);
-  Result:=TFRE_DB_EDITOR_DATA_DESC.create.Describe('Loaded editor data.');
-
-end;
-
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolNotesSave(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_ZFSTreeGridData(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -3320,12 +3254,10 @@ begin
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
     if disk.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
-      writeln('DISK ',disk.field('name').AsString);
-      //writeln('IDENT : ',VM_HACK.DS_IdentifyDisk(disk.field('name').AsString,false));
+      //VM_HACK.DS_IdentifyDisk(disk.field('name').AsString,false);
     end;
   end;
-  //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Offline','Switch offline (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
-  result := GFRE_DB_NIL_DESC;
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Offline','Switch offline (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_IdentifyOff(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -3339,12 +3271,10 @@ begin
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
     if disk.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
-      writeln('DISK ',disk.field('name').AsString);
-      //writeln('IDENT : ',VM_HACK.DS_IdentifyDisk(disk.field('name').AsString,true));
+      //VM_HACK.DS_IdentifyDisk(disk.field('name').AsString,true);
     end;
   end;
-  //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Offline','Switch offline (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
-  result := GFRE_DB_NIL_DESC;
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Offline','Switch offline (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
 end;
 
 
@@ -3705,7 +3635,6 @@ var       debugs   : string;
           disk.Field('wbw').AsReal32 := disko.Field('kwps').AsReal32;
           disk.Field('rbw').AsReal32 := disko.Field('krps').AsReal32;;
           disk.Field('b').AsReal32   := disko.Field('perc_b').AsReal32;
-          //writeln('>> ',format('%30.30s AST %05.1f WBW  %05.1f  RBW   %05.1f   BUSY %05.1f',[disk.Field('caption').AsString,disk.Field('ast').AsReal32,disk.Field('wbw').AsReal32,disk.Field('rbw').AsReal32,disk.Field('b').AsReal32]));
           pool_disks.Update(disk);
         end else begin
           disk := GFRE_DBI.NewObject;
@@ -3826,6 +3755,11 @@ begin
       CreateAppText(conn,'$backup_description','Backup','Backup','Backup');
       CreateAppText(conn,'$fileserver_global_description','Global SAN/NAS','Global SAN/NAS','Global SAN/NAS');
       CreateAppText(conn,'$fileserver_virtual_description','Virtual NAS','Virtual NAS','Virtual NAS');
+
+      CreateAppText(conn,'$pools_info','Overview of disks and pools and their status.');
+      CreateAppText(conn,'$global_info','Overview of global SAN/NAS shares and LUNs.');
+      CreateAppText(conn,'$virtual_info','Overview of virtual NAS fileservers and shares.');
+      CreateAppText(conn,'$backup_info','Overview of backup snapshots of shares, block devices and virtual machines.');
 
       CreateAppText(conn,'$sitemap_main','Storage','','Storage');
       CreateAppText(conn,'$sitemap_pools','Pools','','Pools');
@@ -4100,11 +4034,6 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
     enclosures           : IFRE_DB_Object;
     pools                : IFRE_DB_Object;
 
-    procedure            _DumpCollection(const obj:IFRE_DB_Object);
-    begin
-      writeln(obj.DumpToString);
-    end;
-
     procedure            _UpdateEnclosures(const obj:IFRE_DB_Object);
     var enclosure        : TFRE_DB_ENCLOSURE;
         db_enclosure     : TFRE_DB_ENCLOSURE;
@@ -4185,7 +4114,6 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
         end
       else
         begin
-          writeln(disk.DeviceIdentifier,' ',disk.DeviceName);
           dbo      := disk.CloneToNewObject;
           db_disk  := dbo.Implementor_HC as TFRE_DB_PHYS_DISK;
           db_disk.caption :=  disk.Devicename; // device.WWN+' ('+device.Manufacturer+' '+device.Model_number+' '+device.Serial_number+')';
@@ -4266,24 +4194,14 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
     end;
 
 begin
-  writeln('DISKANDENCLOSUREDATAFEED');
-
   poolcollection         := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
   blockdevicecollection  := conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
   enclosurecollection    := conn.Collection(CFRE_DB_ENCLOSURE_COLLECTION);
   expandercollection     := conn.Collection(CFRE_DB_SAS_EXPANDER_COLLECTION);
   driveslotcollection    := conn.Collection(CFRE_DB_DRIVESLOT_COLLECTION);
 
-//  writeln('DIENC',input.DumpToString());
   enclosures             := input.Field('enclosures').AsObject;
   enclosures.ForAllObjects(@_UpdateEnclosures);
-
-  //writeln('DUMPENC');
-  //enclosurecollection.ForAll(@_DumpCollection);
-  //writeln('DUMPDRIVESLOTS');
-  //driveslotcollection.ForAll(@_DumpCollection);
-  //writeln('DUMPEXP');
-  //expandercollection.ForAll(@_DumpCollection);
 
   if not poolcollection.GetIndexedObj('UNASSIGNED',ua_obj) then
     begin
@@ -4306,9 +4224,6 @@ begin
 
   pools := input.Field('pools').AsObject;
   pools.ForAllObjects(@_UpdatePools);
-
-  writeln('DUMPDRIVESWITHSLOT');
-  blockdevicecollection.ForAll(@_DumpCollection);
 
   result := GFRE_DB_NIL_DESC;
 end;
