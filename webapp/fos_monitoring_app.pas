@@ -1034,7 +1034,7 @@ begin
     with dc_monitoring do begin
       SetDeriveParent(session.GetDBConnection.Collection('testcasestatus'));
       SetDeriveTransformation(tr_Monitoring);
-      SetDisplayType(cdt_Listview,[cdgf_Filter,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'Monitoring',nil,'',nil,nil,TFRE_DB_SERVER_FUNC_DESC.create.Describe(self,'TestcaseStatus_Details'));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'Monitoring',nil,'',nil,nil,TFRE_DB_SERVER_FUNC_DESC.create.Describe(self,'TestcaseStatus_Details'));
     end;
   end;
 end;
