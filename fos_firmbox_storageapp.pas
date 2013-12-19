@@ -2766,7 +2766,7 @@ var
   end;
 
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if not input.FieldPathExists('data.pool_name') then
@@ -2775,6 +2775,7 @@ begin
   pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
   vdevs := conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
   nameOk:=true;
+  lastObj:=nil;
   pools.ForAll(@_checkPoolName);
   if not nameOk then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppTextShort(ses,'$create_pool_error_cap'),app.FetchAppTextShort(ses,'$create_pool_error_not_unique'),fdbmt_error);
