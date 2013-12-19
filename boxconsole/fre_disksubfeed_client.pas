@@ -122,6 +122,7 @@ type
     destructor Destroy         ; override;
     procedure  DataParsed      (const timer : IFRE_APSC_TIMER ; const flag1,flag2 : boolean);
   public
+    function   IOStat_GetData  : IFRE_DB_Object;
   end;
 
 
@@ -165,10 +166,14 @@ begin
   inherited Setup;
 //  GFRE_SC.AddTimer('FAKEPARSE',1000,@DataParsed);
 
-  StartDiskAndEnclosureThread;
-  StartIostatParser;
-  StartZpoolStatusParser;
-//  StartZpoolIOStatParser;
+  try
+    StartIostatParser;
+    StartDiskAndEnclosureThread;
+    StartZpoolStatusParser;
+    StartZpoolIOStatParser;
+  except on e:Exception do begin
+    GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
+  end; end;
 end;
 
 destructor TFRE_DISKSUB_FEED_SERVER.Destroy;
@@ -202,6 +207,14 @@ begin
    PushDataToClients(obj);
 end;
 
+function TFRE_DISKSUB_FEED_SERVER.IOStat_GetData: IFRE_DB_Object;
+begin
+  if assigned(FDiskIoStatMon) then
+    result := FDiskIoStatMon.Get_Data_Object
+  else
+    GFRE_BT.CriticalAbort('IOStatMon not assigned in IOStat_Getdata');
+end;
+
 { TFRE_ZPOOL_IOSTAT_PARSER }
 
 procedure TFRE_ZPOOL_IOSTAT_PARSER.MyOutStreamCallBack(const stream: TStream);
@@ -213,8 +226,20 @@ var st       : TStringStream;
     SA       : TFOSStringArray;
     pool_name: String;
     np       : Boolean;
-    rz_cout  : Integer;
+    vdevc    : Integer;
     resdbo   : IFRE_DB_Object;
+    ziostat  : TFRE_DB_ZPOOL_IOSTAT;
+
+    function RenumberVdev(const devn:string) : string;                 // assume device numbering is the same as in zpool status
+    begin
+      if (Pos('raidz',devn)>0) or (Pos('mirror',devn)>0) then
+        begin
+          result := devn+'-V'+inttostr(vdevc);
+          inc(vdevc);
+        end
+      else
+        result := devn;
+    end;
 
   //                               capacity     operations    bandwidth
   // pool                       alloc   free   read  write   read  write
@@ -222,21 +247,25 @@ var st       : TStringStream;
   var zfsObjId : string[30];
   begin
     zfsObjId := Fline[0];
-    if np then begin
-      pool_name := zfsObjId;
-      np:=false;
-    end;
-    if pos('raidz',LowerCase(zfsObjId))=1 then begin //FIXXME - HACK
-      zfsObjId:=zfsObjId+'-'+IntToStr(rz_cout);
-      rz_cout:=rz_cout+1;
-    end;
-    FData.Field(pool_name).AsObject.Field(zfsObjId).AsObject.Field('iops_r').AsString     := Fline[3];//can be -
-    FData.Field(pool_name).AsObject.Field(zfsObjId).AsObject.Field('iops_w').AsString     := Fline[4];
-    FData.Field(pool_name).AsObject.Field(zfsObjId).AsObject.Field('transfer_r').AsString := Fline[5];//in K,M
-    FData.Field(pool_name).AsObject.Field(zfsObjId).AsObject.Field('transfer_w').AsString := Fline[6];//
+    if np then
+      begin
+        pool_name := zfsObjId;
+        np:=false;
+      end
+    else
+      zfsObjId:=pool_name+'/'+RenumberVdev(zfsObjId);
+
+    ziostat := TFRE_DB_ZPOOL_IOSTAT.CreateForDB;
+    ziostat.iopsR      := Fline[3];//can be -
+    ziostat.iopsW      := Fline[4];
+    ziostat.transferR  := Fline[5];//in K,M
+    ziostat.transferW  := Fline[6];//
+    ziostat.Field('zfs_guid').AsString:=zfsObjId;
+    FData.Field(pool_name).AsObject.Field(zfsobjId).AsObject:=ziostat;
   end;
 
 begin
+  vdevc:=1;
   stream.Position:=0;
   st := TStringStream.Create('');
   try
@@ -258,7 +287,7 @@ begin
           end;
           if pos('-',Fline[0])=1 then begin
             np:=true;
-            rz_cout:=0;
+            vdevc:=1;
             continue;
           end;
           if FLine.count<>7 then
@@ -288,6 +317,7 @@ begin
   resdbo := GFRE_DBI.NewObject;
   resdbo.Field('subfeed').asstring   := 'ZPOOLIOSTAT';
   resdbo.Field('data').AsObject      := Get_Data_Object;
+//  writeln('ZPOOLIOSTAT:',resdbo.DumpToString());
   fsubfeeder.PushDataToClients(resdbo);
 end;
 
@@ -363,6 +393,7 @@ begin
   resdbo := GFRE_DBI.NewObject;
   resdbo.Field('subfeed').asstring   := 'ZPOOLSTATUS';
   resdbo.Field('data').AsObject      := obj;
+//  writeln('DUMPPOOL:',obj.DumpToString());
   fsubfeeder.PushDataToClients(resdbo);
 end;
 
@@ -392,7 +423,7 @@ begin
     so     := TFRE_DB_SCSI.create;
     try
       so.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-      res    := so.GetSG3DiskAndEnclosureInformation(error,obj);
+      res    := so.GetSG3DiskAndEnclosureInformation(fsubfeeder.IOStat_GetData,error,obj);
   //    res    := so.GetDiskInformation(error,obj);
       resdbo := GFRE_DBI.NewObject;
       resdbo.Field('subfeed').asstring   := 'DISKENCLOSURE';
@@ -401,6 +432,7 @@ begin
       resdbo.Field('data').AsObject      := obj;
 //      writeln('SAVE');
 //      resdbo.SaveToFile('DISKENC');
+      writeln('DISKENC:',resdbo.DumpToString());
       fsubfeeder.PushDataToClients(resdbo);
       sleep(5000);
     finally
@@ -417,7 +449,6 @@ var st : TStringStream;
     i  : integer;
     s  : string;
     lc : integer;
-    obj    : IFRE_DB_Object;
     resdbo : IFRE_DB_Object;
 
   //  r/s,w/s,kr/s,kw/s,wait,actv,wsvc_t,asvc_t,%w,%b,device
@@ -427,29 +458,21 @@ var st : TStringStream;
   begin
     devicename := Fline[10];
     diskiostat := TFRE_DB_IOSTAT.Create;
-    try
-      diskiostat.Field('rps').AsReal32    := StrToFloat(Fline[0]);
-      diskiostat.Field('wps').AsReal32    := StrToFloat(Fline[1]);
-      diskiostat.Field('krps').AsReal32   := StrToFloat(Fline[2]);
-      diskiostat.Field('kwps').AsReal32   := StrToFloat(Fline[3]);
-      diskiostat.Field('wait').AsReal32   := StrToFloat(Fline[4]);
-      diskiostat.Field('actv').AsReal32   := StrToFloat(Fline[5]);
-      diskiostat.Field('wsvc_t').AsReal32 := StrToFloat(Fline[6]);
-      diskiostat.Field('actv_t').AsReal32 := StrToFloat(Fline[7]);
-      diskiostat.Field('perc_w').AsReal32 := StrToFloat(Fline[8]);
-      diskiostat.Field('perc_b').AsReal32 := StrToFloat(Fline[9]);
-    except on E:Exception do begin
-      writeln(ClassName,'>>>Mickey Parser Error---');
-      s:= Fline.DelimitedText;
-      writeln(s);
-      writeln(Classname,'<<<Mickey Parser Error---');
-    end;end;
+    diskiostat.Field('rps').AsReal32    := StrToFloat(Fline[0]);
+    diskiostat.Field('wps').AsReal32    := StrToFloat(Fline[1]);
+    diskiostat.Field('krps').AsReal32   := StrToFloat(Fline[2]);
+    diskiostat.Field('kwps').AsReal32   := StrToFloat(Fline[3]);
+    diskiostat.Field('wait').AsReal32   := StrToFloat(Fline[4]);
+    diskiostat.Field('actv').AsReal32   := StrToFloat(Fline[5]);
+    diskiostat.Field('wsvc_t').AsReal32 := StrToFloat(Fline[6]);
+    diskiostat.Field('actv_t').AsReal32 := StrToFloat(Fline[7]);
+    diskiostat.Field('perc_w').AsReal32 := StrToFloat(Fline[8]);
+    diskiostat.Field('perc_b').AsReal32 := StrToFloat(Fline[9]);
     diskiostat.Field('iodevicename').AsString := devicename;
-    obj.Field(devicename).AsObject          := diskiostat;
+    FData.Field(devicename).AsObject          := diskiostat;
   end;
 
 begin
-  obj := GFRE_DBI.NewObject;
   stream.Position:=0;
   st := TStringStream.Create('');
   try
@@ -467,7 +490,19 @@ begin
           if pos('r/s',Fline[0])=1 then begin
             continue;
           end;
-          _UpdateDisk;
+          FLock.Acquire;
+          try
+            try
+              _UpdateDisk;
+            except on E:Exception do begin
+              writeln(ClassName,'>>>Mickey Parser Error---');
+              s:= Fline.DelimitedText;
+              writeln(s);
+              writeln(Classname,'<<<Mickey Parser Error---');
+            end;end;
+          finally
+            FLock.Release;
+          end;
         end;
       end;
     end else begin
@@ -478,7 +513,7 @@ begin
   end;
   resdbo := GFRE_DBI.NewObject;
   resdbo.Field('subfeed').asstring   := 'IOSTAT';
-  resdbo.Field('data').AsObject      := obj;
+  resdbo.Field('data').AsObject      := Get_Data_Object;
   fsubfeeder.PushDataToClients(resdbo);
 end;
 

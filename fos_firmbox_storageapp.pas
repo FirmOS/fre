@@ -4022,6 +4022,7 @@ begin
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_SPARE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_SPARE for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_UNASSIGNED.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_SPARE for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_PHYS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_PHYS_DISK for group STORAGEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_UNDEFINED_BLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_UNDEFINED_BLOCKDEVICE for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SAS_DISK for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SATA_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SATA_DISK for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ENCLOSURE.GetClassStdRoles),'could not add roles TFRE_DB_ENCLOSURE for group STORAGEFEEDER');
@@ -4113,16 +4114,15 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
 
 
     procedure            _UpdateDisks(const obj:IFRE_DB_Object);
-    var  disk               : TFRE_DB_PHYS_DISK;
-         db_disk            : TFRE_DB_PHYS_DISK;
+    var  disk               : TFRE_DB_ZFS_BLOCKDEVICE;
+         db_disk            : TFRE_DB_ZFS_BLOCKDEVICE;
          dbo                : IFRE_DB_Object;
     begin
-      disk := (obj.Implementor_HC as TFRE_DB_PHYS_DISK);
+      disk := (obj.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE);
       if blockdevicecollection.GetIndexedObj(disk.DeviceIdentifier,dbo,CFRE_DB_ZFS_BLOCKDEVICE_DEV_ID_INDEX) then
         begin
-          db_disk  := dbo.Implementor_HC as TFRE_DB_PHYS_DISK;
-          db_disk.Fw_revision := disk.Fw_revision;
-          db_disk.DeviceName  := disk.DeviceName;
+          db_disk  := dbo.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE;
+          db_disk.SetAllSimpleObjectFieldsFromObject(disk);
           if db_disk.FieldExists('target_port') then
             db_disk.Field('target_port').AsStringArr := disk.Field('target_port').asstringArr;
           CheckDbResult(blockdevicecollection.Update(db_disk),'could not update disk');
@@ -4130,7 +4130,7 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
       else
         begin
           dbo      := disk.CloneToNewObject;
-          db_disk  := dbo.Implementor_HC as TFRE_DB_PHYS_DISK;
+          db_disk  := dbo.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE;
           db_disk.caption :=  disk.Devicename; // device.WWN+' ('+device.Manufacturer+' '+device.Model_number+' '+device.Serial_number+')';
           unassigned_disks.addBlockdevice(db_disk);
           CheckDbResult(blockdevicecollection.Store(db_disk),'store blockdevice in disk');
@@ -4170,6 +4170,7 @@ var unassigned_disks     : TFRE_DB_ZFS_UNASSIGNED;
         end;
 
     begin
+//      writeln('SWL',    obj.SchemeClass);
       if (obj.Implementor_HC is TFRE_DB_PHYS_DISK) then
         begin
           disk        := (obj.Implementor_HC as TFRE_DB_PHYS_DISK);

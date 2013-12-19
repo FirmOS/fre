@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-T /opt/local --test-log"/>
+        <CommandLineParams Value="-T /opt/local --test-log -H 10.220.251.10 -U root"/>
         <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
@@ -79,11 +79,11 @@
     <Conditionals Value="if TargetOS = 'darwin' then
    CustomOptions := '-WM10.6';"/>
     <CodeGeneration>
-      <TargetCPU Value="i386"/>
+      <TargetCPU Value="x86_64"/>
     </CodeGeneration>
     <Linking>
       <Debugging>
-        <DebugInfoType Value="dsStabs"/>
+        <DebugInfoType Value="dsDwarf2"/>
       </Debugging>
     </Linking>
     <Other>
