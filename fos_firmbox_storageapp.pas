@@ -2781,7 +2781,7 @@ begin
     exit;
   end;
 
-  newPool:=TFRE_DB_ZFS_POOL.create;
+  newPool:=TFRE_DB_ZFS_POOL.CreateForDB;
   newPool.caption:=input.FieldPath('data.pool_name').AsString;
   newPool.setIsNew;
 
