@@ -423,18 +423,22 @@ begin
     so     := TFRE_DB_SCSI.create;
     try
       so.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-      res    := so.GetSG3DiskAndEnclosureInformation(fsubfeeder.IOStat_GetData,error,obj);
-  //    res    := so.GetDiskInformation(error,obj);
-      resdbo := GFRE_DBI.NewObject;
-      resdbo.Field('subfeed').asstring   := 'DISKENCLOSURE';
-      resdbo.Field('resultcode').AsInt32 := res;
-      resdbo.Field('error').asstring     := error;
-      resdbo.Field('data').AsObject      := obj;
-//      writeln('SAVE');
-//      resdbo.SaveToFile('DISKENC');
-      writeln('DISKENC:',resdbo.DumpToString());
-      fsubfeeder.PushDataToClients(resdbo);
-      sleep(5000);
+      try
+        res    := so.GetSG3DiskAndEnclosureInformation(fsubfeeder.IOStat_GetData,error,obj);
+        resdbo := GFRE_DBI.NewObject;
+        resdbo.Field('subfeed').asstring   := 'DISKENCLOSURE';
+        resdbo.Field('resultcode').AsInt32 := res;
+        resdbo.Field('error').asstring     := error;
+        resdbo.Field('data').AsObject      := obj;
+  //      writeln('SAVE');
+  //      resdbo.SaveToFile('DISKENC');
+        writeln('DISKENC:',resdbo.DumpToString());
+        fsubfeeder.PushDataToClients(resdbo);
+        sleep(5000);
+      except on E:Exception do begin
+        writeln('DiskAndEnclosureThreadException:',E.Message);
+        raise;
+      end; end;
     finally
       so.Free;
     end;
