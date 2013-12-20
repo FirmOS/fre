@@ -432,7 +432,7 @@ begin
         resdbo.Field('data').AsObject      := obj;
   //      writeln('SAVE');
   //      resdbo.SaveToFile('DISKENC');
-        writeln('DISKENC:',resdbo.DumpToString());
+  //      writeln('DISKENC:',resdbo.DumpToString());
         fsubfeeder.PushDataToClients(resdbo);
         sleep(5000);
       except on E:Exception do begin

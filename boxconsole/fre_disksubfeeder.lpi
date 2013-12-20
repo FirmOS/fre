@@ -77,7 +77,9 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then
-   CustomOptions := '-WM10.6';"/>
+   CustomOptions := '-WM10.6';
+if TargetOS = 'solaris' then
+   CustomOptions := '-k-rpath=$ORIGIN/../lib/lib64rel/solaris';"/>
     <CodeGeneration>
       <TargetCPU Value="x86_64"/>
     </CodeGeneration>
