@@ -194,14 +194,15 @@ type
   TFRE_FIRMBOX_BACKUP_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
   protected
-    class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    procedure       SetupAppModuleStructure   ; override;
+    class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    procedure       SetupAppModuleStructure    ; override;
     procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
   published
-    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentSnapshot       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_SnapshotMenu          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DeleteSnapshot        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentSnapshot        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_SnapshotMenu           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteSnapshot         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteSnapshotConfirmed(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -1611,7 +1612,7 @@ begin
     with snap_dc do begin
       SetDeriveParent(conn.Collection('snapshot'));
       SetDeriveTransformation(snap_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable,cdgf_Multiselect],'',nil,'',CWSF(@WEB_SnapshotMenu),nil,CWSF(@WEB_ContentSnapshot));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_SnapshotMenu),nil,CWSF(@WEB_ContentSnapshot));
     end;
   end;
 end;
@@ -1695,8 +1696,41 @@ begin
 end;
 
 function TFRE_FIRMBOX_BACKUP_MOD.WEB_DeleteSnapshot(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+var
+  sf        : TFRE_DB_SERVER_FUNC_DESC;
+  obj       : IFRE_DB_Object;
+  msg       : String;
+  parentObj : IFRE_DB_Object;
 begin
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppTextShort(ses,'$backup_snapshot_delete_diag_cap'),app.FetchAppTextShort(ses,'$backup_snapshot_delete_diag_msg'),fdbmt_info,nil);
+  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  sf:=CWSF(@WEB_DeleteSnapshotConfirmed);
+  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+
+  CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[0]),obj),'TFRE_FIRMBOX_BACKUP_MOD.WEB_DeleteSnapshot');
+  CheckDbResult(conn.Fetch(obj.Field('parentId').AsGUID,parentObj),'TFRE_FIRMBOX_BACKUP_MOD.WEB_DeleteSnapshot');
+
+  msg:=StringReplace(app.FetchAppTextShort(ses,'$backup_snapshot_delete_diag_msg'),'%snapshot_str%',parentObj.Field('displayname').AsString + ' ('+obj.Field('creation').AsString+')',[rfReplaceAll]);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppTextShort(ses,'$backup_snapshot_delete_diag_cap'),msg,fdbmt_confirm,sf);
+end;
+
+function TFRE_FIRMBOX_BACKUP_MOD.WEB_DeleteSnapshotConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  i: Integer;
+begin
+  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      //FIXXME: Errorhandling
+      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+    end;
+    result := GFRE_DB_NIL_DESC;
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
+  end;
 end;
 
 
@@ -4128,7 +4162,7 @@ begin
       CreateAppText(conn,'$backup_content_header','Details about the selected snapshot.');
       CreateAppText(conn,'$backup_snapshot_delete','Delete');
       CreateAppText(conn,'$backup_snapshot_delete_diag_cap','Confirm: Delete snapshot');
-      CreateAppText(conn,'$backup_snapshot_delete_diag_msg','Feature disabled in Demo Mode.');
+      CreateAppText(conn,'$backup_snapshot_delete_diag_msg','The snapshot %snapshot_str% will be deleted permanently! Please confirm to continue.');
 
       //FIXXME - CHECK
       CreateAppText(conn,'$error_no_access','Access denied'); //global text?
