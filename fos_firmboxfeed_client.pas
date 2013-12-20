@@ -82,7 +82,8 @@ type
     procedure  MyConnectionTimer       ; override;
     procedure  GenerateFeedDataTimer   (const TIM : IFRE_APSC_TIMER ; const flag1,flag2 : boolean); // Timout & CMD Arrived & Answer Arrived
     procedure  SubfeederEvent          (const id:string; const dbo:IFRE_DB_Object);override;
-
+  published
+    procedure  REM_REQUESTDISKDATA     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
   end;
 
 
@@ -262,6 +263,15 @@ end;
 procedure TFRE_BOX_FEED_CLIENT.SubfeederEvent(const id: string; const dbo: IFRE_DB_Object);
 begin
   disk_hal.ReceivedDBO(dbo);
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_REQUESTDISKDATA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var   reply_Data  : IFRE_DB_Object;
+begin
+  disks_sent:=false;
+  writeln('SWL: REQUESTING DISK DATA');
+  reply_data := GFRE_DBI.NewObject;
+  AnswerSyncCommand(command_id,reply_data);
 end;
 
 end.
