@@ -52,7 +52,7 @@ type
     procedure       _unassignDisk                       (const upool:TFRE_DB_ZFS_UNASSIGNED; const disks: TFRE_DB_StringArray; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const session: IFRE_DB_UserSession);
     function        _getNextVdevNum                     (const siblings: IFRE_DB_ObjectArray): Integer;
     procedure       _getMultiselectionActions           (const conn: IFRE_DB_CONNECTION; const selected :TFRE_DB_StringArray;var fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled:Boolean);
-    procedure       _updateToolbar                      (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
+    procedure       _updateToolbars                     (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
     procedure       _updateToolbarAssignAndReplaceEntry (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
   protected
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -69,6 +69,7 @@ type
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolStructureSC                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LayoutSC                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBAssign                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBSwitchOnline                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBSwitchOffline                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -1637,7 +1638,7 @@ begin
 
   if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then begin
     txt:=app.FetchAppTextFull(ses,'$backup_snapshot_delete');
-    grid_snap.AddButton.Describe(CWSF(@WEB_DeleteSnapshot),'images_apps/firmbox_storage/delete_snapshot.png',txt.Getshort,txt.GetHint,fdgbd_multi);
+    grid_snap.AddButton.Describe(CWSF(@WEB_DeleteSnapshot),'',txt.Getshort,txt.GetHint,fdgbd_multi);
     txt.Finalize;
   end;
 
@@ -1686,7 +1687,7 @@ begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_DeleteSnapshot);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$backup_snapshot_delete'),'images_apps/firmbox_storage/delete_snapshot.png',func);
+    res.AddEntry.Describe(app.FetchAppTextShort(ses,'$backup_snapshot_delete'),'',func);
     Result:=res;
   end else begin
     Result:=GFRE_DB_NIL_DESC;
@@ -1733,11 +1734,11 @@ var
           zfs_rl_z2: raid_str:=app.FetchAppTextShort(session,'$add_disks_rl_z2');
           zfs_rl_z3: raid_str:=app.FetchAppTextShort(session,'$add_disks_rl_z3');
         end;
-        menu.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_ex_same'),'%raid_level%',raid_str,[rfReplaceAll]),'images_apps/firmbox_storage/expand_storage_disks_same.png',sf);
+        menu.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_ex_same'),'%raid_level%',raid_str,[rfReplaceAll]),'',sf);
       end;
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage_ex_other'),'images_apps/firmbox_storage/expand_storage_disks_other.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage_ex_other'),'');
     end else begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage'),'images_apps/firmbox_storage/add_storage_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage'),'');
     end;
     if storageRL<>zfs_rl_stripe then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1745,7 +1746,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'images_apps/firmbox_storage/expand_storage_disks_s.png',sf);
+      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'',sf);
     end;
     if storageRL<>zfs_rl_mirror then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1753,7 +1754,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'images_apps/firmbox_storage/expand_storage_disks_m.png',sf);
+      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'',sf);
     end;
     if storageRL<>zfs_rl_z1 then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1761,7 +1762,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z1'),'images_apps/firmbox_storage/expand_storage_disks_z1.png',sf);
+      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z1'),'',sf);
     end;
     if storageRL<>zfs_rl_z2 then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1769,7 +1770,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z2'),'images_apps/firmbox_storage/expand_storage_disks_z2.png',sf);
+      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z2'),'',sf);
     end;
     if storageRL<>zfs_rl_z3 then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1777,53 +1778,53 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z3'),'images_apps/firmbox_storage/expand_storage_disks_z3.png',sf);
+      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z3'),'',sf);
     end;
     if Length(addStorage)>1 then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage'),'images_apps/firmbox_storage/add_storage_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage'),'');
     end else begin
       sub:=menu;
     end;
     for i := 0 to Length(addStorage) - 1 do begin
       vdev:=addStorage[i].Implementor_HC as TFRE_DB_ZFS_VDEV;
       if vdev.raidLevel=zfs_rl_undefined then begin
-        subsub:=sub.AddMenu.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_storage_disks.png');
+        subsub:=sub.AddMenu.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'');
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'images_apps/firmbox_storage/add_storage_disks_s.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'',sf);
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'images_apps/firmbox_storage/add_storage_disks_m.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'',sf);
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z1'),'images_apps/firmbox_storage/add_storage_disks_z1.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z1'),'',sf);
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z2'),'images_apps/firmbox_storage/add_storage_disks_z2.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z2'),'',sf);
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z3'),'images_apps/firmbox_storage/add_storage_disks_z3.png',sf);
+        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z3'),'',sf);
       end else begin
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
-        sub.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_storage_disks.png',sf);
+        sub.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'',sf);
       end;
     end;
   end;
@@ -1835,7 +1836,7 @@ var
     sf:=CWSF(@WEB_AssignCacheDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
-    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_cache'),'images_apps/firmbox_storage/add_cache_disks.png',sf);
+    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_cache'),'',sf);
   end;
 
   procedure _addLogMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const expandLog: Boolean; const addLog: IFRE_DB_ObjectArray);
@@ -1846,24 +1847,24 @@ var
     sf   : TFRE_DB_SERVER_FUNC_DESC;
   begin
     if expandLog then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log_ex'),'images_apps/firmbox_storage/expand_log_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log_ex'),'');
     end else begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log'),'images_apps/firmbox_storage/add_log_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log'),'');
     end;
     sf:=CWSF(@WEB_AssignLogDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('expand','true');
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-    sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'images_apps/firmbox_storage/expand_storage_disks_s.png',sf);
+    sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'',sf);
     sf:=CWSF(@WEB_AssignLogDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('expand','true');
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-    sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'images_apps/firmbox_storage/expand_storage_disks_m.png',sf);
+    sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'',sf);
     if Length(addLog)>1 then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log'),'images_apps/firmbox_storage/add_log_disks.png');
+      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log'),'');
     end else begin
       sub:=menu;
     end;
@@ -1873,7 +1874,7 @@ var
       sf.AddParam.Describe('disks',disks);
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('add',vdev.getId);
-      sub.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_log_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_log_disks.png',sf);
+      sub.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_log_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'',sf);
     end;
   end;
 
@@ -1884,7 +1885,7 @@ var
     sf:=CWSF(@WEB_AssignSpareDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
-    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_spare'),'images_apps/firmbox_storage/add_spare_disks.png',sf);
+    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_spare'),'',sf);
   end;
 
   procedure _addVdevMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_VDEV);
@@ -1904,7 +1905,7 @@ var
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('add',target.getId);
-    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_vdev'),'images_apps/firmbox_storage/add_disks_vdev.png',sf);
+    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_vdev'),'',sf);
   end;
 
   procedure _addPoolMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_OBJ);
@@ -2014,7 +2015,7 @@ var
   begin
     if obj.Implementor_HC is TFRE_DB_ZFS_POOL then begin
       pool:=obj.Implementor_HC as TFRE_DB_ZFS_POOL;
-      sub:=menu.AddMenu.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_pool'),'%pool%',pool.caption,[rfReplaceAll]),'images_apps/firmbox_storage/add_pool_disks.png');
+      sub:=menu.AddMenu.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_pool'),'%pool%',pool.caption,[rfReplaceAll]),'');
       _addPoolMenu(sub,pool,pool);
     end;
   end;
@@ -2029,7 +2030,7 @@ begin
         sf:=CWSF(@WEB_Replace);
         sf.AddParam.Describe('old',target.getId);
         sf.AddParam.Describe('new',disk.getId);
-        menu.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png',sf,target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
+        menu.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'',sf,target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
       end else begin
         _addPoolMenu(menu,pool,target as TFRE_DB_ZFS_OBJ);
       end;
@@ -2302,7 +2303,7 @@ begin
   store_l    := TFRE_DB_STORE_DESC.create.Describe('id',CWSF(@WEB_LayoutTreeGridData),TFRE_DB_StringArray.create('caption'),nil,nil,'layout_store');
   glayout_l  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
   glayout_l.AddDataElement.Describe('caption','Caption',dt_string,false,false,2,true,false,'icon');
-  layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store_l,glayout_l,nil,'',[cdgf_Children,cdgf_Multiselect],nil,nil,nil,CWSF(@WEB_TreeDrop));
+  layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store_l,glayout_l,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_Multiselect],nil,CWSF(@WEB_LayoutSC),nil,CWSF(@WEB_TreeDrop));
 
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
     pool_grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
@@ -2351,7 +2352,22 @@ begin
     menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_remove'),'',CWSF(@WEB_TBRemoveNew),true,'pool_remove');
 
     pool_grid.SetMenu(menu);
-    layout_grid.SetMenu(TFRE_DB_MENU_DESC.create.Describe);
+
+    menu:=TFRE_DB_MENU_DESC.create.Describe;
+
+    submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_blockdevices'),'');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_on'),'',CWSF(@WEB_TBIdentifyOn),true,'layout_iden_on');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_off'),'',CWSF(@WEB_TBIdentifyOff),true,'layout_iden_off');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_online'),'',CWSF(@WEB_TBSwitchOnline),true,'layout_switch_online');
+    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'layout_switch_offline');
+
+    subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',true,'layout_assign');
+    _addDisksToPool(subsubmenu,nil,nil,nil,app,conn,ses);
+
+    subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_replace'),'',true,'layout_replace');
+    _replaceDisks(subsubmenu,'',conn);
+
+    layout_grid.SetMenu(menu);
   end;
 
   main    := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(layout_grid,pool_grid,secs,nil,nil,true,1,3,3);
@@ -2368,7 +2384,21 @@ begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedZfsObjs')
   end;
 
-  _updateToolbar(conn,ses);
+  _updateToolbars(conn,ses);
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_LayoutSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  CheckClassVisibility(ses);
+
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
+    ses.GetSessionModuleData(ClassName).Field('selectedLayoutObjs').AsStringArr:=input.Field('selected').AsStringArr;
+  end else begin
+    ses.GetSessionModuleData(ClassName).DeleteField('selectedLayoutObjs')
+  end;
+
+  _updateToolbars(conn,ses);
   Result:=GFRE_DB_NIL_DESC;
 end;
 
@@ -2623,6 +2653,7 @@ var
   rl     : TFRE_DB_ZFS_RAID_LEVEL;
   fnIdentifyOn,fnIdentifyOff, fnRemove, fnAssign, fnSwitchOffline, fnSwitchOnline: Boolean;
   fnSwitchOfflineDisabled, fnSwitchOnlineDisabled: Boolean;
+  dbObj: IFRE_DB_Object;
 begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
@@ -2634,101 +2665,104 @@ begin
       if fnRemove then begin
         sf:=CWSF(@WEB_RemoveNew);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_multiple_remove'),'%num%',IntToStr(input.field('selected').ValueCount),[rfReplaceAll]),'images_apps/firmbox_storage/cm_multiple_remove.png',sf);
+        res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_multiple_remove'),'%num%',IntToStr(input.field('selected').ValueCount),[rfReplaceAll]),'',sf);
       end;
       if fnIdentifyOn then begin
         sf:=CWSF(@WEB_IdentifyOn);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_on'),'images_apps/firmbox_storage/cm_identify.png',sf);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_on'),'',sf);
       end;
       if fnIdentifyOff then begin
         sf:=CWSF(@WEB_IdentifyOff);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_off'),'images_apps/firmbox_storage/cm_identify.png',sf);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_off'),'',sf);
       end;
       if fnSwitchOffline then begin
         sf:=CWSF(@WEB_SwitchOffline);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_offline'),'images_apps/firmbox_storage/cm_switch_offline.png',sf,fnSwitchOfflineDisabled);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_offline'),'',sf,fnSwitchOfflineDisabled);
       end;
       if fnSwitchOnline then begin
         sf:=CWSF(@WEB_SwitchOnline);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_online'),'images_apps/firmbox_storage/cm_switch_online.png',sf,fnSwitchOnlineDisabled);
+        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_online'),'',sf,fnSwitchOnlineDisabled);
       end;
       Result:=res;
     end else begin //single selection
-      zfsObj:=_getZFSObj(conn,input.Field('selected').AsString);
-      pool:=zfsObj.getPool(conn);
-      if (pool is TFRE_DB_ZFS_UNASSIGNED) and (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) then begin
-        _addDisksToPool(res,nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
-        sub:=res.AddMenu.Describe(app.FetchAppTextShort(ses,'$cm_replace'),'images_apps/firmbox_storage/cm_replace.png');
-        _replaceDisks(sub,input.Field('selected').AsString,conn);
-      end else begin
-        if (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) and not zfsObj.getIsNew then begin
-          if (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
-            sf:=CWSF(@WEB_SwitchOnline);
-            sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_online'),'images_apps/firmbox_storage/cm_switch_online.png',sf);
-          end else begin
-            sf:=CWSF(@WEB_SwitchOffline);
-            sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_offline'),'images_apps/firmbox_storage/cm_switch_offline.png',sf);
+      conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsString),dbObj);
+      if dbObj.Implementor_HC is TFRE_DB_ZFS_OBJ then begin
+        zfsObj:=dbObj.Implementor_HC as TFRE_DB_ZFS_OBJ;
+        pool:=zfsObj.getPool(conn);
+        if (pool is TFRE_DB_ZFS_UNASSIGNED) and (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) then begin
+          _addDisksToPool(res,nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
+          sub:=res.AddMenu.Describe(app.FetchAppTextShort(ses,'$cm_replace'),'');
+          _replaceDisks(sub,input.Field('selected').AsString,conn);
+        end else begin
+          if (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) and not zfsObj.getIsNew then begin
+            if (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
+              sf:=CWSF(@WEB_SwitchOnline);
+              sf.AddParam.Describe('selected',input.Field('selected').AsString);
+              res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_online'),'',sf);
+            end else begin
+              sf:=CWSF(@WEB_SwitchOffline);
+              sf.AddParam.Describe('selected',input.Field('selected').AsString);
+              res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_offline'),'',sf);
+            end;
           end;
         end;
-      end;
-      if zfsObj.getisNew then begin
-        sf:=CWSF(@WEB_RemoveNew);
-        sf.AddParam.Describe('selected',input.Field('selected').AsString);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_remove'),'images_apps/firmbox_storage/cm_remove.png',sf);
-        if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
-          sub:=res.AddMenu.Describe(app.FetchAppTextShort(ses,'$cm_change_raid_level'),'images_apps/firmbox_storage/cm_change_raid_level.png');
-          rl:=(zfsObj as TFRE_DB_ZFS_VDEV).raidLevel;
-          if rl<>zfs_rl_mirror then begin
-            sf:=CWSF(@WEB_ChangeRaidLevel);
-            sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-            sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_mirror'),'images_apps/firmbox_storage/cm_rl_mirror.png',sf);
+        if zfsObj.getisNew then begin
+          sf:=CWSF(@WEB_RemoveNew);
+          sf.AddParam.Describe('selected',input.Field('selected').AsString);
+          res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_remove'),'',sf);
+          if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
+            sub:=res.AddMenu.Describe(app.FetchAppTextShort(ses,'$cm_change_raid_level'),'');
+            rl:=(zfsObj as TFRE_DB_ZFS_VDEV).raidLevel;
+            if rl<>zfs_rl_mirror then begin
+              sf:=CWSF(@WEB_ChangeRaidLevel);
+              sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
+              sf.AddParam.Describe('selected',input.Field('selected').AsString);
+              sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_mirror'),'',sf);
+            end;
+            if rl<>zfs_rl_z1 then begin
+              sf:=CWSF(@WEB_ChangeRaidLevel);
+              sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
+              sf.AddParam.Describe('selected',input.Field('selected').AsString);
+              sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z1'),'',sf);
+            end;
+            if rl<>zfs_rl_z2 then begin
+              sf:=CWSF(@WEB_ChangeRaidLevel);
+              sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
+              sf.AddParam.Describe('selected',input.Field('selected').AsString);
+              sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z2'),'',sf);
+            end;
+            if rl<>zfs_rl_z3 then begin
+              sf:=CWSF(@WEB_ChangeRaidLevel);
+              sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
+              sf.AddParam.Describe('selected',input.Field('selected').AsString);
+              sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z3'),'',sf);
+            end;
           end;
-          if rl<>zfs_rl_z1 then begin
-            sf:=CWSF(@WEB_ChangeRaidLevel);
-            sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
-            sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z1'),'images_apps/firmbox_storage/cm_rl_z1.png',sf);
-          end;
-          if rl<>zfs_rl_z2 then begin
-            sf:=CWSF(@WEB_ChangeRaidLevel);
-            sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
-            sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z2'),'images_apps/firmbox_storage/cm_rl_z2.png',sf);
-          end;
-          if rl<>zfs_rl_z3 then begin
-            sf:=CWSF(@WEB_ChangeRaidLevel);
-            sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
-            sf.AddParam.Describe('selected',input.Field('selected').AsString);
-            sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z3'),'images_apps/firmbox_storage/cm_rl_z3.png',sf);
+        end else begin
+          if zfsObj is TFRE_DB_ZFS_POOL then begin
+            sf:=CWSF(@WEB_ScrubPool);
+            sf.AddParam.Describe('pool',input.Field('selected').AsString);
+            res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_scrub_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
+            sf:=CWSF(@WEB_ExportPool);
+            sf.AddParam.Describe('pool',input.Field('selected').AsString);
+            res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_export_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
+            sf:=CWSF(@WEB_DestroyPool);
+            sf.AddParam.Describe('pool',input.Field('selected').AsString);
+            res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_destroy_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
           end;
         end;
-      end else begin
-        if zfsObj is TFRE_DB_ZFS_POOL then begin
-          sf:=CWSF(@WEB_ScrubPool);
-          sf.AddParam.Describe('pool',input.Field('selected').AsString);
-          res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_scrub_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
-          sf:=CWSF(@WEB_ExportPool);
-          sf.AddParam.Describe('pool',input.Field('selected').AsString);
-          res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_export_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
-          sf:=CWSF(@WEB_DestroyPool);
-          sf.AddParam.Describe('pool',input.Field('selected').AsString);
-          res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_destroy_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'images_apps/firmbox_storage/cm_destroy_pool.png',sf,zfsObj.getIsModified);
+        if zfsObj.canIdentify then begin
+          sf:=CWSF(@WEB_IdentifyOn);
+          sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+          res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_on'),'',sf);
+          sf:=CWSF(@WEB_IdentifyOff);
+          sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+          res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_off'),'',sf);
         end;
-      end;
-      if zfsObj.canIdentify then begin
-        sf:=CWSF(@WEB_IdentifyOn);
-        sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_on'),'images_apps/firmbox_storage/cm_identify.png',sf);
-        sf:=CWSF(@WEB_IdentifyOff);
-        sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_off'),'images_apps/firmbox_storage/cm_identify.png',sf);
       end;
     end;
     Result:=res;
@@ -3224,7 +3258,7 @@ begin
   CheckDbResult(conn.Update(vdev),'Change raid level');
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
-  _updateToolbar(conn,ses);
+  _updateToolbars(conn,ses);
   _updateToolbarAssignAndReplaceEntry(conn,ses,app);
   Result:=res;
 end;
@@ -3362,7 +3396,7 @@ begin
       CheckDbResult(conn.Update(disk),'Switch online');
     end;
   end;
-  _updateToolbar(conn,ses);
+  _updateToolbars(conn,ses);
   ses.SendServerClientRequest(update); //FIXXME - remove store update
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Switch Online','Switch online (' + IntToStr(input.Field('selected').ValueCount)+'). Please implement me.',fdbmt_info);
 end;
@@ -3432,6 +3466,7 @@ var
   i     : Integer;
   zfsObj: TFRE_DB_ZFS_OBJ;
   pool  : TFRE_DB_ZFS_ROOTOBJ;
+  dbObj : IFRE_DB_Object;
 begin
   fnIdentifyOn:=true;
   fnIdentifyOFf:=true;
@@ -3443,7 +3478,20 @@ begin
   fnSwitchOnlineDisabled:=false;
 
   for i := 0 to Length(selected) - 1 do begin
-    zfsObj:=_getZFSObj(conn,selected[i]);
+    conn.Fetch(GFRE_BT.HexString_2_GUID(selected[i]),dbObj);
+    if dbObj.Implementor_HC is TFRE_DB_ZFS_OBJ then begin
+      zfsObj:=dbObj.Implementor_HC as TFRE_DB_ZFS_OBJ;
+    end else begin
+      fnIdentifyOn:=false;
+      fnIdentifyOFf:=false;
+      fnRemove:=false;
+      fnAssign:=false;
+      fnSwitchOffline:=false;
+      fnSwitchOnline:=false;
+      fnSwitchOfflineDisabled:=true;
+      fnSwitchOnlineDisabled:=true;
+      exit;
+    end;
     fnIdentifyOn:=fnIdentifyOn and zfsObj.canIdentify;
     pool:=zfsObj.getPool(conn);
     if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin //check if all selected objects are disks
@@ -3475,7 +3523,7 @@ begin
   fnIdentifyOff:=fnIdentifyOn;
 end;
 
-procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbar(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
+procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbars(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
 var
   fnIdentifyOn,fnIdentifyOff, fnRemove, fnAssign, fnSwitchOffline, fnSwitchOnline: Boolean;
   fnSwitchOfflineDisabled, fnSwitchOnlineDisabled: Boolean;
@@ -3484,73 +3532,93 @@ var
   zfsObj: TFRE_DB_ZFS_OBJ;
   vdev: TFRE_DB_ZFS_VDEV;
   selected: TFRE_DB_StringArray;
+  selectedfield: TFRE_DB_NameType;
+  idPrefix: String;
+  i: Integer;
+  dbObj: IFRE_DB_Object;
 begin
-  fnIdentifyOn:=false;
-  fnIdentifyOff:=false;
-  fnAssign:=false;
-  fnReplace:=false;
-  fnSwitchOfflineDisabled:=true;
-  fnSwitchOnlineDisabled:=true;
-  fnRemove:=false;
-  fnDestroy:=false;
-  fnExport:=false;
-  fnScrub:=false;
-  fnRLMirrorDisabled:=true;
-  fnRLZ1Disabled:=true;
-  fnRLZ2Disabled:=true;
-  fnRLZ3Disabled:=true;
-  fnRemove:=false;
 
-  if ses.GetSessionModuleData(ClassName).FieldExists('selectedZfsObjs') then begin
-    selected:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
-    if Length(selected)>1 then begin
-      _getMultiselectionActions(conn,selected,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
+  for i := 0 to 1 do begin
+    if i=0 then begin
+      selectedfield:='selectedZfsObjs';
+      idPrefix:='pool';
     end else begin
-      zfsObj:=_getZFSObj(conn,selected[0]);
-      if zfsObj.getisNew then begin
-        fnRemove:=true;
-        if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
-           vdev:=zfsObj as TFRE_DB_ZFS_VDEV;
-           fnRLMirrorDisabled:=(vdev.raidLevel=zfs_rl_mirror);
-           fnRLZ1Disabled:=(vdev.raidLevel=zfs_rl_z1);
-           fnRLZ2Disabled:=(vdev.raidLevel=zfs_rl_z2);
-           fnRLZ3Disabled:=(vdev.raidLevel=zfs_rl_z3);
-        end;
+      selectedfield:='selectedLayoutObjs';
+      idPrefix:='layout';
+    end;
+
+    fnIdentifyOn:=false;
+    fnIdentifyOff:=false;
+    fnAssign:=false;
+    fnReplace:=false;
+    fnSwitchOfflineDisabled:=true;
+    fnSwitchOnlineDisabled:=true;
+    fnRemove:=false;
+    fnDestroy:=false;
+    fnExport:=false;
+    fnScrub:=false;
+    fnRLMirrorDisabled:=true;
+    fnRLZ1Disabled:=true;
+    fnRLZ2Disabled:=true;
+    fnRLZ3Disabled:=true;
+    fnRemove:=false;
+
+    if ses.GetSessionModuleData(ClassName).FieldExists(selectedfield) then begin
+      selected:=ses.GetSessionModuleData(ClassName).Field(selectedfield).AsStringArr;
+      if Length(selected)>1 then begin
+        _getMultiselectionActions(conn,selected,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
       end else begin
-        if (zfsObj is TFRE_DB_ZFS_POOL) and not zfsObj.getIsModified then begin
-          fnDestroy:=true;
-          fnScrub:=true;
-          fnExport:=true;
-        end;
-        if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin
-          fnSwitchOfflineDisabled:=(zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline;
-          fnSwitchOnlineDisabled:=not fnSwitchOfflineDisabled;
-          if (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then begin
-            fnAssign:=true;
-            fnReplace:=true;
+        conn.Fetch(GFRE_BT.HexString_2_GUID(selected[0]),dbObj);
+        if dbObj.Implementor_HC is TFRE_DB_ZFS_OBJ then begin
+          zfsObj:=dbObj.Implementor_HC as TFRE_DB_ZFS_OBJ;
+          if zfsObj.getisNew then begin
+            fnRemove:=true;
+            if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
+               vdev:=zfsObj as TFRE_DB_ZFS_VDEV;
+               fnRLMirrorDisabled:=(vdev.raidLevel=zfs_rl_mirror);
+               fnRLZ1Disabled:=(vdev.raidLevel=zfs_rl_z1);
+               fnRLZ2Disabled:=(vdev.raidLevel=zfs_rl_z2);
+               fnRLZ3Disabled:=(vdev.raidLevel=zfs_rl_z3);
+            end;
+          end else begin
+            if (zfsObj is TFRE_DB_ZFS_POOL) and not zfsObj.getIsModified then begin
+              fnDestroy:=true;
+              fnScrub:=true;
+              fnExport:=true;
+            end;
+            if zfsObj is TFRE_DB_ZFS_BLOCKDEVICE then begin
+              fnSwitchOfflineDisabled:=(zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline;
+              fnSwitchOnlineDisabled:=not fnSwitchOfflineDisabled;
+              if (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then begin
+                fnAssign:=true;
+                fnReplace:=true;
+              end;
+            end;
           end;
+          fnIdentifyOn:=zfsObj.canIdentify;
+          fnIdentifyOff:=fnIdentifyOn;
         end;
       end;
-      fnIdentifyOn:=zfsObj.canIdentify;
-      fnIdentifyOff:=fnIdentifyOn;
     end;
-  end;
 
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_switch_online',fnSwitchOnlineDisabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_switch_offline',fnSwitchOfflineDisabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_iden_on',not fnIdentifyOn));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_iden_off',not fnIdentifyOff));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_assign',not fnAssign));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_replace',not fnReplace));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_remove',not fnRemove));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_destroy',not fnDestroy));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_scrub',not fnScrub));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_export',not fnExport));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_mirror',fnRLMirrorDisabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_z1',fnRLZ1Disabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_z2',fnRLZ2Disabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_rl_z3',fnRLZ3Disabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_remove',not fnRemove));
+    if i=0 then begin
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_remove',not fnRemove));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_destroy',not fnDestroy));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_scrub',not fnScrub));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_export',not fnExport));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_rl_mirror',fnRLMirrorDisabled));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_rl_z1',fnRLZ1Disabled));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_rl_z2',fnRLZ2Disabled));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_rl_z3',fnRLZ3Disabled));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_remove',not fnRemove));
+    end;
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_switch_online',fnSwitchOnlineDisabled));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_switch_offline',fnSwitchOfflineDisabled));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_iden_on',not fnIdentifyOn));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_iden_off',not fnIdentifyOff));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_assign',not fnAssign));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus(idPrefix+'_replace',not fnReplace));
+  end;
 end;
 
 procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD._updateToolbarAssignAndReplaceEntry(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
@@ -3560,11 +3628,15 @@ var
 begin
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   _addDisksToPool(menu,nil,nil,nil,app,conn,ses);
-  res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_assign',menu);
+  res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_assign',menu.CloneToNewObject().Implementor_HC as TFRE_DB_MENU_DESC);
+  ses.SendServerClientRequest(res);
+  res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('layout_assign',menu);
   ses.SendServerClientRequest(res);
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   _replaceDisks(menu,'',conn);
-  res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_replace',menu);
+  res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('pool_replace',menu.CloneToNewObject().Implementor_HC as TFRE_DB_MENU_DESC);
+  ses.SendServerClientRequest(res);
+  res:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeSubmenu('layout_replace',menu);
   ses.SendServerClientRequest(res);
 end;
 
