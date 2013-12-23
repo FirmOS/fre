@@ -2346,7 +2346,7 @@ begin
     layout_grid.SetDropGrid(pool_grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
 
     menu:=TFRE_DB_MENU_DESC.create.Describe;
-    menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_save_config'),'',CWSF(@WEB_SaveConfig),true,'pool_save');
+    menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_save_config'),'',CWSF(@WEB_SaveConfig),false,'pool_save');
     menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_reset_config'),'',CWSF(@WEB_ResetConfig),true,'pool_reset');
     menu.AddEntry.Describe('DEBUG_RELOAD','',CWSF(@WEB_DebugReloadConfig),false,'pool_reload');
 
@@ -3675,12 +3675,30 @@ begin
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_SaveConfig(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+var
+  i       :   NativeInt;
+  zfsobj  :   TFRE_DB_ZFS_OBJ;
+  em_pool :   TFRE_DB_ZFS_POOL;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',true));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',true));
+  input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
+  writeln('SWL:',input.DumpToString());
+  for i := 0 to input.Field('selected').ValueCount - 1 do begin
+    zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
+    if (zfsobj.Implementor_HC is TFRE_DB_ZFS_POOL) then
+      em_pool:=TFRE_DB_ZFS_POOL.CreateEmbeddedPoolObjectfromCollection(conn,zfsobj.UID);
+    zfsobj.Finalize;
+  end;
+
+
+
+//  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',true));
+//  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',true));
+
+
+
   result:=TFRE_DB_MESSAGE_DESC.create.Describe('SAVE','Save Config',fdbmt_info);
 end;
 
