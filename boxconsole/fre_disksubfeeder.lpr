@@ -49,7 +49,6 @@ uses
   fre_disksubfeed_client,
   fre_basesubfeed_app, fre_basesubfeed_server;
 
-{$I fos_version_helper.inc}
 
 type
   { TFRE_Testserver }
