@@ -204,6 +204,18 @@ type
     function        WEB_DeleteSnapshotConfirmed(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
+  { TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD }
+
+  TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  private
+  protected
+    class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    procedure       SetupAppModuleStructure    ; override;
+    procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
+  published
+    function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+  end;
+
 
 procedure Register_DB_Extensions;
 
@@ -214,9 +226,34 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_BACKUP_MOD);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_POOLS_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_APP);
   GFRE_DBI.Initialize_Extension_Objects;
+end;
+
+{ TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD }
+
+class procedure TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  inherited RegisterSystemScheme(scheme);
+  scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
+end;
+
+procedure TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD.SetupAppModuleStructure;
+begin
+  inherited SetupAppModuleStructure;
+  InitModuleDesc('$backup_scheduler_description')
+end;
+
+procedure TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+begin
+  inherited MySessionInitializeModule(session);
+end;
+
+function TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me');
 end;
 
 { TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD }
@@ -3666,7 +3703,7 @@ begin
 
     Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CWSF(@WEB_NoteStartEdit),CWSF(@WEB_NoteStopEdit),ct_html,false);
   end else begin
-    Result:=TFRE_DB_HTML_DESC.create.Describe('SEAS');
+    Result:=TFRE_DB_HTML_DESC.create.Describe('');
   end;
   (Result.Implementor_HC as TFRE_DB_CONTENT_DESC).contentId:='pools_notes';
 end;
@@ -3902,6 +3939,7 @@ begin
   AddApplicationModule(TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_BACKUP_MOD.create);
+  AddApplicationModule(TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD.create);
 end;
 
 procedure TFRE_FIRMBOX_STORAGE_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
@@ -3917,6 +3955,7 @@ begin
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Virtual',FetchAppTextShort(session,'$sitemap_fileserver_virtual'),'images_apps/firmbox_storage/files_virtual_white.svg',TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup',FetchAppTextShort(session,'$sitemap_backup'),'images_apps/firmbox_storage/clock_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup/Filebrowser',FetchAppTextShort(session,'$sitemap_filebrowser'),'images_apps/firmbox_storage/filebrowser_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Scheduler',FetchAppTextShort(session,'$sitemap_backup_scheduler'),'images_apps/firmbox_storage/clock_white.svg',TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;
@@ -3953,22 +3992,24 @@ begin
       CreateAppText(conn,'$caption','Storage','Storage','Storage');
       CreateAppText(conn,'$pools_description','Pools','Pools','Pools');
       CreateAppText(conn,'$synch_description','Synchronization','Synchronization','Synchronization');
-      CreateAppText(conn,'$backup_description','Backup','Backup','Backup');
+      CreateAppText(conn,'$backup_description','Snapshots','Snapshots','Snapshots');
+      CreateAppText(conn,'$backup_scheduler_description','Snapshot Schedulers','Snapshot Schedulers','Snapshot Schedulers');
       CreateAppText(conn,'$fileserver_global_description','Global SAN/NAS','Global SAN/NAS','Global SAN/NAS');
       CreateAppText(conn,'$fileserver_virtual_description','Virtual NAS','Virtual NAS','Virtual NAS');
 
       CreateAppText(conn,'$pools_info','Overview of disks and pools and their status.');
       CreateAppText(conn,'$global_info','Overview of global SAN/NAS shares and LUNs.');
       CreateAppText(conn,'$virtual_info','Overview of virtual NAS fileservers and shares.');
-      CreateAppText(conn,'$backup_info','Overview of backup snapshots of shares, block devices and virtual machines.');
+      CreateAppText(conn,'$backup_info','Overview of snapshots for shares, block devices and virtual machines.');
 
       CreateAppText(conn,'$sitemap_main','Storage','','Storage');
       CreateAppText(conn,'$sitemap_pools','Pools','','Pools');
       CreateAppText(conn,'$sitemap_fileserver','SAN/NAS','','SAN/NAS');
       CreateAppText(conn,'$sitemap_fileserver_global','Global SAN/NAS','','Global NFS, iSCSI, FC');
       CreateAppText(conn,'$sitemap_fileserver_virtual','Virtual NAS','','Virtual Fileserver');
-      CreateAppText(conn,'$sitemap_backup','Backup','','Backup');
+      CreateAppText(conn,'$sitemap_backup','Snapshots','','Snapshots');
       CreateAppText(conn,'$sitemap_filebrowser','Filebrowser','','Filebrowser');
+      CreateAppText(conn,'$sitemap_backup_scheduler','Snapshot Schedulers','','Snapshot Schedulers');
 
       CreateAppText(conn,'$pool_status_tab','Status');
       CreateAppText(conn,'$pool_space_tab','Space');
