@@ -106,7 +106,6 @@ type
     function        WEB_SaveConfig                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ResetConfig                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Replace                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DebugreloadConfig               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
   end;
 
@@ -2377,7 +2376,6 @@ begin
     menu:=TFRE_DB_MENU_DESC.create.Describe;
     menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_save_config'),'',CWSF(@WEB_SaveConfig),false,'pool_save');
     menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_reset_config'),'',CWSF(@WEB_ResetConfig),true,'pool_reset');
-    menu.AddEntry.Describe('DEBUG_RELOAD','',CWSF(@WEB_DebugReloadConfig),false,'pool_reload');
 
     submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_pools'),'');
     submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_create_pool'),'',CWSF(@WEB_CreatePoolDiag));
@@ -3800,43 +3798,6 @@ begin
   end;
 
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Replace','Please implement me ('+input.Field('new').AsString+'=>'+input.Field('old').AsString+')',fdbmt_info);
-end;
-
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_DebugreloadConfig(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  lastId  : String;
-  reqobj       : IFRE_DB_Object;
-  opd          : IFRE_DB_Object;
-
-  procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
-  var res : TFRE_DB_MESSAGE_DESC;
-      app : IFRE_DB_APPLICATION;
-      conn: IFRE_DB_CONNECTION;
-  begin
-    if status=cdcs_OK then
-      begin
-        opaquedata.Finalize;
-      end
-    else
-      begin
-        if status=cdcs_TIMEOUT then
-          ses.SendServerClientAnswer(TFRE_DB_MESSAGE_DESC.create.Describe('Error','TIMEOUT on requesting disk data',fdbmt_error),ocid);
-        if status=cdcs_ERROR then
-          ses.SendServerClientAnswer(TFRE_DB_MESSAGE_DESC.create.Describe('Error','ERROR on requesting disk data',fdbmt_error),ocid);
-        opaquedata.Finalize;
-      end;
-  end;
-
-begin
-
-  reqobj := GFRE_DBI.NewObject;
-  opd    := GFRE_DBI.NewObject;
-
-
-  if ses.InvokeRemoteRequest('TFRE_BOX_FEED_CLIENT','REQUESTDISKDATA',reqobj,@GotAnswer,opd)<>edb_OK then
-    raise EFRE_DB_Exception.Create('could not invoke ARTEFEED delete measurement command');
-
-  result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.Usage(const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession): TFRE_DB_CONTENT_DESC;
