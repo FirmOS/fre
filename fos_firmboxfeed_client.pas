@@ -269,7 +269,7 @@ procedure TFRE_BOX_FEED_CLIENT.REM_REQUESTDISKDATA(const command_id: Qword; cons
 var   reply_Data  : IFRE_DB_Object;
 begin
   disks_sent:=false;
-  writeln('SWL: REQUESTING DISK DATA');
+//  writeln('SWL: REQUESTING DISK DATA');
   reply_data := GFRE_DBI.NewObject;
   AnswerSyncCommand(command_id,reply_data);
 end;

@@ -3716,7 +3716,7 @@ begin
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
-  writeln('SWL:',input.DumpToString());
+//  writeln('SWL:',input.DumpToString());
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
     if (zfsobj.Implementor_HC is TFRE_DB_ZFS_POOL) then
@@ -4205,6 +4205,8 @@ begin
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_POOL.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_POOL for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_BLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_BLOCKDEVICE for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_VDEVCONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_VDEVCONTAINER for group STORAGEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DISKREPLACECONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DISKREPLACECONTAINER for group STORAGEFEEDER');
+  CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DISKSPARECONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DISKSPARECONTAINER for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_VDEV.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_VDEVfor group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DATASTORAGE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DATASTORAGE for group STORAGEFEEDER');
   CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_LOG.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_LOG for group STORAGEFEEDER');

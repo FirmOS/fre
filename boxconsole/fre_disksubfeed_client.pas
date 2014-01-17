@@ -58,6 +58,17 @@ type
 
   TFRE_DISKSUB_FEED_SERVER        = class;
 
+  { TMPathAdmThread }
+
+  TMPathAdmThread=class(TThread)
+  private
+    fsubfeeder        : TFRE_DISKSUB_FEED_SERVER;
+  public
+    constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
+    procedure   Execute                      ; override;
+  end;
+
+
   { TDiskAndEnclosureThread }
 
   TDiskAndEnclosureThread=class(TThread)
@@ -111,11 +122,13 @@ type
     FPoolStatusMon                           : TFRE_ZPOOL_STATUS_PARSER;
     FPoolIostatMon                           : TFRE_ZPOOL_IOSTAT_PARSER;
     Fdiskenclosurethread                     : TDiskAndEnclosureThread;
+    FMpathAdmThread                          : TMPathAdmThread;
 
     procedure  StartDiskAndEnclosureThread   ;
     procedure  StartIostatParser             ;
     procedure  StartZpoolStatusParser        ;
     procedure  StartZpoolIOStatParser        ;
+    procedure  StartMpathAdmThread           ;
 
   protected
     procedure  Setup           ; override;
@@ -127,6 +140,45 @@ type
 
 
 implementation
+
+{ TMPathAdmThread }
+
+constructor TMPathAdmThread.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
+begin
+  inherited Create(false);
+  fsubfeeder := subfeeder;
+end;
+
+procedure TMPathAdmThread.Execute;
+var so    : TFRE_DB_SCSI;
+    obj   : IFRE_DB_Object;
+    error : string;
+    res   : integer;
+    resdbo: IFRE_DB_Object;
+begin
+  repeat
+    so     := TFRE_DB_SCSI.create;
+    try
+      so.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
+      try
+        res    := so.GetMpathAdmLUInformation(error,obj);
+        resdbo := GFRE_DBI.NewObject;
+        resdbo.Field('subfeed').asstring      := 'MPATH';
+        resdbo.Field('resultcode').AsInt32    := res;
+        resdbo.Field('error').asstring        := error;
+        resdbo.Field('data').AsObject         := obj;
+        resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+        fsubfeeder.PushDataToClients(resdbo);
+        sleep(10000);
+      except on E:Exception do begin
+        GFRE_DBI.LogError(dblc_APPLICATION,'MPathAdmThreadException %s',[e.Message]);
+        raise;
+      end; end;
+    finally
+      so.Free;
+    end;
+  until Terminated;
+end;
 
 { TFRE_DISKSUB_FEED_SERVER }
 
@@ -153,6 +205,11 @@ begin
   FPoolIostatMon.Enable;
 end;
 
+procedure TFRE_DISKSUB_FEED_SERVER.StartMpathAdmThread;
+begin
+  FMpathAdmThread:=TMPathAdmThread.Create(self);
+end;
+
 procedure TFRE_DISKSUB_FEED_SERVER.Setup;
 begin
   fre_dbbase.Register_DB_Extensions;
@@ -166,11 +223,12 @@ begin
   inherited Setup;
 //  GFRE_SC.AddTimer('FAKEPARSE',1000,@DataParsed);
 
-  try
+try
     StartIostatParser;
     StartDiskAndEnclosureThread;
     StartZpoolStatusParser;
     StartZpoolIOStatParser;
+    StartMpathAdmThread;
   except on e:Exception do begin
     GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
   end; end;
@@ -178,7 +236,7 @@ end;
 
 destructor TFRE_DISKSUB_FEED_SERVER.Destroy;
 begin
-  writeln('DESTROYING SUBFEEDER');
+  GFRE_DBI.LogInfo(dblc_APPLICATION,'DESTROYING SUBFEEDER');
 
   if Assigned(FDiskIoStatMon) then
     FDiskIoStatMon.Free;
@@ -189,12 +247,16 @@ begin
 
   if Assigned(Fdiskenclosurethread) then
     begin
-      writeln('TERMINATE THREAD');
       Fdiskenclosurethread.Terminate;
-//      Fdiskenclosurethread.WaitFor;
-//      Fdiskenclosurethread.Free;
+      Fdiskenclosurethread.WaitFor;
+      Fdiskenclosurethread.Free;
     end;
-
+  if Assigned(FMpathAdmThread) then
+    begin
+      FMpathAdmThread.Terminate;
+      FMpathAdmThread.WaitFor;
+      FMpathAdmThread.Free;
+    end;
   inherited Destroy;
 end;
 
@@ -210,7 +272,7 @@ end;
 function TFRE_DISKSUB_FEED_SERVER.IOStat_GetData: IFRE_DB_Object;
 begin
   if assigned(FDiskIoStatMon) then
-    result := FDiskIoStatMon.Get_Data_Object
+      result := FDiskIoStatMon.Get_Data_Object
   else
     GFRE_BT.CriticalAbort('IOStatMon not assigned in IOStat_Getdata');
 end;
@@ -298,10 +360,8 @@ begin
             try
               _UpdateZpoolIostat;
             except on E:Exception do begin
-              writeln(ClassName,'>>>Mickey Parser Error---');
-              s:= Fline.DelimitedText;
-              writeln(s);
-              writeln(Classname,'<<<Mickey Parser Error---');
+              GFRE_DBI.LogError(dblc_APPLICATION,'ZPool Iostat Parser Error: %s',[e.Message]);
+              GFRE_DBI.LogError(dblc_APPLICATION,'ZPool Iostat Text: %s',[Fline.DelimitedText]);
             end;end;
           finally
             FLock.Release;
@@ -309,14 +369,15 @@ begin
         end;
       end;
     end else begin
-      writeln(ClassName,'*IGNORING JUNK : ',st.Size,': [',st.DataString,']');
+      GFRE_DBI.LogInfo(dblc_APPLICATION,'ZPool Iostat IGNORING JUNK: %d [%s]',[st.Size,st.DataString]);
     end;
   finally
     st.Free;
   end;
   resdbo := GFRE_DBI.NewObject;
-  resdbo.Field('subfeed').asstring   := 'ZPOOLIOSTAT';
-  resdbo.Field('data').AsObject      := Get_Data_Object;
+  resdbo.Field('subfeed').asstring      := 'ZPOOLIOSTAT';
+  resdbo.Field('data').AsObject         := Get_Data_Object;
+  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
 //  writeln('ZPOOLIOSTAT:',resdbo.DumpToString());
   fsubfeeder.PushDataToClients(resdbo);
 end;
@@ -378,6 +439,8 @@ begin
             plines.add(flines[i]);
             if Pos('errors:',flines[i])>0 then
               begin
+//                if ParseZpool(GFRE_BT.StringFromFile('status'),pool) then              //DEBUG
+
                 if ParseZpool(plines.Text,pool) then
                   obj.Field(pool.Field('pool').asstring).AsObject:=pool;
                 plines.Clear;
@@ -391,8 +454,10 @@ begin
     st.free;
   end;
   resdbo := GFRE_DBI.NewObject;
-  resdbo.Field('subfeed').asstring   := 'ZPOOLSTATUS';
-  resdbo.Field('data').AsObject      := obj;
+  resdbo.Field('subfeed').asstring      := 'ZPOOLSTATUS';
+  resdbo.Field('data').AsObject         := obj;
+  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+
 //  writeln('DUMPPOOL:',obj.DumpToString());
   fsubfeeder.PushDataToClients(resdbo);
 end;
@@ -417,8 +482,9 @@ var so    : TFRE_DB_SCSI;
     error : string;
     res   : integer;
     resdbo: IFRE_DB_Object;
+//    dummyi: NativeInt;
 begin
-  writeln('exec');
+//  dummyi:=0;
   repeat
     so     := TFRE_DB_SCSI.create;
     try
@@ -426,17 +492,22 @@ begin
       try
         res    := so.GetSG3DiskAndEnclosureInformation(fsubfeeder.IOStat_GetData,error,obj);
         resdbo := GFRE_DBI.NewObject;
-        resdbo.Field('subfeed').asstring   := 'DISKENCLOSURE';
-        resdbo.Field('resultcode').AsInt32 := res;
-        resdbo.Field('error').asstring     := error;
-        resdbo.Field('data').AsObject      := obj;
-  //      writeln('SAVE');
-  //      resdbo.SaveToFile('DISKENC');
-  //      writeln('DISKENC:',resdbo.DumpToString());
+        resdbo.Field('subfeed').asstring      := 'DISKENCLOSURE';
+        resdbo.Field('resultcode').AsInt32    := res;
+        resdbo.Field('error').asstring        := error;
+        resdbo.Field('data').AsObject         := obj;
+        resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+
         fsubfeeder.PushDataToClients(resdbo);
-        sleep(5000);
+//        inc(dummyi);
+        sleep(10000);
+        //if dummyi=10 then
+        //  begin
+        //    writeln('SWL:TERMINATE');
+        //    Terminate;
+        //  end;
       except on E:Exception do begin
-        writeln('DiskAndEnclosureThreadException:',E.Message);
+        GFRE_DBI.LogError(dblc_APPLICATION,'DiskAndEnclosureThreadException %s',[e.Message]);
         raise;
       end; end;
     finally
@@ -499,10 +570,8 @@ begin
             try
               _UpdateDisk;
             except on E:Exception do begin
-              writeln(ClassName,'>>>Mickey Parser Error---');
-              s:= Fline.DelimitedText;
-              writeln(s);
-              writeln(Classname,'<<<Mickey Parser Error---');
+              GFRE_DBI.LogError(dblc_APPLICATION,'Iostat Parser Error: %s',[e.Message]);
+              GFRE_DBI.LogError(dblc_APPLICATION,'Iostat Text: %s',[Fline.DelimitedText]);
             end;end;
           finally
             FLock.Release;
@@ -510,14 +579,16 @@ begin
         end;
       end;
     end else begin
-      writeln(ClassName,'*IGNORING JUNK : ',st.Size,': [',st.DataString,']');
+      GFRE_DBI.LogInfo(dblc_APPLICATION,'Iostat IGNORING JUNK: %d [%s]',[st.Size,st.DataString]);
     end;
   finally
     st.Free;
   end;
   resdbo := GFRE_DBI.NewObject;
-  resdbo.Field('subfeed').asstring   := 'IOSTAT';
-  resdbo.Field('data').AsObject      := Get_Data_Object;
+  resdbo.Field('subfeed').asstring      := 'IOSTAT';
+  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+  resdbo.Field('data').AsObject         := Get_Data_Object;
+//  writeln('SWL:IOSTAT',resdbo.DumpToString());
   fsubfeeder.PushDataToClients(resdbo);
 end;
 
