@@ -103,6 +103,7 @@ type
     {$ENDIF}
   public
     procedure            MyRunMethod; override;
+    procedure            WriteVersion; override;
   end;
 
 {$IFDEF FOS_WITH_CONSOLE}
@@ -332,6 +333,11 @@ begin
   writeln('UHU JUHU');
   {$ENDIF}
   inherited MyRunMethod;
+end;
+
+procedure TFRE_BOXCONSOLE_FEED.WriteVersion;
+begin
+  writeln(GFOS_VHELP_GET_VERSION_STRING);
 end;
 
 var

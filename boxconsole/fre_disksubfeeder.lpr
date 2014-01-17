@@ -51,13 +51,15 @@ uses
 
 {$I fos_version_helper.inc}
 
+
 type
   { TFRE_Testserver }
 
-  { TFRE_TESTDATA_FEED }
+  { TFRE_DISKSUB_FEED }
 
   TFRE_DISKSUB_FEED = class(TFRE_BASESUBDATA_FEED)
     procedure TestMethod; override;
+    procedure WriteVersion; override;
   end;
 
   { TFRE_Testserver }
@@ -70,6 +72,11 @@ procedure TFRE_DISKSUB_FEED.TestMethod;
 begin
   writeln('THIS IS YOUR SHINY TEST Method used with the undocumented -t option.');
   halt;
+end;
+
+procedure TFRE_DISKSUB_FEED.WriteVersion;
+begin
+  writeln(GFOS_VHELP_GET_VERSION_STRING);
 end;
 
 begin
