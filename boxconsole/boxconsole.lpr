@@ -70,6 +70,8 @@ const
   cMenuFrame=Cyan;
 {$ENDIF}
 
+{$I fos_version_helper.inc}
+
 type
 
   { TFRE_BOXCONSOLE_FEED }
