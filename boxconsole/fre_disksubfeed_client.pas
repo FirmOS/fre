@@ -49,7 +49,7 @@ uses
   fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk,fre_base_parser;
 
 const
-  cIOSTATFILEHACKMIST     = '/zones/firmos/myiostat.sh';
+  cIOSTAT                 = 'iostat -rxnsmd 1';
   cIOSTATFILEHACKMIST_LOC = 'sh -c /zones/firmos/myiostat.sh';
   cZPOOLSTATUS            = 'zpool status 1';
   cGET_ZPOOL_IOSTAT       = 'zpool iostat -v 1';
@@ -211,6 +211,7 @@ begin
 end;
 
 procedure TFRE_DISKSUB_FEED_SERVER.Setup;
+var lang:string;
 begin
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
@@ -221,7 +222,10 @@ begin
   FCfg.Port        := '44101';
   FCfg.IP          := '0.0.0.0';
   inherited Setup;
-//  GFRE_SC.AddTimer('FAKEPARSE',1000,@DataParsed);
+
+  lang:=GetEnvironmentVariable('LANG');
+  if lang<>'C' then
+    GFRE_BT.CriticalAbort('Environment LANG for this feeder must be C, instead of %s ',[lang]);
 
 try
     StartIostatParser;
@@ -595,11 +599,10 @@ end;
 constructor TFRE_IOSTAT_PARSER.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
 var cmd:string;
 begin
-  if cFRE_REMOTE_HOST<>'' then
-    cmd := cIOSTATFILEHACKMIST
+  if cFRE_REMOTE_HOST='' then
+    cmd := cIOSTAT
   else
     cmd := cIOSTATFILEHACKMIST_LOC;
-
   inherited Create(cFRE_REMOTE_USER,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'),cFRE_REMOTE_HOST,cmd);
   fsubfeeder := subfeeder;
 end;

@@ -336,6 +336,7 @@ var
   Application : TFRE_BOXCONSOLE_FEED;
 
 begin
+  cFOS_PRODUCT_NAME := 'boxconsole';
   Application:=TFRE_BOXCONSOLE_FEED.Create(nil,TFRE_BOX_FEED_CLIENT.Create);
   Application.Run;
   Application.Free;

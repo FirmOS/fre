@@ -49,6 +49,7 @@ uses
   fre_disksubfeed_client,
   fre_basesubfeed_app, fre_basesubfeed_server;
 
+{$I fos_version_helper.inc}
 
 type
   { TFRE_Testserver }
@@ -72,6 +73,7 @@ begin
 end;
 
 begin
+  cFOS_PRODUCT_NAME := 'fre_disksubfeeder';
   Application:=TFRE_DISKSUB_FEED.Create(nil,TFRE_DISKSUB_FEED_SERVER.Create);
   Application.Run;
   Application.Free;
