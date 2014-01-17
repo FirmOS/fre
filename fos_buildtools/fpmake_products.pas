@@ -26,7 +26,7 @@ begin
         Add('fcl-fpcunit');
         Add('FOS_FIRMBOX');
       end;
-      Directory:=cFOS_BUILD_PREFIX+'firmbox';
+      Directory:=cFOS_BUILD_PREFIX+'firmbox/';
       InstallProgramSuffix := FOSBuild.FOS_Suffix;
       with targets do begin
         AddProgram('firmbox.lpr');
@@ -46,7 +46,8 @@ begin
         Add('fcl-fpcunit');
         Add('FOS_FIRMBOX');
       end;
-      Directory:=cFOS_BUILD_PREFIX+'boxconsole';
+      Directory:=cFOS_BUILD_PREFIX+'boxconsole/';
+      Options.Add('-Fi../../core/fos_include');
       InstallProgramSuffix := FOSBuild.FOS_Suffix;
       with targets do begin
         AddProgram('boxconsole.lpr');
