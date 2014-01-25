@@ -437,7 +437,7 @@ begin
     share_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
     with share_dc do begin
       //SetDeriveParent(conn.Collection('fileshare'));
-      SetReferentialLinkMode('TFRE_DB_VIRTUAL_FILESHARE|FILESERVER',false);
+      SetReferentialLinkMode(['TFRE_DB_VIRTUAL_FILESHARE<FILESERVER']);
       //AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_VIRTUAL_FILESHARE.ClassName));
       SetDeriveTransformation(share_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSShareMenu),nil,CWSF(@WEB_VFSShareSC));
@@ -1002,7 +1002,7 @@ begin
     end;
     nfs_access_dc := session.NewDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_ACCESS_GRID');
     with nfs_access_dc do begin
-      SetReferentialLinkMode('TFRE_DB_NFS_ACCESS|FILESHARE',false);
+      SetReferentialLinkMode(['TFRE_DB_NFS_ACCESS<FILESHARE']);
 //      SetDeriveParent(conn.Collection('fileshare_access'));
       SetDeriveTransformation(nfs_access_tr_Grid);
 //      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_NFS_ACCESS.ClassName));
@@ -1033,7 +1033,7 @@ begin
     end;
     lun_view_dc := session.NewDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_VIEW_GRID');
     with lun_view_dc do begin
-      SetReferentialLinkMode('TFRE_DB_LUN_VIEW|FILESHARE',false);
+      SetReferentialLinkMode(['TFRE_DB_LUN_VIEW<FILESHARE']);
 //      SetDeriveParent(conn.Collection('fileshare_access'));
       SetDeriveTransformation(lun_view_tr_Grid);
 //      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_LUN_VIEW.ClassName));
