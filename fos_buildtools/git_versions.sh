@@ -14,15 +14,11 @@ cd ../artemes
 add_versions
 cd ../citycom
 add_versions
-cd ../extra
-add_versions
 cd ../firmbox
-add_versions
-cd ../frejs
 add_versions
 cd ../monsys
 add_versions
 cd ../firmosdev
 add_versions
 cd fos_buildtools
-printf "$GIT_VERSIONS\n"
+printf "\'$GIT_VERSIONS\'"
