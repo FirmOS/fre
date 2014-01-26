@@ -5,6 +5,7 @@ function add_versions(){
   GIT_VERSIONS=$(printf "$GIT_VERSIONS\n$NEW_VERSION")
 }
 
+cd ..
 cd ../core
 add_versions
 cd ../hal
@@ -23,4 +24,5 @@ cd ../monsys
 add_versions
 cd ../firmosdev
 add_versions
+cd fos_buildtools
 printf "$GIT_VERSIONS\n"
