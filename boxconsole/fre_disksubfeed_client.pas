@@ -45,7 +45,7 @@ unit fre_disksubfeed_client;
 interface
 
 uses
-  Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basesubfeed_server,fre_system,
+  Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basedbo_server,fre_system,
   fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk,fre_base_parser;
 
 const
@@ -115,7 +115,7 @@ type
 
   { TFRE_DISKSUB_FEED_SERVER }
 
-  TFRE_DISKSUB_FEED_SERVER=class(TFRE_BASESUBFEED_SERVER)
+  TFRE_DISKSUB_FEED_SERVER=class(TFRE_DBO_SERVER)
   private
     FDataTimer                               : IFRE_APSC_TIMER;
     FDiskIoStatMon                           : TFRE_IOSTAT_PARSER;
@@ -217,10 +217,10 @@ begin
   fre_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
 
-  FCfg.SpecialFile := cFRE_UX_SOCKS_DIR+'disksub';
-  FCfg.Id          := 'DiskSub';
-  FCfg.Port        := '44101';
-  FCfg.IP          := '0.0.0.0';
+  FDBO_Srv_Cfg.SpecialFile := cFRE_UX_SOCKS_DIR+'disksub';
+  FDBO_Srv_Cfg.Id          := 'DiskSub';
+  FDBO_Srv_Cfg.Port        := '44101';
+  FDBO_Srv_Cfg.IP          := '0.0.0.0';
   inherited Setup;
 
   lang:=GetEnvironmentVariable('LANG');
