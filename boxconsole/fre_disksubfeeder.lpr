@@ -80,7 +80,6 @@ begin
 end;
 
 begin
-  cFOS_PRODUCT_NAME := 'fre_disksubfeeder';
   Application:=TFRE_DISKSUB_FEED.Create(nil,TFRE_DISKSUB_FEED_SERVER.Create);
   Application.Run;
   Application.Free;
