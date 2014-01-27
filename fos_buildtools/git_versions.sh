@@ -1,9 +1,9 @@
 GIT_VERSIONS=""
 
 function add_versions(){
-  NEW_VERSION="'"$(basename $(pwd))"--->"$(git rev-parse --abbrev-ref HEAD)" "$(git log -1 --format="%H [%ci]")"'"
+  NEW_VERSION=$(basename $(pwd))"--->"$(git rev-parse --abbrev-ref HEAD)" "$(git log -1 --format="%H [%ci]")
   if [ "$GIT_VERSIONS" != "" ]; then
-    GIT_VERSIONS="$GIT_VERSIONS""+ LineEnding +"
+    GIT_VERSIONS="$GIT_VERSIONS""'+ LineEnding +'"
   fi  
   GIT_VERSIONS="$GIT_VERSIONS""$NEW_VERSION"
 }

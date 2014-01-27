@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 
 export FOS_PRODUCT_BUILD_HASH="$(bash ../../firmosdev/fos_buildtools/git_versions.sh)"
