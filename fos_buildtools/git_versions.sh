@@ -1,8 +1,11 @@
 GIT_VERSIONS=""
 
 function add_versions(){
-  NEW_VERSION=$(basename $(pwd))" ---> "$(git rev-parse --abbrev-ref HEAD)" "$(git log -1 --format="%H [%ci]")
-  GIT_VERSIONS=$(printf "$GIT_VERSIONS$NEW_VERSION, ")
+  NEW_VERSION="'"$(basename $(pwd))"--->"$(git rev-parse --abbrev-ref HEAD)" "$(git log -1 --format="%H [%ci]")"'"
+  if [ "$GIT_VERSIONS" != "" ]; then
+    GIT_VERSIONS="$GIT_VERSIONS""+ LineEnding +"
+  fi  
+  GIT_VERSIONS="$GIT_VERSIONS""$NEW_VERSION"
 }
 
 cd ..
@@ -21,4 +24,4 @@ add_versions
 cd ../firmosdev
 add_versions
 cd fos_buildtools
-printf "\'\'$GIT_VERSIONS\'\'"
+printf "$GIT_VERSIONS"
