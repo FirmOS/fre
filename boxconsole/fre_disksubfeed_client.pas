@@ -49,10 +49,10 @@ uses
   fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk,fre_base_parser;
 
 const
-  cIOSTAT                 = 'iostat -rxnsmd 1';
-  cIOSTATFILEHACKMIST_LOC = 'sh -c /zones/firmos/myiostat.sh';
-  cZPOOLSTATUS            = 'zpool status 1';
-  cGET_ZPOOL_IOSTAT       = 'zpool iostat -v 1';
+  cIOSTAT                    = 'iostat -rxnsmde 1';
+  cIOSTATFILEHACKMIST_REMOTE = 'sh -c /zones/firmos/myiostat_e.sh';
+  cZPOOLSTATUS               = 'zpool status 1';
+  cGET_ZPOOL_IOSTAT          = 'zpool iostat -v 1';
 
 type
 
@@ -123,7 +123,6 @@ type
     FPoolIostatMon                           : TFRE_ZPOOL_IOSTAT_PARSER;
     Fdiskenclosurethread                     : TDiskAndEnclosureThread;
     FMpathAdmThread                          : TMPathAdmThread;
-    FTimeOut                                 : TFRE_DB_DateTime64;
 
     procedure  _TerminateThreads             ;
     procedure  _WaitForAndFreeThreads        ;
@@ -133,8 +132,6 @@ type
     procedure  StartZpoolStatusParser        ;
     procedure  StartZpoolIOStatParser        ;
     procedure  StartMpathAdmThread           ;
-
-    procedure  TimeoutTimer                  (const timer        : IFRE_APSC_TIMER ; const flag1,flag2 : boolean);
 
   protected
     procedure  Setup           ; override;
@@ -247,26 +244,11 @@ begin
   FMpathAdmThread:=TMPathAdmThread.Create(self);
 end;
 
-procedure TFRE_DISKSUB_FEED_SERVER.TimeoutTimer(const timer: IFRE_APSC_TIMER; const flag1, flag2: boolean);
-begin
-  if (FTimeOut>0) then
-    if (FTimeOut<GFRE_DT.Now_UTC) then
-      begin
-        FTimeOut:=0;
-        GFRE_DBI.LogError(dblc_APPLICATION,'Terminating Threads due to runtime timeout');
-        _TerminateThreads;
-        _WaitForAndFreeThreads;
-        GFRE_DBI.LogError(dblc_APPLICATION,'Requesting Terminate due to runtime timeout');
-        GFRE_SC.RequestTerminate;
-      end;
-end;
 
 
 procedure TFRE_DISKSUB_FEED_SERVER.Setup;
 var lang:string;
 begin
-  FTimeOut:=0;
- // FTimeOut:=GFRE_DT.Now_UTC+(1000*1800);    //DEBUG
 
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
@@ -292,7 +274,6 @@ try
     GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
   end; end;
 
- GFRE_SC.AddTimer('TIMEOUT',1000,@TimeoutTimer);
 end;
 
 destructor TFRE_DISKSUB_FEED_SERVER.Destroy;
@@ -576,7 +557,7 @@ var st : TStringStream;
   var devicename : string[30];
       diskiostat : TFRE_DB_IOSTAT;
   begin
-    devicename := Fline[10];
+    devicename := Fline[14];
     diskiostat := TFRE_DB_IOSTAT.Create;
     diskiostat.Field('rps').AsReal32    := StrToFloat(Fline[0]);
     diskiostat.Field('wps').AsReal32    := StrToFloat(Fline[1]);
@@ -588,6 +569,10 @@ var st : TStringStream;
     diskiostat.Field('actv_t').AsReal32 := StrToFloat(Fline[7]);
     diskiostat.Field('perc_w').AsReal32 := StrToFloat(Fline[8]);
     diskiostat.Field('perc_b').AsReal32 := StrToFloat(Fline[9]);
+    diskiostat.Field('err_sw').AsUint32  := StrToInt(Fline[10]);
+    diskiostat.Field('err_hw').AsUint32  := StrToInt(Fline[11]);
+    diskiostat.Field('err_trn').AsUint32  := StrToInt(Fline[12]);
+    diskiostat.Field('err_tot').AsUint32  := StrToInt(Fline[13]);
     diskiostat.Field('iodevicename').AsString := devicename;
     FData.Field(devicename).AsObject          := diskiostat;
   end;
@@ -643,7 +628,7 @@ begin
   if cFRE_REMOTE_HOST='' then
     cmd := cIOSTAT
   else
-    cmd := cIOSTATFILEHACKMIST_LOC;
+    cmd := cIOSTATFILEHACKMIST_REMOTE;
   inherited Create(cFRE_REMOTE_USER,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'),cFRE_REMOTE_HOST,cmd);
   fsubfeeder := subfeeder;
 end;
