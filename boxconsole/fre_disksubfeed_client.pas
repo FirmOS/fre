@@ -123,12 +123,18 @@ type
     FPoolIostatMon                           : TFRE_ZPOOL_IOSTAT_PARSER;
     Fdiskenclosurethread                     : TDiskAndEnclosureThread;
     FMpathAdmThread                          : TMPathAdmThread;
+    FTimeOut                                 : TFRE_DB_DateTime64;
+
+    procedure  _TerminateThreads             ;
+    procedure  _WaitForAndFreeThreads        ;
 
     procedure  StartDiskAndEnclosureThread   ;
     procedure  StartIostatParser             ;
     procedure  StartZpoolStatusParser        ;
     procedure  StartZpoolIOStatParser        ;
     procedure  StartMpathAdmThread           ;
+
+    procedure  TimeoutTimer                  (const timer        : IFRE_APSC_TIMER ; const flag1,flag2 : boolean);
 
   protected
     procedure  Setup           ; override;
@@ -169,7 +175,8 @@ begin
         resdbo.Field('data').AsObject         := obj;
         resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
         fsubfeeder.PushDataToClients(resdbo);
-        sleep(10000);
+        if not Terminated then
+          sleep(10000);
       except on E:Exception do begin
         GFRE_DBI.LogError(dblc_APPLICATION,'MPathAdmThreadException %s',[e.Message]);
         raise;
@@ -180,7 +187,37 @@ begin
   until Terminated;
 end;
 
+
 { TFRE_DISKSUB_FEED_SERVER }
+
+procedure TFRE_DISKSUB_FEED_SERVER._TerminateThreads;
+begin
+  if Assigned(Fdiskenclosurethread) then
+    begin
+      Fdiskenclosurethread.Terminate;
+    end;
+  if Assigned(FMpathAdmThread) then
+    begin
+      FMpathAdmThread.Terminate;
+    end;
+end;
+
+procedure TFRE_DISKSUB_FEED_SERVER._WaitForAndFreeThreads;
+begin
+  if Assigned(Fdiskenclosurethread) then
+    begin
+      Fdiskenclosurethread.WaitFor;
+      Fdiskenclosurethread.Free;
+      Fdiskenclosurethread:=nil;
+    end;
+  if Assigned(FMpathAdmThread) then
+    begin
+      FMpathAdmThread.WaitFor;
+      FMpathAdmThread.Free;
+      FMpathAdmThread:=nil;
+    end;
+end;
+
 
 procedure TFRE_DISKSUB_FEED_SERVER.StartDiskAndEnclosureThread;
 begin
@@ -210,9 +247,27 @@ begin
   FMpathAdmThread:=TMPathAdmThread.Create(self);
 end;
 
+procedure TFRE_DISKSUB_FEED_SERVER.TimeoutTimer(const timer: IFRE_APSC_TIMER; const flag1, flag2: boolean);
+begin
+  if (FTimeOut>0) then
+    if (FTimeOut<GFRE_DT.Now_UTC) then
+      begin
+        FTimeOut:=0;
+        GFRE_DBI.LogError(dblc_APPLICATION,'Terminating Threads due to runtime timeout');
+        _TerminateThreads;
+        _WaitForAndFreeThreads;
+        GFRE_DBI.LogError(dblc_APPLICATION,'Requesting Terminate due to runtime timeout');
+        GFRE_SC.RequestTerminate;
+      end;
+end;
+
+
 procedure TFRE_DISKSUB_FEED_SERVER.Setup;
 var lang:string;
 begin
+  FTimeOut:=0;
+ // FTimeOut:=GFRE_DT.Now_UTC+(1000*1800);    //DEBUG
+
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
@@ -224,8 +279,8 @@ begin
   inherited Setup;
 
   lang:=GetEnvironmentVariable('LANG');
-  if lang<>'C' then
-    GFRE_BT.CriticalAbort('Environment LANG for this feeder must be C, instead of %s ',[lang]);
+  if (lang<>'C') then
+    GFRE_DBI.LogError(dblc_APPLICATION,'Environment LANG for this feeder must be C, instead of %s ',[lang]);
 
 try
     StartIostatParser;
@@ -236,6 +291,8 @@ try
   except on e:Exception do begin
     GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
   end; end;
+
+ GFRE_SC.AddTimer('TIMEOUT',1000,@TimeoutTimer);
 end;
 
 destructor TFRE_DISKSUB_FEED_SERVER.Destroy;
@@ -249,18 +306,9 @@ begin
   if Assigned(FPoolIostatMon) then
     FPoolIostatMon.Free;
 
-  if Assigned(Fdiskenclosurethread) then
-    begin
-      Fdiskenclosurethread.Terminate;
-      Fdiskenclosurethread.WaitFor;
-      Fdiskenclosurethread.Free;
-    end;
-  if Assigned(FMpathAdmThread) then
-    begin
-      FMpathAdmThread.Terminate;
-      FMpathAdmThread.WaitFor;
-      FMpathAdmThread.Free;
-    end;
+  _TerminateThreads;
+  _WaitForAndFreeThreads;
+
   inherited Destroy;
 end;
 
@@ -486,9 +534,7 @@ var so    : TFRE_DB_SCSI;
     error : string;
     res   : integer;
     resdbo: IFRE_DB_Object;
-//    dummyi: NativeInt;
 begin
-//  dummyi:=0;
   repeat
     so     := TFRE_DB_SCSI.create;
     try
@@ -503,13 +549,8 @@ begin
         resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
 
         fsubfeeder.PushDataToClients(resdbo);
-//        inc(dummyi);
-        sleep(10000);
-        //if dummyi=10 then
-        //  begin
-        //    writeln('SWL:TERMINATE');
-        //    Terminate;
-        //  end;
+        if not Terminated then
+          sleep(10000);
       except on E:Exception do begin
         GFRE_DBI.LogError(dblc_APPLICATION,'DiskAndEnclosureThreadException %s',[e.Message]);
         raise;
