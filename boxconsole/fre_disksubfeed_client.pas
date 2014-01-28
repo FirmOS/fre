@@ -49,10 +49,10 @@ uses
   fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk,fre_base_parser;
 
 const
-  cIOSTAT                 = 'iostat -rxnsmd 1';
-  cIOSTATFILEHACKMIST_LOC = 'sh -c /zones/firmos/myiostat.sh';
-  cZPOOLSTATUS            = 'zpool status 1';
-  cGET_ZPOOL_IOSTAT       = 'zpool iostat -v 1';
+  cIOSTAT                    = 'iostat -rxnsmde 1';
+  cIOSTATFILEHACKMIST_REMOTE = 'sh -c /zones/firmos/myiostat_e.sh';
+  cZPOOLSTATUS               = 'zpool status 1';
+  cGET_ZPOOL_IOSTAT          = 'zpool iostat -v 1';
 
 type
 
@@ -124,6 +124,9 @@ type
     Fdiskenclosurethread                     : TDiskAndEnclosureThread;
     FMpathAdmThread                          : TMPathAdmThread;
 
+    procedure  _TerminateThreads             ;
+    procedure  _WaitForAndFreeThreads        ;
+
     procedure  StartDiskAndEnclosureThread   ;
     procedure  StartIostatParser             ;
     procedure  StartZpoolStatusParser        ;
@@ -169,7 +172,8 @@ begin
         resdbo.Field('data').AsObject         := obj;
         resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
         fsubfeeder.PushDataToClients(resdbo);
-        sleep(10000);
+        if not Terminated then
+          sleep(10000);
       except on E:Exception do begin
         GFRE_DBI.LogError(dblc_APPLICATION,'MPathAdmThreadException %s',[e.Message]);
         raise;
@@ -180,7 +184,37 @@ begin
   until Terminated;
 end;
 
+
 { TFRE_DISKSUB_FEED_SERVER }
+
+procedure TFRE_DISKSUB_FEED_SERVER._TerminateThreads;
+begin
+  if Assigned(Fdiskenclosurethread) then
+    begin
+      Fdiskenclosurethread.Terminate;
+    end;
+  if Assigned(FMpathAdmThread) then
+    begin
+      FMpathAdmThread.Terminate;
+    end;
+end;
+
+procedure TFRE_DISKSUB_FEED_SERVER._WaitForAndFreeThreads;
+begin
+  if Assigned(Fdiskenclosurethread) then
+    begin
+      Fdiskenclosurethread.WaitFor;
+      Fdiskenclosurethread.Free;
+      Fdiskenclosurethread:=nil;
+    end;
+  if Assigned(FMpathAdmThread) then
+    begin
+      FMpathAdmThread.WaitFor;
+      FMpathAdmThread.Free;
+      FMpathAdmThread:=nil;
+    end;
+end;
+
 
 procedure TFRE_DISKSUB_FEED_SERVER.StartDiskAndEnclosureThread;
 begin
@@ -210,9 +244,12 @@ begin
   FMpathAdmThread:=TMPathAdmThread.Create(self);
 end;
 
+
+
 procedure TFRE_DISKSUB_FEED_SERVER.Setup;
 var lang:string;
 begin
+
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
@@ -224,8 +261,8 @@ begin
   inherited Setup;
 
   lang:=GetEnvironmentVariable('LANG');
-  if lang<>'C' then
-    GFRE_BT.CriticalAbort('Environment LANG for this feeder must be C, instead of %s ',[lang]);
+  if (lang<>'C') then
+    GFRE_DBI.LogError(dblc_APPLICATION,'Environment LANG for this feeder must be C, instead of %s ',[lang]);
 
 try
     StartIostatParser;
@@ -236,6 +273,7 @@ try
   except on e:Exception do begin
     GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
   end; end;
+
 end;
 
 destructor TFRE_DISKSUB_FEED_SERVER.Destroy;
@@ -249,18 +287,9 @@ begin
   if Assigned(FPoolIostatMon) then
     FPoolIostatMon.Free;
 
-  if Assigned(Fdiskenclosurethread) then
-    begin
-      Fdiskenclosurethread.Terminate;
-      Fdiskenclosurethread.WaitFor;
-      Fdiskenclosurethread.Free;
-    end;
-  if Assigned(FMpathAdmThread) then
-    begin
-      FMpathAdmThread.Terminate;
-      FMpathAdmThread.WaitFor;
-      FMpathAdmThread.Free;
-    end;
+  _TerminateThreads;
+  _WaitForAndFreeThreads;
+
   inherited Destroy;
 end;
 
@@ -486,9 +515,7 @@ var so    : TFRE_DB_SCSI;
     error : string;
     res   : integer;
     resdbo: IFRE_DB_Object;
-//    dummyi: NativeInt;
 begin
-//  dummyi:=0;
   repeat
     so     := TFRE_DB_SCSI.create;
     try
@@ -503,13 +530,8 @@ begin
         resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
 
         fsubfeeder.PushDataToClients(resdbo);
-//        inc(dummyi);
-        sleep(10000);
-        //if dummyi=10 then
-        //  begin
-        //    writeln('SWL:TERMINATE');
-        //    Terminate;
-        //  end;
+        if not Terminated then
+          sleep(10000);
       except on E:Exception do begin
         GFRE_DBI.LogError(dblc_APPLICATION,'DiskAndEnclosureThreadException %s',[e.Message]);
         raise;
@@ -535,7 +557,7 @@ var st : TStringStream;
   var devicename : string[30];
       diskiostat : TFRE_DB_IOSTAT;
   begin
-    devicename := Fline[10];
+    devicename := Fline[14];
     diskiostat := TFRE_DB_IOSTAT.Create;
     diskiostat.Field('rps').AsReal32    := StrToFloat(Fline[0]);
     diskiostat.Field('wps').AsReal32    := StrToFloat(Fline[1]);
@@ -547,6 +569,10 @@ var st : TStringStream;
     diskiostat.Field('actv_t').AsReal32 := StrToFloat(Fline[7]);
     diskiostat.Field('perc_w').AsReal32 := StrToFloat(Fline[8]);
     diskiostat.Field('perc_b').AsReal32 := StrToFloat(Fline[9]);
+    diskiostat.Field('err_sw').AsUint32  := StrToInt(Fline[10]);
+    diskiostat.Field('err_hw').AsUint32  := StrToInt(Fline[11]);
+    diskiostat.Field('err_trn').AsUint32  := StrToInt(Fline[12]);
+    diskiostat.Field('err_tot').AsUint32  := StrToInt(Fline[13]);
     diskiostat.Field('iodevicename').AsString := devicename;
     FData.Field(devicename).AsObject          := diskiostat;
   end;
@@ -602,7 +628,7 @@ begin
   if cFRE_REMOTE_HOST='' then
     cmd := cIOSTAT
   else
-    cmd := cIOSTATFILEHACKMIST_LOC;
+    cmd := cIOSTATFILEHACKMIST_REMOTE;
   inherited Create(cFRE_REMOTE_USER,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'),cFRE_REMOTE_HOST,cmd);
   fsubfeeder := subfeeder;
 end;
