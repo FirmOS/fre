@@ -41,13 +41,14 @@ program fre_disksubfeeder;
 {$LIBRARYPATH ../../lib}
 
 uses
-  cmem,
+  //cmem,
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
   Classes, SysUtils,
   fre_disksubfeed_client,
-  fre_basesubfeed_app;
+  fre_basesubfeed_app,
+  fre_aps_comm_impl;
 
 {$I fos_version_helper.inc}
 
@@ -70,8 +71,8 @@ var
 
 procedure TFRE_DISKSUB_FEED.TestMethod;
 begin
-  writeln('THIS IS YOUR SHINY TEST Method used with the undocumented -t option.');
-  halt;
+  writeln('PUNCHING AN UNFREED STRINGLIST INTO THE MEM FOR HEAPTRACE CHECK');
+  TStringList.Create;
 end;
 
 procedure TFRE_DISKSUB_FEED.WriteVersion;
@@ -80,6 +81,7 @@ begin
 end;
 
 begin
+  cAPSC_JACK_TIMEOUT:=60000;
   Application:=TFRE_DISKSUB_FEED.Create(nil,TFRE_DISKSUB_FEED_SERVER.Create);
   Application.Run;
   Application.Free;
