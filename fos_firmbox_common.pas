@@ -47,8 +47,9 @@ procedure InitDB(const dbname: string; const user, pass: string);
 implementation
 
 procedure InitializeFirmbox(const dbname: string; const user, pass: string);
-var collection   : IFRE_DB_COLLECTION;
-    conn         : IFRE_DB_CONNECTION;
+var collection      : IFRE_DB_COLLECTION;
+    conn            : IFRE_DB_CONNECTION;
+    unassigned_disks: TFRE_DB_ZFS_UNASSIGNED;
 begin
 
   CONN := GFRE_DBI.NewConnection;
@@ -56,6 +57,12 @@ begin
   try
     collection  := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);  // ZFS GUID for pool => zdb
     collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true);
+
+    unassigned_disks := TFRE_DB_ZFS_UNASSIGNED.CreateForDB;
+    unassigned_disks.setZFSGuid('UNASSIGNED');
+    unassigned_disks.caption:= 'Unassigned disks';  //FIXXME: should be a languge key ?!?
+    unassigned_disks.poolId := unassigned_disks.UID;
+    CheckDbResult(collection.Store(unassigned_disks),'could not store pool for unassigned disks');
 
     collection  := conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);  // ZFS GUID for VDEV => zdb
     collection.DefineIndexOnField('zfs_guid',fdbft_String,true,true);

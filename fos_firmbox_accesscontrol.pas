@@ -18,7 +18,7 @@ type
 
   { TFOS_FIRMBOX_USER_APP }
 
-  TFOS_FIRMBOX_USER_APP=class(TFRE_COMMON_USER_APP)
+  TFOS_FIRMBOX_USER_APP=class(TFRE_COMMON_ACCESSCONTROL_APP)
   protected
       procedure       SetupApplicationStructure     ; override;
   end;
@@ -54,7 +54,7 @@ end;
 
 procedure TFOS_FIRMBOX_USER_APP.SetupApplicationStructure;
 begin
-  InitAppDesc('firmbox_user','$description');
+  InitAppDesc('$description');
   AddApplicationModule(TFOS_FIRMBOX_DOMAIN_MOD.create);
   AddApplicationModule(TFOS_FIRMBOX_USER_MOD.create);
   AddApplicationModule(TFOS_FIRMBOX_GROUP_MOD.create);

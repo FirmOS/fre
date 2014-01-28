@@ -4019,8 +4019,6 @@ begin
       CreateAppText(conn,'$error_assign_vdev_unknown_parent_type','Parent of Vdev does not support disk drops.');
       CreateAppText(conn,'$error_remove_not_new','You can only remove zfs elements which are not in use yet.');
       CreateAppText(conn,'$error_change_rl_not_new','You can only change the raid level of a vdev which is not in use yet.');
-      CreateAppText(conn,'$unassigned_disks','Unassigned disks');
-
 
       CreateAppText(conn,'$add_disks_pool','Assign to %pool%...');
       CreateAppText(conn,'$add_disks_storage_ex_same','Expand storage (%raid_level%)');
@@ -4414,16 +4412,7 @@ begin
   enclosures             := input.Field('enclosures').AsObject;
   enclosures.ForAllObjects(@_UpdateEnclosures);
 
-  if not poolcollection.GetIndexedObj('UNASSIGNED',ua_obj) then
-    begin
-      unassigned_disks := TFRE_DB_ZFS_UNASSIGNED.CreateForDB;
-      unassigned_disks.setZFSGuid('UNASSIGNED');
-      unassigned_disks.caption:= app.FetchAppTextShort(ses,'$unassigned_disks');
-      unassigned_uid   := unassigned_disks.UID;
-      unassigned_disks.poolId := unassigned_uid;
-      CheckDbResult(poolcollection.Store(unassigned_disks),'could not store pool for unassigned disks');
-      poolcollection.Fetch(unassigned_uid,ua_obj);
-    end;
+  poolcollection.GetIndexedObj('UNASSIGNED',ua_obj);
   unassigned_disks := (ua_obj.Implementor_HC as TFRE_DB_ZFS_UNASSIGNED);
 
   devices := input.Field('disks').AsObject;
