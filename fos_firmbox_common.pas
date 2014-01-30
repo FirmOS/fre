@@ -415,8 +415,6 @@ begin
  SCOLL:= CONN.Collection('fileshare');
  ACOLL:= CONN.Collection('fileshare_access');
  BCOLL:= CONN.Collection('snapshot');
- TCOLL:= CONN.Collection('note');
- tcoll.DefineIndexOnField('link',fdbft_String,true,true);
 
  // InitVirtualMachines;
 
