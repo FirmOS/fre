@@ -645,7 +645,7 @@ begin
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$vfs_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
       panel.FillWithObjectValues(vfs,ses);
-      panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(vfs,'saveOperation'),fdbbt_submit);
+      panel.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),TFRE_DB_SERVER_FUNC_DESC.create.Describe(vfs,'saveOperation'),fdbbt_submit);
       panel.contentId:='VIRTUAL_FS_CONTENT';
       Result:=panel;
     end;
@@ -777,7 +777,7 @@ begin
       panel.AddSchemeFormGroup(scheme.GetInputGroup('file'),ses,true,false);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
       panel.FillWithObjectValues(share,ses);
-      panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(share,'saveOperation'),fdbbt_submit);
+      panel.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),TFRE_DB_SERVER_FUNC_DESC.create.Describe(share,'saveOperation'),fdbbt_submit);
       panel.contentId:='VIRTUAL_SHARE_CONTENT';
       Result:=panel;
     end;
@@ -1235,7 +1235,7 @@ begin
       panel.AddSchemeFormGroup(scheme.GetInputGroup('file'),ses,true,true);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
       panel.FillWithObjectValues(nfs,ses);
-      panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(nfs,'saveOperation'),fdbbt_submit);
+      panel.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),TFRE_DB_SERVER_FUNC_DESC.create.Describe(nfs,'saveOperation'),fdbbt_submit);
       panel.contentId := 'GLOBAL_NFS_CONTENT';
       Result:=panel;
     end;
@@ -1471,7 +1471,7 @@ begin
       panel.AddSchemeFormGroup(scheme.GetInputGroup('volume'),ses,true,false);
       panel.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
       panel.FillWithObjectValues(nfs,ses);
-      panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(nfs,'saveOperation'),fdbbt_submit);
+      panel.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),TFRE_DB_SERVER_FUNC_DESC.create.Describe(nfs,'saveOperation'),fdbbt_submit);
       panel.contentId:='GLOBAL_LUN_CONTENT';
       Result:=panel;
     end;
@@ -1701,7 +1701,7 @@ begin
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'$backup_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
       panel.FillWithObjectValues(snap,ses);
-      panel.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(snap,'saveOperation'),fdbbt_submit);
+      panel.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),TFRE_DB_SERVER_FUNC_DESC.create.Describe(snap,'saveOperation'),fdbbt_submit);
       panel.contentId:='BACKUP_SNAP_CONTENT';
       Result:=panel;
     end;
@@ -3731,7 +3731,7 @@ begin
 
 
 
-  result:=TFRE_DB_MESSAGE_DESC.create.Describe('SAVE','Save Config',fdbmt_info);
+  result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppTextShort(ses,'$button_save'),'Save Config',fdbmt_info);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_ResetConfig(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;

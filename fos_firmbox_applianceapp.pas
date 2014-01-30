@@ -733,7 +733,7 @@ var
 begin
   CheckClassVisibility(ses);
 
-  c1:=TFRE_DB_LAYOUT_DESC.create.Describe(app.FetchAppTextShort(ses,'$overview_caption_space')).SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
+  c1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
   c2:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cpu',2,120,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppTextShort(ses,'$overview_caption_cpu'),TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppTextShort(ses,'$overview_cpu_system_legend'),app.FetchAppTextShort(ses,'$overview_cpu_user_legend')),11,CWSF(@WEB_CPUStatusInit));
   c3:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_net',2,120,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppTextShort(ses,'$overview_caption_net'),TFRE_DB_StringArray.create('f00','0f0'),
@@ -1102,7 +1102,6 @@ begin
       CreateAppText(conn,'$fc_state','State');
       CreateAppText(conn,'$fc_desc','Description');
 
-      CreateAppText(conn,'$overview_caption_space','Space');
       CreateAppText(conn,'$overview_caption_cpu','CPU Load (4 Intel E5-4620@2.20GHz)');
       CreateAppText(conn,'$overview_cpu_system_legend','System [%]');
       CreateAppText(conn,'$overview_cpu_user_legend','User [%]');
