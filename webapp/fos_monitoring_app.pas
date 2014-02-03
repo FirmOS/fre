@@ -440,7 +440,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf    :=TFRE_DB_ZFSJob.CreateForDB;
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
-         zf.SetReplicate(sourceds,destds,snapshotkey,desthost,'zfsback',GetbackupKeyFileName,'/zones/firmos/zfsback/.ssh/id_rsa');
+         zf.SetSSHReplicate(sourceds,destds,snapshotkey,desthost,'zfsback',GetbackupKeyFileName,'/zones/firmos/zfsback/.ssh/id_rsa');
          zf.SetPeriodic(everyDay);
          Troubleshooting(zf,'Check Replication ! ');
          StoreAndAddToMachine(zf);
