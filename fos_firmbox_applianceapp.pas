@@ -197,7 +197,7 @@ begin
 //      AddBooleanFieldFilter('zoned','zoned',false);
       AddBooleanFieldFilter('showglobal','showglobal',true,false);
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
-      SetChildToParentLinkField ('parentid');
+      SetParentToChildLinkField ('<PARENTID');
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,system_tr_Grid);
