@@ -31,6 +31,7 @@ program fpmake_test;
          Add('FOS_ARTEMES');
          Add('FOS_MONSYS');
          Add('FOS_CAPTIVEPORTAL');
+         Add('FOS_CITYCOM_APP');
        end;
        Directory:=cFOS_BUILD_PREFIX+'fre_test_server/';
        InstallProgramSuffix := FOSBuild.FOS_Suffix;
