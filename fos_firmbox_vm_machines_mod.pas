@@ -32,7 +32,6 @@ type
     class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
     procedure       MySessionInitializeModule (const session   : TFRE_DB_UserSession);override;
-    procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
     procedure       _GetSelectedVMData        (const conn: IFRE_DB_CONNECTION ; const selected : TGUID; var vmkey,vnc_port,vnc_host,vm_state: String);
   public
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
@@ -57,7 +56,6 @@ type
   protected
     class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
-    procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   public
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
@@ -179,19 +177,6 @@ begin
   InitModuleDesc('$vm_resources_description');
 end;
 
-procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
-var
-  vm_disks: IFRE_DB_COLLECTION;
-  vm_isos : IFRE_DB_COLLECTION;
-begin
-  inherited MyServerInitializeModule(admin_dbc);
-
-  vm_disks := admin_dbc.Collection('VM_DISKS',true,true);
-  vm_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
-
-  vm_isos := admin_dbc.Collection('VM_ISOS',true,true);
-  vm_isos.DefineIndexOnField('isoid',fdbft_String,true,true);
-end;
 
 procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
@@ -602,111 +587,6 @@ begin
   end;
 end;
 
-procedure TFRE_FIRMBOX_VM_MACHINES_MOD.MyServerInitializeModule(const admin_dbc: IFRE_DB_CONNECTION);
-var
-  vm_disks    : IFRE_DB_COLLECTION;
-  vm_isos     : IFRE_DB_COLLECTION;
-  vm_sc       : IFRE_DB_COLLECTION;
-  vm_keyboards: IFRE_DB_COLLECTION;
-  storeObj    : IFRE_DB_Object;
-begin
-  inherited MyServerInitializeModule(admin_dbc);
-
-  vm_disks := admin_dbc.Collection('VM_DISKS',true,true);
-  vm_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
-
-  vm_isos := admin_dbc.Collection('VM_ISOS',true,true);
-  vm_isos.DefineIndexOnField('isoid',fdbft_String,true,true);
-
-  vm_sc   := admin_dbc.Collection('VM_SCS',true,true);
-  vm_sc.DefineIndexOnField('scid',fdbft_String,true,true);
-
-  vm_keyboards := admin_dbc.Collection('VM_KEYBOARDS',true,true);
-  vm_keyboards.DefineIndexOnField('keyboardid',fdbft_String,true,true);
-
-  //FIXXME: remove test code
-  storeObj := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_DISK);
-  storeObj.Field('diskid').AsString:='d1';
-  storeObj.Field('name').AsString:='d1 name';
-  CheckDbResult(vm_disks.Store(storeObj),'Store VM disk');
-
-  storeObj := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_DISK);
-  storeObj.Field('diskid').AsString:='d2';
-  storeObj.Field('name').AsString:='d2 name';
-  CheckDbResult(vm_disks.Store(storeObj),'Store VM disk');
-
-  storeObj := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_ISO);
-  storeObj.Field('isoid').AsString:='i1';
-  storeObj.Field('name').AsString:='iso1 name';
-  CheckDbResult(vm_isos.Store(storeObj),'Store VM iso');
-
-  storeObj := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_ISO);
-  storeObj.Field('isoid').AsString:='i2';
-  storeObj.Field('name').AsString:='iso2 name';
-  CheckDbResult(vm_isos.Store(storeObj),'Store VM iso');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('keyboardid').AsString:='en-gb';
-  storeObj.Field('name').AsString:='English (GB)';
-  storeObj.Field('order').AsString:='1';
-  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('keyboardid').AsString:='en-us';
-  storeObj.Field('name').AsString:='English (US)';
-  storeObj.Field('order').AsString:='2';
-  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('keyboardid').AsString:='fr';
-  storeObj.Field('name').AsString:='French';
-  storeObj.Field('order').AsString:='3';
-  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('keyboardid').AsString:='de';
-  storeObj.Field('name').AsString:='German';
-  storeObj.Field('order').AsString:='4';
-  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('keyboardid').AsString:='it';
-  storeObj.Field('name').AsString:='Italian';
-  storeObj.Field('order').AsString:='5';
-  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('keyboardid').AsString:='es';
-  storeObj.Field('name').AsString:='Spanish';
-  storeObj.Field('order').AsString:='6';
-  CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-  //FIXXME: move to correct location or read from qemu help
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('scid').AsString:='ac97';
-  storeObj.Field('name').AsString:='Intel 82801AA AC97 Audio';
-  storeObj.Field('order').AsString:='1';
-  CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('scid').AsString:='sb16';
-  storeObj.Field('name').AsString:='Creative Sound Blaster 16';
-  storeObj.Field('order').AsString:='2';
-  CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('scid').AsString:='es1370';
-  storeObj.Field('name').AsString:='ENSONIQ AudioPCI ES1370';
-  storeObj.Field('order').AsString:='3';
-  CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-
-  storeObj:=GFRE_DBI.NewObject;
-  storeObj.Field('scid').AsString:='hda';
-  storeObj.Field('name').AsString:='Intel HD Audio';
-  storeObj.Field('order').AsString:='4';
-  CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-
-end;
 
 
 procedure TFRE_FIRMBOX_VM_MACHINES_MOD._GetSelectedVMData(const conn: IFRE_DB_CONNECTION; const selected: TGUID; var vmkey, vnc_port, vnc_host, vm_state: String);

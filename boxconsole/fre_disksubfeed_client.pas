@@ -53,6 +53,7 @@ const
   cIOSTATFILEHACKMIST_REMOTE = 'sh -c /zones/firmos/myiostat_e.sh';
   cZPOOLSTATUS               = 'zpool status 1';
   cGET_ZPOOL_IOSTAT          = 'zpool iostat -v 1';
+  cReadSGLogIntervalSec      = 120;
 
 type
 
@@ -515,13 +516,24 @@ var so    : TFRE_DB_SCSI;
     error : string;
     res   : integer;
     resdbo: IFRE_DB_Object;
+    next_log : TFRE_DB_DateTime64;
+    read_log : boolean;
 begin
+  next_log := GFRE_DT.Now_UTC;
   repeat
     so     := TFRE_DB_SCSI.create;
     try
       so.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
       try
-        res    := so.GetSG3DiskAndEnclosureInformation(fsubfeeder.IOStat_GetData,error,obj);
+        if next_log<GFRE_DT.Now_UTC then
+          begin
+            read_log := true;
+            next_log := GFRE_DT.Now_UTC+(cReadSGLogIntervalSec*1000);
+          end
+        else
+          read_log := false;
+
+        res    := so.GetSG3DiskAndEnclosureInformation(fsubfeeder.IOStat_GetData,error,obj,read_log);
         resdbo := GFRE_DBI.NewObject;
         resdbo.Field('subfeed').asstring      := 'DISKENCLOSURE';
         resdbo.Field('resultcode').AsInt32    := res;
