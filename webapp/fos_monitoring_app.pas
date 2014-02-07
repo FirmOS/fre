@@ -433,7 +433,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         StoreAndAddToMachine(p);
       end;
 
-      procedure AddZFSReplication(const jobkey: string; const desc : string; const sourcehost: string; const desthost:string; const sourceds:string; const destds: string;const checkperiod_sec: integer;const snapshotkey:string='AUTO');
+      procedure AddSSHZFSReplication(const jobkey: string; const desc : string; const sourcehost: string; const desthost:string; const sourceds:string; const destds: string;const checkperiod_sec: integer;const snapshotkey:string='AUTO');
        var
          zf     : TFRE_DB_ZFSJob;
        begin
@@ -452,6 +452,26 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetPeriodic(everyHour);
          Troubleshooting(zf,'Check Snapshot ! ');
          StoreAndAddToMachine(zf);
+      end;
+
+      procedure AddTCPZFSReplication(const jobkey: string; const desc : string; const desthost:string; const sourceds:string; const destds: string;const checkperiod_sec: integer;const snapshotkey:string='AUTO');
+       var
+         zf     : TFRE_DB_ZFSJob;
+       begin
+         zf    :=TFRE_DB_ZFSJob.CreateForDB;
+         zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
+         zf.SetTCPReplicate(sourceds,destds,snapshotkey,desthost,CFRE_FOSCMD_PORT);
+         zf.SetPeriodic(everyDay);
+         Troubleshooting(zf,'Check Replication ! ');
+         StoreAndAddToMachine(zf);
+
+         //zf    :=TFRE_DB_ZFSJob.CreateForDB;
+         //zf.SetJobkeyDescription(mon_key+'_'+jobkey+'_CHECK',desc);
+         //zf.SetRemoteSSH(cremoteuser, desthost, Getremotekeyfilename);
+         //zf.SetSnapshotCheck(destds,'AUTO',checkperiod_sec*2,checkperiod_sec*4);
+         //zf.SetPeriodic(everyHour);
+         //Troubleshooting(zf,'Check Snapshot ! ');
+         //StoreAndAddToMachine(zf);
       end;
 
       procedure AddZFSSnapshot(const jobkey: string; const desc : string; const sourcehost: string; const sourceds:string; const checkperiod_sec: integer;const snapshotkey:string='AUTO');
@@ -641,9 +661,9 @@ begin
   coll_machine        := CONN.Collection('machine');
   coll_testcasestatus := CONN.Collection('testcasestatus');
 
-  if conn.CollectionAsIntf('testcase',IFRE_DB_COLLECTION,coll_testcase,true) = true then begin
+  coll_testcase := conn.Collection('testcase',true);
+  if not coll_testcase.IndexExists('def') then
     coll_testcase.DefineIndexOnField('objname',fdbft_String,true,true);
-  end;
 
   mon_key                               := 'MONFOS';
 
@@ -658,7 +678,20 @@ begin
 
    // AddTester('Tester1','10.1.0.138');
   ///    AddSCPJob;
-    AddServiceGroup('FirmOS Office');         // Firmos Office/Internet/Gateway/INTERNETTESTCASE            STATUS            STATUSDETAILS
+
+  AddServiceGroup('Citycom');         // Firmos Office/Internet/Gateway/INTERNETTESTCASE            STATUS            STATUSDETAILS
+    AddService('nordpool');
+      AddMachine('snord01','10.54.3.1',tmFOSServ);
+      AddTCPZFSReplication('ZFS_REPL_NORDPOOL_01','Replication RZ nordp','10.54.240.198','nordp',
+                        'drsdisk/drssnapshots/s01_nordp',86400);
+      AddTCPZFSReplication('ZFS_REPL_NORDDISK_TEST','Replication RZ norddisk test','10.54.240.198','norddisk/test',
+                        'drsdisk/drssnapshots/norddisktest',86400);
+    AddService('nordpool');
+      AddMachine('ssued01','10.54.3.2',tmFOSServ);
+      AddTCPZFSReplication('ZFS_REPL_SUEDPOOL_01','Replication RZ suedp','10.54.240.198','suedp',
+                        'drsdisk/drssnapshots/s01_suedp',86400);
+
+  AddServiceGroup('FirmOS Office');         // Firmos Office/Internet/Gateway/INTERNETTESTCASE            STATUS            STATUSDETAILS
       AddService('Internet');
         AddMachine('Gateway','91.114.28.42',tmFOSServ);
         AddInternetTestcase(true);
@@ -669,11 +702,11 @@ begin
           AddCPUTestCase('10.1.0.116','CPU_FOSDATA','CPU Load FirmOS Office Storage',5,10);
           AddZpoolStatusTestCase('10.1.0.116','ZPOOL_FOS_FOSDATA','Zones FirmOS Office Storage');
           AddZFSSpaceTestCase('10.1.0.116','ZFS_SPACE_FOSDATA','Zones FirmOS Office Storage Space');
-          AddZFSReplication('ZFS_REPL_FOSDATA','Replication FirmOS Fosdata','10.1.0.116','smartstore.firmos.at','zones/568ac8fd-d282-4848-a5b7-c5df2ae6f3f8',
+          AddSSHZFSReplication('ZFS_REPL_FOSDATA','Replication FirmOS Fosdata','10.1.0.116','smartstore.firmos.at','zones/568ac8fd-d282-4848-a5b7-c5df2ae6f3f8',
                             'zones/backup/firmos/568ac8fd-d282-4848-a5b7-c5df2ae6f3f8',86400);
-          AddZFSReplication('ZFS_REPL_FOSDATA_DOK','Replication FirmOS Fosdata Dokumente','10.1.0.116','smartstore.firmos.at','zones/FirmOS_Data/FirmOS_Dokumente',
+          AddSSHZFSReplication('ZFS_REPL_FOSDATA_DOK','Replication FirmOS Fosdata Dokumente','10.1.0.116','smartstore.firmos.at','zones/FirmOS_Data/FirmOS_Dokumente',
                             'zones/backup/firmos/FirmOSData/FirmOS_Dokumente',86400);
-          AddZFSReplication('ZFS_REPL_FOSDATA_LIB','Replication FirmOS Fosdata Library','10.1.0.116','smartstore.firmos.at','zones/FirmOS_Data/FirmOS_Library',
+          AddSSHZFSReplication('ZFS_REPL_FOSDATA_LIB','Replication FirmOS Fosdata Library','10.1.0.116','smartstore.firmos.at','zones/FirmOS_Data/FirmOS_Library',
                             'zones/backup/firmos/FirmOSData/FirmOS_Library',86400);
         AddMachine('fosdata','10.1.0.132',tmFOSLab,'568ac8fd-d282-4848-a5b7-c5df2ae6f3f8');
           AddProcessTestCase('10.1.0.132','OFFICE_FOSDATA_PROCESS','Processes on Office Fosdata',TFRE_DB_StringArray.Create('smbd','afpd','netatalk'),TFRE_DB_UInt32Array.Create(1,1,1));
@@ -701,13 +734,13 @@ begin
           AddZpoolStatusTestCase('10.1.0.129','ZPOOL_KSM_ZONES','Diskpool KSM Storage');
           AddZFSSpaceTestCase('10.1.0.129','ZFS_SPACE_KSM_ZONES','Zones FirmOS Office Storage Space');
           AddCPUTestCase('10.1.0.129','CPU_KSM','CPU Load KSM Storage',5,10);
-          AddZFSReplication('ZFS_REPL_KSMLINUX','Replication KSM Faktura','10.1.0.129','smartstore.firmos.at','zones/2cd2e934-f21e-4fea-b46e-f3098f4e3be3',
+          AddSSHZFSReplication('ZFS_REPL_KSMLINUX','Replication KSM Faktura','10.1.0.129','smartstore.firmos.at','zones/2cd2e934-f21e-4fea-b46e-f3098f4e3be3',
                             'zones/backup/ksm/2cd2e934-f21e-4fea-b46e-f3098f4e3be3',86400);
-          AddZFSReplication('ZFS_REPL_KSMLINUX_DISK','Replication KSM Faktura Disk0','10.1.0.129','smartstore.firmos.at','zones/2cd2e934-f21e-4fea-b46e-f3098f4e3be3-disk0',
+          AddSSHZFSReplication('ZFS_REPL_KSMLINUX_DISK','Replication KSM Faktura Disk0','10.1.0.129','smartstore.firmos.at','zones/2cd2e934-f21e-4fea-b46e-f3098f4e3be3-disk0',
                             'zones/backup/ksm/2cd2e934-f21e-4fea-b46e-f3098f4e3be3-disk0',86400);
-          AddZFSReplication('ZFS_REPL_KSMSBS','Replication KSM SBS','10.1.0.129','smartstore.firmos.at','zones/a560f5a3-35ae-4552-9f25-be1308c9db65',
+          AddSSHZFSReplication('ZFS_REPL_KSMSBS','Replication KSM SBS','10.1.0.129','smartstore.firmos.at','zones/a560f5a3-35ae-4552-9f25-be1308c9db65',
                             'zones/backup/ksm/a560f5a3-35ae-4552-9f25-be1308c9db65',86400);
-          AddZFSReplication('ZFS_REPL_KSMSBS_DISK','Replication KSM SBS Disk0','10.1.0.129','smartstore.firmos.at','zones/a560f5a3-35ae-4552-9f25-be1308c9db65-disk0',
+          AddSSHZFSReplication('ZFS_REPL_KSMSBS_DISK','Replication KSM SBS Disk0','10.1.0.129','smartstore.firmos.at','zones/a560f5a3-35ae-4552-9f25-be1308c9db65-disk0',
                             'zones/backup/ksm/a560f5a3-35ae-4552-9f25-be1308c9db65-disk0',86400);
     AddServiceGroup('FirmOS Marburgerkai');
       AddService('Backoffice');
@@ -792,15 +825,7 @@ begin
           AddMachine('Artemes','10.220.249.10',tmFOSMB,'',true);
           AddZpoolStatusTestCase('10.220.249.10','ZPOOL_ARTEMES','Diskpool Artemes');
           AddZFSSpaceTestCase('10.220.249.10','ZFS_SPACE_ARTEMES','Zones Artemes');
-          AddZFSReplication('ZFS_REPL_ARTEMES_ARTEMES','Replication Artemes Zone','10.220.249.10','smartstore.firmos.at','zones/6b365d41-283c-45c0-8300-f03c1666396a',
-                            'zones/backup/artemes/6b365d41-283c-45c0-8300-f03c1666396a',86400);
-          AddZFSReplication('ZFS_REPL_ARTEMES_INFRA_TEST','Replication Artemes Infra_test','10.220.249.10','smartstore.firmos.at','zones/infra_test',
-                            'zones/backup/artemes/infra_test',86400);
-          AddZFSReplication('ZFS_REPL_ARTEMES_INFRA_LIVE','Replication Artemes Infra_Live','10.220.249.10','smartstore.firmos.at','zones/infra_live',
-                            'zones/backup/artemes/infra_live',86400);
-          AddZFSReplication('ZFS_REPL_ARTEMES_SVN','Replication Artemes SVN','10.220.249.10','smartstore.firmos.at','zones/svn',
-                            'zones/backup/artemes/svn',86400);
-          AddZFSReplication('ZFS_REPL_ARTEMES','Replication Artemes Complete','10.220.249.10','smartstore.firmos.at','zones',
+          AddSSHZFSReplication('ZFS_REPL_ARTEMES','Replication Artemes Complete','10.220.249.10','smartstore.firmos.at','zones',
                             'zones/backup/artemes/complete',86400,'COMPLETE');
  AddServiceGroup('Citycom');
       AddService('Cityaccess');
