@@ -135,9 +135,13 @@ end;
 class procedure TFRE_FIRMBOX_VM_ISO.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_main_group','General Information');
-  StoreTranslateableText(conn,'scheme_id','ID');
-  StoreTranslateableText(conn,'scheme_name','Name');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_id','ID');
+    StoreTranslateableText(conn,'scheme_name','Name');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_FIRMBOX_VM_DISK }
@@ -158,9 +162,13 @@ end;
 class procedure TFRE_FIRMBOX_VM_DISK.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_main_group','General Information');
-  StoreTranslateableText(conn,'scheme_id','ID');
-  StoreTranslateableText(conn,'scheme_name','Name');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_id','ID');
+    StoreTranslateableText(conn,'scheme_name','Name');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_FIRMBOX_VM_RESOURCES_MOD }

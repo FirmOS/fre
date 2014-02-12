@@ -1065,6 +1065,7 @@ begin
 
   if (currentVersionId='') then
     begin
+      currentVersionId := '1.0';
       CreateAppText(conn,'$caption','Appliance','Appliance','Appliance');
       CreateAppText(conn,'$sitemap_main','Appliance','','Appliance');
       CreateAppText(conn,'$sitemap_status','Overview','','Overview');
@@ -1119,24 +1120,28 @@ begin
       CreateAppText(conn,'$overview_cache_misses_legend','Misses [%]');
 
       CreateAppText(conn,'$button_save','Save'); //global text?
-      currentVersionId:='1.0';
     end;
   if (currentVersionId='1.0') then
     begin
     //next update code
     end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 class procedure TFRE_FIRMBOX_APPLIANCE_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 
-  CheckDbResult(conn.AddGroup('APPLIANCEFEEDER','Group for Appliance Data Feeder','VM Feeder',domainUID),'could not create Appliance feeder group');
+  if currentVersionId='' then
+    begin
+      currentVersionId := '1.0';
 
-  CheckDbResult(conn.AddRolesToGroup('APPLIANCEFEEDER',domainUID,TFRE_DB_StringArray.Create(
-    TFRE_FIRMBOX_APPLIANCE_APP.GetClassRoleNameFetch
-    )),'could not add roles for group APPLIANCEFEEDER');
+      CheckDbResult(conn.AddGroup('APPLIANCEFEEDER','Group for Appliance Data Feeder','VM Feeder',domainUID),'could not create Appliance feeder group');
 
+      CheckDbResult(conn.AddRolesToGroup('APPLIANCEFEEDER',domainUID,TFRE_DB_StringArray.Create(
+        TFRE_FIRMBOX_APPLIANCE_APP.GetClassRoleNameFetch
+        )),'could not add roles for group APPLIANCEFEEDER');
+    end;
 end;
 
 function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DATA_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;

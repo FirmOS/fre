@@ -65,23 +65,23 @@ begin
     if not collection.IndexExists('def') then
       collection.DefineIndexOnField('Mkey',fdbft_String,true,true);
 
-    vm_disks := conn.Collection('VM_DISKS',true,true);
+    vm_disks := conn.Collection('VM_DISKS',true);
     if not vm_disks.IndexExists('def') then
       vm_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
 
-    vm_isos := conn.Collection('VM_ISOS',true,true);
+    vm_isos := conn.Collection('VM_ISOS',true);
     if not vm_isos.IndexExists('def') then
       vm_isos.DefineIndexOnField('isoid',fdbft_String,true,true);
 
-    vm_sc := conn.Collection('VM_SCS',true,true);
+    vm_sc := conn.Collection('VM_SCS',true);
     if not vm_sc.IndexExists('def') then
       vm_sc.DefineIndexOnField('scid',fdbft_String,true,true);
 
-    vm_keyboards := conn.Collection('VM_KEYBOARDS',true,true);
+    vm_keyboards := conn.Collection('VM_KEYBOARDS',true);
     if not vm_keyboards.IndexExists('def') then
       vm_keyboards.DefineIndexOnField('keyboardid',fdbft_String,true,true);
 
-
+   {
     storeObj:=GFRE_DBI.NewObject;
     storeObj.Field('keyboardid').AsString:='en-gb';
     storeObj.Field('name').AsString:='English (GB)';
@@ -142,7 +142,7 @@ begin
     storeObj.Field('name').AsString:='Intel HD Audio';
     storeObj.Field('order').AsString:='4';
     CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-
+    }
   finally
     conn.Finalize;
   end;

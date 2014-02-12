@@ -145,13 +145,17 @@ end;
 
 class procedure TFRE_DB_ZFS_SNAPSHOT.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
- newVersionId:='1.0';
- StoreTranslateableText(conn,'scheme_main_group','Snapshot Properties');
- StoreTranslateableText(conn,'scheme_snapshot','ZFS Snapshot');
- StoreTranslateableText(conn,'scheme_description','Description');
- StoreTranslateableText(conn,'scheme_creation','Creation Timestamp');
- StoreTranslateableText(conn,'scheme_used','Used [MB]');
- StoreTranslateableText(conn,'scheme_refer','Refer [MB]');
+  newVersionId:='1.0';
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_main_group','Snapshot Properties');
+    StoreTranslateableText(conn,'scheme_snapshot','ZFS Snapshot');
+    StoreTranslateableText(conn,'scheme_description','Description');
+    StoreTranslateableText(conn,'scheme_creation','Creation Timestamp');
+    StoreTranslateableText(conn,'scheme_used','Used [MB]');
+    StoreTranslateableText(conn,'scheme_refer','Refer [MB]');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_DB_LUN_VIEW }
@@ -171,10 +175,15 @@ end;
 
 class procedure TFRE_DB_LUN_VIEW.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
+  inherited;
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_main','View Parameter');
-  StoreTranslateableText(conn,'scheme_initiatorgroup','Initiator Group');
-  StoreTranslateableText(conn,'scheme_targetgroup','Target Group');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_main','View Parameter');
+    StoreTranslateableText(conn,'scheme_initiatorgroup','Initiator Group');
+    StoreTranslateableText(conn,'scheme_targetgroup','Target Group');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_DB_ZFS_DATASET_ZVOL }
@@ -195,12 +204,16 @@ end;
 
 class procedure TFRE_DB_ZFS_DATASET_ZVOL.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  inherited InstallDBObjects(conn,currentVersionId,newVersionId);
+  inherited;
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_volume_group','Volume Properties');
-  StoreTranslateableText(conn,'scheme_primarycache','Primary Cache');
-  StoreTranslateableText(conn,'scheme_secondarycache','Secondary Cache');
-  StoreTranslateableText(conn,'scheme_size','Size [MB]');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_volume_group','Volume Properties');
+    StoreTranslateableText(conn,'scheme_primarycache','Primary Cache');
+    StoreTranslateableText(conn,'scheme_secondarycache','Secondary Cache');
+    StoreTranslateableText(conn,'scheme_size','Size [MB]');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_DB_ZFS_DATASET_FILE }
@@ -242,20 +255,24 @@ class procedure TFRE_DB_ZFS_DATASET_FILE.InstallDBObjects(const conn: IFRE_DB_SY
 begin
   inherited InstallDBObjects(conn, currentVersionId, newVersionId);
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_file_group','File Properties');
-  StoreTranslateableText(conn,'scheme_refer','Refer [MB]');
-  StoreTranslateableText(conn,'scheme_quota','Quota [MB]');
-  StoreTranslateableText(conn,'scheme_used','Used [MB]');
-  StoreTranslateableText(conn,'scheme_referenced','Referenced Quota [MB]');
-  StoreTranslateableText(conn,'scheme_accesstime','Access Time');
-  StoreTranslateableText(conn,'scheme_allowdevices','Allow Devices');
-  StoreTranslateableText(conn,'scheme_allowexecution','Allow Execution');
-  StoreTranslateableText(conn,'scheme_allowsetuid','Allow Set UID');
-  StoreTranslateableText(conn,'scheme_snapshots','Show Snapshots');
-  StoreTranslateableText(conn,'scheme_aclinheritance','ACL Inheritance');
-  StoreTranslateableText(conn,'scheme_aclmode','ACL Mode');
-  StoreTranslateableText(conn,'scheme_canmount','Can Mount');
-  StoreTranslateableText(conn,'scheme_extendedattr','Extended Attributes');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_file_group','File Properties');
+    StoreTranslateableText(conn,'scheme_refer','Refer [MB]');
+    StoreTranslateableText(conn,'scheme_quota','Quota [MB]');
+    StoreTranslateableText(conn,'scheme_used','Used [MB]');
+    StoreTranslateableText(conn,'scheme_referenced','Referenced Quota [MB]');
+    StoreTranslateableText(conn,'scheme_accesstime','Access Time');
+    StoreTranslateableText(conn,'scheme_allowdevices','Allow Devices');
+    StoreTranslateableText(conn,'scheme_allowexecution','Allow Execution');
+    StoreTranslateableText(conn,'scheme_allowsetuid','Allow Set UID');
+    StoreTranslateableText(conn,'scheme_snapshots','Show Snapshots');
+    StoreTranslateableText(conn,'scheme_aclinheritance','ACL Inheritance');
+    StoreTranslateableText(conn,'scheme_aclmode','ACL Mode');
+    StoreTranslateableText(conn,'scheme_canmount','Can Mount');
+    StoreTranslateableText(conn,'scheme_extendedattr','Extended Attributes');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_DB_LUN }
@@ -275,9 +292,13 @@ class procedure TFRE_DB_LUN.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION;
 begin
   inherited InstallDBObjects(conn,currentVersionId,newVersionId);
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_lun_group','LUN Parameter');
-  StoreTranslateableText(conn,'scheme_writeback','Writeback');
-  StoreTranslateableText(conn,'scheme_writeprotect','Writeprotect');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_lun_group','LUN Parameter');
+    StoreTranslateableText(conn,'scheme_writeback','Writeback');
+    StoreTranslateableText(conn,'scheme_writeprotect','Writeprotect');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_DB_NFS_ACCESS }
@@ -297,10 +318,15 @@ end;
 
 class procedure TFRE_DB_NFS_ACCESS.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
+  inherited InstallDBObjects(conn,currentVersionId,newVersionId);
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_main','Access Parameter');
-  StoreTranslateableText(conn,'scheme_accesstype','Access Type');
-  StoreTranslateableText(conn,'scheme_subnet','Subnet/Host');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_main','Access Parameter');
+    StoreTranslateableText(conn,'scheme_accesstype','Access Type');
+    StoreTranslateableText(conn,'scheme_subnet','Subnet/Host');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_DB_VIRTUAL_FILESHARE }
@@ -326,14 +352,18 @@ end;
 
 class procedure TFRE_DB_VIRTUAL_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
- inherited InstallDBObjects(conn,currentVersionId,newVersionId);
- newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_share','Share Properties');
-  StoreTranslateableText(conn,'scheme_sharename','Share Name');
-  StoreTranslateableText(conn,'scheme_cifs','CIFS (Windows File Sharing)');
-  StoreTranslateableText(conn,'scheme_afp','AFP (Apple Filing Protocol)');
-  StoreTranslateableText(conn,'scheme_ftp','FTP (File Transfer Protocol)');
-  StoreTranslateableText(conn,'scheme_webdav','WebDAV');
+  inherited InstallDBObjects(conn,currentVersionId,newVersionId);
+  newVersionId:='1.0';
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_share','Share Properties');
+    StoreTranslateableText(conn,'scheme_sharename','Share Name');
+    StoreTranslateableText(conn,'scheme_cifs','CIFS (Windows File Sharing)');
+    StoreTranslateableText(conn,'scheme_afp','AFP (Apple Filing Protocol)');
+    StoreTranslateableText(conn,'scheme_ftp','FTP (File Transfer Protocol)');
+    StoreTranslateableText(conn,'scheme_webdav','WebDAV');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 procedure TFRE_DB_VIRTUAL_FILESHARE.CALC_GetIcons(const setter: IFRE_DB_CALCFIELD_SETTER);
@@ -382,11 +412,15 @@ class procedure TFRE_DB_NFS_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_C
 begin
   inherited InstallDBObjects(conn, currentVersionId, newVersionId);
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_NFS_group','NFS Properties');
-  StoreTranslateableText(conn,'scheme_export','Export name');
-  StoreTranslateableText(conn,'scheme_anonymous','Anonymous access');
-  StoreTranslateableText(conn,'scheme_anonymousrw','Anonymous RW access');
-  StoreTranslateableText(conn,'scheme_auth','Authentication');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_NFS_group','NFS Properties');
+    StoreTranslateableText(conn,'scheme_export','Export name');
+    StoreTranslateableText(conn,'scheme_anonymous','Anonymous access');
+    StoreTranslateableText(conn,'scheme_anonymousrw','Anonymous RW access');
+    StoreTranslateableText(conn,'scheme_auth','Authentication');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 { TFRE_DB_VIRTUAL_FILESERVER }
@@ -413,14 +447,19 @@ end;
 
 class procedure TFRE_DB_VIRTUAL_FILESERVER.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
+  inherited InstallDBObjects(conn, currentVersionId, newVersionId);
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_main_group','Virtual Fileserver Properties');
-  StoreTranslateableText(conn,'scheme_fileservername','Servername');
-  StoreTranslateableText(conn,'scheme_pool','Diskpool');
-  StoreTranslateableText(conn,'scheme_description','Description');
-  StoreTranslateableText(conn,'scheme_ip','IP');
-  StoreTranslateableText(conn,'scheme_interface','Interface');
-  StoreTranslateableText(conn,'scheme_vlan','Vlan');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_main_group','Virtual Fileserver Properties');
+    StoreTranslateableText(conn,'scheme_fileservername','Servername');
+    StoreTranslateableText(conn,'scheme_pool','Diskpool');
+    StoreTranslateableText(conn,'scheme_description','Description');
+    StoreTranslateableText(conn,'scheme_ip','IP');
+    StoreTranslateableText(conn,'scheme_interface','Interface');
+    StoreTranslateableText(conn,'scheme_vlan','Vlan');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 
@@ -482,20 +521,24 @@ end;
 class procedure TFRE_DB_ZFS_DATASET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
-  StoreTranslateableText(conn,'scheme_main_group','General Information');
-  StoreTranslateableText(conn,'scheme_pool','Diskpool');
-  StoreTranslateableText(conn,'scheme_description','Description');
-  StoreTranslateableText(conn,'scheme_advanced_group','Advanced Properties');
-  StoreTranslateableText(conn,'scheme_reservation','Reservation [MB]');
-  StoreTranslateableText(conn,'scheme_refres','Ref. Reservation [MB]');
-  StoreTranslateableText(conn,'scheme_recordsize','Recordsize [kB]');
-  StoreTranslateableText(conn,'scheme_logbias','Log Bias');
-  StoreTranslateableText(conn,'scheme_deduplication','Deduplication');
-  StoreTranslateableText(conn,'scheme_checksum','Checksum');
-  StoreTranslateableText(conn,'scheme_compression','Compression');
-  StoreTranslateableText(conn,'scheme_readonly','Read-Only');
-  StoreTranslateableText(conn,'scheme_copies','Copies');
-  StoreTranslateableText(conn,'scheme_sync','Sync');
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_pool','Diskpool');
+    StoreTranslateableText(conn,'scheme_description','Description');
+    StoreTranslateableText(conn,'scheme_advanced_group','Advanced Properties');
+    StoreTranslateableText(conn,'scheme_reservation','Reservation [MB]');
+    StoreTranslateableText(conn,'scheme_refres','Ref. Reservation [MB]');
+    StoreTranslateableText(conn,'scheme_recordsize','Recordsize [kB]');
+    StoreTranslateableText(conn,'scheme_logbias','Log Bias');
+    StoreTranslateableText(conn,'scheme_deduplication','Deduplication');
+    StoreTranslateableText(conn,'scheme_checksum','Checksum');
+    StoreTranslateableText(conn,'scheme_compression','Compression');
+    StoreTranslateableText(conn,'scheme_readonly','Read-Only');
+    StoreTranslateableText(conn,'scheme_copies','Copies');
+    StoreTranslateableText(conn,'scheme_sync','Sync');
+  end;
+  VersionInstallCheck(currentVersionId,newVersionId);
 end;
 
 procedure TFRE_DB_ZFS_DATASET.CALC_GetDisplayName(const setter: IFRE_DB_CALCFIELD_SETTER);

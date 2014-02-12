@@ -193,20 +193,23 @@ class procedure TFRE_FIRMBOX_VM_APP.InstallDBObjects4Domain(const conn: IFRE_DB_
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 
-  CheckDbResult(conn.AddGroup('VMFEEDER','Group for VM Data Feeder','VM Feeder',domainUID),'could not create VM feeder group');
-  CheckDbResult(conn.AddGroup('VMVIEWER','Group for VM Viewer','VM Viewer',domainUID),'could not create VM viewer group');
+  if currentVersionId='' then
+    begin
+      currentVersionId:='1.0';
+      CheckDbResult(conn.AddGroup('VMFEEDER','Group for VM Data Feeder','VM Feeder',domainUID),'could not create VM feeder group');
+      CheckDbResult(conn.AddGroup('VMVIEWER','Group for VM Viewer','VM Viewer',domainUID),'could not create VM viewer group');
 
-  CheckDbResult(conn.AddRolesToGroup('VMFEEDER',domainUID,TFRE_DB_StringArray.Create(
-    TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch
-    )),'could not add roles for group VMFEEDER');
+      CheckDbResult(conn.AddRolesToGroup('VMFEEDER',domainUID,TFRE_DB_StringArray.Create(
+        TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch
+        )),'could not add roles for group VMFEEDER');
 
-  CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID,TFRE_DB_StringArray.Create(
-     TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch,
-      TFRE_FIRMBOX_VM_MACHINES_MOD.GetClassRoleNameFetch
-    )),'could not add GUI roles for group VMVIEWER');
+      CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID,TFRE_DB_StringArray.Create(
+         TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch,
+          TFRE_FIRMBOX_VM_MACHINES_MOD.GetClassRoleNameFetch
+        )),'could not add GUI roles for group VMVIEWER');
 
-  CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID, TFRE_DB_VMACHINE.GetClassStdRoles(false,false,false,true)),'could not add roles of TFRE_DB_VMACHINE to group VMVIEWER');
-
+      CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID, TFRE_DB_VMACHINE.GetClassStdRoles(false,false,false,true)),'could not add roles of TFRE_DB_VMACHINE to group VMVIEWER');
+    end;
 end;
 
 function TFRE_FIRMBOX_VM_APP.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;

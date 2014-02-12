@@ -43,7 +43,7 @@ interface
 
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
-  fre_system,fos_stats_control_interface, fre_hal_disk,fre_dbbase,fre_zfs,fre_scsi;
+  fre_system,fos_stats_control_interface, fre_hal_disk,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes;
 
 
 type
@@ -68,8 +68,6 @@ type
     vmc                   : IFOS_VM_HOST_CONTROL; // Todo Move MVStats to Statscontroller
     statscontroller       : IFOS_STATS_CONTROL;
     disk_hal              : TFRE_HAL_DISK;
-
-    disks_sent            : boolean;
 
   private
 
@@ -114,7 +112,6 @@ begin
 
   if Get_AppClassAndUid('TFRE_FIRMBOX_STORAGE_APP',FStorage_FeedAppClass,FSTORAGE_FeedAppUid) then begin
     FStorage_Feeding   := True;
-    disks_sent         := false;
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_STORAGE_APP APP NOT FOUND!');
   end;
@@ -136,7 +133,6 @@ begin
   FDISK_Feeding := false;
   FAPP_Feeding  := false;
   FStorage_Feeding:= false;
-  disks_sent      := false;
   inherited;
 end;
 
@@ -155,6 +151,7 @@ begin
 
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
 
   statscontroller := Get_Stats_Control       (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
@@ -166,9 +163,6 @@ begin
 
 
   disk_hal   := TFRE_HAL_DISK.Create;
-  disks_sent := false;
-//  disk_hal.InitializeDiskandEnclosureInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-//  disk_hal.InitializePoolInformation(cFRE_REMOTE_USER,cFRE_REMOTE_HOST,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
 
   if cFRE_SUBFEEDER_IP='' then
     AddSubFeederEventViaUX('disksub')
@@ -234,12 +228,7 @@ begin
   //
   if FStorage_Feeding then
     begin
- //     writeln('disks_sent',disks_sent);
-      if (disk_hal.IsDataAvailable) and (not disks_sent) then
-        begin
-          SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetData);
-          disks_sent:=true;
-        end;
+      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetClonedData);
     end;
 end;
 
@@ -268,7 +257,6 @@ end;
 procedure TFRE_BOX_FEED_CLIENT.REM_REQUESTDISKDATA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
 var   reply_Data  : IFRE_DB_Object;
 begin
-  disks_sent:=false;
 //  writeln('SWL: REQUESTING DISK DATA');
   reply_data := GFRE_DBI.NewObject;
   AnswerSyncCommand(command_id,reply_data);
