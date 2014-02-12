@@ -96,6 +96,12 @@ function copyCursor(cur) {
   return { ch: cur.ch, line: cur.line };
 }
 
+function forEach(arr, func) {
+  for (var i = 0; i < arr.length; i++) {
+    func(arr[i]);
+  }
+}
+
 function testVim(name, run, opts, expectedFail) {
   var vimOpts = {
     lineNumbers: true,
@@ -189,7 +195,7 @@ function testVim(name, run, opts, expectedFail) {
       run(cm, vim, helpers);
       successful = true;
     } finally {
-      if ((debug && !successful) || verbose) {
+      if (!successful || verbose) {
         place.style.visibility = "visible";
       } else {
         place.removeChild(cm.getWrapperElement());
@@ -1047,7 +1053,7 @@ testVim('ctrl-x', function(cm, vim, helpers) {
   eq('-3', cm.getValue());
 }, {value: '0'});
 testVim('<C-x>/<C-a> search forward', function(cm, vim, helpers) {
-  ['<C-x>', '<C-a>'].forEach(function(key) {
+  forEach(['<C-x>', '<C-a>'], function(key) {
     cm.setCursor(0, 0);
     helpers.doKeys(key);
     helpers.assertCursorAt(0, 5);
@@ -1171,6 +1177,13 @@ testVim('p_wrong_register', function(cm, vim, helpers) {
 testVim('p_line', function(cm, vim, helpers) {
   cm.setCursor(0, 1);
   helpers.getRegisterController().pushText('"', 'yank', '  a\nd\n', true);
+  helpers.doKeys('2', 'p');
+  eq('___\n  a\nd\n  a\nd', cm.getValue());
+  helpers.assertCursorAt(1, 2);
+}, { value: '___' });
+testVim('p_lastline', function(cm, vim, helpers) {
+  cm.setCursor(0, 1);
+  helpers.getRegisterController().pushText('"', 'yank', '  a\nd', true);
   helpers.doKeys('2', 'p');
   eq('___\n  a\nd\n  a\nd', cm.getValue());
   helpers.assertCursorAt(1, 2);
@@ -1479,6 +1492,34 @@ testVim('visual_blank', function(cm, vim, helpers) {
   helpers.doKeys('v', 'k');
   eq(vim.visualMode, true);
 }, { value: '\n' });
+testVim('s_normal', function(cm, vim, helpers) {
+  cm.setCursor(0, 1);
+  helpers.doKeys('s');
+  helpers.doInsertModeKeys('Esc');
+  helpers.assertCursorAt(0, 0);
+  eq('ac', cm.getValue());
+}, { value: 'abc'});
+testVim('s_visual', function(cm, vim, helpers) {
+  cm.setCursor(0, 1);
+  helpers.doKeys('v', 's');
+  helpers.doInsertModeKeys('Esc');
+  helpers.assertCursorAt(0, 0);
+  eq('ac', cm.getValue());
+}, { value: 'abc'});
+testVim('S_normal', function(cm, vim, helpers) {
+  cm.setCursor(0, 1);
+  helpers.doKeys('j', 'S');
+  helpers.doInsertModeKeys('Esc');
+  helpers.assertCursorAt(1, 0);
+  eq('aa\n\ncc', cm.getValue());
+}, { value: 'aa\nbb\ncc'});
+testVim('S_visual', function(cm, vim, helpers) {
+  cm.setCursor(0, 1);
+  helpers.doKeys('v', 'j', 'S');
+  helpers.doInsertModeKeys('Esc');
+  helpers.assertCursorAt(0, 0);
+  eq('\ncc', cm.getValue());
+}, { value: 'aa\nbb\ncc'});
 testVim('/ and n/N', function(cm, vim, helpers) {
   cm.openDialog = helpers.fakeOpenDialog('match');
   helpers.doKeys('/');
@@ -1962,6 +2003,33 @@ testVim('zt==z<CR>', function(cm, vim, helpers){
   eq(zVals[2], zVals[5]);
 });
 
+var scrollMotionSandbox =
+  '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+  '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+  '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n'
+  '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n';
+testVim('scrollMotion', function(cm, vim, helpers){
+  var prevCursor, prevScrollInfo;
+  cm.setCursor(0, 0);
+  // ctrl-y at the top of the file should have no effect.
+  helpers.doKeys('<C-y>');
+  eq(0, cm.getCursor().line);
+  prevScrollInfo = cm.getScrollInfo();
+  helpers.doKeys('<C-e>');
+  eq(1, cm.getCursor().line);
+  eq(true, prevScrollInfo.top < cm.getScrollInfo().top);
+  // Jump to the end of the sandbox.
+  cm.setCursor(1000, 0);
+  prevCursor = cm.getCursor();
+  // ctrl-e at the bottom of the file should have no effect.
+  helpers.doKeys('<C-e>');
+  eq(prevCursor.line, cm.getCursor().line);
+  prevScrollInfo = cm.getScrollInfo();
+  helpers.doKeys('<C-y>');
+  eq(prevCursor.line - 1, cm.getCursor().line);
+  eq(true, prevScrollInfo.top > cm.getScrollInfo().top);
+}, { value: scrollMotionSandbox});
+
 var squareBracketMotionSandbox = ''+
   '({\n'+//0
   '  ({\n'+//11
@@ -2045,7 +2113,7 @@ testVim('[(, ])', function(cm, vim, helpers) {
   helpers.assertCursorAt(8,0);
 }, { value: squareBracketMotionSandbox});
 testVim('[*, ]*, [/, ]/', function(cm, vim, helpers) {
-  ['*', '/'].forEach(function(key){
+  forEach(['*', '/'], function(key){
     cm.setCursor(7, 0);
     helpers.doKeys('2', '[', key);
     helpers.assertCursorAt(2,2);
@@ -2333,6 +2401,26 @@ testVim('ex_map_key2ex', function(cm, vim, helpers) {
   eq(written, true);
   eq(actualCm, cm);
 });
+testVim('ex_map_key2key_visual_api', function(cm, vim, helpers) {
+  CodeMirror.Vim.map('b', ':w', 'visual');
+  var tmp = CodeMirror.commands.save;
+  var written = false;
+  var actualCm;
+  CodeMirror.commands.save = function(cm) {
+    written = true;
+    actualCm = cm;
+  };
+  // Mapping should not work in normal mode.
+  helpers.doKeys('b');
+  eq(written, false);
+  // Mapping should work in visual mode.
+  helpers.doKeys('v', 'b');
+  eq(written, true);
+  eq(actualCm, cm);
+
+  CodeMirror.commands.save = tmp;
+});
+
 // Testing registration of functions as ex-commands and mapping to <Key>-keys
 testVim('ex_api_test', function(cm, vim, helpers) {
   var res=false;

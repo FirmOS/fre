@@ -1,5 +1,7 @@
 var Pos = CodeMirror.Pos;
 
+CodeMirror.defaults.rtlMoveVisually = true;
+
 function forEach(arr, f) {
   for (var i = 0, e = arr.length; i < e; ++i) f(arr[i]);
 }
@@ -434,6 +436,36 @@ testCM("markTextStayGone", function(cm) {
   eq(m1.find(), null);
 }, {value: "hello"});
 
+testCM("markTextAllowEmpty", function(cm) {
+  var m1 = cm.markText(Pos(0, 1), Pos(0, 2), {clearWhenEmpty: false});
+  is(m1.find());
+  cm.replaceRange("x", Pos(0, 0));
+  is(m1.find());
+  cm.replaceRange("y", Pos(0, 2));
+  is(m1.find());
+  cm.replaceRange("z", Pos(0, 3), Pos(0, 4));
+  is(!m1.find());
+  var m2 = cm.markText(Pos(0, 1), Pos(0, 2), {clearWhenEmpty: false,
+                                              inclusiveLeft: true,
+                                              inclusiveRight: true});
+  cm.replaceRange("q", Pos(0, 1), Pos(0, 2));
+  is(m2.find());
+  cm.replaceRange("", Pos(0, 0), Pos(0, 3));
+  is(!m2.find());
+  var m3 = cm.markText(Pos(0, 1), Pos(0, 1), {clearWhenEmpty: false});
+  cm.replaceRange("a", Pos(0, 3));
+  is(m3.find());
+  cm.replaceRange("b", Pos(0, 1));
+  is(!m3.find());
+}, {value: "abcde"});
+
+testCM("markTextStacked", function(cm) {
+  var m1 = cm.markText(Pos(0, 0), Pos(0, 0), {clearWhenEmpty: false});
+  var m2 = cm.markText(Pos(0, 0), Pos(0, 0), {clearWhenEmpty: false});
+  cm.replaceRange("B", Pos(0, 1));
+  is(m1.find() && m2.find());
+}, {value: "A"});
+
 testCM("undoPreservesNewMarks", function(cm) {
   cm.markText(Pos(0, 3), Pos(0, 4));
   cm.markText(Pos(1, 1), Pos(1, 3));
@@ -516,6 +548,24 @@ testCM("bookmarkCursor", function(cm) {
   cm.setBookmark(Pos(4, 0), {widget: document.createTextNode("→")});
   is(cm.cursorCoords(Pos(4, 1)).left > pos41.left, "single-char bug");
 }, {value: "foo\nbar\n\n\nx\ny"});
+
+testCM("multiBookmarkCursor", function(cm) {
+  if (phantom) return;
+  var ms = [], m;
+  function add(insertLeft) {
+    for (var i = 0; i < 3; ++i) {
+      var node = document.createElement("span");
+      node.innerHTML = "X";
+      ms.push(cm.setBookmark(Pos(0, 1), {widget: node, insertLeft: insertLeft}));
+    }
+  }
+  var base1 = cm.cursorCoords(Pos(0, 1)).left, base4 = cm.cursorCoords(Pos(0, 4)).left;
+  add(true);
+  is(Math.abs(base1 - cm.cursorCoords(Pos(0, 1)).left) < .1);
+  while (m = ms.pop()) m.clear();
+  add(false);
+  is(Math.abs(base4 - cm.cursorCoords(Pos(0, 1)).left) < .1);
+}, {value: "abcdefg"});
 
 testCM("getAllMarks", function(cm) {
   addDoc(cm, 10, 10);
@@ -692,8 +742,8 @@ testCM("collapsedRangeCoordsChar", function(cm) {
   var m1 = cm.markText(Pos(0, 0), Pos(2, 0), opts);
   eqPos(cm.coordsChar(pos_1_3), Pos(3, 3));
   m1.clear();
-  var m1 = cm.markText(Pos(0, 0), Pos(1, 1), opts);
-  var m2 = cm.markText(Pos(1, 1), Pos(2, 0), opts);
+  var m1 = cm.markText(Pos(0, 0), Pos(1, 1), {collapsed: true, inclusiveLeft: true});
+  var m2 = cm.markText(Pos(1, 1), Pos(2, 0), {collapsed: true, inclusiveRight: true});
   eqPos(cm.coordsChar(pos_1_3), Pos(3, 3));
   m1.clear(); m2.clear();
   var m1 = cm.markText(Pos(0, 0), Pos(1, 6), opts);
@@ -821,6 +871,23 @@ testCM("badNestedFold", function(cm) {
   is(/overlap/i.test(caught.message), "wrong error");
 });
 
+testCM("nestedFoldOnSide", function(cm) {
+  var m1 = cm.markText(Pos(0, 1), Pos(2, 1), {collapsed: true, inclusiveRight: true});
+  var m2 = cm.markText(Pos(0, 1), Pos(0, 2), {collapsed: true});
+  cm.markText(Pos(0, 1), Pos(0, 2), {collapsed: true}).clear();
+  try { cm.markText(Pos(0, 1), Pos(0, 2), {collapsed: true, inclusiveLeft: true}); }
+  catch(e) { var caught = e; }
+  is(caught && /overlap/i.test(caught.message));
+  var m3 = cm.markText(Pos(2, 0), Pos(2, 1), {collapsed: true});
+  var m4 = cm.markText(Pos(2, 0), Pos(2, 1), {collapse: true, inclusiveRight: true});
+  m1.clear(); m4.clear();
+  m1 = cm.markText(Pos(0, 1), Pos(2, 1), {collapsed: true});
+  cm.markText(Pos(2, 0), Pos(2, 1), {collapsed: true}).clear();
+  try { cm.markText(Pos(2, 0), Pos(2, 1), {collapsed: true, inclusiveRight: true}); }
+  catch(e) { var caught = e; }
+  is(caught && /overlap/i.test(caught.message));
+}, {value: "ab\ncd\ef"});
+
 testCM("wrappingInlineWidget", function(cm) {
   cm.setSize("11em");
   var w = document.createElement("span");
@@ -851,6 +918,17 @@ testCM("changedInlineWidget", function(cm) {
   var hScroll = byClassName(cm.getWrapperElement(), "CodeMirror-hscrollbar")[0];
   is(hScroll.scrollWidth > hScroll.clientWidth);
 }, {value: "hello there"});
+
+testCM("changedBookmark", function(cm) {
+  cm.setSize("10em");
+  var w = document.createElement("span");
+  w.innerHTML = "x";
+  var m = cm.setBookmark(Pos(0, 4), {widget: w});
+  w.innerHTML = "and now the widget is really really long all of a sudden and a scrollbar is needed";
+  m.changed();
+  var hScroll = byClassName(cm.getWrapperElement(), "CodeMirror-hscrollbar")[0];
+  is(hScroll.scrollWidth > hScroll.clientWidth);
+}, {value: "abcdefg"});
 
 testCM("inlineWidget", function(cm) {
   var w = cm.setBookmark(Pos(0, 2), {widget: document.createTextNode("uu")});
@@ -941,6 +1019,24 @@ testCM("moveVstuck", function(cm) {
   cm.moveV(-1, "line");
   eqPos(cm.getCursor(), Pos(0, 26));
 }, {lineWrapping: true}, ie_lt8 || opera_lt10);
+
+testCM("collapseOnMove", function(cm) {
+  cm.setSelection(Pos(0, 1), Pos(2, 4));
+  cm.execCommand("goLineUp");
+  is(!cm.somethingSelected());
+  eqPos(cm.getCursor(), Pos(0, 1));
+  cm.setSelection(Pos(0, 1), Pos(2, 4));
+  cm.execCommand("goPageDown");
+  is(!cm.somethingSelected());
+  eqPos(cm.getCursor(), Pos(2, 4));
+  cm.execCommand("goLineUp");
+  cm.execCommand("goLineUp");
+  eqPos(cm.getCursor(), Pos(0, 4));
+  cm.setSelection(Pos(0, 1), Pos(2, 4));
+  cm.execCommand("goCharLeft");
+  is(!cm.somethingSelected());
+  eqPos(cm.getCursor(), Pos(0, 1));
+}, {value: "aaaaa\nb\nccccc"});
 
 testCM("clickTab", function(cm) {
   var p0 = cm.charCoords(Pos(0, 0));
@@ -1110,7 +1206,7 @@ testCM("verticalMovementCommandsWrapping", function(cm) {
 
 testCM("rtlMovement", function(cm) {
   forEach(["خحج", "خحabcخحج", "abخحخحجcd", "abخde", "abخح2342خ1حج", "خ1ح2خح3حxج",
-           "خحcd", "1خحcd", "abcdeح1ج", "خمرحبها مها!", "foobarر",
+           "خحcd", "1خحcd", "abcdeح1ج", "خمرحبها مها!", "foobarر", "خ ة ق",
            "<img src=\"/בדיקה3.jpg\">"], function(line) {
     var inv = line.charAt(0) == "خ";
     cm.setValue(line + "\n"); cm.execCommand(inv ? "goLineEnd" : "goLineStart");
@@ -1130,7 +1226,7 @@ testCM("rtlMovement", function(cm) {
       prevX = cursor.offsetLeft;
     }
   });
-}, {rtlMoveVisually: true});
+});
 
 // Verify that updating a line clears its bidi ordering
 testCM("bidiUpdate", function(cm) {
@@ -1311,6 +1407,7 @@ testCM("atomicMarker", function(cm) {
   eqPos(cm.getCursor(), Pos(8, 3));
   m.clear();
   m = atom(1, 1, 3, 8);
+  cm.setCursor(Pos(0, 0));
   cm.setCursor(Pos(2, 0));
   eqPos(cm.getCursor(), Pos(3, 8));
   cm.execCommand("goCharLeft");
@@ -1380,6 +1477,21 @@ testCM("dirtyBit", function(cm) {
   eq(cm.isClean(), false);
   cm.redo();
   eq(cm.isClean(), true);
+});
+
+testCM("changeGeneration", function(cm) {
+  cm.replaceSelection("x", null, "+insert");
+  var softGen = cm.changeGeneration();
+  cm.replaceSelection("x", null, "+insert");
+  cm.undo();
+  eq(cm.getValue(), "");
+  is(!cm.isClean(softGen));
+  cm.replaceSelection("x", null, "+insert");
+  var hardGen = cm.changeGeneration(true);
+  cm.replaceSelection("x", null, "+insert");
+  cm.undo();
+  eq(cm.getValue(), "x");
+  is(cm.isClean(hardGen));
 });
 
 testCM("addKeyMap", function(cm) {
@@ -1508,4 +1620,42 @@ testCM("change_removedText", function(cm) {
   cm.redo();
   eq(removedText[0].join("\n"), "abc\nd");
   eq(removedText[1].join("\n"), "");
+});
+
+testCM("lineStyleFromMode", function(cm) {
+  CodeMirror.defineMode("test_mode", function() {
+    return {token: function(stream) {
+      if (stream.match(/^\[[^\]]*\]/)) return "line-brackets";
+      if (stream.match(/^\([^\]]*\)/)) return "line-background-parens";
+      stream.match(/^\s+|^\S+/);
+    }};
+  });
+  cm.setOption("mode", "test_mode");
+  var bracketElts = byClassName(cm.getWrapperElement(), "brackets");
+  eq(bracketElts.length, 1);
+  eq(bracketElts[0].nodeName, "PRE");
+  is(!/brackets.*brackets/.test(bracketElts[0].className));
+  var parenElts = byClassName(cm.getWrapperElement(), "parens");
+  eq(parenElts.length, 1);
+  eq(parenElts[0].nodeName, "DIV");
+  is(!/parens.*parens/.test(parenElts[0].className));
+}, {value: "line1: [br] [br]\nline2: (par) (par)\nline3: nothing"});
+
+CodeMirror.registerHelper("xxx", "a", "A");
+CodeMirror.registerHelper("xxx", "b", "B");
+CodeMirror.defineMode("yyy", function() {
+  return {
+    token: function(stream) { stream.skipToEnd(); },
+    xxx: ["a", "b", "q"]
+  };
+});
+CodeMirror.registerGlobalHelper("xxx", "c", function(m) { return m.enableC; }, "C");
+
+testCM("helpers", function(cm) {
+  cm.setOption("mode", "yyy");
+  eq(cm.getHelpers(Pos(0, 0), "xxx").join("/"), "A/B");
+  cm.setOption("mode", {name: "yyy", modeProps: {xxx: "b", enableC: true}});
+  eq(cm.getHelpers(Pos(0, 0), "xxx").join("/"), "B/C");
+  cm.setOption("mode", "javascript");
+  eq(cm.getHelpers(Pos(0, 0), "xxx").join("/"), "");
 });
