@@ -138,7 +138,25 @@ define( [
 		 * Default configuration allows links everywhere
 		 */
 		config: [ 'a' ],
-		
+
+		/**
+		 * The value that will automatically be set to an anchor tag's title
+		 * attribute if its href field matches the titleregex, and the editor
+		 * has not manually defined the title attribute.
+		 *
+		 * @type {string}
+		 */
+		title: null,
+
+		/**
+		 * Regular Expression string which the field's href value will be tested
+		 * against in order to determine whether or not to set the configured
+		 * title attribute value.
+		 *
+		 * @type {string}
+		 */
+		titleregex: null,
+
 		/**
 		 * all links that match the targetregex will get set the target
 		 * e.g. ^(?!.*aloha-editor.com).* matches all href except aloha-editor.com
@@ -201,7 +219,13 @@ define( [
 		 */
 		init: function () {
 			var plugin = this;
-			
+
+			if ('undefined' !== typeof this.settings.title) {
+				this.title = this.settings.title;
+			}
+			if ('undefined' !== typeof this.settings.titleregex) {
+				this.titleregex = this.settings.titleregex;
+			}
 			if ( typeof this.settings.targetregex != 'undefined' ) {
 				this.targetregex = this.settings.targetregex;
 			}
@@ -535,7 +559,7 @@ define( [
 				valueField: 'url',
 				cls: 'aloha-link-href-field',
 				scope: 'Aloha.continuoustext',
-				noTargetHighlight: true,
+				noTargetHighlight: false,
 				targetHighlightClass: 'aloha-focus'
 			});
 			this.hrefField.setTemplate('<span><b>{name}</b><br/>{url}</span>');
@@ -795,10 +819,37 @@ define( [
 		},
 
 		/**
+		 * Automatically sets (or unsets) the title attribute value of the given
+		 * AttributeField's target anchor element based on the link's href
+		 * value.
+		 *
+		 * @param {AttributeField} field The AttributeField that is to be used.
+		 * @param {string} value The value to which the title attribute is to be
+		 *                       set to.
+		 * @param {string} regex A string representing a regular expression
+		 *                       against which to test the href value of the
+		 *                       AttributeField `field`, to predicate whether
+		 *                       the title field should be update or not.
+		 */
+		automaticallySetTitle: function (field, value, regex) {
+			var currentValue = jQuery(field.getTargetObject()).attr('title');
+			var canOverwriteTitle = !currentValue || value === currentValue;
+			if (value && canOverwriteTitle) {
+				field.setAttribute('title', value, regex, field.getValue());
+			}
+		},
+
+		/**
 		 * Updates the link object depending on the src field
 		 */
 		hrefChange: function () {
 			var that = this;
+
+			this.automaticallySetTitle(
+				this.hrefField,
+				this.title,
+				this.titleregex
+			);
 
 			// For now hard coded attribute handling with regex.
 			// Avoid creating the target attribute, if it's unnecessary, so
@@ -847,6 +898,28 @@ define( [
 		}
 	});
 
+	/**
+	 * Add additional target objects, in case the selection includes
+	 * several links tag
+	 *
+	 * @param {RangeObject} rangeObject Selection Range
+	 * @param {LinkPlugin} that Link Plugin object
+	 */
+	function addAdditionalTargetObject(rangeObject, field) {
+		var links = rangeObject.findAllMarkupByTagName('A', rangeObject);
+		for (var i = 0, len = links.length; i < len; i++) {
+			field.addAdditionalTargetObject(links[i]);
+		}
+	}
+
+	/**
+	 * Selection change handler.
+	 *
+	 * @param {LinkPlugin} that This Link Plugin object
+	 * @param {RangeObject} rangeObject Selection Range
+	 * @returns {boolean} True if the link Scope was activated,
+	 *                    False otherwise
+	 */
 	function selectionChangeHandler(that, rangeObject) {
 		var foundMarkup,
 		    enteredLinkScope = false;
@@ -854,18 +927,18 @@ define( [
 		// Check if we need to ignore this selection changed event for
 		// now and check whether the selection was placed within a
 		// editable area.
-		if (   !that.ignoreNextSelectionChangedEvent
-			&& Aloha.Selection.isSelectionEditable()
-			&& Aloha.activeEditable != null ) {
+		if (!that.ignoreNextSelectionChangedEvent &&
+			Aloha.Selection.isSelectionEditable() &&
+			Aloha.activeEditable != null ) {
 			
 			foundMarkup = that.findLinkMarkup(rangeObject);
-			
+
 			if (foundMarkup) {
 				that.toggleLinkScope(true);
 
 				// now we are ready to set the target object
 				that.hrefField.setTargetObject(foundMarkup, 'href');
-
+				addAdditionalTargetObject(rangeObject, that.hrefField);
 				// if the selection-changed event was raised by the first click interaction on this page
 				// the hrefField component might not be initialized. When the user switches to the link
 				// tab to edit the link the field would be empty. We check for that situation and add a

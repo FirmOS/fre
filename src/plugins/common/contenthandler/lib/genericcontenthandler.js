@@ -38,6 +38,13 @@ define([
 	'use strict';
 
 	/**
+	 * Tags used for semantic formatting
+	 * @type {Array.<String>}
+	 * @see GenericContentHandler#transformFormattings
+	 */
+	var formattingTags = ['strong', 'em', 's', 'u', 'strike'];
+
+	/**
 	 * Checks whether the markup describes a paragraph that is propped by
 	 * a <br> tag but is otherwise empty.
 	 * 
@@ -112,7 +119,7 @@ define([
 
 		// Because Aloha does not provide a means for editors to manipulate
 		// these properties.
-		$content.find('td,tr')
+		$content.find('table,th,td,tr')
 			.removeAttr('width')
 			.removeAttr('height')
 			.removeAttr('valign');
@@ -120,6 +127,27 @@ define([
 		// Because Aloha table handling simply does not regard colgroups.
 		// @TODO Use sanitize.js?
 		$content.find('colgroup').remove();
+	}
+
+	/**
+	 * Return true if the nodeType is allowed in the settings,
+	 * Aloha.settings.contentHandler.allows.elements
+	 * 
+	 * @param {String} nodeType	The tag name of the element to evaluate
+	 * 
+	 * @return {Boolean}
+	 */
+	function isAllowedNodeName(nodeType){
+		return !!(
+			Aloha.settings.contentHandler
+			&& Aloha.settings.contentHandler.allows
+			&& Aloha.settings.contentHandler.allows.elements
+			&& ($.inArray(
+		              nodeType.toLowerCase(), 
+				      Aloha.settings.contentHandler.allows.elements
+				         ) !== -1
+			   )
+		);
 	}
 
 	var GenericContentHandler = Manager.createHandler({
@@ -146,7 +174,6 @@ define([
 			}
 
 			prepareTables($content);
-
 			this.cleanLists($content);
 			this.removeComments($content);
 			this.unwrapTags($content);
@@ -193,7 +220,18 @@ define([
 		transformFormattings: function ( content ) {
 			// find all formattings we will transform
 			// @todo this makes troubles -- don't change semantics! at least in this way...
-			content.find('strong,em,s,u,strike').each(function () {
+
+			var selectors = [],
+				i
+			;
+
+			for (i = 0; i < formattingTags.length; i++) {
+				if (!isAllowedNodeName(formattingTags[i])) {
+					selectors.push(formattingTags[i]);
+				}
+			}
+
+			content.find(selectors.join(',')).each(function () {
 				if (this.nodeName === 'STRONG') {
 					// transform strong to b
 					Aloha.Markup.transformDomObject($(this), 'b');

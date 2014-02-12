@@ -27,6 +27,9 @@
 define(['jquery'], function ($) {
 	'use strict';
 	return {
-		ie7: $.browser.msie && parseInt($.browser.version, 10) < 8
+		ie7: $.browser.msie && parseInt($.browser.version, 10) < 8,
+		ie8: $.browser.msie && parseInt($.browser.version, 10) < 9,
+		ie : $.browser.msie,
+		mozilla: $.browser.mozilla
 	};
 });

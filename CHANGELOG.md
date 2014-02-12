@@ -12,6 +12,429 @@ All changes are categorized into one of the following keywords:
                    functional change to any feature.
 - **BUGFIX**: The change fixes a bug.
 
+
+## 0.24.14 - 2014/02/05
+
+- **BUGFIX**: table-plugin: (Firefox) Pressing tab in the last cell of last
+              row creates a row, but the cursor was placed outside the
+              table. With this fix the cursor is placed in the first cell of
+              the created row. #RT57686
+
+## 0.24.13 - 2014/01/30
+
+- **BUGFIX**: align plugin: Setting alignment to content inside of a table cell
+              will no longer result in all of the content in the cell being
+              aligned, but only the content that is selected (up to the nearest
+              block-level element).
+
+- **BUGFIX**: drag-n-drop: Dragging a block element into an non-editable region
+              resulted in a JavaScript error. This error caused HTML artifacts
+              to be left in the region. Fixing the  JavaScript error corrects
+              this behavior. RT#57629
+
+- **BUGFIX**: copy-paste: Copy and paste text content from MS-Word to Aloha content
+              in IE9 Browser, added line break between paragraphs. When
+              copying from MS-Word unrendered whitespaces are added between
+              paragraphs and are rendered as lines break for Aloha Editor.
+              Removing these unrendered whitespaces solves the line break problem.
+              RT#57725
+
+- **BUGFIX**: button tooltip: 'Insert Table' button tooltip did not disappear when selecting
+              the rows and the columns of the table. This has been fixed so the tooltip does
+              disappear. RT#57677
+
+
+## 0.24.12 - 2014/01/22
+
+- **BUGFIX**: core: Performances fixes introduced a regression which resulted
+              in pressing ENTER to break paragraphs incorrectly.  This has been
+              fix so that pressing enter in an empty editable will result in a
+              new paragraph being inserted after rather than before. RT#57660
+
+## 0.24.11 - 2014/01/15
+
+- **ENHANCEMENT**: textcolor-plugin: The Textcolor plugin has had a complete overhaul to improve usability, and  to fix bugs when changing color around complex markup.
+- **BUGFIX**: core: An IE bug that caused editables to not be activated correctly upon the first mouseclick was resolved. 
+                    Previously the cursor position inside the editable was not set. The user had to click twice to place the cursor correctly. RT#57224
+
+## 0.24.10 - 2014/01/08
+
+- **BUGFIX**: table-plugin: Table selection for rows or columns in IE8 did not
+                            show Table Row/Column panel options. This error is
+                            fixed.
+
+## 0.24.9 - 2013/12/18
+
+- **BUGFIX**: image-plugin: The image plugin icons were fixed for IE7+
+- **BUGFIX**: abbr-plugin: A missing i18n translation was added to the remove abbreviation button. RT#57076
+
+## 0.24.8 - 2013/11/21
+
+- **BUGFIX**: blocks: The dragging and dropping of Aloha Blocks has been fixed
+              to no longer use jQueryUi's sortable().  Aloha Editor's own
+              functionality is to be used instead.  This allows implementers to
+              use sortable() to enable drag and drop for blocks which are
+              inside of blocks that have been made draggable by Aloha Editor.
+              RT#56973
+
+## 0.24.7 - 2013/11/14
+
+- **BUGFIX**: Table Plugin: Clicking text inside a table cell doesn't make the whole cell content
+              to be selected (only IE) RT#57176
+
+## 0.24.6 - 2013/11/06
+
+- **BUGFIX**: Change table cell size by drag & drop
+              The line which is shown when you drag & drop the size of cell,
+              is not showed for the last row or last column. RT#55437
+- **BUGFIX**: Tooltip covers color palette
+              The colors tooltip does not disappear when the color palette is shown.
+              RT#57078
+- **BUGFIX**: Formatless Copy/Paste not working.
+              When paste action was made the formatlesshandler was never called.
+              We manually call this handler before pasting the content into the DOM element.
+              RT#56692
+
+## 0.24.5 - 2013/10/24
+
+- **BUGFIX**: WAI input text is mistaken by the Caption Table
+              Putting the image of WAI inside the input text we make clear that this
+              input text is for WAI text and not for Table Caption. RT#56649
+- **BUGFIX**: Creation of several links or abbreviation is not fill with the same value.
+              When create several links in different paragraphs or item list
+              the value is not set the same for all the links but only for the first
+              in the range selection.
+              Changes were made so several links or abbreviation in the same selection
+              have the same value. RT#55298
+- **BUGFIX**: Table caption is removed every time is deactivated.
+              Table caption is now hidden or shown but not removed,
+              so the original text remains. RT#56649
+- **BUGFIX**: Inputs containing image height/width don't display when image is loaded (ie9)
+              When selecting an image the width and height inputs were not displayed.
+              The problem was that when assigning the value to the input, the jQuery.val function was not
+              working, because the element wasn't associated to the DOM yet.
+- **BUGFIX**: Outline on icons is too big resulting in too little visual difference between enabled or disabled state.
+              The outline when the icon is focused is too big and the user can't distinguish when a button
+              icon is enabled or disabled. By adding box-shadow (same behavior for different browsers)
+              the problem was solved.
+- **BUGFIX**: core: Some performance improvements were made, so the Aloha-editor smartContenthandler is faster
+              in large contents. Improvements of loop-for, jQuery selector and Dom iteration. RT#56619
+- **BUGFIX**: rangy: Change rangy-core configuration property "preferTextRange"
+              to false in order to allow for more performant ways to work with
+              ranges in IE.  Accomodations were taken to ensure that IE 9 would
+              not crash with this flag.
+- **BUGFIX**  commands: Further cleanup will no longer be done after inserting
+              paragraphs since this extra processing was not necessary and very
+              expensive on large content.
+- **BUGFIX**: tables: Remove "width" attribute from copied tables. RT#55759
+
+## 0.24.4 - 2013/10/17
+
+- **BUGFIX**: block plugin: Fix the error "Member not found" occuring when initializing a block
+              with links in it. This error occurs on IE 10 compatbility mode with document mode 7.
+- **BUGFIX**: paste plugin: Pasting will no longer always break the line.
+              A wrapping element will no longer be created to contain the copy
+              content. RT#56692
+- **BUGFIX**: header ids plugin: A header ID will now automatically be added as
+              soon as the heading is created if the header id plugins is
+              activated. RT#56670
+- **BUGFIX**: table plugin: The "scope" attribute in TH elements will now be
+              correctly set to "col" instead of "column".  This attribute only
+              accepts "col" or "row" as values. RT#56088
+
+
+## 0.24.3 - 2013/10/09
+
+- **BUGFIX**: tables: When selection is placed into table, all other tables will
+              now have their visual selection removed.
+- **BUGFIX**: tables: The Row and Column floating toolbar tabs will now be shown
+              at the first click of a row or column.
+- **BUGFIX**: tables: Selecting inside of tables will no longer results in
+              sometimes having the selection deselected on mouseup in IE.
+- **BUGFIX**: blocks: Blocks will immediately be given padding landing areas (if
+              needed) as soon as they are inserted into active editables.
+- **BUGFIX**: tables: It is now possible to click once and start editing table
+              summaries.
+- **BUGFIX**: tables: It is now possible to delete entire rows or columns using
+              the delete key.
+
+## 0.24.2 - 2013/10/04
+
+- **BUGFIX**: Fix display of values after image-reset and improve the
+              size-check of image-resizing
+- **BUGFIX**: image plugin: Various fixes and improvements for resizing, cropping 
+              and resetting images have been added, to improve the cohesion between displayed values and actual sizes.
+- **BUGFIX**: blockmanager: Fixed scripts in a block being executed, when
+              getting its configuration.
+- **BUGFIX**: editables: Initializing empty editables in Firefox will no longer
+              result in them aquiring an extra <br/>. This was previously done
+        to work around a Firefox bug that seems not no longer be an issue.
+- **BUGFIX**: tables: Tables with col- and rowspans will now be correctly
+              initialialized in IE9.
+- **BUGFIX**: tables: The cell merge and cell split buttons are now correctly
+              disable when not applicable in IE7 and IE8.
+- **BUGFIX**: tables: Table functionality will no longer stop working when a
+              table is moved from one editable into another.
+- **BUGFIX**: tables: It is now possible to resize table headers (TH cells).
+- **BUGFIX**: tables: Enable blocks that are inserted inside of tables to be
+              draggable.
+
+## 0.24.1 - 2013/09/25
+
+- **BUGFIX**: blockmanager: Fixed scripts in a block being executed, when
+              getting its configuration.
+- **BUGFIX**: editables: Initializing empty editables in Firefox will no longer
+              result in them aquiring an extra <br/>. This was previously done
+                          to work around a Firefox bug that seems not no longer be an issue.
+
+## 0.24.0 - 2013/09/18
+
+- **FEATURE**: New drag behavior for block elements that permits drop the 
+               BlockElement virtually in any element and any level of the 
+               structure, providing a highlight element to know which element 
+               is selected to be the new container, or if the element is not 
+               suitable to be a container the highlighter element show the edges 
+               of the selected element to show that the block will be added 
+               before or after this one.
+
+## 0.23.26 - 2013/11/14
+
+- **BUGFIX**: Table Plugin: Clicking text inside a table cell doesn't make the whole cell content
+              to be selected (only IE) RT#57176
+
+## 0.23.25 - 2013/11/06
+
+- **BUGFIX**: Change table cell size by drag & drop
+              The line which is shown when you drag & drop the size of cell,
+              is not showed for the last row or last column. RT#55437
+- **BUGFIX**: Tooltip covers color palette
+              The colors tooltip does not disappear when the color palette is shown.
+              RT#57078
+- **BUGFIX**: Formatless Copy/Paste not working.
+              When paste action was made the formatlesshandler was never called.
+              We manually call this handler before pasting the content into the DOM element.
+              RT#56692
+
+## 0.23.24 - 2013/10/24
+
+- **BUGFIX**: WAI input text is mistaken by the Caption Table
+              Putting the image of WAI inside the input text we make clear that this
+              input text is for WAI text and not for Table Caption. RT#56649
+- **BUGFIX**: Creation of several links or abbreviation is not fill with the same value.
+              When create several links in different paragraphs or item list
+              the value is not set the same for all the links but only for the first
+              in the range selection.
+              Changes were made so several links or abbreviation in the same selection
+              have the same value. RT#55298
+- **BUGFIX**: Table caption is removed every time is deactivated.
+              Table caption is now hidden or shown but not removed,
+              so the original text remains. RT#56649
+- **BUGFIX**: Inputs containing image height/width don't display when image is loaded (ie9)
+              When selecting an image the width and height inputs were not displayed.
+              The problem was that when assigning the value to the input, the jQuery.val function was not
+              working, because the element wasn't associated to the DOM yet.
+- **BUGFIX**: Outline on icons is too big resulting in too little visual difference between enabled or disabled state.
+              The outline when the icon is focused is too big and the user can't distinguish when a button
+              icon is enabled or disabled. By adding box-shadow (same behavior for different browsers)
+              the problem was solved.
+- **BUGFIX**: core: Some performance improvements were made, so the Aloha-editor smartContenthandler is faster
+              in large contents. Improvements of loop-for, jQuery selector and Dom iteration. RT#56619
+- **BUGFIX**: rangy: Change rangy-core configuration property "preferTextRange"
+              to false in order to allow for more performant ways to work with
+              ranges in IE.  Accomodations were taken to ensure that IE 9 would
+              not crash with this flag.
+- **BUGFIX**  commands: Further cleanup will no longer be done after inserting
+              paragraphs since this extra processing was not necessary and very
+              expensive on large content.
+- **BUGFIX**: tables: Remove "width" attribute from copied tables. RT#55759
+
+## 0.23.21 - 2013/10/04
+
+- **BUGFIX**: Fix display of values after image-reset and improve the
+              size-check of image-resizing
+- **BUGFIX**: image plugin: Various fixes and improvements for resizing, cropping 
+              and resetting images have been added, to improve the cohesion between displayed values and actual sizes.
+- **BUGFIX**: blockmanager: Fixed scripts in a block being executed, when
+              getting its configuration.
+- **BUGFIX**: editables: Initializing empty editables in Firefox will no longer
+              result in them aquiring an extra <br/>. This was previously done
+        to work around a Firefox bug that seems not no longer be an issue.
+- **BUGFIX**: tables: Tables with col- and rowspans will now be correctly
+              initialialized in IE9.
+- **BUGFIX**: tables: The cell merge and cell split buttons are now correctly
+              disable when not applicable in IE7 and IE8.
+- **BUGFIX**: tables: Table functionality will no longer stop working when a
+              table is moved from one editable into another.
+- **BUGFIX**: tables: It is now possible to resize table headers (TH cells).
+
+
+
+## 0.23.20 - 2013/09/25
+
+- **BUGFIX**: blockmanager: Fixed scripts in a block being executed, when
+              getting its configuration.
+- **BUGFIX**: editables: Initializing empty editables in Firefox will no longer
+              result in them aquiring an extra <br/>. This was previously done
+                          to work around a Firefox bug that seems not no longer be an issue.
+
+## 0.23.19 - 2013/08/30
+
+- **BUGFIX**: table plugin: Pressing the tab key when the selection is in the
+                          last cell of a table will correctly place the cursor in the first
+                          cell of the newly created row.
+
+## 0.23.18 - 2013/08/28
+
+- **BUGFIX**: table plugin: Merging table cells in IE8 will no longer result in
+                            the contents of merged cells from being lost.
+- **BUGFIX**: utilities: Pressing backspace in a text node in a paragraph
+                         adjacent to a table will now correctly delete the character to the
+                         left of the cursor rather than jumping into the table.
+
+## 0.23.17 - 2013/08/14
+
+- **BUGFIX**:	   table plugin: Merging cell is now fixed to work correctly, after a
+                 previous fix introduced a bug through circular dependency.
+
+## 0.23.16 - 2013/08/14
+
+- **BUGFIX**:      table-plugin: The table plugin will now not lose the drag handles any more, when getContents()
+                   is called for the editable (which is done on smart content change)
+- **BUGFIX**:      cite-plugin: Several issues with the citation plugin have been fixed: Pressing backspace in a 
+                   blockquote will no longer wrap the blockquote into div's (which would break the behaviour).
+                   The behaviour of pressing enter at the end of a blockquote multiple times has been changed to land
+                   in a new empty paragraph after the blockquote (similar to lists).
+                   When blockquote and quotes are nested, the controls of blockquote and quote will both show the
+                   correct status now.
+- **BUGFIX**:      repositorybrowser: Fix i18n of repository browser to use the language configured in Aloha.settings.locale
+- **BUGFIX**:      table plugin: The selection of table cells has been made more coherent.  
+                   A browser selection will be set on the entire content of the anchor cell of the virtual cell selection.
+
+## 0.23.15 - 2013/08/09
+
+- **BUGFIX**:      core: Fixed selection bug in FF where it was possible to move the selection
+                   into a HR (by clicking on it)
+- **BUGFIX**:      textcolor: The button for changing the textcolor can no longer be accidentally
+                   overwritten by custom background images.
+- **BUGFIX**:      table: The table plugin will now handle pressing down in the last cell as well
+                   as pressing up in the first cell by positioning the cursor directly before or 
+                   after the table.
+- **FEATURE**:     autoparagraph-plugin: The Autoparagraph Plugin checks the contents of editables
+                   and wraps content that is not contained in block level elements into paragraphs.
+
+## 0.23.14 - 2013/07/31
+
+- **BUGFIX**: abbr: The abbreviation plugin will now use non-exclusive scopes
+              to toggle the visibility of its controls. This makes it compatible
+              with other plugins in terms of control visibility (e.g. when nesting
+              abbreviations with links).
+
+- **BUGFIX**: wai-lang: The wai-lang plugin will now use non-exclusive scopes
+              to toggle the visibility of its controls. This makes it compatible
+              with other plugins in terms of control visibility (e.g. when nesting
+              wai-lang with links).
+
+## 0.23.13 - 2013/07/24
+
+
+- **BUGFIX**: blocks: The floating toolbar will now be shown when clicking
+              inside of editables that are nested inside of standalone Empty
+              blocks.
+
+- **BUGFIX**: ui: It is now possible to configure the toolbar to not float at
+              all.
+
+- **BUGFIX**: format: It is no longer possible to use formatting hotkeys to
+              apply disallowed formatting in an editable.
+
+- **BUGFIX**: contenthandler: The content sanitizer has been corrected to use
+              the editable that is passed to it’s handler() function rather than
+              the currently active aditable.
+
+- **BUGFIX**: headerids: Fixed generation of invalid HTML ID’s for headings when
+              the headings start with a number.
+
+- **BUGFIX**: editable: Aloha.Editable.registerEvents(), which attaches
+              necessary events to the given editable, has been introduced.  This
+              is part of a bug fix for applications that intergrate Aloha Editor
+              and need to re-attach events to editables.
+
+## 0.23.12 - 2013/07/04
+
+- **BUGFIX**: paste-plugin: Browsers no longer scroll to the top of an editable
+              after content was pasted.
+
+- **BUGFIX**: paste-plugin: There are no more discrepancies between browsers
+			  when pasting plain text.
+
+- **BUGFIX**: core: Adding blocks and tables will no longer results in empty
+              paragraphs being littered before the inserted element.
+
+- **BUGFIX**: table-plugin: Pressing delete or backspace in an empty node that
+              is adjacent to a table element will no longer result in the table
+              being deleted.
+
+- **BUGFIX**: wai-lang-plugin: Incluing the WAI Language plugin will no longer
+              result in a JavaScript error during initialization.
+
+## 0.23.11 - 2013/06/28
+
+- **FEATURE**: link-plugin: Two new properties have been added, that will allow
+               the link plugin to be configured to automatically set an anchor
+               element's title attribute to a configured value when an internal
+               link is detected in the href input field.
+
+- **BUGFIX**: paste-plugin: Browsers no longer scroll to the top of an editable
+              after content was pasted.
+
+- **BUGFIX**: paste-plugin: There are no more discrepancies between browsers
+              when pasting plain text.
+
+- **BUGFIX**: Adding blocks and tables will no longer results in empty paragraphs
+              being littered before the inserted element.
+
+
+
+## 0.23.10 - 2013/06/05
+
+- **ENHANCEMENT**: Filters the tags used in transformFormattings, extracting the
+                   tags setted in the elements allowed setting
+
+- **ENHANCEMENT**: Added trimWhitespaceCharacters method in util/html to remove
+                   the weirds whitespace characters, this is necessary in
+                   Internet Explorer 7
+
+- **ENHANCEMENT**: The extra plugin headerids now uses PubSub.sub instead
+                   Aloha.bind, when is available
+
+
+- **ENHANCEMENT**: The editable Class now publish the message
+                   aloha.editable.deactivated via PubSub
+
+- **BUGFIX**: Empty tabs will no longer show on the toolbar
+
+- **BUGFIX**: Merging table cells which contains &nbsp; will no longer result
+              in the cell that was merged having unnecessary white spaces.
+
+- **BUGFIX**: Setting transformFormattings to true in the generic handler, and
+              allowing the U tag, will no longer result in the elimination of
+              the U tags
+
+- **BUGFIX**: Textcolor button on toolbar not longer have style superposition
+              when have styles applied to td or you have jquery-ui styles
+
+- **BUGFIX**: The extra plugin headerids not longer result in duplicated id when
+              have duplicated headers title
+
+- **BUGFIX**: The table not longer will be deleted when the user press delete
+              key with the cursor just before a table, or press backspace with
+              the cursor just after the table
+
+- **BUGFIX**: Prevents write outside the p tags, when you insert a table and
+              select just above of this or just in the right, selecting the
+              table wrapper element.
+
+
 ## 0.23.9 - 2013/05/29
 
 - **BUGFIX**: With this change, paragraphs are no longer inserted when pressing Enter

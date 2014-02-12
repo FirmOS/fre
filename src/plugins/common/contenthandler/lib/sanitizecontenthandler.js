@@ -95,8 +95,9 @@ function( Aloha, jQuery, ContentHandlerManager, Plugin, console ) {
 			'p': ['class', 'style', 'id'],
 			'q': ['cite'],
 			'table': ['summary', 'width'],
-			'td': ['abbr', 'axis', 'colspan', 'rowspan', 'width'],
-			'th': ['abbr', 'axis', 'colspan', 'rowspan', 'scope', 'width'],
+									// For IE7 it matters the uppercase 'S' in rowSpan, colSpan
+			'td': ['abbr', 'axis', 'colSpan', 'rowSpan', 'colspan', 'rowspan', 'width'],
+			'th': ['abbr', 'axis', 'colSpan', 'rowSpan', 'colspan', 'rowspan', 'scope', 'width'],
 			'ul': ['type'],
 			'span': ['class','style','lang','xml:lang','role']
 		},
@@ -144,23 +145,27 @@ function( Aloha, jQuery, ContentHandlerManager, Plugin, console ) {
 		 * Handle the content from eg. paste action and sanitize the html
 		 * @param content
 		 */
-		handleContent: function( content )  {
-			var sanitizeConfig,
-				contentHandlerConfig;
+		handleContent: function (content, options, editable)  {
+			if (!editable) {
+				return content;
+			}
 
-			if (Aloha.activeEditable &&
-				Aloha.settings.contentHandler &&
-				Aloha.settings.contentHandler.handler && Aloha.settings.contentHandler.handler.sanitize) {
+			var sanitizeConfig;
+			var contentHandlerConfig;
+
+			if (Aloha.settings.contentHandler &&
+			    Aloha.settings.contentHandler.handler &&
+			    Aloha.settings.contentHandler.handler.sanitize) {
 				// individual sanitize config per editable -- should support merging of configs from other plugins ...
-				if ( Aloha.settings.contentHandler.handler.sanitize ) {
+				if (Aloha.settings.contentHandler.handler.sanitize) {
 					contentHandlerConfig = Aloha.settings.contentHandler.handler.sanitize;
 				}
-				var containerId = contentHandlerConfig['#' + Aloha.activeEditable.getId()];
+				var containerId = contentHandlerConfig['#' + editable.getId()];
 				if (typeof containerId !== 'undefined') {
 					sanitizeConfig = contentHandlerConfig;
 				} else {
-					var containerClasses = Aloha.activeEditable.obj.attr('class').split(' ');
-					for ( var i=0; i < containerClasses.length; i++) {
+					var containerClasses = editable.obj.attr('class').split(' ');
+					for (var i = 0; i < containerClasses.length; i++) {
 						if (typeof contentHandlerConfig['.' + containerClasses[i]] !== 'undefined') {
 							sanitizeConfig = contentHandlerConfig['.' + containerClasses[i]];
 						}
@@ -169,13 +174,13 @@ function( Aloha, jQuery, ContentHandlerManager, Plugin, console ) {
 			}
 
 			if ( typeof sanitize === 'undefined' || typeof sanitizeConfig !== 'undefined') {
-				initSanitize( sanitizeConfig );
+				initSanitize(sanitizeConfig);
 			}
 
-			if ( typeof content === 'string' ){
-				content = jQuery( '<div>' + content + '</div>' ).get(0);
-			} else if ( content instanceof jQuery ) {
-				content = jQuery( '<div>' ).append(content).get(0);
+			if (typeof content === 'string'){
+				content = jQuery('<div>' + content + '</div>').get(0);
+			} else if (content instanceof jQuery) {
+				content = jQuery('<div>').append(content).get(0);
 			}
 
 			return jQuery('<div>').append(sanitize.clean_node(content)).html();

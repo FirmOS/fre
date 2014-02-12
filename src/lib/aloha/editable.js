@@ -167,6 +167,65 @@ define([
 		}
 	}
 
+	/**
+	 * Registers events on the given editable's corresponding DOM element.
+	 *
+	 * @param {Editable} editable
+	 */
+	function registerEvents(editable) {
+		var $editable = editable.obj;
+
+		$editable.mousedown(function (event) {
+			if (!Aloha.eventHandled) {
+				Aloha.eventHandled = true;
+				if (Aloha.activeEditable == null || typeof Aloha.activeEditable === 'undefined' || $editable[0] !== Aloha.activeEditable.obj[0]) {
+					Aloha.mouseEventChangedEditable = true;
+				}
+				return editable.activate(event);
+			}
+		});
+		$editable.mouseup(function (event) {
+			Aloha.eventHandled = false;
+		});
+
+		$editable.focus(function (event) {
+			return editable.activate(event);
+		});
+
+		$editable.keydown(function (event) {
+			var letEventPass = Markup.preProcessKeyStrokes(event);
+			editable.keyCode = event.which;
+			if (!letEventPass) {
+				// the event will not proceed to key press, therefore trigger
+				// smartContentChange
+				editable.smartContentChange(event);
+			}
+			return letEventPass;
+		});
+
+		$editable.keypress(StateOverride.keyPressHandler);
+		$editable.keypress(function (event) {
+			// triggers a smartContentChange to get the right charcode
+			// To test try http://www.w3.org/2002/09/tests/keys.html
+			Aloha.activeEditable.smartContentChange(event);
+		});
+
+		$editable.keyup(function (event) {
+			if (event.keyCode === 27) {
+				Aloha.deactivateEditable();
+				return false;
+			}
+		});
+
+		$editable.contentEditableSelectionChange(function (event) {
+			Selection.onChange($editable, event, 0, Aloha.mouseEventChangedEditable);
+			if (Aloha.mouseEventChangedEditable) {
+				Aloha.mouseEventChangedEditable = false;
+			}
+			return $editable;
+		});
+	}
+
 	$(document).keydown(onKeydown);
 
 	/**
@@ -301,54 +360,7 @@ define([
 			Aloha.bind('aloha-plugins-loaded', function () {
 				me.obj.addClass('aloha-editable').contentEditable(true);
 
-				me.obj.mousedown(function (e) {
-					if (!Aloha.eventHandled) {
-						Aloha.eventHandled = true;
-						return me.activate(e);
-					}
-				});
-
-				me.obj.mouseup(function (e) {
-					Aloha.eventHandled = false;
-				});
-
-				me.obj.focus(function (e) {
-					return me.activate(e);
-				});
-
-				var keyInputElements = me.obj.add('.aloha-block', me.obj)
-					.keydown(function (event) {
-						var letEventPass = Markup.preProcessKeyStrokes(event);
-						me.keyCode = event.which;
-
-						if (!letEventPass) {
-							// the event will not proceed to key press, therefore trigger smartContentChange
-							me.smartContentChange(event);
-						}
-						return letEventPass;
-					})
-					.keypress(StateOverride.keyPressHandler);
-
-				// handle keypress
-				me.obj.keypress(function (event) {
-					// triggers a smartContentChange to get the right charcode
-					// To test try http://www.w3.org/2002/09/tests/keys.html
-					Aloha.activeEditable.smartContentChange(event);
-				});
-
-				// handle shortcut keys
-				me.obj.keyup(function (event) {
-					if (event.keyCode === 27) {
-						Aloha.deactivateEditable();
-						return false;
-					}
-				});
-
-				// register the onSelectionChange Event with the Editable field
-				me.obj.contentEditableSelectionChange(function (event) {
-					Selection.onChange(me.obj, event);
-					return me.obj;
-				});
+				registerEvents(me);
 
 				// mark the editable as unmodified
 				me.setUnmodified();
@@ -367,10 +379,6 @@ define([
 
 				me.snapshotContent = me.getContents();
 
-				// FF bug: check for empty editable contents ( no <br>; no whitespace )
-				if (jQuery.browser.mozilla) {
-					me.initEmptyEditable();
-				}
 
 				me.initPlaceholder();
 
@@ -507,19 +515,6 @@ define([
 			var editableTrimedContent = jQuery.trim(this.getContents()),
 				onlyBrTag = (editableTrimedContent === '<br>') ? true : false;
 			return (editableTrimedContent.length === 0 || onlyBrTag);
-		},
-
-		/**
-		 * Check if the editable div is not empty. Fixes a FF browser bug
-		 * see issue: https://github.com/alohaeditor/Aloha-Editor/issues/269
-		 *
-		 * @return {undefined}
-		 */
-		initEmptyEditable: function () {
-			var obj = this.obj;
-			if (this.empty(this.getContents())) {
-				jQuery(obj).prepend('<br class="aloha-cleanme" />');
-			}
 		},
 
 		/**
@@ -775,6 +770,11 @@ define([
 			 */
 			Aloha.trigger('aloha-editable-deactivated', {
 				editable: this
+			});
+			PubSub.pub('aloha.editable.deactivated', {
+				data: {
+					editable: this
+				}
 			});
 
 			/**
@@ -1034,4 +1034,7 @@ define([
 	Aloha.Editable.getContentSerializer = function () {
 		return contentSerializer;
 	};
+
+	Aloha.Editable.registerEvents = registerEvents;
+
 });
