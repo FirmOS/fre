@@ -29,7 +29,8 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-e CITYCOM --nozip --nocache --jsdebug"/>
+        <CommandLineParams Value="-e CITYCOM"/>
+        <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
     <Units Count="6">
@@ -78,20 +79,20 @@
     <Conditionals Value="if TargetOS = 'darwin' then
    CustomOptions := '-WM10.6';
 if TargetOS = 'solaris' then
-   CustomOptions := '-k-rpath=$ORIGIN/../lib/lib64rel/solaris';"/>
+  begin
+    if TargetCPU='i386' then
+      CustomOptions := '-k-rpath=$ORIGIN/../lib/lib32rel/solaris';
+    if TargetCPU='x86_64' then
+      CustomOptions := '-k-rpath=$ORIGIN/../lib/lib64rel/solaris';
+  end"/>
     <Parsing>
       <SyntaxOptions>
         <IncludeAssertionCode Value="True"/>
       </SyntaxOptions>
     </Parsing>
     <CodeGeneration>
-      <TargetCPU Value="x86_64"/>
+      <TargetCPU Value="i386"/>
     </CodeGeneration>
-    <Linking>
-      <Debugging>
-        <DebugInfoType Value="dsDwarf2Set"/>
-      </Debugging>
-    </Linking>
     <Other>
       <CompilerMessages>
         <MsgFileName Value=""/>
