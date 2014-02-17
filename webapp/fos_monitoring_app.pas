@@ -1047,9 +1047,9 @@ begin
       AddMatchingReferencedField('testcase','displayname','displayname','Testfunktion');
       AddOneToOnescheme('statusupdatetime','','Statusupdate',dt_date);
       AddOneToOnescheme('statussummary','','Statusinformation');
-      AddMatchingReferencedField (TFRE_DB_NameTypeArray.Create('testcase','machine'),'objname','machine','Gerät');
-      AddMatchingReferencedField (TFRE_DB_NameTypeArray.Create('testcase','machine'),'ip','ip','IP-Adresse');
-      AddMatchingReferencedField (TFRE_DB_NameTypeArray.Create('testcase','machine'),'displayaddress','address','Aufstellungsort');
+      AddMatchingReferencedField (['testcase','machine'],'objname','machine','Gerät');
+      AddMatchingReferencedField (['testcase','machine'],'ip','ip','IP-Adresse');
+      AddMatchingReferencedField (['testcase','machine'],'displayaddress','address','Aufstellungsort'); // -> TODO Fix to vali reflink specifier syntax
   //    AddMatchingReferencedField('status_uid','status_icon','','Icon',dt_icon);
   //    AddMatchingReferencedField('status_uid','provisioned_time','','ProvTime',dt_date);
   //    AddMatchingReferencedField('status_uid','online_time','','Last Online',dt_date);
