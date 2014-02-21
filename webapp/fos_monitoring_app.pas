@@ -640,7 +640,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         end;
 
       begin
-        collsite   := CONN.Collection('site');
+        collsite   := CONN.GetCollection('site');
         collsite.ForAll(@_site_endpoints);
 
 //             _addCheck;
@@ -655,13 +655,13 @@ begin
 
   jobdbo       := GFRE_DBI.NewObject;
 
-  coll_mon            := CONN.Collection('monitoring');
-  coll_sg             := CONN.Collection('servicegroup');
-  coll_service        := CONN.Collection('service');
-  coll_machine        := CONN.Collection('machine');
-  coll_testcasestatus := CONN.Collection('testcasestatus');
+  coll_mon            := CONN.CreateCollection('monitoring');
+  coll_sg             := CONN.CreateCollection('servicegroup');
+  coll_service        := CONN.CreateCollection('service');
+  coll_machine        := CONN.CreateCollection('machine');
+  coll_testcasestatus := CONN.CreateCollection('testcasestatus');
 
-  coll_testcase := conn.Collection('testcase',true);
+  coll_testcase := conn.CreateCollection('testcase',true);
   if not coll_testcase.IndexExists('def') then
     coll_testcase.DefineIndexOnField('objname',fdbft_String,true,true);
 
@@ -1036,11 +1036,13 @@ end;
 
 procedure TFRE_DB_MONSYS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var dc_monitoring : IFRE_DB_DERIVED_COLLECTION;
-    tr_Monitoring    : IFRE_DB_SIMPLE_TRANSFORM;
+    tr_Monitoring : IFRE_DB_SIMPLE_TRANSFORM;
+    conn          : IFRE_DB_CONNECTION;
 
 begin
   inherited;
   if session.IsInteractiveSession then begin
+    conn:=session.GetDBConnection;
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Monitoring);
     with tr_Monitoring do begin
       AddOneToOnescheme('status_icon','','Status',dt_icon);
@@ -1057,7 +1059,7 @@ begin
 
     dc_monitoring := session.NewDerivedCollection('main_monsys');
     with dc_monitoring do begin
-      SetDeriveParent(session.GetDBConnection.Collection('testcasestatus'));
+      SetDeriveParent(conn.GetCollection('testcasestatus'));
       SetDeriveTransformation(tr_Monitoring);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'Monitoring',nil,'',nil,nil,TFRE_DB_SERVER_FUNC_DESC.create.Describe(self,'TestcaseStatus_Details'));
     end;
@@ -1099,7 +1101,7 @@ var col       : IFRE_DB_COLLECTION;
 
 begin
   writeln('check actuality');
-  col       := GetDBConnection(input).Collection('testcasestatus');
+  col       := GetDBConnection(input).GetCollection('testcasestatus');
   col.ForAll(@_checkactual);
   result := GFRE_DB_NIL_DESC;
 end;
@@ -1110,7 +1112,7 @@ var col       : IFRE_DB_COLLECTION;
     i         : integer;
     obj       : IFRE_DB_Object;
 begin
-  col       := GetDBConnection(input).Collection('testcasestatus');
+  col       := GetDBConnection(input).GetCollection('testcasestatus');
   upd_guids :=  GFRE_DBI.StringArray2GuidArray(input.Field('SELECTED').AsStringArr);
   for i:=0 to high(upd_guids) do begin
     if col.Fetch(upd_guids[i],obj) then begin
@@ -1283,7 +1285,7 @@ var jobkey              : string;
     itcs                : integer;
 begin
   jobkey        := input.Field('jobkey').AsString;
-  coll_testcase := conn.Collection('testcase',true);
+  coll_testcase := conn.GetCollection('testcase');
   if coll_testcase.GetIndexedObj(jobkey,testcase_dbo) then begin
 
   //  testcase_status_ids := testcase_dbo.ReferencedByList('TFRE_DB_TestcaseStatus'); DEPRECATED
@@ -1374,7 +1376,7 @@ var
 begin
   actmon        :=  GetActualMonitoring;
 
-  coll_mon  := CONN.Collection('monitoring');
+  coll_mon  := CONN.GetCollection('monitoring');
 //  writeln ('COUNT:',coll_mon.Count);
   hlt := true; // get first
   coll_mon.ForAllBreak(@_getmon,hlt);
