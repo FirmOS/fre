@@ -43,110 +43,9 @@ uses
 //--
 //STORE(SALES) -> APP ( Funktionsmodule / Speicherplatz Kaufen / VM RAM / Virtuelle CPU's / BACKUPSPACE )
 //
-procedure InitDB(const dbname: string; const user, pass: string);
 
 implementation
 
-procedure InitializeFirmbox(const dbname: string; const user, pass: string);
-var conn            : IFRE_DB_CONNECTION;
-    collection      : IFRE_DB_COLLECTION;
-    storeObj        : IFRE_DB_Object;
-    vm_disks        : IFRE_DB_COLLECTION;
-    vm_isos         : IFRE_DB_COLLECTION;
-    vm_sc           : IFRE_DB_COLLECTION;
-    vm_keyboards    : IFRE_DB_COLLECTION;
-begin
-  CONN := GFRE_DBI.NewConnection;
-  CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
-  try
-    InitDiskDataCollections(conn);
-
-    collection  := conn.Collection('virtualmachine');
-    if not collection.IndexExists('def') then
-      collection.DefineIndexOnField('Mkey',fdbft_String,true,true);
-
-    vm_disks := conn.Collection('VM_DISKS',true);
-    if not vm_disks.IndexExists('def') then
-      vm_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
-
-    vm_isos := conn.Collection('VM_ISOS',true);
-    if not vm_isos.IndexExists('def') then
-      vm_isos.DefineIndexOnField('isoid',fdbft_String,true,true);
-
-    vm_sc := conn.Collection('VM_SCS',true);
-    if not vm_sc.IndexExists('def') then
-      vm_sc.DefineIndexOnField('scid',fdbft_String,true,true);
-
-    vm_keyboards := conn.Collection('VM_KEYBOARDS',true);
-    if not vm_keyboards.IndexExists('def') then
-      vm_keyboards.DefineIndexOnField('keyboardid',fdbft_String,true,true);
-
-   {
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('keyboardid').AsString:='en-gb';
-    storeObj.Field('name').AsString:='English (GB)';
-    storeObj.Field('order').AsString:='1';
-    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('keyboardid').AsString:='en-us';
-    storeObj.Field('name').AsString:='English (US)';
-    storeObj.Field('order').AsString:='2';
-    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('keyboardid').AsString:='fr';
-    storeObj.Field('name').AsString:='French';
-    storeObj.Field('order').AsString:='3';
-    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('keyboardid').AsString:='de';
-    storeObj.Field('name').AsString:='German';
-    storeObj.Field('order').AsString:='4';
-    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('keyboardid').AsString:='it';
-    storeObj.Field('name').AsString:='Italian';
-    storeObj.Field('order').AsString:='5';
-    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('keyboardid').AsString:='es';
-    storeObj.Field('name').AsString:='Spanish';
-    storeObj.Field('order').AsString:='6';
-    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
-
-    //FIXXME: move to correct location or read from qemu help
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('scid').AsString:='ac97';
-    storeObj.Field('name').AsString:='Intel 82801AA AC97 Audio';
-    storeObj.Field('order').AsString:='1';
-    CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('scid').AsString:='sb16';
-    storeObj.Field('name').AsString:='Creative Sound Blaster 16';
-    storeObj.Field('order').AsString:='2';
-    CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('scid').AsString:='es1370';
-    storeObj.Field('name').AsString:='ENSONIQ AudioPCI ES1370';
-    storeObj.Field('order').AsString:='3';
-    CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-
-    storeObj:=GFRE_DBI.NewObject;
-    storeObj.Field('scid').AsString:='hda';
-    storeObj.Field('name').AsString:='Intel HD Audio';
-    storeObj.Field('order').AsString:='4';
-    CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
-    }
-  finally
-    conn.Finalize;
-  end;
-end;
 
 procedure FIRMBOX_MetaGenerateTestData(const dbname: string; const user, pass: string);
 var conn     : IFRE_DB_Connection;
@@ -469,10 +368,10 @@ begin
  CONN := GFRE_DBI.NewConnection;
  CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
 
- COLL := CONN.Collection('service');
- SCOLL:= CONN.Collection('fileshare');
- ACOLL:= CONN.Collection('fileshare_access');
- BCOLL:= CONN.Collection('snapshot');
+ COLL := CONN.GetCollection('service');
+ SCOLL:= CONN.GetCollection('fileshare');
+ ACOLL:= CONN.GetCollection('fileshare_access');
+ BCOLL:= CONN.GetCollection('snapshot');
 
  // InitVirtualMachines;
 
@@ -527,7 +426,7 @@ begin
  _AddLun('600144F090832B3B000051DEAE750001',10240);
  _AddLun('600144F090832B3B000051DEAE780002',102400);
 
- ncoll := Conn.Collection('datalink');
+ ncoll := Conn.GetCollection('datalink');
 
 
  link_parent:=AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',GUID_NULL,true,true,'phys','10.1.0.232/24','admin');
@@ -553,7 +452,7 @@ begin
  AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'net0',vm_parent,true,false,'vnic','192.168.2.1/24','Zone vnas2');
 
 
- hcoll := Conn.Collection('hba');
+ hcoll := Conn.GetCollection('hba');
 
  COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_FC_PORT);
  cob.Field('objname').asstring:='10000090fa0ef24a';
@@ -591,7 +490,7 @@ begin
  cob.Field('nodewwn').asstring:='20000090fa0ef24b';
  CheckDbResult(hCOLL.Store(cob),'Add FC Port');
 
- mcoll := Conn.Collection('setting');
+ mcoll := Conn.GetCollection('setting');
  COB   := GFRE_DBI.NewObjectScheme(TFRE_DB_MACHINE_SETTING_POWER);
  cob.Field('objname').asstring:='Power State';
  cob.Field('poweroperation').asstring:='nothing';
@@ -618,7 +517,7 @@ begin
  CheckDbResult(mCOLL.Store(cob),'Add Setting');
 
 
- vm_disks := conn.Collection('VM_DISKS',true,true);
+ vm_disks := conn.GetCollection('VM_DISKS');
 
  cob := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_DISK);
  cob.Field('diskid').AsString:='d1';
@@ -630,7 +529,7 @@ begin
  cob.Field('name').AsString:='d2 name';
  CheckDbResult(vm_disks.Store(cob),'Store VM disk');
 
- vm_isos := conn.Collection('VM_ISOS',true,true);
+ vm_isos := conn.GetCollection('VM_ISOS');
 
  cob := GFRE_DBI.NewObjectScheme(TFRE_FIRMBOX_VM_ISO);
  cob.Field('isoid').AsString:='i1';
@@ -645,11 +544,6 @@ begin
  InitTestUser;
 
  CONN.Finalize;
-end;
-
-procedure InitDB(const dbname: string; const user, pass: string);
-begin
-  InitializeFirmbox(dbname,user,pass);
 end;
 
 procedure FIRMBOX_MetaRegister;
@@ -670,8 +564,104 @@ begin
 end;
 
 procedure FIRMBOX_MetaInitializeDatabase(const dbname: string; const user, pass: string);
+var conn            : IFRE_DB_CONNECTION;
+    collection      : IFRE_DB_COLLECTION;
+    storeObj        : IFRE_DB_Object;
+    vm_disks        : IFRE_DB_COLLECTION;
+    vm_isos         : IFRE_DB_COLLECTION;
+    vm_sc           : IFRE_DB_COLLECTION;
+    vm_keyboards    : IFRE_DB_COLLECTION;
 begin
-  fos_firmbox_common.InitDB(dbname,user,pass);
+  CONN := GFRE_DBI.NewConnection;
+  CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
+  try
+    InitDiskDataCollections(conn);
+
+    collection  := conn.getCollection(CFRE_DB_VM_COLLECTION);
+    if not collection.IndexExists('def') then
+      collection.DefineIndexOnField('Mkey',fdbft_String,true,true);
+
+    vm_disks := conn.CreateCollection('VM_DISKS');
+    if not vm_disks.IndexExists('def') then
+      vm_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
+
+    vm_isos := conn.CreateCollection('VM_ISOS');
+    if not vm_isos.IndexExists('def') then
+      vm_isos.DefineIndexOnField('isoid',fdbft_String,true,true);
+
+    vm_sc := conn.CreateCollection('VM_SCS');
+    if not vm_sc.IndexExists('def') then
+      vm_sc.DefineIndexOnField('scid',fdbft_String,true,true);
+
+    vm_keyboards := conn.CreateCollection('VM_KEYBOARDS');
+    if not vm_keyboards.IndexExists('def') then
+      vm_keyboards.DefineIndexOnField('keyboardid',fdbft_String,true,true);
+
+   {
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('keyboardid').AsString:='en-gb';
+    storeObj.Field('name').AsString:='English (GB)';
+    storeObj.Field('order').AsString:='1';
+    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('keyboardid').AsString:='en-us';
+    storeObj.Field('name').AsString:='English (US)';
+    storeObj.Field('order').AsString:='2';
+    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('keyboardid').AsString:='fr';
+    storeObj.Field('name').AsString:='French';
+    storeObj.Field('order').AsString:='3';
+    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('keyboardid').AsString:='de';
+    storeObj.Field('name').AsString:='German';
+    storeObj.Field('order').AsString:='4';
+    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('keyboardid').AsString:='it';
+    storeObj.Field('name').AsString:='Italian';
+    storeObj.Field('order').AsString:='5';
+    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('keyboardid').AsString:='es';
+    storeObj.Field('name').AsString:='Spanish';
+    storeObj.Field('order').AsString:='6';
+    CheckDbResult(vm_keyboards.Store(storeObj),'Store keyboard layout');
+
+    //FIXXME: move to correct location or read from qemu help
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('scid').AsString:='ac97';
+    storeObj.Field('name').AsString:='Intel 82801AA AC97 Audio';
+    storeObj.Field('order').AsString:='1';
+    CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
+
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('scid').AsString:='sb16';
+    storeObj.Field('name').AsString:='Creative Sound Blaster 16';
+    storeObj.Field('order').AsString:='2';
+    CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
+
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('scid').AsString:='es1370';
+    storeObj.Field('name').AsString:='ENSONIQ AudioPCI ES1370';
+    storeObj.Field('order').AsString:='3';
+    CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
+
+    storeObj:=GFRE_DBI.NewObject;
+    storeObj.Field('scid').AsString:='hda';
+    storeObj.Field('name').AsString:='Intel HD Audio';
+    storeObj.Field('order').AsString:='4';
+    CheckDbResult(vm_sc.Store(storeObj),'Store VM sound card');
+    }
+  finally
+    conn.Finalize;
+  end;
 end;
 
 procedure FIRMBOX_MetaRemove(const dbname: string; const user, pass: string);

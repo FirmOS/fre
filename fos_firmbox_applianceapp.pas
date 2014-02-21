@@ -192,7 +192,7 @@ begin
     end;
     datalink_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
     with datalink_dc do begin
-      SetDeriveParent(conn.Collection('datalink'));
+      SetDeriveParent(conn.GetCollection('datalink'));
       SetDeriveTransformation(datalink_tr_Grid);
 //      AddBooleanFieldFilter('zoned','zoned',false);
       AddBooleanFieldFilter('showglobal','showglobal',true,false);
@@ -207,7 +207,7 @@ begin
     end;
     system_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
     with system_dc do begin
-      SetDeriveParent(conn.Collection('setting'));
+      SetDeriveParent(conn.GetCollection('setting'));
       SetDeriveTransformation(system_tr_Grid);
       SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_SYSTEMMenu),nil,CWSF(@WEB_SYSTEMContent));
     end;
@@ -221,7 +221,7 @@ begin
     end;
     fc_dc := session.NewDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
     with fc_dc do begin
-      SetDeriveParent(conn.Collection('hba'));
+      SetDeriveParent(conn.GetCollection('hba'));
       SetDeriveTransformation(fc_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_FCMenu),nil,CWSF(@WEB_FCContent));
     end;
@@ -484,7 +484,7 @@ var
   end;
 
 begin
-  coll := conn.Collection('ZONES_SPACE',true,true);
+  coll := conn.GetCollection('ZONES_SPACE');
   //coll.ForAll(@_addValues);
 end;
 
@@ -566,6 +566,7 @@ var
   disks               : IFRE_DB_COLLECTION;
   labels              : TFRE_DB_StringArray;
   idx                 : NativeInt;
+  conn                : IFRE_DB_CONNECTION;
 
   procedure _AddDisk(const obj:IFRE_DB_Object);
   var diskname : string;
@@ -586,15 +587,16 @@ var
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
+    conn:=session.GetDBConnection;
     __idxCPU:=-1;__idxRAM:=-1;__idxCache:=-1;__idxDisk:=-1;__idxNet:=-1;
-    CHARTDATA := session.GetDBConnection.Collection('ZONES_SPACE');
+    CHARTDATA := conn.getCollection('ZONES_SPACE');
     DC_CHARTDATA_ZONES := session.NewDerivedCollection('DC_ZONES_SPACE');
     with DC_CHARTDATA_ZONES do begin
       SetDeriveParent(CHARTDATA);
       SetDisplayTypeChart('Space on Diskpool',fdbct_pie,TFRE_DB_StringArray.Create('value'),True,True,nil,true);
     end;
 
-    disks := session.GetDBConnection.Collection('POOL_DISKS',false);
+    disks := conn.GetCollection('POOL_DISKS');
     idx:=0;
 
     ast   := session.NewDerivedCollection('APP_POOL_AST');
@@ -640,7 +642,7 @@ begin
   FtotalSwap:=338566808; //may change? mysessioninitializemodule better? feeder?
   FtotalNet:=100*1024*1024*2;//100MB * 2 Devices
 
-  coll := admin_dbc.Collection('ZONES_SPACE',true,true);
+  coll := admin_dbc.CreateCollection('ZONES_SPACE',true);
   coll.DefineIndexOnField('name',fdbft_String,true,true);
 
   space := GFRE_DBI.NewObject;
@@ -663,7 +665,7 @@ begin
   //DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);    //RZNORD
   //_fillPoolCollection(admin_dbc,DISKI_HACK.Get_ZFS_Data_Once);
 
-  coll := admin_dbc.Collection('LIVE_STATUS',true,true);
+  coll := admin_dbc.CreateCollection('LIVE_STATUS',true);
   coll.DefineIndexOnField('feedname',fdbft_String,true,true);
 end;
 
@@ -1005,7 +1007,7 @@ var pool_disks : IFRE_DB_COLLECTION;
 
 begin
   dbc := GetDBConnection(input);
-  pool_disks := dbc.Collection('POOL_DISKS',false,true);
+  pool_disks := dbc.GetCollection('POOL_DISKS');
   UpdateDiskCollection(pool_disks,input.Field('DISK').AsObject);
   result := GFRE_DB_NIL_DESC;
 end;

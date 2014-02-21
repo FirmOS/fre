@@ -419,7 +419,7 @@ begin
     end;
     fs_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
     with fs_dc do begin
-      SetDeriveParent(conn.Collection('service'));
+      SetDeriveParent(conn.GetCollection('service'));
       AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_VIRTUAL_FILESERVER.ClassName));
       SetDeriveTransformation(fs_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSMenu),nil,CWSF(@WEB_VFSSC));
@@ -922,7 +922,7 @@ var coll  : IFRE_DB_COLLECTION;
   end;
 
 begin
-  coll := conn.Collection('service');
+  coll := conn.GetCollection('service');
   hlt  := false;
   coll.ForAllBreak(@_get,hlt);
   if not hlt then
@@ -987,7 +987,7 @@ begin
     end;
     nfs_share_dc := session.NewDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_GRID');
     with nfs_share_dc do begin
-      SetDeriveParent(conn.Collection('fileshare'));
+      SetDeriveParent(conn.GetCollection('fileshare'));
       fileserverId:= _GetFileserverID(conn);
       AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT,false);
       AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_NFS_FILESHARE.ClassName));
@@ -1018,7 +1018,7 @@ begin
     end;
     lun_dc := session.NewDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
     with lun_dc do begin
-      SetDeriveParent(conn.Collection('fileshare'));
+      SetDeriveParent(conn.GetCollection('fileshare'));
       fileserverId:= _GetFileserverID(conn);
       AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT,false);
       AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_LUN.ClassName));
@@ -1643,7 +1643,7 @@ begin
     end;
     snap_dc := session.NewDerivedCollection('BACKUP_MOD_SNAPSHOT_GRID');
     with snap_dc do begin
-      SetDeriveParent(conn.Collection('snapshot'));
+      SetDeriveParent(conn.GetCollection('snapshot'));
       SetDeriveTransformation(snap_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_SnapshotMenu),nil,CWSF(@WEB_ContentSnapshot));
     end;
@@ -2103,7 +2103,7 @@ begin
       end;
     end;
   end else begin
-    pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
+    pools := conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
     count := 0;
     hlt   := false;
     pools.ForAllBreak(@_countPools,hlt);
@@ -2142,7 +2142,7 @@ var
   end;
 
 begin
-  blockdevicecollection:=conn.Collection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
+  blockdevicecollection:=conn.GetCollection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
   blockdevicecollection.ForAll(@_checkBD);
 end;
 
@@ -2170,7 +2170,7 @@ var
 
 begin
   pool  := nil;
-  pools := conn.Collection('pool');
+  pools := conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
   hlt   := false;
   pools.ForAllBreak(@_checkPool,hlt);
   Result:=pool;
@@ -2192,7 +2192,7 @@ var
   end;
 
 begin
-  pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
+  pools := conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
   hlt   := false;
   pools.ForAllBreak(@_checkPool,hlt);
   Result:=ua;
@@ -2257,6 +2257,7 @@ var
   trans                : IFRE_DB_SIMPLE_TRANSFORM;
   idx                  : Integer;
   labels               : TFRE_DB_StringArray;
+  conn                 : IFRE_DB_CONNECTION;
 
   procedure _AddDisk(const obj:IFRE_DB_Object);
   begin
@@ -2268,8 +2269,8 @@ begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
     //_buildPoolsCollection(session);
-
-    disks := session.GetDBConnection.Collection('POOL_DISKS',false);
+    conn  := session.GetDBConnection;
+    disks := conn.GetCollection('POOL_DISKS');
 
     idx:=0;
     //SetLength(labels,disks.Count);
@@ -2327,7 +2328,7 @@ begin
   //DISKI_HACK := Get_Stats_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   //VM_HACK    := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
 
-  pool_disks := admin_dbc.Collection('POOL_DISKS',true,true);
+  pool_disks := admin_dbc.CreateCollection('POOL_DISKS',true);
   pool_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
 
   //// Used to fix display in startup case, when no feeder has made initial data
@@ -2597,7 +2598,7 @@ begin
     end;
   end else begin
     count:=0;
-    pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
+    pools := conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
     res:=TFRE_DB_STORE_DATA_DESC.create;
     //ua := nil;
     pools.ForAll(@_ProcessPools);
@@ -2645,7 +2646,7 @@ begin
     res.Describe(count);
   end else begin
     count:=0;
-    enclosures := conn.Collection(CFRE_DB_ENCLOSURE_COLLECTION);
+    enclosures := conn.GetCollection(CFRE_DB_ENCLOSURE_COLLECTION);
     res:=TFRE_DB_STORE_DATA_DESC.create;
     enclosures.ForAll(@_ProcessEnclosures);
     res.Describe(count);
@@ -2817,7 +2818,7 @@ var disk_data   : IFRE_DB_Object;
     pool_disks  : IFRE_DB_COLLECTION;
 begin
   //FIXXXME - please implement me!
-  pool_disks := GetDBConnection(input).Collection('POOL_DISKS',false,true);
+  pool_disks := GetDBConnection(input).GetCollection('POOL_DISKS');
 //  disk_data := DISKI_HACK.Get_Disk_Data;
 //  UpdateDiskCollection(pool_disks,disk_data);
   result := GFRE_DB_NIL_DESC;
@@ -2852,8 +2853,8 @@ begin
   if not input.FieldPathExists('data.pool_name') then
     raise EFRE_DB_Exception.Create('WEB_CreatePool: Missing parameter pool_name');
 
-  pools := conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
-  vdevs := conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
+  pools := conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
+  vdevs := conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
   nameOk:=true;
   lastObj:=nil;
   pools.ForAll(@_checkPoolName);
@@ -2942,7 +2943,7 @@ begin
     tspare.caption:=app.FetchAppTextShort(ses,'$new_spare_caption');
     tspare.setIsNew;
     res.addNewEntry(_getZFSTreeObj(conn,tspare),lastIdx,tpool.getId); //FIXXME - remove store update
-    vdevs:=conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
+    vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
     CheckDbResult(vdevs.Store(tspare.CloneToNewObject()),'Assign spare');
   end;
   tpool.setIsModified;
@@ -3000,7 +3001,7 @@ begin
     tcache.setIsNew;
     tcache.caption:=app.FetchAppTextShort(ses,'$new_cache_caption');
     res.addNewEntry(_getZFSTreeObj(conn,tcache),lastIdx,tpool.getId); //FIXXME - remove store update
-    vdevs:=conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
+    vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
     CheckDbResult(vdevs.Store(tcache.CloneToNewObject()),'Assign cache');
   end;
   tpool.setIsModified;
@@ -3046,7 +3047,7 @@ begin
     input.Field('disks').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
   end;
 
-  vdevs:=conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
+  vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
 
   tpool:=_getZFSObj(conn,input.Field('pool').AsString) as TFRE_DB_ZFS_POOL;
   res:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store'); //FIXXME - remove store update
@@ -3143,7 +3144,7 @@ begin
     input.Field('disks').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
   end;
 
-  vdevs:=conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
+  vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
 
   tpool    := _getZFSObj(conn,input.Field('pool').AsString) as TFRE_DB_ZFS_POOL;
   res      := TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store'); //FIXXME - remove store update
@@ -3253,11 +3254,11 @@ var
       CheckDbResult(conn.Update(zfsObj),'Remove new disk');
     end else begin
       if zfsObj.Implementor_HC is TFRE_DB_ZFS_POOL then begin
-        pools:=conn.Collection(CFRE_DB_ZFS_POOL_COLLECTION);
+        pools:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
         res.addDeletedEntry(zfsObj.getId);
         pools.Remove(zfsObj.UID);
       end else begin
-        vdevs:=conn.Collection(CFRE_DB_ZFS_VDEV_COLLECTION);
+        vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
         res.addDeletedEntry(zfsObj.getId);
         vdevs.Remove(zfsObj.UID);
       end;
