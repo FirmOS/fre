@@ -14,7 +14,11 @@ uses
   fre_system,
   FRE_DB_COMMON;
 
-//var
+const
+
+  CFRE_DB_VM_COLLECTION            = 'virtualmachine';
+
+  //var
 //     cVM_HostUser:string   = ''; // 'root';
 //     cVMHostMachine:string = ''; // '10.1.0.116';
 
@@ -35,6 +39,7 @@ type
     procedure       _GetSelectedVMData        (const conn: IFRE_DB_CONNECTION ; const selected : TGUID; var vmkey,vnc_port,vnc_host,vm_state: String);
   public
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects      (const conn:IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   published
     function  WEB_VM_Feed_Update        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -204,7 +209,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     tr_Grid.AddOneToOnescheme('name','',app.FetchAppTextShort(session,'$gc_iso_name'));
 
-    isosp := conn.Collection('VM_ISOS',false);
+    isosp := conn.GetCollection('VM_ISOS');
     isos:= session.NewDerivedCollection('VM_ISOS_DERIVED');
     with isos do begin
       SetDeriveTransformation(tr_Grid);
@@ -215,7 +220,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     tr_Grid.AddOneToOnescheme('name','',app.FetchAppTextShort(session,'$gc_disk_name'));
 
-    diskp := conn.Collection('VM_DISKS',false);
+    diskp := conn.GetCollection('VM_DISKS');
     disks:= session.NewDerivedCollection('VM_DISKS_DERIVED');
     with disks do begin
       SetDeriveTransformation(tr_Grid);
@@ -363,7 +368,7 @@ begin
     end;
     datalink_dc := session.NewDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
     with datalink_dc do begin
-      SetDeriveParent(conn.Collection('datalink'));
+      SetDeriveParent(conn.GetCollection('datalink'));
       SetDeriveTransformation(datalink_tr_Grid);
       AddBooleanFieldFilter('showvirtual','showvirtual',true,false);
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
@@ -537,7 +542,7 @@ begin
       AddOneToOnescheme('PERFRSS','',app.FetchAppTextShort(session,'$gc_vm_paged_mem'),dt_number,true,false,false,2);
       AddOneToOnescheme('PERFVSZ','',app.FetchAppTextShort(session,'$gc_vm_virtual_mem'),dt_number,true,false,false,2);
     end;
-    vmcp := session.GetDBConnection.Collection('virtualmachine',false);
+    vmcp := conn.GetCollection(CFRE_DB_VM_COLLECTION);
     vmc  := session.NewDerivedCollection('VMC');
     with VMC do begin
       SetDeriveTransformation(tr_Grid);
@@ -549,7 +554,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     transform.AddOneToOnescheme('name');
 
-    isosp := conn.Collection('VM_ISOS',false);
+    isosp := conn.GetCollection('VM_ISOS');
     isos:= session.NewDerivedCollection('VM_CH_ISOS_DERIVED');
     with isos do begin
       SetDeriveTransformation(transform);
@@ -560,7 +565,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     transform.AddOneToOnescheme('name');
 
-    disksp := session.GetDBConnection.Collection('VM_DISKS',false);
+    disksp := conn.GetCollection('VM_DISKS');
     disks:= session.NewDerivedCollection('VM_CH_DISKS_DERIVED');
     with disks do begin
       SetDeriveTransformation(transform);
@@ -571,7 +576,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     transform.AddOneToOnescheme('name');
 
-    scsp := session.GetDBConnection.Collection('VM_SCS',false);
+    scsp := conn.GetCollection('VM_SCS');
     scs:= session.NewDerivedCollection('VM_CH_SCS_DERIVED');
     with scs do begin
       SetDeriveTransformation(transform);
@@ -583,7 +588,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     transform.AddOneToOnescheme('name');
 
-    keyboardsp := session.GetDBConnection.Collection('VM_KEYBOARDS',false);
+    keyboardsp := conn.GetCollection('VM_KEYBOARDS');
     keyboards:= session.NewDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
     with keyboards do begin
       SetDeriveTransformation(transform);
@@ -601,7 +606,7 @@ procedure TFRE_FIRMBOX_VM_MACHINES_MOD._GetSelectedVMData(const conn: IFRE_DB_CO
 var coll     : IFRE_DB_COLLECTION;
     vmo      : IFRE_DB_Object;
 begin
-  coll := conn.Collection('virtualmachine');
+  coll := conn.GetCollection(CFRE_DB_VM_COLLECTION);
   if coll.Fetch(selected,vmo) then begin
     vmkey    := vmo.Field('MKEY').AsString;
     vnc_port := vmo.Field('VNC_PORT').AsString;
@@ -616,6 +621,12 @@ begin
   newVersionId:='1.0';
 end;
 
+class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+begin
+  inherited InstallUserDBObjects(conn, currentVersionId);
+  conn.CreateCollection(CFRE_DB_VM_COLLECTION);
+end;
+
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var// vmc     : IFOS_VM_HOST_CONTROL;
     vmo     : IFRE_DB_Object;
@@ -623,7 +634,7 @@ var// vmc     : IFOS_VM_HOST_CONTROL;
     vmcc    : IFRE_DB_COLLECTION;
 begin
   GFRE_DBI.LogInfo(dblc_APPLICATION,'START FEED UPDATE');
-  conn.CollectionAsIntf('virtualmachine',IFRE_DB_COLLECTION,vmcc,false);
+  conn.GetCollection(CFRE_DB_VM_COLLECTION);
   VM_UpdateCollection(conn,vmcc,input.CloneToNewObject(),TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
   GFRE_DBI.LogInfo(dblc_APPLICATION,'START FEED UPDATE DONE');
   result := GFRE_DB_NIL_DESC;
@@ -667,7 +678,7 @@ begin
   CheckClassVisibility(ses);
 
   vmkey := input.Field('vmkey').AsString;
-  conn.CollectionAsIntf('virtualmachine',IFRE_DB_COLLECTION,VMCC,true,true);
+  conn.GetCollection(CFRE_DB_VM_COLLECTION);
   if vmcc.GetIndexedObj(vmkey,obj) then begin
     result := TFRE_DB_HTML_DESC.create.Describe(FREDB_String2EscapedJSString('<pre style="font-size: 10px">'+obj.DumpToString+'</pre>'));
   end else begin
@@ -687,7 +698,7 @@ var
 begin
   CheckClassVisibility(ses);
   vmkey  := input.Field('vmkey').AsString;
-  VMCC := conn.Collection('virtualmachine',false);
+  VMCC := conn.GetCollection(CFRE_DB_VM_COLLECTION);
   if vmcc.GetIndexedObj(vmkey,obj) then begin
     if obj.Field('MSTATE').AsString='running' then begin
       if obj.Field('MTYPE').AsString='KVM' then begin
