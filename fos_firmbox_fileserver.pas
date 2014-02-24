@@ -203,6 +203,8 @@ begin
 end;
 
 class procedure TFRE_DB_ZFS_DATASET_ZVOL.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+var
+  enum: IFRE_DB_Enum;
 begin
   inherited;
   newVersionId:='1.0';
@@ -212,6 +214,16 @@ begin
     StoreTranslateableText(conn,'scheme_primarycache','Primary Cache');
     StoreTranslateableText(conn,'scheme_secondarycache','Secondary Cache');
     StoreTranslateableText(conn,'scheme_size','Size [MB]');
+
+    StoreTranslateableText(conn,'enum_cache_none','None');
+    StoreTranslateableText(conn,'enum_cache_all','All');
+    StoreTranslateableText(conn,'enum_cache_metadata','Metadata');
+
+    enum:=GFRE_DBI.NewEnum('cache').Setup(GFRE_DBI.CreateText('$enum_cache','Cache'));
+    enum.addEntry('none',GetTranslateableTextKey('enum_cache_none'));
+    enum.addEntry('all',GetTranslateableTextKey('enum_cache_all'));
+    enum.addEntry('metadata',GetTranslateableTextKey('enum_cache_metadata'));
+    GFRE_DBI.RegisterSysEnum(enum);
   end;
   VersionInstallCheck(currentVersionId,newVersionId);
 end;
@@ -252,6 +264,8 @@ begin
 end;
 
 class procedure TFRE_DB_ZFS_DATASET_FILE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+var
+  enum: IFRE_DB_Enum;
 begin
   inherited InstallDBObjects(conn, currentVersionId, newVersionId);
   newVersionId:='1.0';
@@ -271,6 +285,41 @@ begin
     StoreTranslateableText(conn,'scheme_aclmode','ACL Mode');
     StoreTranslateableText(conn,'scheme_canmount','Can Mount');
     StoreTranslateableText(conn,'scheme_extendedattr','Extended Attributes');
+
+    StoreTranslateableText(conn,'enum_aclinheritance_discard','Discard');
+    StoreTranslateableText(conn,'enum_aclinheritance_noallow','NoAllow');
+    StoreTranslateableText(conn,'enum_aclinheritance_restricted','Restricted');
+    StoreTranslateableText(conn,'enum_aclinheritance_passthrough','Passthrough');
+    StoreTranslateableText(conn,'enum_aclinheritance_passthroughx','Passthrough-X');
+
+    enum:=GFRE_DBI.NewEnum('aclinheritance').Setup(GFRE_DBI.CreateText('$enum_aclinheritance','ACL Inheritance'));
+    enum.addEntry('discard',GetTranslateableTextKey('enum_aclinheritance_discard'));
+    enum.addEntry('noallow',GetTranslateableTextKey('enum_aclinheritance_noallow'));
+    enum.addEntry('restricted',GetTranslateableTextKey('enum_aclinheritance_restricted'));
+    enum.addEntry('passthrough',GetTranslateableTextKey('enum_aclinheritance_passthrough'));
+    enum.addEntry('passthrough-x',GetTranslateableTextKey('enum_aclinheritance_passthroughx'));
+    GFRE_DBI.RegisterSysEnum(enum);
+
+    StoreTranslateableText(conn,'enum_aclmode_discard','Discard');
+    StoreTranslateableText(conn,'enum_aclmode_groupmask','Groupmask');
+    StoreTranslateableText(conn,'enum_aclinheritance_passthrough','Passthrough');
+
+    enum:=GFRE_DBI.NewEnum('aclmode').Setup(GFRE_DBI.CreateText('$enum_aclmode','ACL Mode'));
+    enum.addEntry('discard',GetTranslateableTextKey('enum_aclmode_discard'));
+    enum.addEntry('groupmask',GetTranslateableTextKey('enum_aclmode_groupmask'));
+    enum.addEntry('passthrough',GetTranslateableTextKey('enum_aclinheritance_passthrough'));
+    GFRE_DBI.RegisterSysEnum(enum);
+
+    StoreTranslateableText(conn,'enum_canmount_off','Off');
+    StoreTranslateableText(conn,'enum_canmount_on','On');
+    StoreTranslateableText(conn,'enum_canmount_noauto','NoAuto');
+
+    enum:=GFRE_DBI.NewEnum('canmount').Setup(GFRE_DBI.CreateText('$enum_canmount','Can Mount'));
+    enum.addEntry('off',GetTranslateableTextKey('enum_canmount_off'));
+    enum.addEntry('on',GetTranslateableTextKey('enum_canmount_on'));
+    enum.addEntry('noauto',GetTranslateableTextKey('enum_canmount_noauto'));
+    GFRE_DBI.RegisterSysEnum(enum);
+
   end;
   VersionInstallCheck(currentVersionId,newVersionId);
 end;
@@ -304,7 +353,9 @@ end;
 { TFRE_DB_NFS_ACCESS }
 
 class procedure TFRE_DB_NFS_ACCESS.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-var group : IFRE_DB_InputGroupSchemeDefinition;
+var
+  group : IFRE_DB_InputGroupSchemeDefinition;
+  enum  : IFRE_DB_Enum;
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
@@ -314,6 +365,13 @@ begin
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main'));
   group.AddInput('accesstype',GetTranslateableTextKey('scheme_accesstype'));
   group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
+
+  enum:=GFRE_DBI.NewEnum('nfs_access').Setup(GFRE_DBI.CreateText('$enum_nfs_access','NFS Access'));
+  enum.addEntry('rw',GetTranslateableTextKey('enum_nfs_access_rw'));
+  enum.addEntry('ro',GetTranslateableTextKey('enum_nfs_access_ro'));
+  enum.addEntry('root',GetTranslateableTextKey('enum_nfs_access_root'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
 end;
 
 class procedure TFRE_DB_NFS_ACCESS.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -325,6 +383,12 @@ begin
     StoreTranslateableText(conn,'scheme_main','Access Parameter');
     StoreTranslateableText(conn,'scheme_accesstype','Access Type');
     StoreTranslateableText(conn,'scheme_subnet','Subnet/Host');
+
+    StoreTranslateableText(conn,'enum_nfs_access','NFS Access');
+    StoreTranslateableText(conn,'enum_nfs_access_rw','Read-Write');
+    StoreTranslateableText(conn,'enum_nfs_access_ro','Read-Only');
+    StoreTranslateableText(conn,'enum_nfs_access_root','Root');
+
   end;
   VersionInstallCheck(currentVersionId,newVersionId);
 end;
@@ -409,6 +473,8 @@ begin
 end;
 
 class procedure TFRE_DB_NFS_FILESHARE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+var
+  enum: IFRE_DB_Enum;
 begin
   inherited InstallDBObjects(conn, currentVersionId, newVersionId);
   newVersionId:='1.0';
@@ -419,6 +485,22 @@ begin
     StoreTranslateableText(conn,'scheme_anonymous','Anonymous access');
     StoreTranslateableText(conn,'scheme_anonymousrw','Anonymous RW access');
     StoreTranslateableText(conn,'scheme_auth','Authentication');
+
+    StoreTranslateableText(conn,'enum_nfs_auth_sys','System users AUTH_SYS');
+    StoreTranslateableText(conn,'enum_nfs_auth_none','Nobody AUTH_NONE');
+    StoreTranslateableText(conn,'enum_nfs_auth_des','Public key AUTH_DES');
+    StoreTranslateableText(conn,'enum_nfs_auth_k5','Kerberos V5');
+    StoreTranslateableText(conn,'enum_nfs_auth_k5c','Kerberos V5 with checksums');
+    StoreTranslateableText(conn,'enum_nfs_auth_k5ce','Kerberos V5 with checksums and encryption');
+
+    enum:=GFRE_DBI.NewEnum('nfs_auth').Setup(GFRE_DBI.CreateText('$enum_nfs_auth','NFS Auth'));
+    enum.addEntry('sys',GetTranslateableTextKey('enum_nfs_auth_sys'));
+    enum.addEntry('none',GetTranslateableTextKey('enum_nfs_auth_none'));
+    enum.addEntry('des',GetTranslateableTextKey('enum_nfs_auth_des'));
+    enum.addEntry('k5',GetTranslateableTextKey('enum_nfs_auth_k5'));
+    enum.addEntry('k5c',GetTranslateableTextKey('enum_nfs_auth_k5c'));
+    enum.addEntry('k5ce',GetTranslateableTextKey('enum_nfs_auth_k5ce'));
+    GFRE_DBI.RegisterSysEnum(enum);
   end;
   VersionInstallCheck(currentVersionId,newVersionId);
 end;
@@ -519,6 +601,8 @@ begin
 end;
 
 class procedure TFRE_DB_ZFS_DATASET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+var
+  enum: IFRE_DB_Enum;
 begin
   newVersionId:='1.0';
   if currentVersionId='' then begin
@@ -537,6 +621,62 @@ begin
     StoreTranslateableText(conn,'scheme_readonly','Read-Only');
     StoreTranslateableText(conn,'scheme_copies','Copies');
     StoreTranslateableText(conn,'scheme_sync','Sync');
+
+    StoreTranslateableText(conn,'enum_logbias_latency','Latency');
+    StoreTranslateableText(conn,'enum_logbias_throughput','Throughput');
+
+    enum:=GFRE_DBI.NewEnum('logbias').Setup(GFRE_DBI.CreateText('$enum_logbias','Log Bias'));
+    enum.addEntry('latency',GetTranslateableTextKey('enum_logbias_latency'));
+    enum.addEntry('throughput',GetTranslateableTextKey('enum_logbias_throughput'));
+    GFRE_DBI.RegisterSysEnum(enum);
+
+    StoreTranslateableText(conn,'enum_compression_off','Off');
+    StoreTranslateableText(conn,'enum_compression_on','On');
+    StoreTranslateableText(conn,'enum_compression_gzip','Gzip');
+    StoreTranslateableText(conn,'enum_compression_gzip-1','Gzip-1');
+    StoreTranslateableText(conn,'enum_compression_gzip-2','Gzip-2');
+    StoreTranslateableText(conn,'enum_compression_gzip-3','Gzip-3');
+    StoreTranslateableText(conn,'enum_compression_gzip-4','Gzip-4');
+    StoreTranslateableText(conn,'enum_compression_gzip-5','Gzip-5');
+    StoreTranslateableText(conn,'enum_compression_gzip-6','Gzip-6');
+    StoreTranslateableText(conn,'enum_compression_gzip-7','Gzip-7');
+    StoreTranslateableText(conn,'enum_compression_gzip-8','Gzip-8');
+    StoreTranslateableText(conn,'enum_compression_gzip-9','Gzip-9');
+
+    enum:=GFRE_DBI.NewEnum('compression').Setup(GFRE_DBI.CreateText('$enum_compression','Compression'));
+    enum.addEntry('off',GetTranslateableTextKey('enum_compression_off'));
+    enum.addEntry('on',GetTranslateableTextKey('enum_compression_on'));
+    enum.addEntry('gzip',GetTranslateableTextKey('enum_compression_gzip'));
+    enum.addEntry('gzip-1',GetTranslateableTextKey('enum_compression_gzip-1'));
+    enum.addEntry('gzip-2',GetTranslateableTextKey('enum_compression_gzip-2'));
+    enum.addEntry('gzip-3',GetTranslateableTextKey('enum_compression_gzip-3'));
+    enum.addEntry('gzip-4',GetTranslateableTextKey('enum_compression_gzip-4'));
+    enum.addEntry('gzip-5',GetTranslateableTextKey('enum_compression_gzip-5'));
+    enum.addEntry('gzip-6',GetTranslateableTextKey('enum_compression_gzip-6'));
+    enum.addEntry('gzip-7',GetTranslateableTextKey('enum_compression_gzip-7'));
+    enum.addEntry('gzip-8',GetTranslateableTextKey('enum_compression_gzip-8'));
+    enum.addEntry('gzip-9',GetTranslateableTextKey('enum_compression_gzip-9'));
+    GFRE_DBI.RegisterSysEnum(enum);
+
+    StoreTranslateableText(conn,'enum_copies_1','1');
+    StoreTranslateableText(conn,'enum_copies_2','2');
+    StoreTranslateableText(conn,'enum_copies_3','3');
+
+    enum:=GFRE_DBI.NewEnum('copies').Setup(GFRE_DBI.CreateText('$enum_copies','Copies'));
+    enum.addEntry('1',GetTranslateableTextKey('enum_copies_1'));
+    enum.addEntry('2',GetTranslateableTextKey('enum_copies_2'));
+    enum.addEntry('3',GetTranslateableTextKey('enum_copies_3'));
+    GFRE_DBI.RegisterSysEnum(enum);
+
+    StoreTranslateableText(conn,'enum_sync_standard','Standard');
+    StoreTranslateableText(conn,'enum_sync_always','Always');
+    StoreTranslateableText(conn,'enum_sync_disabled','Disabled');
+
+    enum:=GFRE_DBI.NewEnum('sync').Setup(GFRE_DBI.CreateText('$enum_sync','Sync Mode'));
+    enum.addEntry('standard',GetTranslateableTextKey('enum_sync_standard'));
+    enum.addEntry('always',GetTranslateableTextKey('enum_sync_always'));
+    enum.addEntry('disabled',GetTranslateableTextKey('enum_sync_disabled'));
+    GFRE_DBI.RegisterSysEnum(enum);
   end;
   VersionInstallCheck(currentVersionId,newVersionId);
 end;
@@ -560,81 +700,7 @@ begin
 end;
 
 procedure Register_DB_Extensions;
-var enum : IFRE_DB_Enum;
 begin
-  enum:=GFRE_DBI.NewEnum('nfs_access').Setup(GFRE_DBI.CreateText('$enum_nfs_access','NFS Access'));
-  enum.addEntry('rw',GFRE_DBI.CreateText('$enum_nfs_access_rw','Read-Write'));
-  enum.addEntry('ro',GFRE_DBI.CreateText('$enum_nfs_access_ro','Read-Only'));
-  enum.addEntry('root',GFRE_DBI.CreateText('$enum_nfs_access_root','Root'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('nfs_auth').Setup(GFRE_DBI.CreateText('$enum_nfs_auth','NFS Auth'));
-  enum.addEntry('sys',GFRE_DBI.CreateText('$enum_nfs_auth_sys','System users AUTH_SYS'));
-  enum.addEntry('none',GFRE_DBI.CreateText('$enum_nfs_auth_none','Nobody AUTH_NONE'));
-  enum.addEntry('des',GFRE_DBI.CreateText('$enum_nfs_auth_des','Public key AUTH_DES'));
-  enum.addEntry('k5',GFRE_DBI.CreateText('$enum_nfs_auth_k5','Kerberos V5'));
-  enum.addEntry('k5c',GFRE_DBI.CreateText('$enum_nfs_auth_k5c','Kerberos V5 with checksums'));
-  enum.addEntry('k5ce',GFRE_DBI.CreateText('$enum_nfs_auth_k5ce','Kerberos V5 with checksums and encryption'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('logbias').Setup(GFRE_DBI.CreateText('$enum_logbias','Log Bias'));
-  enum.addEntry('latency',GFRE_DBI.CreateText('$enum_logbias_latency','Latency'));
-  enum.addEntry('throughput',GFRE_DBI.CreateText('$enum_logbias_throughput','Throughput'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('compression').Setup(GFRE_DBI.CreateText('$enum_compression','Compression'));
-  enum.addEntry('off',GFRE_DBI.CreateText('$enum_compression_off','Off'));
-  enum.addEntry('on',GFRE_DBI.CreateText('$enum_compression_on','On'));
-  enum.addEntry('gzip',GFRE_DBI.CreateText('$enum_compression_gzip','Gzip'));
-  enum.addEntry('gzip-1',GFRE_DBI.CreateText('$enum_compression_gzip-1','Gzip-1'));
-  enum.addEntry('gzip-2',GFRE_DBI.CreateText('$enum_compression_gzip-2','Gzip-2'));
-  enum.addEntry('gzip-3',GFRE_DBI.CreateText('$enum_compression_gzip-3','Gzip-3'));
-  enum.addEntry('gzip-4',GFRE_DBI.CreateText('$enum_compression_gzip-4','Gzip-4'));
-  enum.addEntry('gzip-5',GFRE_DBI.CreateText('$enum_compression_gzip-5','Gzip-5'));
-  enum.addEntry('gzip-6',GFRE_DBI.CreateText('$enum_compression_gzip-6','Gzip-6'));
-  enum.addEntry('gzip-7',GFRE_DBI.CreateText('$enum_compression_gzip-7','Gzip-7'));
-  enum.addEntry('gzip-8',GFRE_DBI.CreateText('$enum_compression_gzip-8','Gzip-8'));
-  enum.addEntry('gzip-9',GFRE_DBI.CreateText('$enum_compression_gzip-9','Gzip-9'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('aclinheritance').Setup(GFRE_DBI.CreateText('$enum_aclinheritance','ACL Inheritance'));
-  enum.addEntry('discard',GFRE_DBI.CreateText('$enum_aclinheritance_discard','Discard'));
-  enum.addEntry('noallow',GFRE_DBI.CreateText('$enum_aclinheritance_noallow','NoAllow'));
-  enum.addEntry('restricted',GFRE_DBI.CreateText('$enum_aclinheritance_restricted','Restricted'));
-  enum.addEntry('passthrough',GFRE_DBI.CreateText('$enum_aclinheritance_passthrough','Passthrough'));
-  enum.addEntry('passthrough-x',GFRE_DBI.CreateText('$enum_aclinheritance_passthroughx','Passthrough-X'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('aclmode').Setup(GFRE_DBI.CreateText('$enum_aclmode','ACL Mode'));
-  enum.addEntry('discard',GFRE_DBI.CreateText('$enum_aclmode_discard','Discard'));
-  enum.addEntry('groupmask',GFRE_DBI.CreateText('$enum_aclmode_groupmask','Groupmask'));
-  enum.addEntry('passthrough',GFRE_DBI.CreateText('$enum_aclinheritance_passthrough','Passthrough'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('canmount').Setup(GFRE_DBI.CreateText('$enum_canmount','Can Mount'));
-  enum.addEntry('off',GFRE_DBI.CreateText('$enum_canmount_off','Off'));
-  enum.addEntry('on',GFRE_DBI.CreateText('$enum_canmount_on','On'));
-  enum.addEntry('noauto',GFRE_DBI.CreateText('$enum_canmount_noauto','NoAuto'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('copies').Setup(GFRE_DBI.CreateText('$enum_copies','Copies'));
-  enum.addEntry('1',GFRE_DBI.CreateText('$enum_copies_1','1'));
-  enum.addEntry('2',GFRE_DBI.CreateText('$enum_copies_2','2'));
-  enum.addEntry('3',GFRE_DBI.CreateText('$enum_copies_3','3'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('sync').Setup(GFRE_DBI.CreateText('$enum_sync','Sync Mode'));
-  enum.addEntry('standard',GFRE_DBI.CreateText('$enum_sync_standard','Standard'));
-  enum.addEntry('always',GFRE_DBI.CreateText('$enum_sync_always','Always'));
-  enum.addEntry('disabled',GFRE_DBI.CreateText('$enum_sync_disabled','Disabled'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
-  enum:=GFRE_DBI.NewEnum('cache').Setup(GFRE_DBI.CreateText('$enum_cache','Cache'));
-  enum.addEntry('none',GFRE_DBI.CreateText('$enum_cache_none','None'));
-  enum.addEntry('all',GFRE_DBI.CreateText('$enum_cache_all','All'));
-  enum.addEntry('metadata',GFRE_DBI.CreateText('$enum_cache_metadata','Metadata'));
-  GFRE_DBI.RegisterSysEnum(enum);
-
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_ZFS_DATASET);
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_ZFS_DATASET_FILE);
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_ZFS_DATASET_ZVOL);
