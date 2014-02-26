@@ -575,8 +575,6 @@ begin
   CONN := GFRE_DBI.NewConnection;
   CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
   try
-    InitDiskDataCollections(conn);
-
     collection  := conn.getCollection(CFRE_DB_VM_COLLECTION);
     if not collection.IndexExists('def') then
       collection.DefineIndexOnField('Mkey',fdbft_String,true,true);

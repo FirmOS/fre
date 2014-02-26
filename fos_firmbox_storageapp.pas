@@ -32,6 +32,7 @@ type
     class procedure RegisterSystemScheme        (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects            (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     class procedure InstallDBObjects4Domain     (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallUserDBObjects        (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
 
   published
     function        WEB_RAW_DISK_FEED           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2633,7 +2634,7 @@ begin
     conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('parentid').AsString),dbObj);
     if not Assigned(dbObj) then raise EFRE_DB_Exception.Create('Parent object not found.');
 
-    refs:=conn.GetReferences(dbObj.UID,false,''); //get refs of spezific field (parent_in_zfs_uid)
+    refs:=conn.GetReferences(dbObj.UID,false,'','parent_in_zfs_uid');
 
     res:=TFRE_DB_STORE_DATA_DESC.create;
     count:=0;
@@ -3951,6 +3952,8 @@ begin
 
   if (currentVersionId='') then
     begin
+      currentVersionId:='1.0';
+
       CreateAppText(conn,'$caption','Storage','Storage','Storage');
       CreateAppText(conn,'$pools_description','Pools','Pools','Pools');
       CreateAppText(conn,'$synch_description','Synchronization','Synchronization','Synchronization');
@@ -4182,8 +4185,6 @@ begin
       CreateAppText(conn,'$error_no_access','Access denied'); //global text?
       CreateAppText(conn,'$error_not_found','Not found'); //global text?
       CreateAppText(conn,'$button_save','Save'); //global text?
-
-      currentVersionId:='1.0';
     end;
   if (currentVersionId='1.0') then
     begin
@@ -4223,6 +4224,14 @@ begin
       CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_EXPANDER.GetClassStdRoles),'could not add roles TFRE_DB_SAS_EXPANDER for group STORAGEFEEDER');
       CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_DRIVESLOT.GetClassStdRoles),'could not add roles TFRE_DB_DRIVESLOT for group STORAGEFEEDER');
    end;
+end;
+
+class procedure TFRE_FIRMBOX_STORAGE_APP.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+begin
+  CreateDiskDataCollections(conn);
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+  end;
 end;
 
 function TFRE_FIRMBOX_STORAGE_APP.WEB_RAW_DISK_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
