@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="9"/>
+    <General>
+      <Flags>
+        <MainUnitHasCreateFormStatements Value="False"/>
+      </Flags>
+      <SessionStorage Value="InIDEConfig"/>
+      <MainUnit Value="0"/>
+      <Title Value="monitorfeeder"/>
+      <UseAppBundle Value="False"/>
+      <ResourceType Value="res"/>
+    </General>
+    <i18n>
+      <EnableI18N LFM="False"/>
+    </i18n>
+    <VersionInfo>
+      <StringTable ProductVersion=""/>
+    </VersionInfo>
+    <BuildModes Count="1">
+      <Item1 Name="Default" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lrs|lpi|lpk|sh|xml)"/>
+      <ExcludeFileFilter Value="*.(bak|ppu|o|so);*~;backup"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+        <CommandLineParams Value="-U root -H 10.1.0.121 -u firmfeeder@system -p x"/>
+        <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
+      </local>
+    </RunParams>
+    <Units Count="5">
+      <Unit0>
+        <Filename Value="monitorfeeder.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="monitorfeeder"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="../../firmbox/core/fre_server/fre_base_client.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fre_base_client"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="../../firmbox/core/fre_server/fre_feed_client.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fre_feed_client"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="../../firmbox/core/fre_core/fos_stats_control_interface.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fos_stats_control_interface"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="../../core/fre_core/fos_ncurses_core.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fos_ncurses_core"/>
+      </Unit4>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <Target>
+      <Filename Value="../../bin/monitorfeeder"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="../../core/fos_include;$(ProjOutDir)"/>
+      <OtherUnitFiles Value="../../core;../../core/fre_aps;../../core/fre_core;../../core/fre_fcom;../../core/fre_blockcom;../../core/fre_db;../../core/fre_external;../../core/fre_server;../../core/fos_interfaces;../../core/fre_apps;../../core/fre_external/synapse;../../firmbox;../../hal"/>
+      <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <Conditionals Value="if TargetOS = 'darwin' then
+   CustomOptions := '-WM10.6';
+   if TargetOS = 'solaris' then
+   CustomOptions := '-k-rpath=$ORIGIN/../lib/lib64rel/solaris';"/>
+    <Parsing>
+      <SyntaxOptions>
+        <IncludeAssertionCode Value="True"/>
+      </SyntaxOptions>
+    </Parsing>
+    <CodeGeneration>
+      <TargetCPU Value="x86_64"/>
+    </CodeGeneration>
+    <Other>
+      <CompilerMessages>
+        <MsgFileName Value=""/>
+      </CompilerMessages>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions Count="3">
+      <Item1>
+        <Name Value="EAbort"/>
+      </Item1>
+      <Item2>
+        <Name Value="ECodetoolError"/>
+      </Item2>
+      <Item3>
+        <Name Value="EFOpenError"/>
+      </Item3>
+    </Exceptions>
+  </Debugging>
+</CONFIG>
