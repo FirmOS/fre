@@ -233,7 +233,7 @@ function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_Content(const input:IFRE_DB_Obj
 var
   sub_sec_s       : TFRE_DB_SUBSECTIONS_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   sub_sec_s        := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
 
@@ -251,7 +251,7 @@ var
   dc_system       : IFRE_DB_DERIVED_COLLECTION;
   system_content  : TFRE_DB_FORM_PANEL_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   dc_system                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
   grid_system              := dc_system.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -267,11 +267,11 @@ var
   datalink_content: TFRE_DB_FORM_PANEL_DESC;
   txt             : IFRE_DB_TEXT;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   dc_datalink                := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then begin
     txt:=app.FetchAppTextFull(ses,'$create_aggr');
     grid_datalink.AddButton.Describe(CWSF(@WEB_DatalinkCreateAggr),'images_apps/firmbox_appliance/create_aggr.png',txt.Getshort,txt.GetHint);
     txt.Finalize;
@@ -288,7 +288,7 @@ var
   dc_fc           : IFRE_DB_DERIVED_COLLECTION;
   fc_content      : TFRE_DB_FORM_PANEL_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   dc_fc               := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
   grid_fc             := dc_fc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -378,10 +378,10 @@ var
   sclass        : TFRE_DB_NameType;
 begin
   Result:=GFRE_DB_NIL_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_VNIC)
-    or conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_VNIC)
-    or conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_AGGR)
-    or conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_STUB) then
+  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_DATALINK_VNIC)
+    or conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_DATALINK_VNIC)
+    or conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_DATALINK_AGGR)
+    or conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_DATALINK_STUB) then
     begin
       if input.Field('SELECTED').ValueCount=1  then begin
         sel_guid := input.Field('SELECTED').AsGUID;
@@ -389,13 +389,13 @@ begin
         if dc.Fetch(sel_guid,dl) then begin
           sclass := dl.SchemeClass;
           writeln(schemeclass);
-          if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_VNIC) then
+          if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_DATALINK_VNIC) then
             input.Field('add_vnic').AsString    := app.FetchAppTextShort(ses,'$datalink_add_vnic');
-          if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_VNIC) then
+          if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_DATALINK_VNIC) then
             input.Field('delete_vnic').AsString := app.FetchAppTextShort(ses,'$datalink_delete_vnic');
-          if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_AGGR) then
+          if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_DATALINK_AGGR) then
             input.Field('delete_aggr').AsString := app.FetchAppTextShort(ses,'$datalink_delete_aggr');
-          if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATALINK_STUB) then
+          if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_DATALINK_STUB) then
             input.Field('delete_stub').AsString := app.FetchAppTextShort(ses,'$datalink_delete_stub');
           result := dl.Invoke('Menu',input,ses,app,conn);
         end;
@@ -409,7 +409,7 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then
     raise EFRE_DB_Exception.Create('No access to edit settings!');
 
   GetSystemScheme(TFRE_DB_DATALINK_AGGR,scheme);
@@ -733,7 +733,7 @@ var
   sub1l              : TFRE_DB_LAYOUT_DESC;
   sub2l              : TFRE_DB_LAYOUT_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   c1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
   c2:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cpu',2,120,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppTextShort(ses,'$overview_caption_cpu'),TFRE_DB_StringArray.create('f00','0f0'),
@@ -1030,10 +1030,10 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_appliance/appliance_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_APP));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppTextShort(session,'$sitemap_status'),'images_apps/firmbox_appliance/status_white.svg',TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_STATUS_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppTextShort(session,'$sitemap_settings'),'images_apps/firmbox_appliance/settings_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD));
-  //FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppTextShort(session,'$sitemap_analytics'),'images_apps/firmbox_appliance/analytics_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_appliance/appliance_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Overview',FetchAppTextShort(session,'$sitemap_status'),'images_apps/firmbox_appliance/status_white.svg',TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_STATUS_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Settings',FetchAppTextShort(session,'$sitemap_settings'),'images_apps/firmbox_appliance/settings_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD));
+  //FREDB_SiteMap_AddRadialEntry(SiteMapData,'Status/Analytics',FetchAppTextShort(session,'$sitemap_analytics'),'images_apps/firmbox_appliance/analytics_white.svg',TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.ClassName,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;

@@ -53,7 +53,7 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure','Infrastructure','images_apps/firmbox_infrastructure/infrastructure_white.svg','',0,conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_INFRASTRUCTURE_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure','Infrastructure','images_apps/firmbox_infrastructure/infrastructure_white.svg','',0,conn.SYS.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_INFRASTRUCTURE_APP));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Computer','Devices','images_apps/firmbox_infrastructure/computer_white.svg','',0,false);
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/AP','Wifi','images_apps/firmbox_infrastructure/wireless_white.svg','',0,false);
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Infrastructure/Network','Network','images_apps/firmbox_infrastructure/network_white.svg','',0,false);

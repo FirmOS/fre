@@ -54,7 +54,7 @@ begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
   //STORE(SALES) -> APP ( Funktionsmodule / Speicherplatz Kaufen / VM RAM / Virtuelle CPU's / BACKUPSPACE )
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store','Store','images_apps/firmbox_store/store_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORE_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store','Store','images_apps/firmbox_store/store_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_STORE_APP));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Modules','Modules','images_apps/firmbox_store/puzzle_white.svg','',0,false);
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Backupspace','Backupspace','images_apps/firmbox_store/clock_white.svg','',0,true);
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Store/Machines','Machines','images_apps/firmbox_store/server_white.svg','',0,false);

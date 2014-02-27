@@ -190,7 +190,7 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_services/tool_white.svg','',0,conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,ClassType));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_services/tool_white.svg','',0,conn.SYS.CheckClassRight4MyDomain(sr_FETCH,ClassType));
 //  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Mailserver','Mailserver','images_apps/firmbox_services/letter_white.svg','MAILSERVER',0,CheckAppRightModule(conn,'mailserver'));
 //  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Mailserver/Webmail','Webmail','images_apps/firmbox_services/letter_white.svg','',0,CheckAppRightModule(conn,'webmail'));
 //  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Webserver','Webserver','images_apps/firmbox_services/webportal_white.svg','WEBSERVER',0,CheckAppRightModule(conn,'webserver'));

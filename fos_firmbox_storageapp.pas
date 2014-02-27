@@ -310,7 +310,7 @@ var
   groupid       : TGuid;
   i             : NativeInt;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.FieldExists('share_id') then begin
@@ -483,18 +483,18 @@ var
   txt           : IFRE_DB_TEXT;
 
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   sub_sec_fs   := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
   dc_fs       := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
   grid_fs     := dc_fs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_create_vfs');
     grid_fs.AddButton.Describe(CWSF(@WEB_CreateVFS),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_delete_vfs');
     grid_fs.AddButton.Describe(CWSF(@WEB_VFSDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
@@ -521,14 +521,14 @@ var
   //grid_group_out: TFRE_DB_VIEW_LIST_DESC;
   //share_group   : TFRE_DB_LAYOUT_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   dc_group_in   := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
   grid          := dc_group_in.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
   //share_id = ses.GetSessionModuleData(ClassName).Field('selectedVFSShare')
 
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then begin
     grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupSetRead),'',app.FetchAppTextShort(ses,'$tb_share_group_setread_on'),app.FetchAppTextHint(ses,'$tb_share_group_setread_on'),fdgbd_single);
     grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupSetWrite),'',app.FetchAppTextShort(ses,'$tb_share_group_setwrite_on'),app.FetchAppTextHint(ses,'$tb_share_group_setwrite_on'),fdgbd_single);
     grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupClearRead),'',app.FetchAppTextShort(ses,'$tb_share_group_setread_off'),app.FetchAppTextHint(ses,'$tb_share_group_setread_off'),fdgbd_single);
@@ -561,16 +561,16 @@ var
   dc_share      : IFRE_DB_DERIVED_COLLECTION;
   grid_share    : TFRE_DB_VIEW_LIST_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   dc_share    := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
   grid_share  := dc_share.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_create_vfs_share');
     grid_share.AddButton.Describe(CWSF(@WEB_CreateVFSShare),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_delete_vfs_share');
     grid_share.AddButton.Describe(CWSF(@WEB_VFSShareDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
@@ -597,7 +597,7 @@ var
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
 
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESERVER) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESERVER) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESERVER,scheme);
@@ -615,7 +615,7 @@ var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_VFSDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -677,7 +677,7 @@ var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   sf:=CWSF(@WEB_VFSDeleteConfirmed);
@@ -692,7 +692,7 @@ function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSDeleteConfirmed(const input:
 var
   i      : NativeInt;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESERVER) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.field('confirmed').AsBoolean then begin
@@ -714,7 +714,7 @@ var
   fileserver : TFRE_DB_String;
   dependend  : TFRE_DB_StringArray;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VIRTUAL_FILESHARE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   dependend  := GetDependencyFiltervalues(input,'uids_ref');
@@ -744,7 +744,7 @@ var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_VFSShareDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -765,7 +765,7 @@ var
   sel_guid      : TGUID;
 
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedVFSShare') and (ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').ValueCount>0)  then begin
     sel_guid := ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').AsGUID;
@@ -809,7 +809,7 @@ var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   sf:=CWSF(@WEB_VFSShareDeleteConfirmed);
@@ -824,7 +824,7 @@ function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareDeleteConfirmed(const i
 var
   i      : NativeInt;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_VIRTUAL_FILESHARE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.field('confirmed').AsBoolean then begin
@@ -853,7 +853,7 @@ begin
   end;
   share_id   := dependend[0];
 
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_VFSShareGroupSetRead);
     func.AddParam.Describe('share_id',share_id);
@@ -1049,7 +1049,7 @@ function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_Content(const input:IFRE_DB_Obje
 var
   sub_sec_s     : TFRE_DB_SUBSECTIONS_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   sub_sec_s        := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
   sub_sec_s.AddSection.Describe(CWSF(@WEB_ContentFilerNFS),app.FetchAppTextShort(ses,'$storage_global_filer_nfs'),1,'nfs');
@@ -1069,19 +1069,19 @@ var
   dc_share_nfs        : IFRE_DB_DERIVED_COLLECTION;
   grid_nfs            : TFRE_DB_VIEW_LIST_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   dc_share_nfs := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_GRID');
   grid_nfs     := dc_share_nfs.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_create_nfs_export');
     grid_nfs.AddButton.Describe(CWSF(@WEB_CreateNFSExport),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_delete_nfs_export');
     grid_nfs.AddButton.Describe(CWSF(@WEB_NFSDelete),'',txt.Getshort,txt.GetHint,fdgbd_multi);
     txt.Finalize;
@@ -1089,17 +1089,17 @@ begin
 
   dc_share_nfs_access := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_ACCESS_GRID');
   grid_nfs_access     := dc_share_nfs_access.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if  conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_ACCESS) then begin
+  if  conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_NFS_ACCESS) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_create_nfs_access');
     grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessCreate),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
-  if  conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then begin
+  if  conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_modify_nfs_access');
     grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessModify),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
   end;
-  if  conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then begin
+  if  conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_delete_nfs_access');
     grid_nfs_access.AddButton.Describe(CWSF(@WEB_NFSAccessDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
@@ -1123,16 +1123,16 @@ var
   lun_rightside : TFRE_DB_LAYOUT_DESC;
   lun           : TFRE_DB_LAYOUT_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   dc_lun     := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
   grid_lun   := dc_lun.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_LUN) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_create_lun');
     grid_lun.AddButton.Describe(CWSF(@WEB_CreateLUN),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN) then begin
     txt:=app.FetchAppTextFull(ses,'$tb_delete_lun');
     grid_lun.AddButton.Describe(CWSF(@WEB_LUNDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
@@ -1140,17 +1140,17 @@ begin
 
   dc_lun_view   := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_VIEW_GRID');
   grid_lun_view := dc_lun_view.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN_VIEW)  then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_LUN_VIEW)  then begin
     txt:=app.FetchAppTextFull(ses,'$tb_create_lun_view');
     grid_lun_view.AddButton.Describe(CWSF(@WEB_CreateLUNView),'',txt.Getshort,txt.GetHint);
     txt.Finalize;
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW)  then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW)  then begin
     txt:=app.FetchAppTextFull(ses,'$tb_lunview_modify');
     grid_lun_view.AddButton.Describe(CWSF(@WEB_LUNViewModify),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW)  then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN_VIEW)  then begin
     txt:=app.FetchAppTextFull(ses,'$tb_lunview_delete');
     grid_lun_view.AddButton.Describe(CWSF(@WEB_LUNViewDelete),'',txt.Getshort,txt.GetHint,fdgbd_single);
     txt.Finalize;
@@ -1170,7 +1170,7 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_NFS_FILESHARE,scheme);
@@ -1202,7 +1202,7 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NFS_ACCESS) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_NFS_ACCESS) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_NFS_ACCESS,scheme);
@@ -1253,7 +1253,7 @@ var
   func      : TFRE_DB_SERVER_FUNC_DESC;
   dtxt      : IFRE_DB_TEXT;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_NFSDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1269,7 +1269,7 @@ var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then
      raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   sf:=CWSF(@WEB_NFSDeleteConfirmed);
@@ -1284,7 +1284,7 @@ function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSDeleteConfirmed(const input:I
 var
   i      : NativeInt;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_FILESHARE) then
      raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.field('confirmed').AsBoolean then begin
@@ -1304,15 +1304,15 @@ var
   func      : TFRE_DB_SERVER_FUNC_DESC;
   dtxt      : IFRE_DB_TEXT;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) or conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) or conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
-    if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then
+    if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS) then
       begin
         func:=CWSF(@WEB_NFSAccessModify);
         func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
         res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_modify_nfs_access'),'',func);
       end;
-    if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then
+    if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then
       begin
         func:=CWSF(@WEB_NFSAccessDelete);
         func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1331,7 +1331,7 @@ var
   msg: String;
   obj: IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS)
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_delete_single_select'));
@@ -1350,7 +1350,7 @@ function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessDeleteConfirmed(const i
 var
   i: Integer;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_NFS_ACCESS) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.field('confirmed').AsBoolean then begin
@@ -1371,7 +1371,7 @@ var
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
   obj        : IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS)
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_NFS_ACCESS)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_modify_single_select'));
@@ -1394,7 +1394,7 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN)
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_LUN)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_LUN,scheme);
@@ -1422,7 +1422,7 @@ var
   res        : TFRE_DB_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_LUN_VIEW)
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_LUN_VIEW)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_LUN_VIEW,scheme);
@@ -1440,7 +1440,7 @@ var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_LUNDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1488,7 +1488,7 @@ var
   sf     : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg: String;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_delete_single_select'));
@@ -1505,7 +1505,7 @@ function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNDeleteConfirmed(const input:I
 var
   i      : NativeInt;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.field('confirmed').AsBoolean then begin
@@ -1524,15 +1524,15 @@ var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) or conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) or conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
-    if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then
+    if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then
       begin
         func:=CWSF(@WEB_LUNViewModify);
         func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
         res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_lunview_modify'),'',func);
       end;
-    if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
+    if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
       begin
         func:=CWSF(@WEB_LUNViewDelete);
         func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1551,7 +1551,7 @@ var
   cap    : TFRE_DB_String;
   msg    : String;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_delete_single_select'));
@@ -1568,7 +1568,7 @@ function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewDeleteConfirmed(const inp
 var
   i: Integer;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.field('confirmed').AsBoolean then begin
@@ -1589,7 +1589,7 @@ var
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
   obj        : IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_LUN_VIEW) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_modify_single_select'));
@@ -1661,17 +1661,17 @@ var
   txt           : IFRE_DB_TEXT;
 
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   sub_sec   := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
 
   dc_snap       := ses.FetchDerivedCollection('BACKUP_MOD_SNAPSHOT_GRID');
   grid_snap     := dc_snap.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
-    if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
+    if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_LUN_VIEW) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then begin
     txt:=app.FetchAppTextFull(ses,'$backup_snapshot_delete');
     grid_snap.AddButton.Describe(CWSF(@WEB_DeleteSnapshot),'',txt.Getshort,txt.GetHint,fdgbd_multi);
     txt.Finalize;
@@ -1718,7 +1718,7 @@ var
   res       : TFRE_DB_MENU_DESC;
   func      : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then begin
     res:=TFRE_DB_MENU_DESC.create.Describe;
     func:=CWSF(@WEB_DeleteSnapshot);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -1736,7 +1736,7 @@ var
   msg       : String;
   parentObj : IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   sf:=CWSF(@WEB_DeleteSnapshotConfirmed);
@@ -1753,7 +1753,7 @@ function TFRE_FIRMBOX_BACKUP_MOD.WEB_DeleteSnapshotConfirmed(const input: IFRE_D
 var
   i: Integer;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_ZFS_SNAPSHOT) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.field('confirmed').AsBoolean then begin
@@ -2352,7 +2352,7 @@ var
   sf         : TFRE_DB_SERVER_FUNC_DESC;
   subsubmenu : TFRE_DB_SUBMENU_DESC;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   store    := TFRE_DB_STORE_DESC.create.Describe('id',CWSF(@WEB_ZFSTreeGridData),TFRE_DB_StringArray.create('caption'),nil,nil,'pools_store');
   glayout  := TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
@@ -2369,7 +2369,7 @@ begin
   glayout_l.AddDataElement.Describe('caption','Caption',dt_string,false,false,2,true,false,'icon');
   layout_grid:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store_l,glayout_l,CWSF(@WEB_GridMenu),'',[cdgf_Children,cdgf_Multiselect],nil,CWSF(@WEB_LayoutSC),nil,CWSF(@WEB_TreeDrop));
 
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
     pool_grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
     layout_grid.SetDragClasses(TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
     pool_grid.SetDropGrid(pool_grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
@@ -2440,7 +2440,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolStructureSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
     ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr:=input.Field('selected').AsStringArr;
@@ -2458,7 +2458,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_LayoutSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
     ses.GetSessionModuleData(ClassName).Field('selectedLayoutObjs').AsStringArr:=input.Field('selected').AsStringArr;
@@ -2472,7 +2472,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBAssign(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
   //FIXXME implement me
   Result:=GFRE_DB_NIL_DESC;
@@ -2480,7 +2480,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBSwitchOnline(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
@@ -2489,7 +2489,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBSwitchOffline(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
@@ -2498,7 +2498,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBIdentifyOn(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
@@ -2507,7 +2507,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBIdentifyOff(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
@@ -2516,7 +2516,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBRemoveNew(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
@@ -2525,7 +2525,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBChangeRaidLevel(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
@@ -2534,7 +2534,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBDestroyPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
@@ -2543,7 +2543,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBExportPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('pool').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsString;
@@ -2552,7 +2552,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_TBScrubPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('pool').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsString;
@@ -2585,7 +2585,7 @@ var
   end;
 
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   if input.FieldExists('parentid') then begin
     parentObj:=_getZFSObj(conn,input.Field('parentid').AsString);
@@ -2628,7 +2628,7 @@ var
   end;
 
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   if input.FieldExists('parentid') then begin
     conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('parentid').AsString),dbObj);
@@ -2665,7 +2665,7 @@ var
 
   storeup    : TFRE_DB_UPDATE_STORE_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
 //  GFRE_BT.SeperateString(input.Field('selected').AsString,',',sIdPath);
 
@@ -2701,7 +2701,7 @@ var
   dbObj: IFRE_DB_Object;
 begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
     if input.Field('selected').ValueCount>1 then begin //multiselection
       _getMultiselectionActions(conn,input.Field('selected').AsStringArr,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
       if fnAssign then begin;
@@ -2848,7 +2848,7 @@ var
   end;
 
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if not input.FieldPathExists('data.pool_name') then
@@ -2897,7 +2897,7 @@ function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_CreatePoolDiag(const input:IFRE_DB_O
 var
   res  :TFRE_DB_DIALOG_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$create_pool_diag_cap'));
@@ -2908,7 +2908,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_ImportPoolDiag(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppTextShort(ses,'$import_pool_diag_cap'),app.FetchAppTextShort(ses,'$import_pool_diag_msg'),fdbmt_info,nil);
@@ -3313,7 +3313,7 @@ var
   pool   : TFRE_DB_ZFS_ROOTOBJ;
   sf     : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
@@ -3326,7 +3326,7 @@ function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_DestroyPoolConfirmed(const input:IFR
 var
   pool   : TFRE_DB_ZFS_ROOTOBJ;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if input.field('confirmed').AsBoolean then begin
@@ -3344,7 +3344,7 @@ function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_ScrubPool(const input: IFRE_DB_Objec
 var
   pool: TFRE_DB_ZFS_ROOTOBJ;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
@@ -3355,7 +3355,7 @@ function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_ExportPool(const input: IFRE_DB_Obje
 var
   pool: TFRE_DB_ZFS_ROOTOBJ;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
@@ -3368,7 +3368,7 @@ var
   disk   : TFRE_DB_ZFS_OBJ;
   i      : Integer;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
@@ -3385,7 +3385,7 @@ var
   disk   : TFRE_DB_ZFS_OBJ;
   i      : Integer;
 begin
-  CheckClassVisibility(ses);
+  CheckClassVisibility4MyDomain(ses);
 
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
@@ -3404,7 +3404,7 @@ var
   i      : Integer;
   update : TFRE_DB_UPDATE_STORE_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   update:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store'); //FIXXME - remove store update
@@ -3428,7 +3428,7 @@ var
   i      : Integer;
   update : TFRE_DB_UPDATE_STORE_DESC;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   update:=TFRE_DB_UPDATE_STORE_DESC.create.Describe('pools_store'); //FIXXME - remove store update
@@ -3714,7 +3714,7 @@ var
   zfsobj  :   TFRE_DB_ZFS_OBJ;
   em_pool :   TFRE_DB_ZFS_POOL;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr;
@@ -3792,7 +3792,7 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_Replace(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   if not input.FieldExists('new') then begin
@@ -3912,13 +3912,13 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_storage/files_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_APP));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools',FetchAppTextShort(session,'$sitemap_pools'),'images_apps/firmbox_storage/disk_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Global',FetchAppTextShort(session,'$sitemap_fileserver_global'),'images_apps/firmbox_storage/files_global_white.svg',TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Virtual',FetchAppTextShort(session,'$sitemap_fileserver_virtual'),'images_apps/firmbox_storage/files_virtual_white.svg',TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup',FetchAppTextShort(session,'$sitemap_backup'),'images_apps/firmbox_storage/clock_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup/Filebrowser',FetchAppTextShort(session,'$sitemap_filebrowser'),'images_apps/firmbox_storage/filebrowser_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Scheduler',FetchAppTextShort(session,'$sitemap_backup_scheduler'),'images_apps/firmbox_storage/clock_white.svg',TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_storage/files_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Pools',FetchAppTextShort(session,'$sitemap_pools'),'images_apps/firmbox_storage/disk_white.svg',TFRE_FIRMBOX_STORAGE_POOLS_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_STORAGE_POOLS_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Global',FetchAppTextShort(session,'$sitemap_fileserver_global'),'images_apps/firmbox_storage/files_global_white.svg',TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Virtual',FetchAppTextShort(session,'$sitemap_fileserver_virtual'),'images_apps/firmbox_storage/files_virtual_white.svg',TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup',FetchAppTextShort(session,'$sitemap_backup'),'images_apps/firmbox_storage/clock_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Backup/Filebrowser',FetchAppTextShort(session,'$sitemap_filebrowser'),'images_apps/firmbox_storage/filebrowser_white.svg',TFRE_FIRMBOX_BACKUP_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Storage/Scheduler',FetchAppTextShort(session,'$sitemap_backup_scheduler'),'images_apps/firmbox_storage/clock_white.svg',TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;
