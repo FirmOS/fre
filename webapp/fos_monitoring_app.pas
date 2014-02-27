@@ -1197,7 +1197,7 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Monitoring','Monitoring','images_apps/monitoring/monitor_white.svg','',0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_MONSYS));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Monitoring','Monitoring','images_apps/monitoring/monitor_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_MONSYS));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;
