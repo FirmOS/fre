@@ -368,6 +368,9 @@ begin
  CONN := GFRE_DBI.NewConnection;
  CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
 
+ InitTestUser;
+
+
  COLL := CONN.GetCollection('service');
  SCOLL:= CONN.GetCollection('fileshare');
  ACOLL:= CONN.GetCollection('fileshare_access');
@@ -541,7 +544,7 @@ begin
  cob.Field('name').AsString:='iso2 name';
  CheckDbResult(vm_isos.Store(cob),'Store VM iso');
 
- InitTestUser;
+
 
  CONN.Finalize;
 end;
@@ -594,6 +597,14 @@ begin
     vm_keyboards := conn.CreateCollection('VM_KEYBOARDS');
     if not vm_keyboards.IndexExists('def') then
       vm_keyboards.DefineIndexOnField('keyboardid',fdbft_String,true,true);
+
+    collection  := conn.CreateCollection('datalink');     //fixme
+    collection  := conn.CreateCollection('setting');
+    collection  := conn.CreateCollection('hba');
+    collection  := conn.CreateCollection('snapshot');
+    collection  := conn.CreateCollection('service');
+    collection  := conn.CreateCollection('fileshare');
+    collection  := conn.CreateCollection('fileshare_access');
 
    {
     storeObj:=GFRE_DBI.NewObject;

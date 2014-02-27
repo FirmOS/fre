@@ -112,6 +112,7 @@ begin
 
   if Get_AppClassAndUid('TFRE_FIRMBOX_STORAGE_APP',FStorage_FeedAppClass,FSTORAGE_FeedAppUid) then begin
     FStorage_Feeding   := True;
+    disk_hal.ClearSnapshotAndUpdates;
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_STORAGE_APP APP NOT FOUND!');
   end;
@@ -228,7 +229,8 @@ begin
   //
   if FStorage_Feeding then
     begin
-      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetClonedData);
+      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeSnaphot);
+      disk_hal.ClearSnapshotAndUpdates; //force always full state
     end;
 end;
 

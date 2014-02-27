@@ -326,11 +326,11 @@ var st       : TStringStream;
     resdbo   : IFRE_DB_Object;
     ziostat  : TFRE_DB_ZPOOL_IOSTAT;
 
-    function RenumberVdev(const devn:string) : string;                 // assume device numbering is the same as in zpool status
+    function VdevName(const devn:string) : string;                 // assume device numbering is the same as in zpool status
     begin
       if (Pos('raidz',devn)>0) or (Pos('mirror',devn)>0) then
         begin
-          result := devn+'-V'+inttostr(vdevc);
+          result := pool_name+'/'+devn+'-'+inttostr(vdevc);
           inc(vdevc);
         end
       else
@@ -349,19 +349,19 @@ var st       : TStringStream;
         np:=false;
       end
     else
-      zfsObjId:=pool_name+'/'+RenumberVdev(zfsObjId);
+      zfsObjId:=VdevName(zfsObjId);
 
     ziostat := TFRE_DB_ZPOOL_IOSTAT.CreateForDB;
     ziostat.iopsR      := Fline[3];//can be -
     ziostat.iopsW      := Fline[4];
     ziostat.transferR  := Fline[5];//in K,M
     ziostat.transferW  := Fline[6];//
-    ziostat.Field('zfs_guid').AsString:=zfsObjId;
+    ziostat.Field('zfs_guid').AsString:=GFRE_BT.HashString_MD5_HEX(cFRE_MACHINE_NAME+'_'+zfsObjId);
     FData.Field(pool_name).AsObject.Field(zfsobjId).AsObject:=ziostat;
   end;
 
 begin
-  vdevc:=1;
+  vdevc:=0;
   stream.Position:=0;
   st := TStringStream.Create('');
   try

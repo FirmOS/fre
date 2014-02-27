@@ -2143,7 +2143,7 @@ var
   end;
 
 begin
-  blockdevicecollection:=conn.GetCollection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
+  blockdevicecollection:=conn.GetCollection(CFRE_DB_DEVICE_COLLECTION);
   blockdevicecollection.ForAll(@_checkBD);
 end;
 
@@ -2634,7 +2634,7 @@ begin
     conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('parentid').AsString),dbObj);
     if not Assigned(dbObj) then raise EFRE_DB_Exception.Create('Parent object not found.');
 
-    refs:=conn.GetReferences(dbObj.UID,false,'','parent_in_zfs_uid');
+    refs:=conn.GetReferences(dbObj.UID,false,'','enclosure_uid');
 
     res:=TFRE_DB_STORE_DATA_DESC.create;
     count:=0;

@@ -249,7 +249,7 @@ begin
   enum:=GFRE_DBI.NewEnum('aclmode').Setup(GFRE_DBI.CreateText('$enum_aclmode','ACL Mode'));
   enum.addEntry('discard',GetTranslateableTextKey('enum_aclmode_discard'));
   enum.addEntry('groupmask',GetTranslateableTextKey('enum_aclmode_groupmask'));
-  enum.addEntry('passthrough',GetTranslateableTextKey('enum_aclinheritance_passthrough'));
+  enum.addEntry('passthrough',GetTranslateableTextKey('enum_aclmode_passthrough'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   enum:=GFRE_DBI.NewEnum('canmount').Setup(GFRE_DBI.CreateText('$enum_canmount','Can Mount'));
@@ -316,7 +316,7 @@ begin
 
     StoreTranslateableText(conn,'enum_aclmode_discard','Discard');
     StoreTranslateableText(conn,'enum_aclmode_groupmask','Groupmask');
-    StoreTranslateableText(conn,'enum_aclinheritance_passthrough','Passthrough');
+    StoreTranslateableText(conn,'enum_aclmode_passthrough','Passthrough');
 
     StoreTranslateableText(conn,'enum_canmount_off','Off');
     StoreTranslateableText(conn,'enum_canmount_on','On');
@@ -520,7 +520,7 @@ begin
   scheme.AddSchemeField('interface',fdbft_String);
   scheme.AddSchemeField('vlan',fdbft_UInt16);
 
-  group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('vfs_scheme_main_group'));
   group.AddInput('objname',GetTranslateableTextKey('scheme_fileservername'),false);
   group.AddInput('pool',GetTranslateableTextKey('scheme_pool'),true);
   group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
@@ -535,7 +535,7 @@ begin
   newVersionId:='1.0';
   if currentVersionId='' then begin
     currentVersionId := '1.0';
-    StoreTranslateableText(conn,'scheme_main_group','Virtual Fileserver Properties');
+    StoreTranslateableText(conn,'vfs_scheme_main_group','Virtual Fileserver Properties');
     StoreTranslateableText(conn,'scheme_fileservername','Servername');
     StoreTranslateableText(conn,'scheme_pool','Diskpool');
     StoreTranslateableText(conn,'scheme_description','Description');
