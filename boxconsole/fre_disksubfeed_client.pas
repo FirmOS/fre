@@ -357,6 +357,7 @@ var st       : TStringStream;
     ziostat.transferR  := Fline[5];//in K,M
     ziostat.transferW  := Fline[6];//
     ziostat.Field('zfs_guid').AsString:=GFRE_BT.HashString_MD5_HEX(cFRE_MACHINE_NAME+'_'+zfsObjId);
+//    writeln('SWL: ZPIOSTAT ',zfsObjId, ' ',   ziostat.Field('zfs_guid').AsString);
     FData.Field(pool_name).AsObject.Field(zfsobjId).AsObject:=ziostat;
   end;
 
@@ -383,7 +384,7 @@ begin
           end;
           if pos('-',Fline[0])=1 then begin
             np:=true;
-            vdevc:=1;
+            vdevc:=0;
             continue;
           end;
           if FLine.count<>7 then
