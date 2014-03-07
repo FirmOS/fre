@@ -827,7 +827,7 @@ begin
   maxCPU:=getAvailableCPU;
   res.AddNumber.DescribeSlider(app.FetchAppTextShort(ses,'$vm_cpu'),'cpu',1,maxCPU,true,IntToStr(maxCPU),0,maxCPU);
 
-  res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_sc'),'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC,true,dh_chooser_combo,true);
+  res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_sc'),'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC);
 
   idestore:=TFRE_DB_STORE_DESC.create.Describe();
   idestore.AddEntry.Describe(app.FetchAppTextShort(ses,'$vm_ide_option_disk'),'disk');
