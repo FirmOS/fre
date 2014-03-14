@@ -842,38 +842,46 @@ begin
   chooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_ide0'),'ide0',idestore,true,dh_chooser_combo,false,false,false,'disk');
 
   diskchooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_disk_chooser'),'disk0',diskstore,true,dh_chooser_combo,true);
-  chooser.addDependentInput(diskchooser,'disk');
-  diskchooser.addDependentInput(res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname0',true),'create');
-  diskchooser.addDependentInput(res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize0',true,false,false,false,'40'),'create');
+  chooser.addDependentInput('disk0','disk');
+  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname0',true);
+  res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize0',true,false,false,false,'40');
+  diskchooser.addDependentInput('diskname0','create');
+  diskchooser.addDependentInput('disksize0','create');
   isochooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_iso_chooser'),'iso0',isostore,true,dh_chooser_combo,true);
-  chooser.addDependentInput(isochooser,'iso');
+  chooser.addDependentInput('iso0','iso');
 
   chooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_ide1'),'ide1',idestore,true,dh_chooser_combo,false,false,false,'iso');
 
   diskchooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_disk_chooser'),'disk1',diskstore,true,dh_chooser_combo,true);
-  chooser.addDependentInput(diskchooser,'disk');
-  diskchooser.addDependentInput(res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname1',true),'create');
-  diskchooser.addDependentInput(res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize1',true,false,false,false,'40'),'create');
+  chooser.addDependentInput('disk1','disk');
+  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname1',true);
+  res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize1',true,false,false,false,'40');
+  diskchooser.addDependentInput('diskname1','create');
+  diskchooser.addDependentInput('disksize1','create');
   isochooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_iso_chooser'),'iso1',isostore,true,dh_chooser_combo,true);
-  chooser.addDependentInput(isochooser,'iso');
+  chooser.addDependentInput('iso1','iso');
 
   chooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_ide2'),'ide2',idestore);
 
   diskchooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_disk_chooser'),'disk2',diskstore,true,dh_chooser_combo,true);
-  chooser.addDependentInput(diskchooser,'disk');
-  diskchooser.addDependentInput(res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname2',true),'create');
-  diskchooser.addDependentInput(res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize2',true,false,false,false,'40'),'create');
+  chooser.addDependentInput('disk2','disk');
+  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname2',true);
+  res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize2',true,false,false,false,'40');
+  diskchooser.addDependentInput('diskname2','create');
+  diskchooser.addDependentInput('disksize2','create');
   isochooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_iso_chooser'),'iso2',isostore,true,dh_chooser_combo,true);
-  chooser.addDependentInput(isochooser,'iso');
+  chooser.addDependentInput('iso2','iso');
 
   chooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_ide3'),'ide3',idestore);
 
   diskchooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_disk_chooser'),'disk3',diskstore,true,dh_chooser_combo,true);
-  chooser.addDependentInput(diskchooser,'disk');
-  diskchooser.addDependentInput(res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname3',true),'create');
-  diskchooser.addDependentInput(res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize3',true,false,false,false,'40'),'create');
+  chooser.addDependentInput('disk3','disk');
+  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname3',true);
+  res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize3',true,false,false,false,'40');
+  diskchooser.addDependentInput('diskname3','create');
+  diskchooser.addDependentInput('disksize3','create');
   isochooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_iso_chooser'),'iso3',isostore,true,dh_chooser_combo,true);
-  chooser.addDependentInput(isochooser,'iso');
+  chooser.addDependentInput('iso3','iso');
 
   group:=res.AddGroup.Describe(app.FetchAppTextShort(ses,'$vm_advanced'),true,true);
 
