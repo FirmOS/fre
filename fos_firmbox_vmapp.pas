@@ -59,12 +59,12 @@ begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization',FetchAppTextShort(session,'$caption'),'images_apps/firmbox_vm/monitor_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch',FetchAppTextShort(session,'$vnetwork_description'),'images_apps/firmbox_vm/network_white.svg',TFRE_FIRMBOX_VM_NETWORK_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD));
+//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch/Interfaces','Interfaces','images_apps/firmbox_vm/plug_white.svg','',0,CheckAppRightModule(conn,'interfaces'));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/Machines',FetchAppTextShort(session,'$machines_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_MACHINES_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_MACHINES_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources',FetchAppTextShort(session,'$vm_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources/Disks',FetchAppTextShort(session,'$vm_disk_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname+':DISKS',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources/ISOs',FetchAppTextShort(session,'$vm_iso_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname+':ISOS',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch',FetchAppTextShort(session,'$vnetwork_description'),'images_apps/firmbox_vm/network_white.svg',TFRE_FIRMBOX_VM_NETWORK_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD));
-//  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch/Interfaces','Interfaces','images_apps/firmbox_vm/plug_white.svg','',0,CheckAppRightModule(conn,'interfaces'));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(ClassName).Field('SITEMAP').AsObject := SiteMapData;
 end;
