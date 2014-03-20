@@ -126,7 +126,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
       mon_id       : TGUID;
       mon_key      : string;
       sg           : IFRE_DB_Object;
-      sg_id        : TGUID;
       service      : IFRE_DB_Object;
       service_id   : TGUID;
       machine      : IFRE_DB_Object;
@@ -152,24 +151,11 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         result := SetDirSeparators(cFRE_GLOBAL_DIRECTORY+'/ssl/user/zfsbackup_rsa');
       end;
 
-
-
-      procedure AddServiceGroup(const name :string);
-      begin
-        sg                                  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_SERVICEGROUP);
-        sg.Field('objname').AsString        := name;
-        // sg.Field('CUSTOMERID').AsObjectLink := customerid;
-        sg_id                               := sg.UID;
-        sg.Field('monitoring').AsObjectLink := mon_id;
-        CheckDbResult(coll_sg.Store(sg),'Add ServiceGroup');
-      end;
-
       procedure AddService(const name :string);
       begin
         service                                     :=  GFRE_DBI.NewObjectScheme(TFRE_DB_SERVICE);
         service.Field('objname').AsString           := name;
         service_id                                  := service.UID;
-        service.Field('servicegroup').AsObjectLink  := sg_id;
         CheckDbResult(coll_service.Store(service),'Add Service');
       end;
 
@@ -656,7 +642,6 @@ begin
   jobdbo       := GFRE_DBI.NewObject;
 
   coll_mon            := CONN.CreateCollection('monitoring');
-  coll_sg             := CONN.CreateCollection('servicegroup');
   coll_service        := CONN.CreateCollection('service');
   coll_machine        := CONN.CreateCollection('machine');
   coll_testcasestatus := CONN.CreateCollection('testcasestatus');
@@ -679,7 +664,6 @@ begin
    // AddTester('Tester1','10.1.0.138');
   ///    AddSCPJob;
 
-  AddServiceGroup('Citycom');         // Firmos Office/Internet/Gateway/INTERNETTESTCASE            STATUS            STATUSDETAILS
     AddService('nordpool');
       AddMachine('snord01','10.54.3.1',tmFOSServ);
       AddTCPZFSReplication('ZFS_REPL_NORDPOOL_01','Replication RZ nordp','10.54.240.198','nordp',
@@ -691,7 +675,6 @@ begin
       AddTCPZFSReplication('ZFS_REPL_SUEDPOOL_01','Replication RZ suedp','10.54.240.198','suedp',
                         'drsdisk/drssnapshots/s01_suedp',86400);
 
-  AddServiceGroup('FirmOS Office');         // Firmos Office/Internet/Gateway/INTERNETTESTCASE            STATUS            STATUSDETAILS
       AddService('Internet');
         AddMachine('Gateway','91.114.28.42',tmFOSServ);
         AddInternetTestcase(true);
@@ -719,7 +702,7 @@ begin
         AddMachine('old_build','10.1.0.117',tmFosLab,'bd2a5ef3-a11c-459e-8d26-460939758fed');
         AddMachine('wintest','10.1.0.118',tmFosLab,'d8aea6ea-94b7-4aab-b2c7-16b69c9ea156');
       AddService('Lab');
-    AddServiceGroup('KSM');
+
       AddService('Office');
         AddMachine('SBS Server','10.4.0.234',tmKSMServ);
           AddWinRMTestCase('10.4.0.234','WINRM_KSM_SBS','SBS Server KSM WinRM');
@@ -742,7 +725,7 @@ begin
                             'zones/backup/ksm/a560f5a3-35ae-4552-9f25-be1308c9db65',86400);
           AddSSHZFSReplication('ZFS_REPL_KSMSBS_DISK','Replication KSM SBS Disk0','10.1.0.129','smartstore.firmos.at','zones/a560f5a3-35ae-4552-9f25-be1308c9db65-disk0',
                             'zones/backup/ksm/a560f5a3-35ae-4552-9f25-be1308c9db65-disk0',86400);
-    AddServiceGroup('FirmOS Marburgerkai');
+
       AddService('Backoffice');
         AddMachine('Firewall','80.120.208.114',tmFOSMB);
           AddInternetTestcase(false);
@@ -827,8 +810,8 @@ begin
           AddZFSSpaceTestCase('10.220.249.10','ZFS_SPACE_ARTEMES','Zones Artemes');
           AddSSHZFSReplication('ZFS_REPL_ARTEMES','Replication Artemes Complete','10.220.249.10','smartstore.firmos.at','zones',
                             'zones/backup/artemes/complete',86400,'COMPLETE');
- AddServiceGroup('Citycom');
-      AddService('Cityaccess');
+
+     AddService('Cityaccess');
         AddMachine('WlanController','109.73.148.178',tmCC);
            AddDiskSpaceTestCase('172.17.0.1','WLANC_SPACE_USR','Diskspace on WLANC /usr','/usr');
            AddDiskSpaceTestCase('172.17.0.1','WLANC_SPACE_VAR','Diskspace on WLANC /var','/var');
