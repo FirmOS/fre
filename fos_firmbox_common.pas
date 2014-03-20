@@ -14,6 +14,7 @@ uses
   fre_accesscontrol_common,
   fos_firmbox_fileserver,
   fos_firmbox_storageapp,
+  fos_firmbox_servicesapp,
   fos_firmbox_vmapp,
   fos_firmbox_applianceapp,
   fos_firmbox_vm_machines_mod,
@@ -67,6 +68,13 @@ var conn     : IFRE_DB_Connection;
     mcoll    : IFRE_DB_Collection;
     link_parent : TGUID;
     vm_parent   : TGUID;
+    mguid: TGuid;
+    dguid: TGuid;
+    zguid: TGuid;
+    zobj: TFRE_DB_ZONE;
+    sobj: TFRE_DB_SERVICE;
+    mobj: TFRE_DB_MACHINE;
+    dobj: TFRE_DB_SERVICE_DOMAIN;
 
   function AddDatalink(const clname:string; const name: string; const parentid:TGUID; const show_virtual:boolean; const show_global:boolean; const icon:string; const ip:string; const desc:string='';const vlan:integer=0): TGUID;
   var
@@ -380,7 +388,6 @@ begin
 
  COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_VIRTUAL_FILESERVER);
 // cob.Field('machineid').AsObjectLink:=wlan_machine_uid;
-// COb.Field('servicegroup').AsObjectLink:=si;
  cob.Field('pool').asstring:='zones';
  fsname := 'Engineering';
  cob.Field('objname').asstring:= fsname;
@@ -396,7 +403,6 @@ begin
 
  COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_VIRTUAL_FILESERVER);
 // cob.Field('machineid').AsObjectLink:=wlan_machine_uid;
-// COb.Field('servicegroup').AsObjectLink:=si;
  cob.Field('pool').asstring:='zones';
  fsname := 'Business';
  cob.Field('objname').asstring:= fsname;
@@ -414,7 +420,6 @@ begin
 
  COB  :=  GFRE_DBI.NewObjectScheme(TFRE_DB_GLOBAL_FILESERVER);
 // cob.Field('machineid').AsObjectLink:=wlan_machine_uid;
-// COb.Field('servicegroup').AsObjectLink:=si;
  fs := COB.UID;
  CheckDbResult(COLL.Store(cob),'Add Fileserver');
 
@@ -544,7 +549,60 @@ begin
  cob.Field('name').AsString:='iso2 name';
  CheckDbResult(vm_isos.Store(cob),'Store VM iso');
 
+  //SERVICES
 
+  coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
+  mobj:=TFRE_DB_MACHINE.CreateForDB;
+  mobj.Name:='Firmbox 1';
+  mguid:=mobj.UID;
+  CheckDbResult(coll.Store(mobj));
+
+  mobj:=TFRE_DB_MACHINE.CreateForDB;
+  mobj.Name:='Firmbox 2';
+  CheckDbResult(coll.Store(mobj));
+
+  coll:=conn.GetCollection(CFOS_DB_SERVICE_DOMAINS_COLLECTION);
+
+  dobj:=TFRE_DB_SERVICE_DOMAIN.CreateForDB;
+  dobj.Name:='Domain1';
+  dobj.Field('serviceParent').AsObjectLink:=mguid;
+  dguid:=dobj.UID;
+  CheckDbResult(coll.Store(dobj));
+
+  dobj:=TFRE_DB_SERVICE_DOMAIN.CreateForDB;
+  dobj.Name:='Domain2';
+  dobj.Field('serviceParent').AsObjectLink:=mguid;
+  CheckDbResult(coll.Store(dobj));
+
+  coll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
+
+  zobj:=TFRE_DB_ZONE.CreateForDB;
+  zobj.Name:='Zone1';
+  zobj.Field('serviceParent').AsObjectLink:=dguid;
+  zguid:=zobj.UID;
+  CheckDbResult(coll.Store(zobj));
+
+  coll:=conn.GetCollection(CFOS_DB_MANAGED_SERVICES_COLLECTION);
+
+  sobj:=TFRE_DB_SERVICE.CreateForDB;
+  sobj.Name:='VM1';
+  sobj.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobj));
+
+  sobj:=TFRE_DB_SERVICE.CreateForDB;
+  sobj.Name:='VM2';
+  sobj.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobj));
+
+  sobj:=TFRE_DB_SERVICE.CreateForDB;
+  sobj.Name:='DNS';
+  sobj.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobj));
+
+  zobj:=TFRE_DB_ZONE.CreateForDB;
+  zobj.Name:='Zone2';
+  zobj.Field('serviceParent').AsObjectLink:=dguid;
+  CheckDbResult(coll.Store(zobj));
 
  CONN.Finalize;
 end;
@@ -562,6 +620,7 @@ begin
   fre_testcase.Register_DB_Extensions;
   fos_firmbox_fileserver.Register_DB_Extensions;
   fos_firmbox_storageapp.Register_DB_Extensions;
+  fos_firmbox_servicesapp.Register_DB_Extensions;
   fos_firmbox_vmapp.Register_DB_Extensions;
   GFRE_DBI.Initialize_Extension_Objects;
 end;
