@@ -53,7 +53,7 @@
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <Libraries Value="/lib/64/;/lib/"/>
-      <OtherUnitFiles Value="../.."/>
+      <OtherUnitFiles Value="../../../hal"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then
