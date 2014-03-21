@@ -48,12 +48,23 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
-  Classes, SysUtils, CustApp,
-  FRE_SYSTEM,FOS_DEFAULT_IMPLEMENTATION,FOS_TOOL_INTERFACES,FOS_FCOM_TYPES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,
+  Classes,
+  SysUtils,
+  CustApp,
+  FRE_SYSTEM,
+  FOS_DEFAULT_IMPLEMENTATION,
+  FOS_TOOL_INTERFACES,
+  FOS_FCOM_TYPES,
+  FRE_APS_INTERFACE,
+  FRE_DB_INTERFACE,
   FRE_DB_CORE,
   FRE_DB_EMBEDDED_IMPL,
-  FRE_CONFIGURATION,FRE_BASE_SERVER,
-  fos_monitorfeed_client,fre_basefeed_app;
+  FRE_CONFIGURATION,
+  FRE_BASE_SERVER,
+  fos_monitorfeed_client,
+  fre_basefeed_app,
+  fre_hal_update,
+fre_hal_mos;
 
 
 {$I fos_version_helper.inc}

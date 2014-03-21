@@ -29,11 +29,11 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-U root -H 10.1.0.121 -u firmfeeder@system -p x"/>
+        <CommandLineParams Value="-u monitorfeeder@system -p x --subfeederip=10.54.3.1"/>
         <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <Units Count="5">
+    <Units Count="7">
       <Unit0>
         <Filename Value="monitorfeeder.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -59,6 +59,16 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="fos_ncurses_core"/>
       </Unit4>
+      <Unit5>
+        <Filename Value="../../hal/fre_hal_update.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fre_hal_update"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="../../hal/fre_hal_mos.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fre_hal_mos"/>
+      </Unit6>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

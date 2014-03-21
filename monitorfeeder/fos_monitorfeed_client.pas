@@ -43,19 +43,23 @@ interface
 
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
-  fre_system,fos_stats_control_interface, fre_hal_disk,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes;
+  fre_system,fos_stats_control_interface, fre_hal_disk,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_monitoring,fre_hal_mos,
+  fre_hal_update;
 
 
 type
 
 
+  { TFRE_MONITOR_FEED_CLIENT }
+
   TFRE_MONITOR_FEED_CLIENT=class(TFRE_BASE_CLIENT)
   private
+    FEED_Timer            : IFRE_APSC_TIMER;
     FMonitor_Feeding      : Boolean;
     FMonitor_FeedAppClass : TFRE_DB_String;
     FMonitor_FeedAppUid   : TGuid;
     disk_hal              : TFRE_HAL_DISK;
-
+    mos_hal               : TFRE_HAL_MOS;
   private
 
   public
@@ -66,6 +70,8 @@ type
     procedure  MyFinalize              ; override;
     procedure  MyConnectionTimer       ; override;
     procedure  SubfeederEvent          (const id:string; const dbo:IFRE_DB_Object);override;
+    procedure  GenerateFeedDataTimer   (const TIM : IFRE_APSC_TIMER ; const flag1,flag2 : boolean); // Timout & CMD Arrived & Answer Arrived
+
   published
   end;
 
@@ -82,13 +88,21 @@ begin
   if Get_AppClassAndUid('TFOS_CITYCOM_MONITORING_APP',FMonitor_FeedAppClass,FMonitor_FeedAppUid) then begin
     FMonitor_Feeding   := True;
     disk_hal.ClearSnapshotAndUpdates;
+    mos_hal.ClearSnapshotAndUpdates;
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFOS_CITYCOM_MONITORING_APP APP NOT FOUND!');
   end;
+
+  FEED_Timer := chanman.AddTimer(10000);
+  FEED_Timer.TIM_SetID('FEED_'+inttostr(chanman.GetID));
+  writeln('Generated Feedtimer 10 ',FEED_Timer.TIM_GetID);
+  FEED_Timer.TIM_SetCallback(@GenerateFeedDataTimer);
+  FEED_Timer.TIM_Start;
 end;
 
 procedure TFRE_MONITOR_FEED_CLIENT.MySessionDisconnected(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 begin
+  FEED_Timer.Finalize;
   FMonitor_Feeding:= false;
   inherited;
 end;
@@ -105,8 +119,15 @@ begin
   fre_ZFS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
+  fre_monitoring.Register_DB_Extensions;
+  fre_hal_update.Register_DB_Extensions;
+  fre_hal_mos.Register_DB_Extensions;
 
   disk_hal   := TFRE_HAL_DISK.Create;
+  mos_hal    := TFRE_HAL_MOS.Create;
+
+  mos_hal.LoadConfiguration;
+  mos_hal.StartSNMPRequests;
 
   if cFRE_SUBFEEDER_IP='' then
     AddSubFeederEventViaUX('disksub')
@@ -118,6 +139,7 @@ end;
 procedure TFRE_MONITOR_FEED_CLIENT.MyFinalize;
 begin
   disk_hal.Free;
+  mos_hal.Free;
 end;
 
 
@@ -130,12 +152,21 @@ begin
     begin
       SendServerCommand(FMonitor_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FMonitor_FeedAppUid),disk_hal.GetUpdateDataAndTakeSnaphot);
       disk_hal.ClearSnapshotAndUpdates; //force always full state
+
+      SendServerCommand(FMonitor_FeedAppClass,'MOS_DATA_FEED',TFRE_DB_GUIDArray.Create(FMonitor_FeedAppUid),mos_hal.GetUpdateDataAndTakeSnaphot);
+//      mos_hal.ClearSnapshotAndUpdates; //force always full state
+
     end;
 end;
 
 procedure TFRE_MONITOR_FEED_CLIENT.SubfeederEvent(const id: string; const dbo: IFRE_DB_Object);
 begin
   disk_hal.ReceivedDBO(dbo);
+end;
+
+procedure TFRE_MONITOR_FEED_CLIENT.GenerateFeedDataTimer(const TIM: IFRE_APSC_TIMER; const flag1, flag2: boolean);
+begin
+  mos_hal.StartSNMPRequests;
 end;
 
 end.
