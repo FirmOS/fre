@@ -1,0 +1,16 @@
+msgid  "Usage: %s [-t] path ...\n"
+msgstr
+msgid  "Unexpected libscf error: %s.  Exiting.\n"
+msgstr
+msgid  "Couldn't bind to svc.configd.\n"
+msgstr
+msgid  "cannot resolve pathname "
+       "for %s"
+msgstr
+msgid  "cannot stat %s"
+msgstr
+msgid  "file tree walk of %s encountered "
+       "error.  %s\n"
+msgstr
+msgid  "no paths walked\n"
+msgstr

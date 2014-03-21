@@ -1,0 +1,11 @@
+msgid  "Usage:\tsvccfg [-v] [-s FMRI] [-f file]\n"
+       "\tsvccfg [-v] [-s FMRI] <command> [args]\n"
+msgstr
+msgid  "Out of memory.\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "printf() error"
+msgstr
+msgid  "Syntax error.\n"
+msgstr

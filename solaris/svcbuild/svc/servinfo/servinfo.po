@@ -1,0 +1,13 @@
+msgid  "Usage: %s [-R] [-Pp] [-tu[6]] "
+       "-s service_name\n"
+msgstr
+msgid  "Can't get rpc entry\n"
+msgstr
+msgid  "setnetconfig failed\n"
+msgstr
+msgid  "getnetconfig failed\n"
+msgstr
+msgid  "Failed: rpcb_getmaps failed\n"
+msgstr
+msgid  "Failed to get information for %s\n"
+msgstr

@@ -1,0 +1,329 @@
+msgid  "illegal boolean value \"%s\"\n"
+msgstr
+msgid  "unknown value type (%d)\n"
+msgstr
+# msgid  "unknown value type (%d)\n"
+# msgstr
+msgid  "Could not validate element\n"
+msgstr
+msgid  "Could not parse DTD \"%s\".\n"
+msgstr
+msgid  "could not allocate memory"
+msgstr
+msgid  "Document is not valid.\n"
+msgstr
+msgid  "illegal value \"%s\" for "
+       "%s (%s)\n"
+msgstr
+msgid  "Illegal character"
+msgstr
+# msgid  "illegal value \"%s\" for "
+#        "%s (%s)\n"
+# msgstr
+msgid  "string duplication failed (%s)\n"
+msgstr
+# msgid  "illegal value \"%s\" for "
+#        "%s (%s)\n"
+# msgstr
+msgid  "Illegal format"
+msgstr
+# msgid  "unknown value type (%d)\n"
+# msgstr
+msgid  "no value on value node?\n"
+msgstr
+msgid  "value list contains illegal element "
+       "\'%s\'\n"
+msgstr
+msgid  "property name missing in group '%s'\n"
+msgstr
+msgid  "property type invalid for "
+       "property '%s/%s'\n"
+msgstr
+msgid  "property type missing for property '%s/%s'\n"
+msgstr
+msgid  "property value missing for property '%s/%s'\n"
+msgstr
+# msgid  "property name missing in group \'%s\'\n"
+# msgstr
+# msgid  "property type invalid for "
+#        "property '%s/%s'\n"
+# msgstr
+# msgid  "property type missing for "
+#        "property \'%s/%s\'\n"
+# msgstr
+msgid  "property \'%s\' "
+       "type-to-list mismatch\n"
+msgstr
+msgid  "unknown value list type: %s\n"
+msgstr
+msgid  "Invalid environment variable "
+       "\"%s\".\n"
+msgstr
+msgid  "Invalid environment variable "
+       "\"%s\"; \"SMF_\" prefix is reserved.\n"
+msgstr
+msgid  "illegal element \"%s\" on "
+       "method environment for \"%s\"\n"
+msgstr
+msgid  "Out of memory\n"
+msgstr
+msgid  "illegal element \'%s\' in method "
+       "context\n"
+msgstr
+msgid  "illegal value \"%s\" for "
+       "timeout_seconds (%s)\n"
+msgstr
+# msgid  "Illegal character"
+# msgstr
+msgid  "illegal element \"%s\" on "
+       "execution method \"%s\"\n"
+msgstr
+# msgid  "illegal value \"%s\" "
+#        "for %s (%s)\n"
+# msgstr
+# msgid  "Illegal format"
+# msgstr
+msgid  "illegal element \"%s\" on "
+       "dependency group \"%s\"\n"
+msgstr
+msgid  "Property group and dependent of entity %s "
+       "have same name \"%s\".\n"
+msgstr
+msgid  "unexpected element %s.\n"
+msgstr
+msgid  "no stability value found\n"
+msgstr
+msgid  "illegal element \"%s\" on restarter "
+       "element for \"%s\"\n"
+msgstr
+msgid  "Out of memory.\n"
+msgstr
+# msgid  "property value missing for property '%s/%s'\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "attribute name missing in element 'type'\n"
+msgstr
+msgid  "attribute name missing in sub-element of type\n"
+msgstr
+msgid  "name '%s,%s' is too long\n"
+msgstr
+msgid  "unknown element %s\n"
+msgstr
+# msgid  "name '%s,%s' is too long\n"
+# msgstr
+msgid  "illegal element '%s' on "
+       "notification parameters\n"
+msgstr
+msgid  "Can't have more than 1 element "
+       "event in a notification parameter\n"
+msgstr
+msgid  "couldn't allocate memory"
+msgstr
+msgid  "Invalid input.\n"
+msgstr
+msgid  "Can't mix SMF and FMA event definitions\n"
+msgstr
+msgid  "Non-SMF transition evenst must go to %s\n"
+msgstr
+msgid  "event name too long: %s\n"
+msgstr
+msgid  "Can't set events for global service\n"
+msgstr
+msgid  "%s attribute is %d characters too long for "
+       "%s in %s\n"
+msgstr
+msgid  "illegal element \"%s\" on loctext "
+       "element for \"%s\"\n"
+msgstr
+msgid  "loctext element has no content for \"%s\"\n"
+msgstr
+# msgid  "Out of memory\n"
+# msgstr
+msgid  "illegal element \"%s\" on %s element "
+       "for \"%s\"\n"
+msgstr
+msgid  "\"%c\" is not a legal character in the %s "
+       "attribute of the %s element in %s.\n"
+msgstr
+msgid  "\"%s\" is not a legal number for the %s "
+       "attribute of the %s element in %s.\n"
+msgstr
+msgid  "Cardinality max is less than min for "
+       "the %s element in %s.\n"
+msgstr
+# msgid  "Out of memory\n"
+# msgstr
+# msgid  "illegal element \"%s\" on %s element "
+#        "for \"%s\"\n"
+# msgstr
+msgid  "The %s element in %s had an empty list of "
+       "separators.\n"
+msgstr
+msgid  "illegal element \"%s\" on template "
+       "for service \"%s\"\n"
+msgstr
+msgid  "%s element requires a %s attribute in the %s "
+       "service.\n"
+msgstr
+msgid  "Unable to convert %s for the %s "
+       "element in service %s.\n"
+msgstr
+msgid  "Maximum less than minimum for the %s element "
+       "in service %s.\n"
+msgstr
+msgid  "%s element is missing the %s attribute in "
+       "service %s.\n"
+msgstr
+# msgid  "%s element is missing the %s attribute in "
+#        "service %s.\n"
+# msgstr
+msgid  "min and max are too long for the %s element "
+       "of %s.\n"
+msgstr
+# msgid  "%s element requires a %s attribute in the %s "
+#        "service.\n"
+# msgstr
+msgid  "Constructed property name is %u characters "
+       "too long for value \"%s\" in the %s service.\n"
+msgstr
+msgid  "Name attribute is "
+       "%u characters too long for %s in service %s\n"
+msgstr
+# msgid  "Name attribute is "
+#        "%u characters too long for %s in service %s\n"
+# msgstr
+msgid  "\"%s\" is an illegal element in %s "
+       "of service %s\n"
+msgstr
+msgid  "%s is an invalid element of "
+       "choices for service %s.\n"
+msgstr
+msgid  "%s is an invalid element of "
+       "constraints for service %s.\n"
+msgstr
+msgid  "\"%s\" is an illegal element in the "
+       "%s element of %s\n"
+msgstr
+msgid  "prop_pattern name is missing for %s\n"
+msgstr
+msgid  "prop_pattern name, \"%s\", for %s is not "
+       "valid.\n"
+msgstr
+msgid  "prop_pattern name, \"%s\", for %s is %d "
+       "characters too long\n"
+msgstr
+msgid  "Property group for prop_pattern, \"%s\", "
+       "already exists in %s\n"
+msgstr
+msgid  "illegal element \"%s\" in prop_pattern "
+       "for service \"%s\"\n"
+msgstr
+msgid  "pg_pattern is missing the %s attribute "
+       "in %s\n"
+msgstr
+msgid  "pg_pattern %s attribute may only "
+       "have a value of \"instance\" when it is in a "
+       "service declaration.\n"
+msgstr
+msgid  "pg_pattern %s attribute has a "
+       "value of \"delegate\" but is not in a "
+       "restarter service\n"
+msgstr
+msgid  "pg_pattern %s attribute has a "
+       "value of \"%s\" but is not in a "
+       "service entity.\n"
+msgstr
+msgid  "pg_pattern %s attribute has a "
+       "value of \"%s\" but is in the \"%s\" service.  "
+       "pg_patterns with target \"%s\" are only allowed "
+       "in the global service.\n"
+msgstr
+msgid  "Unable to create pg_pattern "
+       "property for %s\n"
+msgstr
+msgid  "pg_pattern type is for %s is "
+       "%d bytes too long\n"
+msgstr
+msgid  "pg_pattern name attribute, \"%s\", "
+       "for %s is invalid\n"
+msgstr
+msgid  "pg_pattern property group name "
+       "for %s is %d bytes too long\n"
+msgstr
+msgid  "pg_pattern with empty name and "
+       "type is not unique in %s\n"
+msgstr
+msgid  "pg_pattern with empty name and "
+       "type \"%s\" is not unique in %s\n"
+msgstr
+msgid  "pg_pattern with name \"%s\" "
+       "and empty type is not unique in %s\n"
+msgstr
+msgid  "pg_pattern with name \"%s\" "
+       "and type \"%s\" is not unique in %s\n"
+msgstr
+msgid  "Invalid pg_pattern attributes in %s\n"
+msgstr
+msgid  "illegal element \"%s\" in pg_pattern "
+       "for service \"%s\"\n"
+msgstr
+# msgid  "illegal element \"%s\" on template "
+#        "for service \"%s\"\n"
+# msgstr
+msgid  "Instance \"%s\" missing attribute "
+       "\"%s\".\n"
+msgstr
+msgid  "Invalid enabled value\n"
+msgstr
+msgid  "Template data for \"%s\" may "
+       "not be modified in a profile.\n"
+msgstr
+msgid  "illegal element \"%s\" on instance \"%s\"\n"
+msgstr
+msgid  "Unable to create the real path of the "
+       "manifest file \"%s\" : %d\n"
+msgstr
+# msgid  "Property group for prop_pattern, "
+#        "\"%s\", already exists in %s\n"
+# msgstr
+# msgid  "Template data for \"%s\" may "
+#        "not be modified in a profile.\n"
+# msgstr
+msgid  "illegal element \"%s\" on service \"%s\"\n"
+msgstr
+msgid  "included bundle of different type.\n"
+msgstr
+msgid  "document is not a manifest.\n"
+msgstr
+msgid  "document is not a profile.\n"
+msgstr
+msgid  "document is not an archive.\n"
+msgstr
+msgid  "service bundle lacks name attribute\n"
+msgstr
+msgid  "unable to open file: %s\n"
+msgstr
+msgid  "couldn't parse document\n"
+msgstr
+msgid  "document has no DTD\n"
+msgstr
+msgid  "document DTD unknown; not service bundle?\n"
+msgstr
+msgid  "document is empty\n"
+msgstr
+msgid  "document is not a service bundle\n"
+msgstr
+# msgid  "Could not parse DTD \"%s\".\n"
+# msgstr
+msgid  "couldn't handle XInclude statements "
+       "in document\n"
+msgstr
+# msgid  "could not allocate memory"
+# msgstr
+# msgid  "Document is not valid.\n"
+# msgstr
+msgid  "Couldn't walk services"
+msgstr
+msgid  "Couldn't walk instances"
+msgstr
