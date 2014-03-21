@@ -593,7 +593,7 @@ end;
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_CreateVFS(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
 
@@ -601,7 +601,7 @@ begin
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESERVER,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$vfs_add_diag_cap'),600,0,true,true,false);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$vfs_add_diag_cap'),600,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
   //res.SetElementValue('pool','zones'); //FIXXME - get a pool
   serverfunc := CSCF(TFRE_DB_VIRTUAL_FILESERVER.ClassName,'NewOperation','collection','service');
@@ -709,7 +709,7 @@ end;
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_CreateVFSShare(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
   fileserver : TFRE_DB_String;
   dependend  : TFRE_DB_StringArray;
@@ -726,7 +726,7 @@ begin
 
 
   GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESHARE,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$vfs_share_add_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$vfs_share_add_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddSchemeFormGroup(scheme.GetInputGroup('share'),ses,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('file'),ses,true,true);
@@ -1167,14 +1167,14 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_CreateNFSExport(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_NFS_FILESHARE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_NFS_FILESHARE,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$nfs_add_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$nfs_add_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('nfs'),ses,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('file'),ses,true,true);
@@ -1199,14 +1199,14 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessCreate(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_NFS_ACCESS) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_NFS_ACCESS,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$nfsaccess_add_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$nfsaccess_add_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
 //  res.SetElementValue('fileshare','');
   serverfunc :=TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_NFS_FILESHARE.ClassName,'NewOperation');
@@ -1367,7 +1367,7 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessModify(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
   obj        : IFRE_DB_Object;
 begin
@@ -1377,7 +1377,7 @@ begin
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_modify_single_select'));
 
   GetSystemScheme(TFRE_DB_NFS_ACCESS,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$nfsaccess_modify_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$nfsaccess_modify_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
 
   CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsString),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessModify');
@@ -1391,14 +1391,14 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_CreateLUN(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_LUN)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_LUN,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$lun_add_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$lun_add_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('lun'),ses,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('volume'),ses,true,false);
@@ -1419,14 +1419,14 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_CreateLUNView(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_LUN_VIEW)
     then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GetSystemScheme(TFRE_DB_LUN_VIEW,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$lunview_add_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$lunview_add_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
 //  res.SetElementValue('fileshare','');
   serverfunc :=TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_LUN_VIEW.ClassName,'NewOperation');
@@ -1585,7 +1585,7 @@ end;
 function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewModify(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
   obj        : IFRE_DB_Object;
 begin
@@ -1595,7 +1595,7 @@ begin
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_modify_single_select'));
 
   GetSystemScheme(TFRE_DB_LUN_VIEW,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$lunview_modify_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$lunview_modify_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
 
   CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsString),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewModify');
@@ -2895,12 +2895,12 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_CreatePoolDiag(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  res  :TFRE_DB_DIALOG_DESC;
+  res  :TFRE_DB_FORM_DIALOG_DESC;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$create_pool_diag_cap'));
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$create_pool_diag_cap'));
   res.AddInput.Describe(app.FetchAppTextShort(ses,'$create_pool_diag_name'),'pool_name',true);
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CWSF(@WEB_CreatePool),fdbbt_submit);
   result:=res;

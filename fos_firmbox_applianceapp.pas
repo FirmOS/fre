@@ -406,14 +406,14 @@ end;
 function TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.WEB_DatalinkCreateAggr(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_DIALOG_DESC;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
   serverfunc : TFRE_DB_SERVER_FUNC_DESC;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_DATALINK_AGGR) then
     raise EFRE_DB_Exception.Create('No access to edit settings!');
 
   GetSystemScheme(TFRE_DB_DATALINK_AGGR,scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$aggr_add_diag_cap'),600,0,true,true,false);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$aggr_add_diag_cap'),600,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
   res.SetElementValue('objname','aggr');
 

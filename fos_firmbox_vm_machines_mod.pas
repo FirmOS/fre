@@ -280,7 +280,7 @@ end;
 
 function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_CreateDisk(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res       : TFRE_DB_DIALOG_DESC;
+  res       : TFRE_DB_FORM_DIALOG_DESC;
   scheme    : IFRE_DB_SchemeObject;
   serverFunc: TFRE_DB_SERVER_FUNC_DESC;
 begin
@@ -288,7 +288,7 @@ begin
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_DISK',scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'ADD_DISK'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'ADD_DISK'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   serverFunc:=CSCF('TFRE_FIRMBOX_VM_DISK','NewOperation','collection','VM_DISKS');
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverFunc,fdbbt_submit);
@@ -308,7 +308,7 @@ end;
 
 function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_UploadISO(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res: TFRE_DB_DIALOG_DESC;
+  res: TFRE_DB_FORM_DIALOG_DESC;
   serverFunc: TFRE_DB_SERVER_FUNC_DESC;
   scheme: IFRE_DB_SchemeObject;
 begin
@@ -316,7 +316,7 @@ begin
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_ISO',scheme);
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'UPLOAD_ISO'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'UPLOAD_ISO'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   serverFunc:=CSCF('TFRE_FIRMBOX_VM_ISO','NewOperation','collection','VM_ISOS');
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverFunc,fdbbt_submit);
@@ -793,7 +793,7 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_NewVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  res                  : TFRE_DB_DIALOG_DESC;
+  res                  : TFRE_DB_FORM_DIALOG_DESC;
   maxRAM,minRAM,stepRAM: Integer;
   maxCPU               : Integer;
   idestore             : TFRE_DB_STORE_DESC;
@@ -817,7 +817,7 @@ begin
   vm_scs:= ses.FetchDerivedCollection('VM_CH_SCS_DERIVED');
   vm_keyboards:= ses.FetchDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
 
-  res:=TFRE_DB_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$vm_new_caption'));
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$vm_new_caption'));
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$vm_new_save'),CWSF(@WEB_CreateVM),fdbbt_submit);
 
   res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_name'),'name',true);
