@@ -1,0 +1,263 @@
+msgid  "Connection to repository server broken.  "
+       "Exiting.\n"
+msgstr
+msgid  "Repository is read-only.  Exiting.\n"
+msgstr
+msgid  "Usage: %1$s [-S <state>] [-v] [-Z | -z zone] [cmd [args ... ]]\n\n"
+       "\t%1$s enable [-rst] [<service> ...]\t- enable and online service(s)\n"
+       "\t%1$s disable [-st] [<service> ...]\t- disable and offline "
+       "service(s)\n"
+       "\t%1$s restart [-d] [<service> ...]\t- restart specified service(s)\n"
+       "\t%1$s refresh [<service> ...]\t\t- re-read service configuration\n"
+       "\t%1$s mark [-It] <state> [<service> ...] - set maintenance state\n"
+       "\t%1$s clear [<service> ...]\t\t- clear maintenance state\n"
+       "\t%1$s milestone [-d] <milestone>\t- advance to a service milestone\n"
+       "\n\t"
+       "Services can be specified using an FMRI, abbreviation, or fnmatch(5)\n"
+       "\tpattern, as shown in these examples for svc:/network/smtp:sendmail\n"
+       "\n"
+       "\t%1$s <cmd> svc:/network/smtp:sendmail\n"
+       "\t%1$s <cmd> network/smtp:sendmail\n"
+       "\t%1$s <cmd> network/*mail\n"
+       "\t%1$s <cmd> network/smtp\n"
+       "\t%1$s <cmd> smtp:sendmail\n"
+       "\t%1$s <cmd> smtp\n"
+       "\t%1$s <cmd> sendmail\n"
+msgstr
+msgid  "Could not get contract id for process"
+msgstr
+msgid  "Could not read status of contract "
+       "%ld: %s.\n"
+msgstr
+msgid  "Could not get svc_fmri for contract "
+       "%ld: %s.\n"
+msgstr
+msgid  "%s: Repository read-only.\n"
+msgstr
+msgid  "%s: Could not set %s/%s "
+       "(repository read-only).\n"
+msgstr
+msgid  "%s: Could not set %s/%s: "
+       "my_ct_name failed.\n"
+msgstr
+# msgid  "%s: Repository read-only.\n"
+# msgstr
+# msgid  "%s: Could not set %s/%s "
+#        "(repository read-only).\n"
+# msgstr
+# msgid  "%s: Repository read-only.\n"
+# msgstr
+# msgid  "%s: Could not set %s/%s "
+#        "(repository read-only).\n"
+# msgstr
+msgid  "%s temporarily enabled.\n"
+msgstr
+msgid  "%s temporarily disabled.\n"
+msgstr
+# msgid  "%s: Repository "
+#        "read-only.\n"
+# msgstr
+# msgid  "%s: Could not set "
+#        "%s/%s (repository read-only).\n"
+# msgstr
+msgid  "Could not delete %s/%s "
+       "property of %s: backend access denied.\n"
+msgstr
+msgid  "Could not delete %s/%s "
+       "property of %s: backend is read-only.\n"
+msgstr
+msgid  "%s enabled.\n"
+msgstr
+msgid  "%s disabled.\n"
+msgstr
+msgid  "FMRI \"%s\" is a legacy service.\n"
+msgstr
+msgid  "FMRI \"%s\" is invalid.\n"
+msgstr
+msgid  "FMRI \"%s\" does not designate a service or instance.\n"
+msgstr
+msgid  "No such instance \"%s\".\n"
+msgstr
+msgid  "Service \"%s\" has no instances.\n"
+msgstr
+msgid  "operation on service %s is ambiguous; "
+       "instance specification needed.\n"
+msgstr
+msgid  "scf_instance_to_fmri() returned unexpectedly "
+       "long value.\n"
+msgstr
+msgid  "\"%s\" is misconfigured (\"%s\" dependency "
+       "lacks \"%s\" property.)\n"
+msgstr
+msgid  "\"%s\" is misconfigured (\"%s/%s\" property "
+       "is not single-valued.)\n"
+msgstr
+msgid  "\"%s\" is misconfigured (\"%s/%s\" property "
+       "is not of astring type.)\n"
+msgstr
+msgid  "\"%s\" is misconfigured (lacks \"%s\" "
+       "property group).\n"
+msgstr
+msgid  "\"%s\" is misconfigured (the value of "
+       "\"%s/%s\" is too long).\n"
+msgstr
+msgid  "Restarter FMRI for \"%s\" is "
+       "invalid.\n"
+msgstr
+msgid  "Restarter FMRI for \"%s\" identifies "
+       "a service with multiple instances.\n"
+msgstr
+msgid  "\"%s\" is misconfigured (\"%s/%s\" "
+       "property is not single-valued).\n"
+msgstr
+msgid  "\"%s\" is misconfigured (\"%s/%s\" "
+       "property is not of astring type).\n"
+msgstr
+msgid  "Dependency \"%s\" of \"%s\" has "
+       "unknown type \"%s\".\n"
+msgstr
+# msgid  "\"%s\" is misconfigured (\"%s\" "
+#        "dependency lacks \"%s\" property.)\n"
+# msgstr
+msgid  "\"%s\" is misconfigured (property "
+       "\"%s/%s\" is not of fmri type).\n"
+msgstr
+msgid  "%s requires one of:\n"
+msgstr
+msgid  "\"%s\" dependency of \"%s\" "
+       "has invalid FMRI \"%s\".\n"
+msgstr
+msgid  "%s depends on %s, which has "
+       "multiple instances.\n"
+msgstr
+msgid  "Action %s set for %s.\n"
+msgstr
+msgid  "%s is misconfigured (lacks \"%s\" property "
+       "group).\n"
+msgstr
+msgid  "%s is misconfigured (\"%s\" property "
+       "group lacks \"%s\" property).\n"
+msgstr
+msgid  "%s is misconfigured (\"%s/%s\" "
+       "property is not single-valued).\n"
+msgstr
+msgid  "%s is misconfigured (\"%s/%s\" "
+       "property is not of type astring).\n"
+msgstr
+msgid  "%s is misconfigured (\"%s/%s\" property value "
+       "is too long).\n"
+msgstr
+msgid  "Repository write "
+       "contention.\n"
+msgstr
+# msgid  "operation on service %s is ambiguous; "
+#        "instance specification needed.\n"
+# msgstr
+msgid  "%s: Dependency cycle detected.\n"
+msgstr
+msgid  "Instance \"%s\" is in maintenance"
+       " state.\n"
+msgstr
+msgid  "Instance \"%s\" has been disabled"
+       " by another entity.\n"
+msgstr
+msgid  "Instance \"%s\" has unsatisfied"
+       " dependencies.\n"
+msgstr
+msgid  "Instance \"%s\" has been enabled"
+       " by another entity.\n"
+msgstr
+msgid  "Restarter for instance \"%s\" is"
+       " unavailable.\n"
+msgstr
+msgid  "Instance \"%s\" is not in a "
+       "maintenance or degraded state.\n"
+msgstr
+msgid  "Instance \"%s\" is not online.\n"
+msgstr
+msgid  "Could not delete %s/%s property of "
+       "%s: permission denied.\n"
+msgstr
+msgid  "Could not delete %s/%s property of "
+       "%s: access denied.\n"
+msgstr
+msgid  "Could not delete %s/%s property of "
+       "%s: backend read-only.\n"
+msgstr
+msgid  "Usage: svcadm milestone [-d] <milestone>\n\n"
+       "\t-d\tmake the specified milestone the default for system boot\n\n"
+       "\tMilestones can be specified using an FMRI or abbreviation.\n"
+       "\tThe major milestones are as follows:\n\n"
+       "\tall\n"
+       "\tnone\n"
+msgstr
+msgid  "\"%s\" is not a valid major milestone.\n"
+msgstr
+msgid  "svcadm -z may only be used "
+       "from the global zone\n"
+msgstr
+msgid  "svcadm -Z may only be used "
+       "from the global zone\n"
+msgstr
+msgid  "could not get number of zones"
+msgstr
+msgid  "could not allocate array for "
+       "%d zone IDs"
+msgstr
+msgid  "could not get zone list"
+msgstr
+msgid  "%s: Permission denied.\n"
+msgstr
+msgid  "Out of memory.\n"
+msgstr
+msgid  "%s: Couldn't create \"%s\" "
+       "property group (permission denied).\n"
+msgstr
+msgid  "%s: Couldn't modify \"%s\" property "
+       "group (permission denied).\n"
+msgstr
+msgid  "%s: Couldn't modify \"%s/%s\" "
+       "property (permission denied).\n"
+msgstr
+msgid  "No such service \"%s\".\n"
+msgstr
+msgid  "could not get name for "
+       "zone %d; ignoring"
+msgstr
+msgid  "invalid zone '%s'\n"
+msgstr
+msgid  "Couldn't bind to configuration repository: "
+       "%s.\n"
+msgstr
+msgid  "failed to iterate over "
+       "instances: %s\n"
+msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+msgid  "-t may not be "
+       "used with degraded.\n"
+msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+msgid  "State must be '%s' or '%s'\n"
+msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr

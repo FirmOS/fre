@@ -1,0 +1,82 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/generic_limited_net.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/generic_limited_net.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile generic_limited_net.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/generic_open.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/generic_open.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile generic_open.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/inetd_generic.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/inetd_generic.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile inetd_generic.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/inetd_upgrade.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/inetd_upgrade.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile inetd_upgrade.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/ns_dns.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/ns_dns.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile ns_dns.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/ns_files.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/ns_files.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile ns_files.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/ns_ldap.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/ns_ldap.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile ns_ldap.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/ns_nis.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/ns_nis.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile ns_nis.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/ns_none.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/ns_none.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile ns_none.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/platform_SUNW,SPARC-Enterprise.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,SPARC-Enterprise.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile platform_SUNW,SPARC-Enterprise.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire-15000.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire-15000.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile platform_SUNW,Sun-Fire-15000.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire-880.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire-880.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile platform_SUNW,Sun-Fire-880.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile platform_SUNW,Sun-Fire.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/platform_SUNW,Ultra-Enterprise-10000.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,Ultra-Enterprise-10000.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile platform_SUNW,Ultra-Enterprise-10000.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/platform_SUNW,UltraSPARC-IIi-Netract.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,UltraSPARC-IIi-Netract.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile platform_SUNW,UltraSPARC-IIi-Netract.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/platform_none.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_none.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile platform_none.xml
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/etc/svc/profile/platform_sun4v.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_sun4v.xml; install -s -m 0444 -f /root/smartos-live/proto/etc/svc/profile platform_sun4v.xml
+.BUILT_LAST_MAKE_RUN:
+check_limited:
+	echo Check for enabled limited services \
+		not covered by open profile
+	/usr/bin/perl -w listsvcs.pl -e generic_limited_net.xml > check_limited.enabled
+	/usr/bin/perl -w listsvcs.pl generic_open.xml inetd_generic.xml > check_limited.all
+	/usr/bin/comm -23 check_limited.enabled check_limited.all | /usr/bin/tee check_limited.notcovered
+	/usr/bin/test ! -s check_limited.notcovered && touch check_limited
+.BUILT_LAST_MAKE_RUN:
+check_open:
+	echo Check for enabled open services \
+		not covered by limited profile
+	/usr/bin/perl -w listsvcs.pl -e generic_open.xml inetd_generic.xml > check_open.enabled
+	/usr/bin/perl -w listsvcs.pl generic_limited_net.xml > check_open.all
+	/usr/bin/comm -23 check_open.enabled check_open.all | /usr/bin/tee check_open.notcovered
+	/usr/bin/test ! -s check_open.notcovered && touch check_open
+.BUILT_LAST_MAKE_RUN:
+install:
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform.xml
+	# SUNW,Sun-Fire-V890
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire-V890.xml
+	ln /root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire-880.xml \
+	    /root/smartos-live/proto/etc/svc/profile/platform_SUNW,Sun-Fire-V890.xml
+	# SUNW,UltraSPARC-IIe-NetraCT-[46]0
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,UltraSPARC-IIe-NetraCT-40.xml
+	/usr/bin/rm -f /root/smartos-live/proto/etc/svc/profile/platform_SUNW,UltraSPARC-IIe-NetraCT-60.xml
+	ln /root/smartos-live/proto/etc/svc/profile/platform_SUNW,UltraSPARC-IIi-Netract.xml \
+	/root/smartos-live/proto/etc/svc/profile/platform_SUNW,UltraSPARC-IIe-NetraCT-40.xml
+	ln /root/smartos-live/proto/etc/svc/profile/platform_SUNW,UltraSPARC-IIi-Netract.xml \
+	    /root/smartos-live/proto/etc/svc/profile/platform_SUNW,UltraSPARC-IIe-NetraCT-60.xml

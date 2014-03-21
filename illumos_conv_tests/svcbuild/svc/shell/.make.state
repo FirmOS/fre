@@ -1,0 +1,22 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/lib/svc/share/fs_include.sh:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/share/fs_include.sh; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/share fs_include.sh
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/lib/svc/share/ipf_include.sh:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/share/ipf_include.sh; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/share ipf_include.sh
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/lib/svc/share/mfsthistory:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/share/mfsthistory; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/share mfsthistory
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/lib/svc/share/net_include.sh:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/share/net_include.sh; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/share net_include.sh
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/lib/svc/share/routing_include.sh:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/share/routing_include.sh; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/share routing_include.sh
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/lib/svc/share/sendmail_include.sh:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/share/sendmail_include.sh; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/share sendmail_include.sh
+.BUILT_LAST_MAKE_RUN:
+/root/smartos-live/proto/lib/svc/share/smf_include.sh:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/share/smf_include.sh; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/share smf_include.sh

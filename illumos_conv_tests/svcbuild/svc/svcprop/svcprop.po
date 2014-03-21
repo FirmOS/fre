@@ -1,0 +1,85 @@
+msgid  "Unexpected libscf error: %s.  Exiting.\n"
+msgstr
+msgid  "Could not allocate memory"
+msgstr
+msgid  "Usage: %1$s [-fqtv] "
+       "[-C | -c | -s snapshot] [-z zone] "
+       "[-p [name/]name]... \n"
+       "         {FMRI | pattern}...\n"
+       "       %1$s -w [-fqtv] [-z zone] [-p [name/]name] "
+       "{FMRI | pattern}\n"
+msgstr
+msgid  "Permission denied.\n"
+msgstr
+msgid  "Only instances have "
+       "snapshots.\n"
+msgstr
+msgid  "Invalid snapshot name.\n"
+msgstr
+msgid  "No such snapshot.\n"
+msgstr
+# msgid  "Only instances have "
+#        "snapshots.\n"
+# msgstr
+msgid  "Couldn't find property group "
+       "`%s' for %s `%s'.\n"
+msgstr
+msgid  "Couldn't find property "
+       "`%s/%s' for %s `%s'.\n"
+msgstr
+msgid  "-p argument `%s/%s' "
+       "has too many components for property "
+       "group `%s'.\n"
+msgstr
+msgid  "Couldn't find property `%s' in "
+       "property group `%s'.\n"
+msgstr
+msgid  "The -p option cannot be used with property "
+       "operands.\n"
+msgstr
+msgid  "Invalid component name `%s'.\n"
+msgstr
+msgid  "-p argument `%s' has too many "
+       "components.\n"
+msgstr
+msgid  "Not found.\n"
+msgstr
+msgid  "-p cannot be used with "
+       "property FMRIs.\n"
+msgstr
+msgid  "-p argument "
+       "\"%s/%s\" has too many components for "
+       "property group %s.\n"
+msgstr
+msgid  "Invalid property name "
+       "\"%s\".\n"
+msgstr
+msgid  "Cannot wait for an instance.\n"
+msgstr
+msgid  "Invalid "
+       "property group name \"%s\".\n"
+msgstr
+# msgid  "Invalid property name "
+#        "\"%s\".\n"
+# msgstr
+msgid  "Cannot wait for a service.\n"
+msgstr
+# msgid  "Invalid "
+#        "property group name \"%s\".\n"
+# msgstr
+# msgid  "Invalid property name "
+#        "\"%s\".\n"
+# msgstr
+msgid  "FMRI must specify an entity, "
+       "property group, or property.\n"
+msgstr
+msgid  "svcprop -z may only be used "
+       "from the global zone\n"
+msgstr
+msgid  "invalid zone '%s'\n"
+msgstr
+msgid  "Could not connect to configuration repository: "
+       "%s.\n"
+msgstr
+msgid  "failed to iterate over instances: %s\n"
+msgstr

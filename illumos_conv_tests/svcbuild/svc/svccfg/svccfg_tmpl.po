@@ -1,0 +1,89 @@
+msgid  "composed_pool tree creation failed: %s\n"
+msgstr
+msgid  "composed_instance tree creation "
+       "failed: %s\n"
+msgstr
+msgid  "true"
+msgstr
+msgid  "false"
+msgstr
+msgid  "Property group"
+msgstr
+msgid  "pg_pattern name"
+msgstr
+msgid  "pg_pattern type"
+msgstr
+msgid  "prop_pattern name"
+msgstr
+msgid  "prop_pattern type"
+msgstr
+msgid  "Template source"
+msgstr
+msgid  "%sUnable to convert property value"
+msgstr
+msgid  "Property"
+msgstr
+msgid  "%sInvalid template - %s"
+msgstr
+msgid  "%sInvalid type in prop_pattern"
+msgstr
+# msgid  "prop_pattern name"
+# msgstr
+msgid  "%sProperty group has no type"
+msgstr
+msgid  "Type specified in pg_pattern"
+msgstr
+msgid  "%sPg_pattern with true required attribute "
+       "is missing the type attribute"
+msgstr
+msgid  "Pg_pattern name"
+msgstr
+# msgid  "false"
+# msgstr
+# msgid  "true"
+# msgstr
+msgid  "WARNING: restarter FMRI %s is invalid\n"
+msgstr
+msgid  "WARNING: restarter FMRI %s is not valid; "
+       "instance fmri required.\n"
+msgstr
+# msgid  "WARNING: restarter FMRI %s is invalid\n"
+# msgstr
+# msgid  "WARNING: restarter FMRI %s is not valid; "
+#        "instance fmri required.\n"
+# msgstr
+msgid  "include_values "
+       "type must be \"constraints\" or \"values\""
+msgstr
+msgid  "pg_info tree creation failed: %s\n"
+msgstr
+msgid  "Out of memory.\n"
+msgstr
+msgid  "composed_pg pool creation failed: %s\n"
+msgstr
+msgid  "composed_prop pool creation failed. %s\n"
+msgstr
+msgid  "pg_pattern info pool creation failed: %s\n"
+msgstr
+msgid  "inmem_errors_pool pool creation failed: "
+       "%s\n"
+msgstr
+msgid  "tv_errors_pool pool creation failed: %s\n"
+msgstr
+msgid  "Property does not have correct type for "
+       "a range specification"
+msgstr
+msgid  "Illegal range "
+       "value"
+msgstr
+msgid  "Property "
+       "group name too long"
+msgstr
+msgid  "prop_pattern name too long"
+msgstr
+msgid  "Bundle is not a manifest.  Unable to validate "
+       "against templates.\n"
+msgstr
+msgid  "Manifest for %s contains an object "
+       "named \"%s\" that is not a service.\n"
+msgstr

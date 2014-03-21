@@ -1,0 +1,93 @@
+msgid  "Error reading terminal: %s.\n"
+msgstr
+msgid  "Out of memory.\n"
+msgstr
+# msgid  "Error reading terminal: %s.\n"
+# msgstr
+msgid  "No free stdio streams.\n"
+msgstr
+msgid  "Could not open %s"
+msgstr
+msgid  "Could not stat %s"
+msgstr
+msgid  "%s is not a regular file.\n"
+msgstr
+msgid  "SVCCFG_DOOR unused when "
+       "SVCCFG_REPOSITORY specified\n"
+msgstr
+msgid  "Warning: "
+msgstr
+msgid  "Import of %s failed.\n"
+msgstr
+msgid  "WARNING: svccfg "
+       "import of %s failed.\n"
+msgstr
+# msgid  "Import of %s failed.\n"
+# msgstr
+# msgid  "WARNING: svccfg import "
+#        "of %s failed.\n"
+# msgstr
+msgid  "Could not store hash for %s. "
+       "%s\n"
+msgstr
+msgid  "Unknown error from "
+       "mhash_store_entry() for %s\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Unable to open %s for "
+       "progress reporting.  %s\n"
+msgstr
+msgid  "Unable to stat file %s.  %s\n"
+msgstr
+msgid  "%s is not a directory or regular "
+       "file\n"
+msgstr
+msgid  "Could not hash directory %s\n"
+msgstr
+msgid  "Could not hash file %s\n"
+msgstr
+msgid  "No changes were necessary\n"
+msgstr
+msgid  "Successful import.\n"
+msgstr
+# msgid  "Unable to stat file %s.  %s\n"
+# msgstr
+# msgid  "%s is not a directory or regular "
+#        "file\n"
+# msgstr
+# msgid  "Could not hash directory %s\n"
+# msgstr
+# msgid  "Could not hash file %s\n"
+# msgstr
+# msgid  "No changes were necessary\n"
+# msgstr
+msgid  "Successfully applied: %s\n"
+msgstr
+msgid  "WARNING: Failed to apply %s\n"
+msgstr
+msgid  "Couldn't read arguments"
+msgstr
+msgid  "Unknown option -%c.\n"
+msgstr
+msgid  "No non-flag arguments defined.\n"
+msgstr
+msgid  "General commands:	 help set repository end\n"
+       "Manifest commands:	 inventory validate import export "
+       "archive\n"
+       "Profile commands:	 apply extract\n"
+       "Entity commands:	 list select unselect add delete "
+       "describe\n"
+       "Snapshot commands:	 listsnap selectsnap revert\n"
+       "Instance commands:	 refresh\n"
+       "Property group commands: listpg addpg delpg\n"
+       "Property commands:	 listprop setprop delprop editprop\n"
+       "Property value commands: addpropvalue delpropvalue "
+       "setenv unsetenv\n"
+       "Notification parameters: "
+       "listnotify setnotify delnotify\n"
+msgstr
+msgid  "Usage: %s\n"
+msgstr
+msgid  "Unknown command.\n"
+msgstr

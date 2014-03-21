@@ -1,0 +1,8 @@
+msgid  "Syntax error.\n"
+msgstr
+msgid  "Unknown command \"%s\".\n"
+msgstr
+# msgid  "Unknown command \"%s\".\n"
+# msgstr
+msgid  "Out of memory\n"
+msgstr

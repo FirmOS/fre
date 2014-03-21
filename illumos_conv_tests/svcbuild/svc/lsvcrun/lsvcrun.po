@@ -1,0 +1,81 @@
+msgid  "Usage: %s [-s] script {start | stop}\n"
+msgstr
+msgid  "couldn't parse name %s.\n"
+msgstr
+msgid  "strdup() failed (%s).\n"
+msgstr
+# msgid  "couldn't parse name %s.\n"
+# msgstr
+# msgid  "couldn't parse name %s.\n"
+# msgstr
+# msgid  "strdup() failed (%s).\n"
+# msgstr
+# msgid  "strdup() failed (%s).\n"
+# msgstr
+msgid  "%s failed (%s).  Repository will not be modified.\n"
+msgstr
+msgid  "Insufficient privilege to add repository properties; "
+       "not launching \"%s\".\n"
+msgstr
+msgid  "Service matching \"%s\" "
+       "seems to be running.\n"
+msgstr
+msgid  "Service \"%s\" has an invalid property "
+       "group.\n"
+msgstr
+msgid  "Couldn't stat %s (%s).\n"
+msgstr
+msgid  "Service matching \"%s\" "
+       "doesn't seem to be running.\n"
+msgstr
+msgid  "Could not connect to svc.configd.\n"
+msgstr
+msgid  "Can not create contract"
+msgstr
+msgid  "Can not allocate memory"
+msgstr
+msgid  "Can not set svc_fmri"
+msgstr
+msgid  "Can not set svc_aux"
+msgstr
+msgid  "Can not activate contract template"
+msgstr
+msgid  "Could not remove property group %s: %s.\n"
+msgstr
+msgid  "%s failed (%s).\n"
+msgstr
+msgid  "Could not get contract"
+msgstr
+# msgid  "%s failed (%s).\n"
+# msgstr
+msgid  "Could not commit property values to repository.\n"
+msgstr
+msgid  "invocation outside smf(5) inappropriate\n"
+msgstr
+msgid  "Could not create new environment: out of memory.\n"
+msgstr
+msgid  "Could not create pipe"
+msgstr
+msgid  "Executing legacy init script \"%s\" "
+       "despite previous errors.\n"
+msgstr
+msgid  "Executing legacy init script \"%s\".\n"
+msgstr
+# msgid  "Couldn't stat %s (%s).\n"
+# msgstr
+msgid  "Could not fork"
+msgstr
+msgid  "Could not exec \"%s %s %s\""
+msgstr
+msgid  "Could not inform parent of error"
+msgstr
+msgid  "exec() failed; leaving properties.\n"
+msgstr
+msgid  "exec() failed.\n"
+msgstr
+msgid  "Legacy init script \"%s\" failed due "
+       "to signal %s.\n"
+msgstr
+msgid  "Legacy init script \"%s\" exited with "
+       "return code %d.\n"
+msgstr

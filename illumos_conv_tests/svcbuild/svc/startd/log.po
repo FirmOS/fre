@@ -1,0 +1,22 @@
+msgid  "starting"
+msgstr
+msgid  "transitioned to maintenance by "
+       "request (see 'svcs -xv' for details)"
+msgstr
+msgid  "failed repeatedly: transitioned to "
+       "maintenance (see 'svcs -xv' for details)"
+msgstr
+msgid  "misconfigured: transitioned to "
+       "maintenance (see 'svcs -xv' for details)"
+msgstr
+msgid  "failed fatally: transitioned to "
+       "maintenance (see 'svcs -xv' for details)"
+msgstr
+msgid  "timed out: transitioned to "
+       "maintenance (see 'svcs -xv' for details)"
+msgstr
+msgid  "failed: transitioned to "
+       "maintenance (see 'svcs -xv' for details)"
+msgstr
+msgid  "outcome unknown?"
+msgstr

@@ -1,0 +1,6 @@
+msgid  "couldn't check status "
+       "of /var filesystem: %s\n"
+msgstr
+msgid  "couldn't check status "
+       "of /etc/svc filesystem: %s\n"
+msgstr

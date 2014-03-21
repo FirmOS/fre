@@ -1,0 +1,201 @@
+msgid  "Out of memory.\n"
+msgstr
+msgid  "svc:/%s:%s has invalid dependency \"%s\".\n"
+msgstr
+msgid  "svc:/%s:%s has "
+       "dependency with unknown type \"%s\".\n"
+msgstr
+msgid  "svc:/%s:%s has "
+       "dependency without an entities "
+       "property.\n"
+msgstr
+msgid  "svc:/%s:%s has no "
+       "\"%s\" property group; ignoring.\n"
+msgstr
+msgid  "Dependency cycle detected:\n"
+       "  svc:/%s:%s\n"
+msgstr
+msgid  "svc:/%s:%s has invalid state \"%s\".\n"
+msgstr
+msgid  "svc:/%s:%s has "
+       "dependency group with invalid type \"%s\".\n"
+msgstr
+# msgid  "Dependency cycle detected:\n"
+#        "  svc:/%s:%s\n"
+# msgstr
+msgid  "is running."
+msgstr
+msgid  "is uninitialized."
+msgstr
+msgid  "is disabled."
+msgstr
+msgid  "is temporarily disabled."
+msgstr
+msgid  "has missing dependencies."
+msgstr
+msgid  "is starting."
+msgstr
+msgid  "is offline."
+msgstr
+msgid  "was taken down for maintenace "
+       "by an administrator."
+msgstr
+msgid  "completed a dependency cycle."
+msgstr
+msgid  "is not running because "
+       "a method failed repeatedly."
+msgstr
+msgid  "has an invalid dependency."
+msgstr
+msgid  "has an invalid restarter."
+msgstr
+msgid  "is not running because "
+       "a method failed."
+msgstr
+msgid  "is not running for an unknown reason."
+msgstr
+msgid  "was restarting too quickly."
+msgstr
+msgid  "requires maintenance."
+msgstr
+msgid  "is in an invalid state."
+msgstr
+msgid  "exited with $SMF_EXIT_ERR_CONFIG"
+msgstr
+msgid  "exited with $SMF_EXIT_ERR_FATAL"
+msgstr
+msgid  "exited with status %d"
+msgstr
+msgid  "dumped core on %s (%d)"
+msgstr
+msgid  "dumped core signal %d"
+msgstr
+msgid  "died on %s (%d)"
+msgstr
+msgid  "died on signal %d"
+msgstr
+msgid  "Reason: Start method %s.\n"
+msgstr
+msgid  "Reason: "
+       "Start method failed repeatedly, last %s.\n"
+msgstr
+msgid  "Reason: Method failed repeatedly."
+msgstr
+msgid  "Reason: Method failed."
+msgstr
+msgid  "Reason: Unknown."
+msgstr
+msgid  "Reason: "
+       "Restarter \"%s\" is invalid.\n"
+msgstr
+msgid  "Reason: "
+       "Restarter \"%s\" does not exist.\n"
+msgstr
+msgid  "   See: %s%s\n"
+msgstr
+msgid  "Reason: Dependency %s is absent.\n"
+msgstr
+# msgid  "   See: %s%s\n"
+# msgstr
+msgid  "Reason: "
+       "Service svc:/%s:%s is running.\n"
+msgstr
+msgid  "Reason: Service svc:/%s:%s %s"
+msgstr
+msgid  "Reason: Service svc:/%s:%s %s\n"
+msgstr
+msgid  "Reason: Service svc:/%s:%s\n"
+       "        %s\n"
+msgstr
+# msgid  "   See: %s%s\n"
+# msgstr
+msgid  "  Path: svc:/%s:%s\n"
+msgstr
+msgid  "%6s  %*ssvc:/%s:%s\n"
+msgstr
+msgid  "   See: %s\n"
+msgstr
+# msgid  "   See: %s\n"
+# msgstr
+# msgid  "Reason: "
+#        "Restarter \"%s\" is invalid.\n"
+# msgstr
+# msgid  "Reason: "
+#        "Restarter \"%s\" does not exist.\n"
+# msgstr
+msgid  "Reason: Restarter %s "
+       "has not initialized service state.\n"
+msgstr
+msgid  "Reason: Restarter %s is not running.\n"
+msgstr
+msgid  "Reason: Disabled by an administrator."
+msgstr
+msgid  "Reason: "
+       "Temporarily disabled by an administrator."
+msgstr
+msgid  "Reason: "
+       "Maintenance requested by an administrator."
+msgstr
+msgid  "Reason: Completes a dependency cycle."
+msgstr
+msgid  "Reason: Maintenance "
+       "requested by \"%s\"\n"
+msgstr
+msgid  "Reason: Maintenance "
+       "requested by another service."
+msgstr
+msgid  "Reason: Has invalid dependency."
+msgstr
+# msgid  "Reason: Restarter \"%s\" is "
+#        "invalid.\n"
+# msgstr
+msgid  "Reason: Restarting too quickly."
+msgstr
+msgid  "Reason: Restarter %s gave no explanation.\n"
+msgstr
+# msgid  "Reason: Unknown."
+# msgstr
+msgid  "Reason: Start method is running."
+msgstr
+msgid  "Reason: Transitioning to state %s.\n"
+msgstr
+msgid  "Reason: Degraded by an administrator."
+msgstr
+msgid  "Reason: Not in valid state (%s).\n"
+msgstr
+# msgid  "   See: %s%s\n"
+# msgstr
+msgid  "   See: %s(%s)\n"
+msgstr
+msgid  "   See: man -M %s -s %s %s\n"
+msgstr
+# msgid  "   See: %s\n"
+# msgstr
+msgid  "svc:/%s:%s"
+msgstr
+msgid  " (%s)\n"
+msgstr
+msgid  "  Zone: %s\n"
+msgstr
+msgid  " Alias: %s\n"
+msgstr
+msgid  " State: %s since %s\n"
+msgstr
+msgid  "Impact: None."
+msgstr
+msgid  "Impact: This service is not running."
+msgstr
+msgid  "Impact: 1 dependent service "
+       "is not running.  (Use -v for list.)"
+msgstr
+msgid  "Impact: 1 dependent service is not running:"
+msgstr
+msgid  "Impact: %d dependent services "
+       "are not running.  (Use -v for list.)\n"
+msgstr
+msgid  "Impact: %d dependent services are not running:\n"
+msgstr
+msgid  "        svc:/%s:%s\n"
+msgstr
+msgid  "failed to iterate over instances: %s\n"
+msgstr
