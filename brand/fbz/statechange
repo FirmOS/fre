@@ -1,0 +1,159 @@
+#!/bin/ksh -p
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+# Copyright 2013 Joyent, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+unset LD_LIBRARY_PATH
+PATH=/usr/bin:/usr/sbin
+export PATH
+
+. /lib/sdc/config.sh
+
+# subcommand:
+# pre
+# post
+
+# state
+# ZONE_STATE_CONFIGURED		0 (script will never see this)
+# ZONE_STATE_INCOMPLETE		1 (script will never see this)
+# ZONE_STATE_INSTALLED		2
+# ZONE_STATE_READY		3
+# ZONE_STATE_RUNNING		4
+# ZONE_STATE_SHUTTING_DOWN	5
+# ZONE_STATE_DOWN		6
+# ZONE_STATE_MOUNTED		7
+
+# cmd
+#
+# ready				0
+# boot				1
+# forceboot			2
+# reboot			3
+# halt				4
+# uninstalling			5
+# mount				6
+# forcemount			7
+# unmount			8
+
+subcommand=$1
+ZONENAME=$2
+ZONEPATH=$3
+state=$4
+cmd=$5
+
+#LOCKFILE=/etc/dladm/zone.lck
+SNAPSHOT_DIR=root/checkpoints
+#PSRSET=/usr/sbin/psrset
+
+#
+# Log a message, then exit
+#
+log_and_exit()
+{
+	echo "$1"
+	logger -p daemon.err "zone $ZONENAME $1"
+	exit 1
+}
+
+
+#
+# We're readying the zone.  Make sure the per-zone writable
+# directories exist so that we can lofs mount them.  We do this here,
+# instead of in the install script, since this list has evolved and
+# there are already zones out there in the installed state.
+#
+setup_fs()
+{
+	[ ! -d $ZONEPATH/site ] && mkdir -m755 $ZONEPATH/site
+	[ ! -d $ZONEPATH/local ] && mkdir -m755 $ZONEPATH/local
+	[ ! -d $ZONEPATH/$SNAPSHOT_DIR ] && mkdir -m755 $ZONEPATH/$SNAPSHOT_DIR
+	if [ ! -d $ZONEPATH/ccs ]; then
+		mkdir -m755 $ZONEPATH/ccs
+		(cd /usr/ccs; tar cbf 512 - *) | \
+		    (cd $ZONEPATH/ccs; tar xbf 512 -)
+	fi
+
+	uname -v > $ZONEPATH/lastbooted
+}
+
+# zonadmd unable to unmount the given path, try to cleanup so unmount can
+# succeed.
+cleanup_mount()
+{
+	echo "attempting to cleanup mount $1"
+	logger -p daemon.err "zone $ZONENAME attempting to cleanup mount $1"
+
+	fnd_procs=0
+	for i in `fuser -c $1 2>/dev/null`
+	do
+		fnd_procs=1
+
+		pty=`ps -otty -p $i | \
+		    nawk '{if ($1 != "TT" && $1 != "?") print $0}'`
+
+		if [ -n "$pty" ]; then
+			echo "shell process $i blocking zone" \
+			    "$ZONENAME shutdown, killing the process" | wall
+			echo "killing GZ user shell $i under $1"
+			logger -p daemon.err "zone $ZONENAME:" \
+			    "killing GZ user shell $i under $1"
+			kill -9 $i
+		else
+			echo "Error: GZ process $i under $1 blocking shutdown"
+			logger -p daemon.err "Error: zone $ZONENAME:" \
+			    "GZ process $i under $1 blocking shutdown"
+
+			local args="pargs: `pargs $i`"
+			echo "$args"
+			logger -p daemon.err "$args"
+
+			local tree="ptree: `ptree $i`"
+			echo "$tree"
+			logger -p daemon.err "$tree"
+		fi
+	done
+
+	if [ $fnd_procs -eq 1 ]; then
+		# Exit out to give the zoneadmd umount a chance to suceed now.
+		# Zoneadmd will give us another shot if it still can't umount.
+		sleep 1
+		exit 0
+	fi
+
+}
+
+
+#
+# Main
+#
+
+if [[ "$subcommand" == "pre" && $cmd == 0 ]]; then
+	setup_fs
+fi
+
+# Zone halt is hung unmounting, try to recover
+[[ "$subcommand" == "post" && $state == 6 && $cmd == 8 ]] && \
+    cleanup_mount "$6"
+
+
+exit 0
