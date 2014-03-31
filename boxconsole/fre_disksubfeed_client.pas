@@ -54,6 +54,7 @@ const
   cZPOOLSTATUS               = 'zpool status 1';
   cGET_ZPOOL_IOSTAT          = 'zpool iostat -v 1';
   cReadSGLogIntervalSec      = 120;
+  cZpoolQueryIntervalMSec    = 1000;
 
 type
 
@@ -69,6 +70,15 @@ type
     procedure   Execute                      ; override;
   end;
 
+  { TZpoolThread }
+
+  TZpoolThread=class(TThread)
+  private
+    fsubfeeder        : TFRE_DISKSUB_FEED_SERVER;
+  public
+    constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
+    procedure   Execute                      ; override;
+  end;
 
   { TDiskAndEnclosureThread }
 
@@ -91,48 +101,23 @@ type
     constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
   end;
 
-  { TFRE_ZPOOL_STATUS_PARSER }
-
-  TFRE_ZPOOL_STATUS_PARSER=class(TFOS_PARSER_PROC)
-  private
-    fsubfeeder        : TFRE_DISKSUB_FEED_SERVER;
-  protected
-    procedure   MyOutStreamCallBack          (const stream:TStream); override;
-  public
-    constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
-  end;
-
-  { TFRE_ZPOOL_IOSTAT_PARSER }
-
-  TFRE_ZPOOL_IOSTAT_PARSER=class(TFOS_PARSER_PROC)
-  private
-     fsubfeeder          : TFRE_DISKSUB_FEED_SERVER;
-  protected
-     procedure   MySetup ; override;
-     procedure   MyOutStreamCallBack (const stream:TStream); override;
-  public
-    constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
-  end;
-
   { TFRE_DISKSUB_FEED_SERVER }
 
   TFRE_DISKSUB_FEED_SERVER=class(TFRE_DBO_SERVER)
   private
     FDataTimer                               : IFRE_APSC_TIMER;
     FDiskIoStatMon                           : TFRE_IOSTAT_PARSER;
-    FPoolStatusMon                           : TFRE_ZPOOL_STATUS_PARSER;
-    FPoolIostatMon                           : TFRE_ZPOOL_IOSTAT_PARSER;
     Fdiskenclosurethread                     : TDiskAndEnclosureThread;
     FMpathAdmThread                          : TMPathAdmThread;
+    FZpoolThread                             : TZpoolThread;
 
     procedure  _TerminateThreads             ;
     procedure  _WaitForAndFreeThreads        ;
 
     procedure  StartDiskAndEnclosureThread   ;
     procedure  StartIostatParser             ;
-    procedure  StartZpoolStatusParser        ;
-    procedure  StartZpoolIOStatParser        ;
     procedure  StartMpathAdmThread           ;
+    procedure  StartZPoolThread              ;
 
   protected
     procedure  Setup           ; override;
@@ -144,6 +129,66 @@ type
 
 
 implementation
+
+{ TZpoolThread }
+
+constructor TZpoolThread.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
+begin
+  inherited Create(false);
+  fsubfeeder := subfeeder;
+end;
+
+procedure TZpoolThread.Execute;
+var zo       : TFRE_DB_ZFSLib;
+    pools    : IFRE_DB_Object;
+    error    : string;
+    res      : integer;
+    resdbo   : IFRE_DB_Object;
+    poollist : IFRE_DB_Object;
+
+
+    procedure _PoolIterator(const obj: IFRE_DB_Object);
+    var pool : IFRE_DB_Object;
+    begin
+      if res=0 then
+        begin
+          res := zo.GetPoolStatus(obj.Field('name').asstring,error,pool);
+          pools.Field(obj.Field('name').asstring).AsObject:=pool;
+        end;
+    end;
+
+begin
+  zo     := TFRE_DB_ZFSLib.create;
+  try
+    repeat
+      try
+        pools  := GFRE_DBI.NewObject;
+        res    := zo.GetActivePools(error,poollist);
+        if res=0 then
+          begin
+            poollist.ForAllObjects(@_PoolIterator);
+          end;
+
+        resdbo := GFRE_DBI.NewObject;
+        resdbo.Field('subfeed').asstring      := 'ZPOOLSTATUS';
+        resdbo.Field('resultcode').AsInt32    := res;
+        resdbo.Field('error').asstring        := error;
+        resdbo.Field('data').AsObject         := pools;
+        resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+//        writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
+        fsubfeeder.PushDataToClients(resdbo);
+
+        if not Terminated then
+           sleep(cZpoolQueryIntervalMSec);
+      except on E:Exception do begin
+        GFRE_DBI.LogError(dblc_APPLICATION,'ZPoolThread Exception %s',[e.Message]);
+        raise;
+      end; end;
+    until Terminated;
+  finally
+    zo.Free;
+  end;
+end;
 
 { TMPathAdmThread }
 
@@ -198,6 +243,10 @@ begin
     begin
       FMpathAdmThread.Terminate;
     end;
+  if Assigned(FZpoolThread) then
+    begin
+      FZpoolThread.Terminate;
+    end;
 end;
 
 procedure TFRE_DISKSUB_FEED_SERVER._WaitForAndFreeThreads;
@@ -214,6 +263,12 @@ begin
       FMpathAdmThread.Free;
       FMpathAdmThread:=nil;
     end;
+  if Assigned(FZpoolThread) then
+    begin
+      FZpoolThread.WaitFor;
+      FZpoolThread.Free;
+      FZpoolThread:=nil;
+    end;
 end;
 
 
@@ -228,21 +283,14 @@ begin
   FDiskIoStatMon.Enable;
 end;
 
-procedure TFRE_DISKSUB_FEED_SERVER.StartZpoolStatusParser;
-begin
-  FPoolStatusMon := TFRE_ZPOOL_STATUS_PARSER.Create(self);
-  FPoolStatusMon.Enable;
-end;
-
-procedure TFRE_DISKSUB_FEED_SERVER.StartZpoolIOStatParser;
-begin
-  FPoolIostatMon := TFRE_ZPOOL_IOSTAT_PARSER.Create(self);
-  FPoolIostatMon.Enable;
-end;
-
 procedure TFRE_DISKSUB_FEED_SERVER.StartMpathAdmThread;
 begin
   FMpathAdmThread:=TMPathAdmThread.Create(self);
+end;
+
+procedure TFRE_DISKSUB_FEED_SERVER.StartZPoolThread;
+begin
+  FZpoolThread:=TZpoolThread.Create(self);
 end;
 
 
@@ -268,8 +316,7 @@ begin
 try
     StartIostatParser;
     StartDiskAndEnclosureThread;
-    StartZpoolStatusParser;
-    StartZpoolIOStatParser;
+    StartZpoolThread;
     StartMpathAdmThread;
   except on e:Exception do begin
     GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
@@ -283,10 +330,6 @@ begin
 
   if Assigned(FDiskIoStatMon) then
     FDiskIoStatMon.Free;
-  if Assigned(FPoolStatusMon) then
-    FPoolStatusMon.Free;
-  if Assigned(FPoolIostatMon) then
-    FPoolIostatMon.Free;
 
   _TerminateThreads;
   _WaitForAndFreeThreads;
@@ -311,197 +354,6 @@ begin
     GFRE_BT.CriticalAbort('IOStatMon not assigned in IOStat_Getdata');
 end;
 
-{ TFRE_ZPOOL_IOSTAT_PARSER }
-
-procedure TFRE_ZPOOL_IOSTAT_PARSER.MyOutStreamCallBack(const stream: TStream);
-var st       : TStringStream;
-    sl       : TStringlist;
-    i,j      : integer;
-    s        : string;
-    lc       : integer;
-    SA       : TFOSStringArray;
-    pool_name: String;
-    np       : Boolean;
-    vdevc    : Integer;
-    resdbo   : IFRE_DB_Object;
-    ziostat  : TFRE_DB_ZPOOL_IOSTAT;
-
-    function VdevName(const devn:string) : string;                 // assume device numbering is the same as in zpool status
-    begin
-      if (Pos('raidz',devn)>0) or (Pos('mirror',devn)>0) then
-        begin
-          result := pool_name+'/'+devn+'-'+inttostr(vdevc);
-          inc(vdevc);
-        end
-      else
-        result := devn;
-    end;
-
-  //                               capacity     operations    bandwidth
-  // pool                       alloc   free   read  write   read  write
-  procedure _UpdateZpoolIostat;
-  var zfsObjId : string[30];
-  begin
-    zfsObjId := Fline[0];
-    if np then
-      begin
-        pool_name := zfsObjId;
-        np:=false;
-      end
-    else
-      zfsObjId:=VdevName(zfsObjId);
-
-    ziostat := TFRE_DB_ZPOOL_IOSTAT.CreateForDB;
-    ziostat.iopsR      := Fline[3];//can be -
-    ziostat.iopsW      := Fline[4];
-    ziostat.transferR  := Fline[5];//in K,M
-    ziostat.transferW  := Fline[6];//
-    ziostat.Field('zfs_guid').AsString:=GFRE_BT.HashString_MD5_HEX(cFRE_MACHINE_NAME+'_'+zfsObjId);
-//    writeln('SWL: ZPIOSTAT ',zfsObjId, ' ',   ziostat.Field('zfs_guid').AsString);
-    FData.Field(pool_name).AsObject.Field(zfsobjId).AsObject:=ziostat;
-  end;
-
-begin
-  vdevc:=0;
-  stream.Position:=0;
-  st := TStringStream.Create('');
-  try
-    st.CopyFrom(stream,stream.Size);
-    stream.Size:=0;
-    FLines.DelimitedText := st.DataString;
-    if Flines.count>0 then begin
-      if pos('capacity',Flines[0])>1 then begin
-        lc := FLines.Count;
-        for i := 2 to lc-4 do begin
-          s := FLines[i];
-          if s='' then begin
-            continue;
-          end;
-          GFRE_BT.SeperateString(s,' ',SA);
-          fline.Clear;
-          for j := 0 to high(sa) do begin
-            if sa[j]<>'' then FLine.Add(sa[j]);
-          end;
-          if pos('-',Fline[0])=1 then begin
-            np:=true;
-            vdevc:=0;
-            continue;
-          end;
-          if FLine.count<>7 then
-            continue;
-            //raise EFRE_Exception.Create('zpool iostat parser error, unexpected val count ' + IntToStr(fline.Count)+' '+fline.text);
-          FLock.Acquire;
-          try
-            try
-              _UpdateZpoolIostat;
-            except on E:Exception do begin
-              GFRE_DBI.LogError(dblc_APPLICATION,'ZPool Iostat Parser Error: %s',[e.Message]);
-              GFRE_DBI.LogError(dblc_APPLICATION,'ZPool Iostat Text: %s',[Fline.DelimitedText]);
-            end;end;
-          finally
-            FLock.Release;
-          end;
-        end;
-      end;
-    end else begin
-      GFRE_DBI.LogInfo(dblc_APPLICATION,'ZPool Iostat IGNORING JUNK: %d [%s]',[st.Size,st.DataString]);
-    end;
-  finally
-    st.Free;
-  end;
-  resdbo := GFRE_DBI.NewObject;
-  resdbo.Field('subfeed').asstring      := 'ZPOOLIOSTAT';
-  resdbo.Field('data').AsObject         := Get_Data_Object;
-  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-//  writeln('ZPOOLIOSTAT:',resdbo.DumpToString());
-  fsubfeeder.PushDataToClients(resdbo);
-end;
-
-constructor TFRE_ZPOOL_IOSTAT_PARSER.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
-begin
-  inherited Create(cFRE_REMOTE_USER,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'),cFRE_REMOTE_HOST,cGET_ZPOOL_IOSTAT);
-  fsubfeeder := subfeeder;
-end;
-
-
-
-
-procedure TFRE_ZPOOL_IOSTAT_PARSER.MySetup;
-begin
-  FLine.Delimiter:=' ';
-end;
-
-
-
-{ TFRE_ZPOOL_STATUS_PARSER }
-
-procedure TFRE_ZPOOL_STATUS_PARSER.MyOutStreamCallBack(const stream: TStream);
-
-type
-    TpoolparseState = (pp_notfound,pp_found);
-
-var st     : TStringStream;
-    obj    : IFRE_DB_Object;
-    resdbo : IFRE_DB_Object;
-    plines : TStringList;
-    i      : NativeInt;
-    pstate : TpoolparseState;
-    pool   : TFRE_DB_ZFS_POOL;
-
-begin
-  obj := GFRE_DBI.NewObject;
-
-  pstate := pp_notfound;
-  stream.Position:=0;
-  st     := TStringStream.Create('');
-  plines := TStringList.Create;
-  try
-    st.CopyFrom(stream,stream.Size);
-    stream.Size:=0;
-    flines.Text:=st.DataString;
-    for i:=0 to flines.Count-1 do begin
-      case pstate of
-        pp_notfound:
-          begin
-            if Pos('pool:',flines[i])>0 then
-              begin
-                plines.Add(flines[i]);
-                pstate := pp_found;
-              end;
-          end;
-        pp_found:
-          begin
-            plines.add(flines[i]);
-            if Pos('errors:',flines[i])>0 then
-              begin
-//                if ParseZpool(GFRE_BT.StringFromFile('status'),pool) then              //DEBUG
-
-                if ParseZpool(plines.Text,pool) then
-                  obj.Field(pool.Field('pool').asstring).AsObject:=pool;
-                plines.Clear;
-                pstate := pp_notfound;
-              end;
-          end;
-      end;
-    end;
-  finally
-    plines.Free;
-    st.free;
-  end;
-  resdbo := GFRE_DBI.NewObject;
-  resdbo.Field('subfeed').asstring      := 'ZPOOLSTATUS';
-  resdbo.Field('data').AsObject         := obj;
-  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-
-//  writeln('DUMPPOOL:',obj.DumpToString());
-  fsubfeeder.PushDataToClients(resdbo);
-end;
-
-constructor TFRE_ZPOOL_STATUS_PARSER.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
-begin
-  inherited Create(cFRE_REMOTE_USER,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'),cFRE_REMOTE_HOST,cZPOOLSTATUS);
-  fsubfeeder := subfeeder;
-end;
 
 { TDiskAndEnclosureThread }
 
