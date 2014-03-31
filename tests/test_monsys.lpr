@@ -19,6 +19,7 @@ begin
 //  InitMinimal(true);
   InitMinimal;
   Initialize_Read_FRE_CFG_Parameter;
+  GFRE_DBI.LocalZone:='Europe/Vienna';
 
   FRE_DBBASE.Register_DB_Extensions;
   FRE_DBBUSINESS.Register_DB_Extensions;
