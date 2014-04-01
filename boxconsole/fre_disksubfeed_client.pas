@@ -46,7 +46,7 @@ interface
 
 uses
   Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basedbo_server,fre_system,
-  fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk,fre_base_parser;
+  fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk,fre_base_parser,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
 
 const
   cIOSTAT                    = 'iostat -rxnsmde 1';
@@ -139,8 +139,7 @@ begin
 end;
 
 procedure TZpoolThread.Execute;
-var zo       : TFRE_DB_ZFSLib;
-    pools    : IFRE_DB_Object;
+var pools    : IFRE_DB_Object;
     error    : string;
     res      : integer;
     resdbo   : IFRE_DB_Object;
@@ -152,42 +151,38 @@ var zo       : TFRE_DB_ZFSLib;
     begin
       if res=0 then
         begin
-          res := zo.GetPoolStatus(obj.Field('name').asstring,error,pool);
+          res :=  fosillu_zfs_GetPoolStatusDBO(obj.Field('name').asstring,error,pool);
           pools.Field(obj.Field('name').asstring).AsObject:=pool;
         end;
     end;
 
 begin
-  zo     := TFRE_DB_ZFSLib.create;
-  try
-    repeat
-      try
-        pools  := GFRE_DBI.NewObject;
-        res    := zo.GetActivePools(error,poollist);
-        if res=0 then
-          begin
-            poollist.ForAllObjects(@_PoolIterator);
-          end;
+  repeat
+    try
+      pools  := GFRE_DBI.NewObject;
+      res    := fosillu_zfs_GetActivePoolsDBO(error,poollist);
+ //     writeln('SWL:POOLLIST',poollist.DumpToString());
+      if res=0 then
+        begin
+          poollist.ForAllObjects(@_PoolIterator);
+        end;
 
-        resdbo := GFRE_DBI.NewObject;
-        resdbo.Field('subfeed').asstring      := 'ZPOOLSTATUS';
-        resdbo.Field('resultcode').AsInt32    := res;
-        resdbo.Field('error').asstring        := error;
-        resdbo.Field('data').AsObject         := pools;
-        resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-//        writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
-        fsubfeeder.PushDataToClients(resdbo);
+      resdbo := GFRE_DBI.NewObject;
+      resdbo.Field('subfeed').asstring      := 'ZPOOLSTATUS';
+      resdbo.Field('resultcode').AsInt32    := res;
+      resdbo.Field('error').asstring        := error;
+      resdbo.Field('data').AsObject         := pools;
+      resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+//      writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
+      fsubfeeder.PushDataToClients(resdbo);
 
-        if not Terminated then
-           sleep(cZpoolQueryIntervalMSec);
-      except on E:Exception do begin
-        GFRE_DBI.LogError(dblc_APPLICATION,'ZPoolThread Exception %s',[e.Message]);
-        raise;
-      end; end;
-    until Terminated;
-  finally
-    zo.Free;
-  end;
+      if not Terminated then
+         sleep(cZpoolQueryIntervalMSec);
+    except on E:Exception do begin
+      GFRE_DBI.LogError(dblc_APPLICATION,'ZPoolThread Exception %s',[e.Message]);
+      raise;
+    end; end;
+  until Terminated;
 end;
 
 { TMPathAdmThread }
@@ -303,6 +298,8 @@ begin
   fre_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
 
+  InitIllumosLibraryHandles;
+
   FDBO_Srv_Cfg.SpecialFile := cFRE_UX_SOCKS_DIR+'disksub';
   FDBO_Srv_Cfg.Id          := 'DiskSub';
   FDBO_Srv_Cfg.Port        := '44101';
@@ -334,6 +331,7 @@ begin
   _TerminateThreads;
   _WaitForAndFreeThreads;
 
+  FinishIllumosLibraryHandles;
   inherited Destroy;
 end;
 
