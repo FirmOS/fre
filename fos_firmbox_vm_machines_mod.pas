@@ -548,7 +548,6 @@ begin
       SetDeriveTransformation(tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ColumnResizeable],'',nil,'',nil,nil,CWSF(@WEB_VM_Details));
       SetDeriveParent(vmcp);
-      AddRightFilterForEntryAndUser('RF','VMLIST');
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
