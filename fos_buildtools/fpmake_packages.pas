@@ -25,7 +25,6 @@ program fpmake_packages;
        with Targets do begin
         AddUnit('fos_firmbox_common.pas');
         AddUnit('fos_firmbox_applianceapp.pas');
-        AddUnit('fos_firmbox_fileserver.pas');
         AddUnit('fos_firmbox_infrastructureapp.pas');
         AddUnit('fos_firmbox_servicesapp.pas');
         AddUnit('fos_firmbox_storageapp.pas');

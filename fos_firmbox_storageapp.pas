@@ -10,7 +10,7 @@ uses
   FOS_TOOL_INTERFACES,
   FRE_ZFS,
   FRE_DB_INTERFACE,fos_stats_control_interface,FOS_VM_CONTROL_INTERFACE,
-  fos_firmbox_vm_machines_mod,fos_firmbox_fileserver, fre_scsi,fre_hal_disk, fre_hal_schemes,
+  fos_firmbox_vm_machines_mod, fre_scsi,fre_hal_disk, fre_hal_schemes,
   FRE_DB_COMMON;
 
 var
