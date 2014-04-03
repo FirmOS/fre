@@ -52,7 +52,6 @@ type
   published
     function        WEB_RAW_DATA_FEED             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_RAW_DATA_FEED30           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_RAW_DISK_FEED             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_APPLIANCE_STATUS_MOD }
@@ -69,7 +68,7 @@ type
     procedure       SetupAppModuleStructure   ; override;
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
     procedure       MyServerInitializeModule  (const admin_dbc : IFRE_DB_CONNECTION); override;
-    procedure       UpdateDiskCollection      (const pool_disks : IFRE_DB_COLLECTION ; const data:IFRE_DB_Object);
+    procedure       UpdateDiskCollection      (const pool_disks : IFRE_DB_COLLECTION ; const data:IFRE_DB_Object);  //obsolete, change to new collection
   published
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_CPUStatusStopStart    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -84,7 +83,6 @@ type
     function        WEB_CacheStatusInit       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_RAW_UPDATE            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_RAW_UPDATE30          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_RAW_DISK_UPDATE       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD }
@@ -711,6 +709,8 @@ var       debugs   : string;
   end;
 
 begin
+  //obsolete
+  exit;
   debugs := '';
   pool_disks.StartBlockUpdating;
   try
@@ -1001,17 +1001,6 @@ begin
   result := GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.WEB_RAW_DISK_UPDATE(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-var pool_disks : IFRE_DB_COLLECTION;
-    dbc        : IFRE_DB_CONNECTION;
-
-begin
-  dbc := GetDBConnection(input);
-  pool_disks := dbc.GetCollection('POOL_DISKS');
-  UpdateDiskCollection(pool_disks,input.Field('DISK').AsObject);
-  result := GFRE_DB_NIL_DESC;
-end;
-
 { TFRE_FIRMBOX_APPLIANCE_APP }
 
 procedure TFRE_FIRMBOX_APPLIANCE_APP.SetupApplicationStructure;
@@ -1154,12 +1143,6 @@ end;
 function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DATA_FEED30(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   result := DelegateInvoke(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.ClassName,'RAW_UPDATE30',input);
-end;
-
-function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DISK_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  result := DelegateInvoke(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.ClassName,'RAW_DISK_UPDATE',input);
-//  result := DelegateInvoke('STORAGE_POOLS','RAW_DISK_FEED',data);
 end;
 
 procedure Register_DB_Extensions;

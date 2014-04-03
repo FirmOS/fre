@@ -43,7 +43,8 @@ interface
 
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
-  fre_system,fos_stats_control_interface, fre_hal_disk,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes;
+  fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,
+  fre_hal_update;
 
 
 type
@@ -67,7 +68,7 @@ type
     FAPPL_FeedAppUid      : TGuid;
     vmc                   : IFOS_VM_HOST_CONTROL; // Todo Move MVStats to Statscontroller
     statscontroller       : IFOS_STATS_CONTROL;
-    disk_hal              : TFRE_HAL_DISK;
+    disk_hal              : TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT;
 
   private
 
@@ -112,7 +113,7 @@ begin
 
   if Get_AppClassAndUid('TFRE_FIRMBOX_STORAGE_APP',FStorage_FeedAppClass,FSTORAGE_FeedAppUid) then begin
     FStorage_Feeding   := True;
-    disk_hal.ClearSnapshotAndUpdates;
+    disk_hal.ClearStatusSnapshotAndUpdates;
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_STORAGE_APP APP NOT FOUND!');
   end;
@@ -153,6 +154,7 @@ begin
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
+  fre_hal_update.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
 
   statscontroller := Get_Stats_Control       (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
@@ -163,7 +165,7 @@ begin
   statscontroller.StartZFSParser(true);
 
 
-  disk_hal   := TFRE_HAL_DISK.Create;
+  disk_hal   := TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT.Create;
 
   if cFRE_SUBFEEDER_IP='' then
     AddSubFeederEventViaUX('disksub')
@@ -229,8 +231,8 @@ begin
   //
   if FStorage_Feeding then
     begin
-      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeSnaphot);
-      disk_hal.ClearSnapshotAndUpdates; //force always full state
+      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot);
+  //    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
     end;
 end;
 

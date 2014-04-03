@@ -18,11 +18,12 @@ uses
   fos_firmbox_applianceapp,
   fos_firmbox_vm_machines_mod,
   fre_hal_schemes,
+  fre_hal_update,
   FRE_ZFS,
   fre_scsi,
   fre_testcase,
   fre_system,
-  fre_hal_disk,
+  fre_hal_disk_enclosure_pool_mangement,
   fos_vm_control_interface
 ;
 
@@ -612,6 +613,7 @@ begin
   FRE_DBBASE.Register_DB_Extensions;
   FRE_DBBUSINESS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
+  fre_hal_update.Register_DB_Extensions;
   FRE_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
   fos_firmbox_applianceapp.Register_DB_Extensions;
