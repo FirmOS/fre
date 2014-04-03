@@ -332,10 +332,10 @@ begin
     if (conn.sys.FetchGroupById(groupid,group)<>edb_OK) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'Group not found!'));
 
     rrole := _getRolename(share_s,rtRead);
-    if conn.sys.RoleExists(rrole+'@'+group.GetDomain(conn))=false then raise EFRE_DB_Exception.Create('No Read Role for Fileshare !');
+    if conn.sys.RoleExists(rrole,group.DomainID)=false then raise EFRE_DB_Exception.Create('No Read Role for Fileshare !');
 
     wrole := _getRolename(share_s,rtWrite);
-    if conn.sys.RoleExists(wrole+'@'+group.GetDomain(conn))=false then raise EFRE_DB_Exception.Create('No Write Role for Fileshare !');
+    if conn.sys.RoleExists(wrole,group.DomainID)=false then raise EFRE_DB_Exception.Create('No Write Role for Fileshare !');
 
     if change_read then begin
       if read then begin
