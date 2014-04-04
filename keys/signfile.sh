@@ -1,0 +1,1 @@
+openssl dgst -sha512 -sign firmos_signkey.pem -out $1.sha512 $1
