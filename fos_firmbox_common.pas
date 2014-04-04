@@ -346,30 +346,49 @@ var conn     : IFRE_DB_Connection;
   procedure InitTestUser;
   var login     : TFRE_DB_String;
       res       : TFRE_DB_Errortype;
-      userdbo   : IFRE_DB_USER;
       passwd    : TFRE_DB_String;
+      domainId  : TGUID;
+      userObj   : IFRE_DB_USER;
+      groups    : TFRE_DB_GUIDArray;
+      group     : IFRE_DB_GROUP;
   begin
 
-      login  :='firmfeeder@'+CFRE_DB_SYS_DOMAIN_NAME;
+      login  :='firmfeeder';
       passwd :='x';
 
-      if conn.sys.UserExists(login) then
-        CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
-      CheckDbResult(conn.sys.AddUser(login,passwd,'Feeder','Feeder'),'cannot add user '+login);
+      domainId:=conn.sys.DomainID(CFRE_DB_SYS_DOMAIN_NAME);
 
-      CheckDbResult(conn.sys.ModifyUserGroups(login,TFRE_DB_StringArray.create('VMFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'APPLIANCEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'STORAGEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME),true),'cannot set user groups '+login);
-      CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
+      if conn.sys.UserExists(login,domainId) then
+        CheckDbResult(conn.sys.DeleteUser(login,domainId),'cannot delete user '+login);
+      CheckDbResult(conn.sys.AddUser(login,domainId,passwd,'Feeder','Feeder'),'cannot add user '+login);
 
-      login  :='firmviewer@'+CFRE_DB_SYS_DOMAIN_NAME;
+      CheckDbResult(conn.sys.FetchUser(login,domainId,userObj));
+
+      groups:=TFRE_DB_GUIDArray.create;
+      SetLength(groups,3);
+      CheckDbResult(conn.sys.FetchGroup('VMFEEDER',domainId,group));
+      groups[0]:=group.UID;
+      SetLength(groups,3);
+      CheckDbResult(conn.sys.FetchGroup('APPLIANCEFEEDER',domainId,group));
+      groups[1]:=group.UID;
+      SetLength(groups,3);
+      CheckDbResult(conn.sys.FetchGroup('STORAGEFEEDER',domainId,group));
+      groups[2]:=group.UID;
+
+      CheckDbResult(conn.sys.ModifyUserGroupsById(userObj.UID,groups,true),'cannot set user groups '+login);
+
+      login  :='firmviewer';
       passwd :='x';
 
-      if conn.sys.UserExists(login) then
-        CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
-      CheckDbResult(conn.sys.AddUser(login,passwd,'Firmviewer','Firmviewer'),'cannot add user '+login);
+      if conn.sys.UserExists(login,domainId) then
+        CheckDbResult(conn.sys.DeleteUser(login,domainId),'cannot delete user '+login);
+      CheckDbResult(conn.sys.AddUser(login,domainId,passwd,'Firmviewer','Firmviewer'),'cannot add user '+login);
 
-      CheckDbResult(conn.sys.ModifyUserGroups(login,TFRE_DB_StringArray.Create('VMVIEWER'+'@'+CFRE_DB_SYS_DOMAIN_NAME),true),'cannot set user groups '+login);
-      CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
+      CheckDbResult(conn.sys.FetchUser(login,domainId,userObj));
 
+      CheckDbResult(conn.sys.FetchGroup('VMVIEWER',domainId,group));
+
+      CheckDbResult(conn.sys.ModifyUserGroupsById(userObj.UID,TFRE_DB_GUIDArray.Create(group.UID),true),'cannot set user groups '+login);
   end;
 
 begin
