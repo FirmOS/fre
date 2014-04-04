@@ -3,7 +3,8 @@ program svctest;
 {$mode objfpc}{$H+}
 
 uses
-  cthreads,unixtype,libscf,nvpair,libzfs,zfs,Classes, fos_illumos_defs,ctypes,sysutils,strutils;
+  cthreads, unixtype, fosillu_libscf, fosillu_nvpair, fosillu_libzfs, fosillu_zfs, Classes, fos_illumos_defs,fosillu_mnttab,fosillu_libzonecfg,
+  ctypes, sysutils, strutils;
 
 var h      : Pscf_handle_t;
     res    : integer;

@@ -9,7 +9,7 @@
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
-      <Title Value="svctest"/>
+      <Title Value="zfszonecfgtest"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
@@ -30,13 +30,14 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
+        <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <Units Count="3">
+    <Units Count="5">
       <Unit0>
-        <Filename Value="svctest.lpr"/>
+        <Filename Value="zfszonecfgtest.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="svctest"/>
+        <UnitName Value="zfszonecfgtest"/>
       </Unit0>
       <Unit1>
         <Filename Value="../zpconfig/fos_illumos_defs.pas"/>
@@ -48,17 +49,27 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="fos_firmbox_svcctrl"/>
       </Unit2>
+      <Unit3>
+        <Filename Value="../../fos_firmbox_zonectrl.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fos_firmbox_zonectrl"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="../../../hal/fosillu_hal_dbo_zfs_dataset.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fosillu_hal_dbo_zfs_dataset"/>
+      </Unit4>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="svctest"/>
+      <Filename Value="zfszonecfgtest"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <Libraries Value="/lib/64/;/lib/"/>
-      <OtherUnitFiles Value="../../../hal;../.."/>
+      <OtherUnitFiles Value="../../../hal;../../../core/fre_core;../../../core/fos_interfaces;../.."/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then
@@ -73,6 +84,11 @@ if TargetOS = 'solaris' then
     <CodeGeneration>
       <TargetCPU Value="i386"/>
     </CodeGeneration>
+    <Linking>
+      <Debugging>
+        <UseHeaptrc Value="True"/>
+      </Debugging>
+    </Linking>
     <Other>
       <CompilerMessages>
         <MsgFileName Value=""/>
