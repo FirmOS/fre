@@ -45,7 +45,7 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
-
+  classes,
   FRE_DBTEST,
   fos_firmbox_common,
   fos_artemes_common,
@@ -62,11 +62,85 @@ uses
 type
   { TFRE_Testserver }
   TFRE_Testserver = class(TFRE_CLISRV_APP)
+  protected
+    procedure   AddCommandLineOptions; override;
+    function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
+    function    AfterStartupTerminatingCommands:boolean ; override; { cmd's that should be executed with db core init, they terminate}
+    function    AfterInitDBTerminatingCommands:boolean  ; override; { cmd's that should be executed with full db init, they terminate}
+    procedure   ParseSetSystemFlags                     ; override; { Setting of global flags before startup go here }
+
+    procedure   GenerateTestLicense  (const file_name:string='testlic.txt');
+    procedure   ApplyLicense         (const file_name:string='testlic.txt');
+    procedure   VerifyLicence        ;
   end;
 
   { TFRE_Testserver }
 var
   Application: TFRE_Testserver;
+
+procedure TFRE_Testserver.AddCommandLineOptions;
+begin
+  inherited;
+  AddHelpOutLine('Extended:');
+  AddCheckOption('*','gentestlic:'   ,'                | --gentestlic=<unqid,cstid>     : generate a debug test license with fixed featureset');
+  AddCheckOption('*','verifylic'     ,'                | --verifylic                    : verify license status of the db system');
+  AddCheckOption('*','applylic:'     ,'                | --applylic=<licfile>           : (re)apply a license file');
+end;
+
+function TFRE_Testserver.PreStartupTerminatingCommands: boolean;
+begin
+  Result:=inherited PreStartupTerminatingCommands;
+  if HasOption('verifylic') then
+    begin
+      result := true;
+      VerifyLicence;
+      exit;
+    end;
+end;
+
+function TFRE_Testserver.AfterStartupTerminatingCommands: boolean;
+begin
+  Result:=inherited AfterStartupTerminatingCommands;
+  if HasOption('applylic)') then
+    begin
+      result := true;
+      ApplyLicense;
+      exit;
+    end;
+end;
+
+function TFRE_Testserver.AfterInitDBTerminatingCommands: boolean;
+begin
+  Result:=inherited AfterInitDBTerminatingCommands;
+  if HasOption('gentestlic') then
+    begin
+      result := true;
+      GenerateTestLicense(GetOptionValue('gentestlic'));
+      exit;
+    end;
+end;
+
+procedure TFRE_Testserver.ParseSetSystemFlags;
+begin
+  inherited ParseSetSystemFlags;
+end;
+
+procedure TFRE_Testserver.GenerateTestLicense(const file_name: string);
+begin
+  writeln('TEST LICENSE ',file_name);
+end;
+
+procedure TFRE_Testserver.ApplyLicense(const file_name: string);
+begin
+  writeln('APPLY LICENSE');
+end;
+
+procedure TFRE_Testserver.VerifyLicence;
+begin
+  writeln('VERIFY LICENSE');
+end;
+
+
 begin
   Application:=TFRE_Testserver.Create(nil);
   Application.Title:='FirmOS Testserver';
