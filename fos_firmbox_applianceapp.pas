@@ -599,7 +599,7 @@ begin
 
     ast   := session.NewDerivedCollection('APP_POOL_AST');
     ast.SetDeriveParent(disks);
-    ast.AddOrderField('1','diskid',true);
+    ast.SetDefaultOrderField('diskid',true);
     ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20);
     SetLength(labels,ast.Count);
     ast.ForAll(@_AddDisk);
@@ -607,17 +607,17 @@ begin
 
     rbw   := session.NewDerivedCollection('APP_POOL_RBW');
     rbw.SetDeriveParent(disks);
-    rbw.AddOrderField('1','diskid',true);
+    rbw.SetDefaultOrderField('diskid',true);
     rbw.SetDisplayTypeChart('Raw Disk Bandwidth Read (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('rbw'),false,false,labels,false,400000);
 
     wbw   := session.NewDerivedCollection('APP_POOL_WBW');
     wbw.SetDeriveParent(disks);
-    wbw.AddOrderField('1','diskid',true);
+    wbw.SetDefaultOrderField('diskid',true);
     wbw.SetDisplayTypeChart('Raw Disk Bandwidth Write (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('wbw'),false,false,labels,false,400000);
 
     busy  := session.NewDerivedCollection('APP_POOL_BUSY');
     busy.SetDeriveParent(disks);
-    busy.AddOrderField('1','diskid',true);
+    busy.SetDefaultOrderField('diskid',true);
     busy.SetDisplayTypeChart('Raw Disk Busy Times [%]',fdbct_column,TFRE_DB_StringArray.Create('b'),false,false,labels,false,100);
 
   end;

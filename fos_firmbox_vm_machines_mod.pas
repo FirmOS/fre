@@ -579,7 +579,7 @@ begin
     scs:= session.NewDerivedCollection('VM_CH_SCS_DERIVED');
     with scs do begin
       SetDeriveTransformation(transform);
-      AddOrderField('scs_order','order',true);
+      SetDefaultOrderField('order',true);
       SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
       SetDeriveParent(scsp);
     end;
@@ -591,7 +591,7 @@ begin
     keyboards:= session.NewDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
     with keyboards do begin
       SetDeriveTransformation(transform);
-      AddOrderField('keyboard_order','order',true);
+      SetDefaultOrderField('order',true);
       SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
       SetDeriveParent(keyboardsp);
     end;

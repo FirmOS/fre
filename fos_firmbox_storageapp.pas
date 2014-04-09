@@ -437,7 +437,7 @@ begin
     share_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
     with share_dc do begin
       //SetDeriveParent(conn.Collection('fileshare'));
-      SetReferentialLinkMode(['TFRE_DB_VIRTUAL_FILESHARE<FILESERVER']);
+      // SetReferentialLinkMode(['TFRE_DB_VIRTUAL_FILESHARE<FILESERVER']); CHANGE TO REFLINKFILTER MODE
       //AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_VIRTUAL_FILESHARE.ClassName));
       SetDeriveTransformation(share_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSShareMenu),nil,CWSF(@WEB_VFSShareSC));
@@ -1002,7 +1002,7 @@ begin
     end;
     nfs_access_dc := session.NewDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_ACCESS_GRID');
     with nfs_access_dc do begin
-      SetReferentialLinkMode(['TFRE_DB_NFS_ACCESS<FILESHARE']);
+//      SetReferentialLinkMode(['TFRE_DB_NFS_ACCESS<FILESHARE']); change to reflink filter mode
 //      SetDeriveParent(conn.Collection('fileshare_access'));
       SetDeriveTransformation(nfs_access_tr_Grid);
 //      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_NFS_ACCESS.ClassName));
@@ -1033,7 +1033,7 @@ begin
     end;
     lun_view_dc := session.NewDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_VIEW_GRID');
     with lun_view_dc do begin
-      SetReferentialLinkMode(['TFRE_DB_LUN_VIEW<FILESHARE']);
+      //SetReferentialLinkMode(['TFRE_DB_LUN_VIEW<FILESHARE']); change to reflink filter mode
 //      SetDeriveParent(conn.Collection('fileshare_access'));
       SetDeriveTransformation(lun_view_tr_Grid);
 //      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_LUN_VIEW.ClassName));
@@ -2294,7 +2294,7 @@ begin
 
     ast   := session.NewDerivedCollection('POOL_AST');
     ast.SetDeriveParent(disks);
-    ast.AddOrderField('1','diskid',true);
+    ast.SetDefaultOrderField('diskid',true);
     ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20);
     SetLength(labels,ast.Count);
     ast.ForAll(@_AddDisk);
@@ -2302,15 +2302,15 @@ begin
 
     rbw   := session.NewDerivedCollection('POOL_RBW');
     rbw.SetDeriveParent(disks);
-    rbw.AddOrderField('1','diskid',true);
+    rbw.SetDefaultOrderField('diskid',true);
     rbw.SetDisplayTypeChart('Raw Disk Bandwidth Read (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('rbw'),false,false,labels,false,160000);
     wbw   := session.NewDerivedCollection('POOL_WBW');
     wbw.SetDeriveParent(disks);
-    wbw.AddOrderField('1','diskid',true);
+    wbw.SetDefaultOrderField('diskid',true);
     wbw.SetDisplayTypeChart('Raw Disk Bandwidth Write (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('wbw'),false,false,labels,false,160000);
     busy   := session.NewDerivedCollection('POOL_BUSY');
     busy.SetDeriveParent(disks);
-    busy.AddOrderField('1','diskid',true);
+    busy.SetDefaultOrderField('diskid',true);
     busy.SetDisplayTypeChart('Raw Disk Busy Times [%]',fdbct_column,TFRE_DB_StringArray.Create('b'),false,false,labels,false,100);
   end;
 end;
