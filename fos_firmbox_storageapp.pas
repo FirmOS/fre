@@ -2130,6 +2130,7 @@ var
   begin
     if (obj.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE) then begin
       bd:=obj.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE;
+      writeln('SWL: DUMP BD',bd.DumpToString());
       if (bd.getPool(conn).Implementor_HC is TFRE_DB_ZFS_POOL) then begin
         sf:=CWSF(@WEB_Replace);
         sf.AddParam.Describe('old',bd.getId);
@@ -2142,7 +2143,7 @@ var
   end;
 
 begin
-  blockdevicecollection:=conn.GetCollection(CFRE_DB_DEVICE_COLLECTION);
+  blockdevicecollection:=conn.GetCollection(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
   blockdevicecollection.ForAll(@_checkBD);
 end;
 
@@ -4202,6 +4203,7 @@ begin
         TFRE_FIRMBOX_STORAGE_APP.GetClassRoleNameFetch
         )),'could not add roles for group STORAGEFEEDER');
 
+      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_UNCONFIGURED_MACHINE.GetClassStdRoles),'could not add roles TFRE_DB_UNCONFIGURED_MACHINE for group STORAGEFEEDER');
       CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_MACHINE.GetClassStdRoles),'could not add roles TFRE_DB_MACHINE for group STORAGEFEEDER');
       CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_POOL.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_POOL for group STORAGEFEEDER');
       CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_BLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_BLOCKDEVICE for group STORAGEFEEDER');

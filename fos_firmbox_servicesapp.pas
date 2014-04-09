@@ -21,6 +21,7 @@ uses
   FOS_TOOL_INTERFACES,
   FRE_DB_INTERFACE,
   FRE_DB_COMMON,
+  fre_system,
   fre_zfs;
 
 const

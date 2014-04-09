@@ -18,7 +18,7 @@ uses
   fos_firmbox_applianceapp,
   fos_firmbox_vm_machines_mod,
   fre_hal_schemes,
-  fre_hal_update,
+  fre_diff_transport,
   FRE_ZFS,
   fre_scsi,
   fre_testcase,
@@ -572,6 +572,12 @@ begin
 
   coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
   mobj:=TFRE_DB_MACHINE.CreateForDB;
+  mobj.Name:='franzmac';
+  mguid:=mobj.UID;
+  CheckDbResult(coll.Store(mobj));
+
+  coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
+  mobj:=TFRE_DB_MACHINE.CreateForDB;
   mobj.Name:='Firmbox 1';
   mguid:=mobj.UID;
   CheckDbResult(coll.Store(mobj));
@@ -632,7 +638,7 @@ begin
   FRE_DBBASE.Register_DB_Extensions;
   FRE_DBBUSINESS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
-  fre_hal_update.Register_DB_Extensions;
+  fre_diff_transport.Register_DB_Extensions;
   FRE_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
   fos_firmbox_applianceapp.Register_DB_Extensions;
