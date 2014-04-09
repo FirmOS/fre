@@ -63,8 +63,8 @@ uses
   FRE_BASE_SERVER,
   fos_monitorfeed_client,
   fre_basefeed_app,
-  fre_hal_update,
-fre_hal_mos;
+  fre_diff_transport,
+  fre_hal_mos;
 
 
 {$I fos_version_helper.inc}

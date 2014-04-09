@@ -44,7 +44,7 @@ interface
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
   fre_system,fos_stats_control_interface, fre_hal_disk,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_monitoring,fre_hal_mos,
-  fre_hal_update;
+  fre_diff_transport;
 
 
 type
@@ -120,7 +120,7 @@ begin
   fre_hal_schemes.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
   fre_monitoring.Register_DB_Extensions;
-  fre_hal_update.Register_DB_Extensions;
+  fre_diff_transport.Register_DB_Extensions;
   fre_hal_mos.Register_DB_Extensions;
 
   disk_hal   := TFRE_HAL_DISK.Create;
