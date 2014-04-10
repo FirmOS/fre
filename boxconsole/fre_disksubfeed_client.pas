@@ -173,7 +173,7 @@ begin
       resdbo.Field('error').asstring        := error;
       resdbo.Field('data').AsObject         := pools;
       resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-//      writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
+     writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
       fsubfeeder.PushDataToClients(resdbo);
 
       if not Terminated then
@@ -308,7 +308,11 @@ begin
 
   lang:=GetEnvironmentVariable('LANG');
   if (lang<>'C') then
-    GFRE_DBI.LogError(dblc_APPLICATION,'Environment LANG for this feeder must be C, instead of %s ',[lang]);
+    begin
+      GFRE_DBI.LogError(dblc_APPLICATION,'Environment LANG for this feeder must be C, instead of %s ',[lang]);
+      writeln('Environment LANG for this feeder must be C, instead of ',lang);
+      abort;
+    end;
 
 try
     StartIostatParser;
