@@ -44,7 +44,7 @@ interface
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
   fre_system,fre_dbbase,fre_zfs,fre_scsi,
-  fos_stats_control_interface, fre_hal_disk,
+  fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,
   fre_hal_schemes;
 
 type

@@ -46,7 +46,7 @@ interface
 
 uses
   Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basedbo_server,fre_system,
-  fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk,fre_base_parser,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
+  fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk_enclosure_pool_mangement,fre_base_parser,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
 
 const
   cIOSTAT                    = 'iostat -rxnsmde 1';
