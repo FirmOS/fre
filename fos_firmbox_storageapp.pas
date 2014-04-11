@@ -3721,7 +3721,7 @@ begin
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
     if (zfsobj.Implementor_HC is TFRE_DB_ZFS_POOL) then
-      em_pool:=TFRE_DB_ZFS_POOL.CreateEmbeddedPoolObjectfromCollection(conn,zfsobj.UID);
+      em_pool:=TFRE_DB_ZFS_POOL.CreateEmbeddedPoolObjectfromDB(conn,zfsobj.UID);
     zfsobj.Finalize;
   end;
 
