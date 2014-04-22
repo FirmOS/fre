@@ -139,35 +139,6 @@ begin
       CreateAppText(conn,'$gc_vm_paged_mem','Paged Mem');
       CreateAppText(conn,'$gc_vm_virtual_mem','Virtual Mem');
 
-      CreateAppText(conn,'$vm_new_caption','New Virtual Machine');
-      CreateAppText(conn,'$vm_new_save','Create');
-
-      CreateAppText(conn,'$vm_name','Name');
-      CreateAppText(conn,'$vm_mem','RAM (kB)');
-      CreateAppText(conn,'$vm_cpu','CPUs');
-      CreateAppText(conn,'$vm_sc','Sound card');
-
-      CreateAppText(conn,'$vm_ide0','IDE Drive 0');
-      CreateAppText(conn,'$vm_ide1','IDE Drive 1');
-      CreateAppText(conn,'$vm_ide2','IDE Drive 2');
-      CreateAppText(conn,'$vm_ide3','IDE Drive 3');
-
-      CreateAppText(conn,'$vm_disk_chooser','Disk');
-      CreateAppText(conn,'$vm_iso_chooser','ISO (CD/DVD)');
-
-      CreateAppText(conn,'$vm_ide_option_disk','Hard Disk');
-      CreateAppText(conn,'$vm_ide_option_iso','Mount ISO CD/DVD');
-
-      CreateAppText(conn,'$vm_upload_iso','Upload ISO file');
-      CreateAppText(conn,'$vm_create_new_disk','Create new disk');
-
-      CreateAppText(conn,'$vm_new_disk_name','Disk name');
-      CreateAppText(conn,'$vm_new_disk_size','Disk size');
-
-      CreateAppText(conn,'$vm_advanced','Advanced settings');
-      CreateAppText(conn,'$vm_keyboard_layout_auto','Automatic');
-      CreateAppText(conn,'$vm_keyboard_layout','Keyboard layout');
-
       CreateAppText(conn,'$vm_resources_disks','Disks');
       CreateAppText(conn,'$vm_resources_isos','ISOs');
       CreateAppText(conn,'$vm_resources_add_disk','Create','','Create a new disk');

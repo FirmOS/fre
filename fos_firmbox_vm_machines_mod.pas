@@ -526,6 +526,8 @@ var
   keyboardsp : IFRE_DB_COLLECTION;
   keyboards  : IFRE_DB_DERIVED_COLLECTION;
   transform  : IFRE_DB_SIMPLE_TRANSFORM;
+  zonesp     : IFRE_DB_COLLECTION;
+  zones      : IFRE_DB_DERIVED_COLLECTION;
 begin
   inherited MySessionInitializeModule(session);
   app:=GetEmbeddingApp;
@@ -617,7 +619,42 @@ end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='1.0';
+   newVersionId:='1.0';
+   if currentVersionId='' then begin
+     currentVersionId:='1.0';
+
+     CreateModuleText(conn,'$vm_new_caption','New Virtual Machine');
+     CreateModuleText(conn,'$vm_new_save','Create');
+
+     CreateModuleText(conn,'$vm_name','Name');
+     CreateModuleText(conn,'$vm_mem','RAM (kB)');
+     CreateModuleText(conn,'$vm_cpu','CPUs');
+     CreateModuleText(conn,'$vm_sc','Sound card');
+
+     CreateModuleText(conn,'$vm_ide0','IDE Drive 0');
+     CreateModuleText(conn,'$vm_ide1','IDE Drive 1');
+     CreateModuleText(conn,'$vm_ide2','IDE Drive 2');
+     CreateModuleText(conn,'$vm_ide3','IDE Drive 3');
+
+     CreateModuleText(conn,'$vm_ide_type','Type');
+
+     CreateModuleText(conn,'$vm_disk_chooser','Disk');
+     CreateModuleText(conn,'$vm_iso_chooser','ISO (CD/DVD)');
+
+     CreateModuleText(conn,'$vm_ide_option_disk','Hard Disk');
+     CreateModuleText(conn,'$vm_ide_option_iso','Mount ISO CD/DVD');
+
+     CreateModuleText(conn,'$vm_upload_iso','Upload ISO file');
+     CreateModuleText(conn,'$vm_create_new_disk','Create new disk');
+
+     CreateModuleText(conn,'$vm_new_disk_name','Disk name');
+     CreateModuleText(conn,'$vm_new_disk_size','Disk size');
+
+     CreateModuleText(conn,'$vm_advanced','Advanced settings');
+     CreateModuleText(conn,'$vm_keyboard_layout_auto','Automatic');
+     CreateModuleText(conn,'$vm_keyboard_layout','Keyboard layout');
+   end;
+
 end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
@@ -811,82 +848,91 @@ begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VMACHINE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
+  if not ses.GetSessionModuleData(ClassName).FieldExists('selectedZone') then
+    raise EFRE_DB_Exception.Create('Zone Id is missing.');
+
   vm_isos := ses.FetchDerivedCollection('VM_CH_ISOS_DERIVED');
   vm_disks:= ses.FetchDerivedCollection('VM_CH_DISKS_DERIVED');
   vm_scs:= ses.FetchDerivedCollection('VM_CH_SCS_DERIVED');
   vm_keyboards:= ses.FetchDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
 
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$vm_new_caption'));
-  res.AddButton.Describe(app.FetchAppTextShort(ses,'$vm_new_save'),CWSF(@WEB_CreateVM),fdbbt_submit);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$vm_new_caption'));
+  res.AddButton.Describe(FetchModuleTextShort(ses,'$vm_new_save'),CWSF(@WEB_CreateVM),fdbbt_submit);
 
-  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_name'),'name',true);
+  res.AddInput.Describe('','zone',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedZone').AsString);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'$vm_name'),'name',true);
   maxRAM:=getAvailableRAM; minRAM:=getMinimumRAM; stepRAM:=getRAMSteps;
-  res.AddNumber.DescribeSlider(app.FetchAppTextShort(ses,'$vm_mem'),'mem',minRAM,maxRAM,true,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);
+  res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'$vm_mem'),'mem',minRAM,maxRAM,true,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);
 
   maxCPU:=getAvailableCPU;
-  res.AddNumber.DescribeSlider(app.FetchAppTextShort(ses,'$vm_cpu'),'cpu',1,maxCPU,true,IntToStr(maxCPU),0,maxCPU);
+  res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'$vm_cpu'),'cpu',1,maxCPU,true,IntToStr(maxCPU),0,maxCPU);
 
-  res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_sc'),'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC);
+  res.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_sc'),'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC);
 
   idestore:=TFRE_DB_STORE_DESC.create.Describe();
-  idestore.AddEntry.Describe(app.FetchAppTextShort(ses,'$vm_ide_option_disk'),'disk');
-  idestore.AddEntry.Describe(app.FetchAppTextShort(ses,'$vm_ide_option_iso'),'iso');
+  idestore.AddEntry.Describe(FetchModuleTextShort(ses,'$vm_ide_option_disk'),'disk');
+  idestore.AddEntry.Describe(FetchModuleTextShort(ses,'$vm_ide_option_iso'),'iso');
 
   isostore:=vm_isos.GetStoreDescription as TFRE_DB_STORE_DESC;
-  isostore.AddEntry.Describe(app.FetchAppTextShort(ses,'$vm_upload_iso'),'upload');
+  //isostore.AddEntry.Describe(FetchModuleTextShort(ses,'$vm_upload_iso'),'upload');
 
   diskstore:=vm_disks.GetStoreDescription as TFRE_DB_STORE_DESC;
-  diskstore.AddEntry.Describe(app.FetchAppTextShort(ses,'$vm_create_new_disk'),'create');
+  diskstore.AddEntry.Describe(FetchModuleTextShort(ses,'$vm_create_new_disk'),'create');
 
-  chooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_ide0'),'ide0',idestore,true,dh_chooser_combo,false,false,false,'disk');
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'$vm_ide0'));
+  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_ide_type'),'ide0',idestore,true,dh_chooser_combo,false,false,false,'disk');
 
-  diskchooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_disk_chooser'),'disk0',diskstore,true,dh_chooser_combo,true);
+  diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_disk_chooser'),'disk0',diskstore,true,dh_chooser_combo,true);
   chooser.addDependentInput('disk0','disk');
-  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname0',true);
-  res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize0',true,false,false,false,'40');
+  group.AddInput.Describe(FetchModuleTextShort(ses,'$vm_new_disk_name'),'diskname0',true);
+  group.AddNumber.Describe(FetchModuleTextShort(ses,'$vm_new_disk_size'),'disksize0',true,false,false,false,'40');
   diskchooser.addDependentInput('diskname0','create');
   diskchooser.addDependentInput('disksize0','create');
-  isochooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_iso_chooser'),'iso0',isostore,true,dh_chooser_combo,true);
+  isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_iso_chooser'),'iso0',isostore,true,dh_chooser_combo,true);
   chooser.addDependentInput('iso0','iso');
 
-  chooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_ide1'),'ide1',idestore,true,dh_chooser_combo,false,false,false,'iso');
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'$vm_ide1'));
+  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_ide_type'),'ide1',idestore,true,dh_chooser_combo,false,false,false,'iso');
+  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_ide_type'),'ide1',idestore);
 
-  diskchooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_disk_chooser'),'disk1',diskstore,true,dh_chooser_combo,true);
+  diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_disk_chooser'),'disk1',diskstore,true,dh_chooser_combo,true);
   chooser.addDependentInput('disk1','disk');
-  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname1',true);
-  res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize1',true,false,false,false,'40');
+  group.AddInput.Describe(FetchModuleTextShort(ses,'$vm_new_disk_name'),'diskname1',true);
+  group.AddNumber.Describe(FetchModuleTextShort(ses,'$vm_new_disk_size'),'disksize1',true,false,false,false,'40');
   diskchooser.addDependentInput('diskname1','create');
   diskchooser.addDependentInput('disksize1','create');
-  isochooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_iso_chooser'),'iso1',isostore,true,dh_chooser_combo,true);
+  isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_iso_chooser'),'iso1',isostore,true,dh_chooser_combo,true);
   chooser.addDependentInput('iso1','iso');
 
-  chooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_ide2'),'ide2',idestore);
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'$vm_ide2'));
+  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_ide_type'),'ide2',idestore);
 
-  diskchooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_disk_chooser'),'disk2',diskstore,true,dh_chooser_combo,true);
+  diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_disk_chooser'),'disk2',diskstore,true,dh_chooser_combo,true);
   chooser.addDependentInput('disk2','disk');
-  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname2',true);
-  res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize2',true,false,false,false,'40');
+  group.AddInput.Describe(FetchModuleTextShort(ses,'$vm_new_disk_name'),'diskname2',true);
+  group.AddNumber.Describe(FetchModuleTextShort(ses,'$vm_new_disk_size'),'disksize2',true,false,false,false,'40');
   diskchooser.addDependentInput('diskname2','create');
   diskchooser.addDependentInput('disksize2','create');
-  isochooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_iso_chooser'),'iso2',isostore,true,dh_chooser_combo,true);
+  isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_iso_chooser'),'iso2',isostore,true,dh_chooser_combo,true);
   chooser.addDependentInput('iso2','iso');
 
-  chooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_ide3'),'ide3',idestore);
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'$vm_ide3'));
+  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_ide_type'),'ide3',idestore);
 
-  diskchooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_disk_chooser'),'disk3',diskstore,true,dh_chooser_combo,true);
+  diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_disk_chooser'),'disk3',diskstore,true,dh_chooser_combo,true);
   chooser.addDependentInput('disk3','disk');
-  res.AddInput.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_name'),'diskname3',true);
-  res.AddNumber.Describe(app.FetchAppTextShort(ses,'$vm_new_disk_size'),'disksize3',true,false,false,false,'40');
+  group.AddInput.Describe(FetchModuleTextShort(ses,'$vm_new_disk_name'),'diskname3',true);
+  group.AddNumber.Describe(FetchModuleTextShort(ses,'$vm_new_disk_size'),'disksize3',true,false,false,false,'40');
   diskchooser.addDependentInput('diskname3','create');
   diskchooser.addDependentInput('disksize3','create');
-  isochooser:=res.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_iso_chooser'),'iso3',isostore,true,dh_chooser_combo,true);
+  isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_iso_chooser'),'iso3',isostore,true,dh_chooser_combo,true);
   chooser.addDependentInput('iso3','iso');
 
-  group:=res.AddGroup.Describe(app.FetchAppTextShort(ses,'$vm_advanced'),true,true);
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'$vm_advanced'),true,true);
 
   keyboardstore:=vm_keyboards.GetStoreDescription as TFRE_DB_STORE_DESC;
-  keyboardstore.AddEntry.Describe(app.FetchAppTextShort(ses,'$vm_keyboard_layout_auto'),'auto');
-  group.AddChooser.Describe(app.FetchAppTextShort(ses,'$vm_keyboard_layout'),'keybord_layout',keyboardstore,true,dh_chooser_combo,true);
+  keyboardstore.AddEntry.Describe(FetchModuleTextShort(ses,'$vm_keyboard_layout_auto'),'auto');
+  group.AddChooser.Describe(FetchModuleTextShort(ses,'$vm_keyboard_layout'),'keybord_layout',keyboardstore,true,dh_chooser_combo,true);
 
   Result:=res;
 end;

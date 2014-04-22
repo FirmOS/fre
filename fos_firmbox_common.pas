@@ -68,13 +68,14 @@ var conn     : IFRE_DB_Connection;
     mcoll    : IFRE_DB_Collection;
     link_parent : TGUID;
     vm_parent   : TGUID;
-    mguid: TGuid;
-    dguid: TGuid;
-    zguid: TGuid;
-    zobj: TFRE_DB_ZONE;
-    sobj: TFRE_DB_SERVICE;
-    mobj: TFRE_DB_MACHINE;
-    dobj: TFRE_DB_SERVICE_DOMAIN;
+    mguid       : TGuid;
+    dguid       : TGuid;
+    zguid       : TGuid;
+    zobj        : TFRE_DB_ZONE;
+    sobj        : TFRE_DB_SERVICE;
+    mobj        : TFRE_DB_MACHINE;
+    dobj        : TFRE_DB_SERVICE_DOMAIN;
+    sobjvm      : TFRE_DB_VMACHINE;
 
   function AddDatalink(const clname:string; const name: string; const parentid:TGUID; const show_virtual:boolean; const show_global:boolean; const icon:string; const ip:string; const desc:string='';const vlan:integer=0): TGUID;
   var
@@ -572,62 +573,62 @@ begin
 
   coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
   mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.Name:='franzmac';
+  mobj.ObjectName:='franzmac';
   mguid:=mobj.UID;
   CheckDbResult(coll.Store(mobj));
 
   coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
   mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.Name:='Firmbox 1';
+  mobj.ObjectName:='Firmbox 1';
   mguid:=mobj.UID;
   CheckDbResult(coll.Store(mobj));
 
   mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.Name:='Firmbox 2';
+  mobj.ObjectName:='Firmbox 2';
   CheckDbResult(coll.Store(mobj));
 
   coll:=conn.GetCollection(CFOS_DB_SERVICE_DOMAINS_COLLECTION);
 
   dobj:=TFRE_DB_SERVICE_DOMAIN.CreateForDB;
-  dobj.Name:='Domain1';
+  dobj.ObjectName:='Domain1';
   dobj.Field('serviceParent').AsObjectLink:=mguid;
   dguid:=dobj.UID;
   CheckDbResult(coll.Store(dobj));
 
   dobj:=TFRE_DB_SERVICE_DOMAIN.CreateForDB;
-  dobj.Name:='Domain2';
+  dobj.ObjectName:='Domain2';
   dobj.Field('serviceParent').AsObjectLink:=mguid;
   CheckDbResult(coll.Store(dobj));
 
   coll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
 
   zobj:=TFRE_DB_ZONE.CreateForDB;
-  zobj.Name:='Zone1';
+  zobj.ObjectName:='Zone1';
   zobj.Field('serviceParent').AsObjectLink:=dguid;
   zguid:=zobj.UID;
   CheckDbResult(coll.Store(zobj));
 
-  coll:=conn.GetCollection(CFOS_DB_MANAGED_SERVICES_COLLECTION);
-
-  sobj:=TFRE_DB_SERVICE.CreateForDB;
-  sobj.Name:='VM1';
-  sobj.Field('serviceParent').AsObjectLink:=zguid;
-  CheckDbResult(coll.Store(sobj));
-
-  sobj:=TFRE_DB_SERVICE.CreateForDB;
-  sobj.Name:='VM2';
-  sobj.Field('serviceParent').AsObjectLink:=zguid;
-  CheckDbResult(coll.Store(sobj));
-
-  sobj:=TFRE_DB_SERVICE.CreateForDB;
-  sobj.Name:='DNS';
-  sobj.Field('serviceParent').AsObjectLink:=zguid;
-  CheckDbResult(coll.Store(sobj));
-
   zobj:=TFRE_DB_ZONE.CreateForDB;
-  zobj.Name:='Zone2';
+  zobj.ObjectName:='Zone2';
   zobj.Field('serviceParent').AsObjectLink:=dguid;
   CheckDbResult(coll.Store(zobj));
+
+  coll:=conn.GetCollection(CFOS_DB_MANAGED_SERVICES_COLLECTION);
+
+  sobjvm:=TFRE_DB_VMACHINE.CreateForDB;
+  sobjvm.ObjectName:='VM1';
+  sobjvm.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobjvm));
+
+  sobjvm:=TFRE_DB_VMACHINE.CreateForDB;
+  sobjvm.ObjectName:='VM2';
+  sobjvm.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobjvm));
+
+  sobj:=TFRE_DB_SERVICE.CreateForDB;
+  sobj.ObjectName:='DNS';
+  sobj.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobj));
 
  CONN.Finalize;
 end;
