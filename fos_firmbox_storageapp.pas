@@ -2594,8 +2594,8 @@ begin
     children:=parentObj.getZFSChildren(conn);
     res:=TFRE_DB_STORE_DATA_DESC.create.Describe(Length(children));
     for i := 0 to Length(children) - 1 do begin
-      zfs_obj:=children[i].Implementor_HC as TFRE_DB_ZFS_OBJ;
-      res.addEntry(_getZFSTreeObj(conn,zfs_obj));
+      if children[i].IsA(TFRE_DB_ZFS_OBJ,zfs_obj) then
+        res.addEntry(_getZFSTreeObj(conn,zfs_obj));
     end;
   end else begin
     count:=0;
@@ -4227,6 +4227,7 @@ begin
       CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_FILEBLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_FILEBLOCKDEVICE for group STORAGEFEEDER');
       CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZPOOL_IOSTAT.GetClassStdRoles),'could not add roles TFRE_DB_ZPOOL_IOSTAT for group STORAGEFEEDER');
       CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_IOSTAT.GetClassStdRoles),'could not add roles TFRE_DB_IOSTAT for group STORAGEFEEDER');
+      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SG_LOGS.GetClassStdRoles),'could not add roles TFRE_DB_SG_LOGS for group STORAGEFEEDER');
 
   end;
 end;
