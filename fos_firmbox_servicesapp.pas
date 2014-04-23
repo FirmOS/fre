@@ -109,6 +109,22 @@ var
   serviceObj        : IFRE_DB_Object;
   addServiceDisabled: Boolean;
   addZoneDisabled   : Boolean;
+  coll              : IFRE_DB_COLLECTION;
+  machineId         : TGuid;
+  hlt               : boolean;
+
+  procedure _checkPools(const obj:IFRE_DB_Object; var halt : boolean);
+  var
+    poolObj: TFRE_DB_ZFS_POOL;
+  begin
+    if obj.IsA(TFRE_DB_ZFS_POOL,poolObj) then begin
+      if not poolObj.getIsNew and (poolObj.MachineID=machineID) then begin
+        addZoneDisabled:=false;
+        halt:=true;
+      end;
+    end;
+  end;
+
 begin
   addServiceDisabled:=true;
   addZoneDisabled:=true;
@@ -117,7 +133,10 @@ begin
     if ses.GetSessionModuleData(ClassName).Field('selectedService').ValueCount=1 then begin
       CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
       if serviceObj.IsA('TFRE_DB_SERVICE_DOMAIN') then begin
-        addZoneDisabled:=false;
+        machineId:=serviceObj.Field('serviceParent').AsObjectLink;
+
+        coll:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
+        coll.ForAllBreak(@_checkPools,hlt);
         res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
         res.AddSection.Describe(CWSF(@WEB_ContentDomainSel),FetchModuleTextShort(ses,'$domain_sel_general_tab'),1);
       end else
@@ -188,13 +207,15 @@ begin
     CreateModuleText(conn,'$no_sel_general_tab','General');
     CreateModuleText(conn,'$multi_sel_general_tab','General');
     CreateModuleText(conn,'$unknown_sel_general_tab','General');
+
+    CreateModuleText(conn,'$vm_sel_general_tab','General');
+    CreateModuleText(conn,'$zone_sel_general_tab','General');
+    CreateModuleText(conn,'$domain_sel_general_tab','General');
+
     CreateModuleText(conn,'$no_sel_general_content','Please select a service to get detailed information about it.');
     CreateModuleText(conn,'$multi_sel_general_content','Please select exactly one service to get detailed information about it.');
     CreateModuleText(conn,'$unknown_sel_general_content','No detailed information available for %service_name%.');
     CreateModuleText(conn,'$domain_sel_general_content','No detailed information available for %domain_name%.');
-
-    CreateModuleText(conn,'$vm_sel_general_tab','General');
-    CreateModuleText(conn,'$zone_sel_general_tab','General');
 
     CreateModuleText(conn,'$zone_panel_cap','Properties');
 
@@ -202,6 +223,11 @@ begin
 
     CreateModuleText(conn,'$tb_add_service','Add Service');
     CreateModuleText(conn,'$tb_add_service_vm','Virtual Machine');
+
+    CreateModuleText(conn,'$add_zone_diag_cap','Add Zone');
+    CreateModuleText(conn,'$add_zone_diag_location_group','Pools');
+    CreateModuleText(conn,'$add_zone_diag_pool','Pool');
+
   end;
   VersionInstallCheck(currentVersionId,newVersionId);
 end;
@@ -300,15 +326,52 @@ end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddZone(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  scheme : IFRE_DB_SchemeObject;
-  zoneObj: IFRE_DB_Object;
-  res    : TFRE_DB_FORM_DIALOG_DESC;
+  scheme    : IFRE_DB_SchemeObject;
+  zoneObj   : IFRE_DB_Object;
+  res       : TFRE_DB_FORM_DIALOG_DESC;
+  store     : TFRE_DB_STORE_DESC;
+  group     : TFRE_DB_INPUT_GROUP_DESC;
+  coll      : IFRE_DB_COLLECTION;
+  poolCount : Integer;
+  pool      : TFRE_DB_ZFS_POOL;
+  machineId : TGuid;
+  domainObj : IFRE_DB_Object;
+
+  procedure _getPools(const obj:IFRE_DB_Object);
+  var
+    poolObj: TFRE_DB_ZFS_POOL;
+  begin
+    if obj.IsA(TFRE_DB_ZFS_POOL,poolObj) then begin
+      if not poolObj.getIsNew and (poolObj.MachineID=machineID) then begin
+        poolCount:=poolCount+1;
+        store.AddEntry.Describe(poolObj.caption,poolObj.UID_String);
+        pool:=poolObj;
+      end;
+    end;
+  end;
+
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZONE)) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_zone_diag_cap'),600);
+
+  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),domainObj));
+  machineId:=domainObj.Field('serviceParent').AsObjectLink;
+
+  coll:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
+  store:=TFRE_DB_STORE_DESC.create.Describe();
+  poolCount:=0;
+  coll.ForAll(@_getPools);
+  if poolCount=0 then raise EFRE_DB_Exception.Create('No Pool(s) configured.');
+  if poolCount=1 then begin
+    res.AddInput.Describe('','pool',false,false,false,true,pool.UID_String);
+  end else begin
+    group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'$add_zone_diag_location_group'));
+    group.AddChooser.Describe(FetchModuleTextShort(ses,'$add_zone_diag_pool'),'pool',store,true,dh_chooser_combo,true);
+  end;
+
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CSCF('TFRE_DB_ZONE','newOperation','collection',CFOS_DB_ZONES_COLLECTION),fdbbt_submit);
@@ -345,7 +408,6 @@ begin
   vm_machines:=TFRE_FIRMBOX_VM_MACHINES_MOD.create;
   services.VM:=vm_machines;
   AddApplicationModule(services);
-  AddApplicationModule(vm_machines);
 end;
 
 procedure TFOS_FIRMBOX_SERVICES_APP._UpdateSitemap(const session: TFRE_DB_UserSession);

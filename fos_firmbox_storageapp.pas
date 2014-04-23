@@ -2193,6 +2193,7 @@ var
   end;
 
 begin
+  ua:=nil;
   pools := conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
   hlt   := false;
   pools.ForAllBreak(@_checkPool,hlt);
@@ -2641,6 +2642,7 @@ begin
     for i := 0 to Length(refs) - 1 do begin
       CheckDbResult(conn.Fetch(refs[i],obj),'TFRE_DB_ZFS_OBJ.getChildren');
       if obj.Implementor_HC is TFRE_DB_PHYS_DISK then begin
+        count:=count+1;
         res.addEntry(_getLayoutTreeObj(conn,obj));
       end;
     end;
@@ -3271,7 +3273,7 @@ begin
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
     pool:=zfsObj.getPool(conn);
-    if pool.getId=ua.getId then continue; //skip: already unassigned
+    if assigned(ua) and (pool.getId=ua.getId) then continue; //skip: already unassigned
     if not zfsObj.getIsNew then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_remove_not_new'));
     _handleObj(zfsObj);
   end;
