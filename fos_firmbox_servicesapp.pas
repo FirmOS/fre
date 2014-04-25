@@ -56,6 +56,8 @@ type
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
     function        _getServiceContent                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
+    function        _getPoolCount                       (const conn: IFRE_DB_CONNECTION; const machineId: TGuid; var pool:TFRE_DB_ZFS_POOL; const store: TFRE_DB_STORE_DESC): Integer;
+    function        _hasPool                            (const conn: IFRE_DB_CONNECTION; const machineId: TGuid): Boolean;
   public
     VM: TFRE_FIRMBOX_VM_MACHINES_MOD;
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
@@ -70,6 +72,8 @@ type
     function        WEB_ContentZoneSel                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentVMSel                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddVM                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddNAS                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddDNS                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddZone                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ServicesMenu                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ServicesSC                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -109,24 +113,17 @@ var
   serviceObj        : IFRE_DB_Object;
   addServiceDisabled: Boolean;
   addZoneDisabled   : Boolean;
-  coll              : IFRE_DB_COLLECTION;
   machineId         : TGuid;
   hlt               : boolean;
-
-  procedure _checkPools(const obj:IFRE_DB_Object; var halt : boolean);
-  var
-    poolObj: TFRE_DB_ZFS_POOL;
-  begin
-    if obj.IsA(TFRE_DB_ZFS_POOL,poolObj) then begin
-      if not poolObj.getIsNew and (poolObj.MachineID=machineID) then begin
-        addZoneDisabled:=false;
-        halt:=true;
-      end;
-    end;
-  end;
+  addDNSDisabled    : Boolean;
+  addNASDisabled    : Boolean;
+  zone              : TFRE_DB_ZONE;
+  pool              : TFRE_DB_ZFS_POOL;
 
 begin
   addServiceDisabled:=true;
+  addDNSDisabled:=true;
+  addNASDisabled:=true;
   addZoneDisabled:=true;
   ses.GetSessionModuleData(VM.ClassName).DeleteField('selectedZone');
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedService') then begin
@@ -135,13 +132,18 @@ begin
       if serviceObj.IsA('TFRE_DB_SERVICE_DOMAIN') then begin
         machineId:=serviceObj.Field('serviceParent').AsObjectLink;
 
-        coll:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
-        coll.ForAllBreak(@_checkPools,hlt);
+        addZoneDisabled:=not _hasPool(conn,machineId);
         res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
         res.AddSection.Describe(CWSF(@WEB_ContentDomainSel),FetchModuleTextShort(ses,'$domain_sel_general_tab'),1);
       end else
-      if serviceObj.IsA('TFRE_DB_ZONE') then begin
+      if serviceObj.IsA(TFRE_DB_ZONE,zone) then begin
         addServiceDisabled:=false;
+        if not zone.hasNAS(conn) then begin
+          addNASDisabled:=false;
+        end;
+        if not zone.hasDNS(conn) then begin
+          addDNSDisabled:=false;
+        end;
         ses.GetSessionModuleData(VM.ClassName).Field('selectedZone').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedService').AsString;
         res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
         res.AddSection.Describe(CWSF(@WEB_ContentZoneSel),FetchModuleTextShort(ses,'$zone_sel_general_tab'),1);
@@ -162,9 +164,61 @@ begin
     res.AddSection.Describe(CWSF(@WEB_ContentNoSel),FetchModuleTextShort(ses,'$no_sel_general_tab'),1);
   end;
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_service',addServiceDisabled));
+  if not addServiceDisabled then begin
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_service_nas',addNASDisabled));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_service_dns',addDNSDisabled));
+  end;
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_zone',addZoneDisabled));
   res.contentId:='SERVICE_DETAILS';
   Result:=res;
+end;
+
+function TFOS_FIRMBOX_MANAGED_SERVICES_MOD._getPoolCount(const conn: IFRE_DB_CONNECTION; const machineId: TGuid; var pool:TFRE_DB_ZFS_POOL; const store: TFRE_DB_STORE_DESC): Integer;
+var
+  poolCount: NativeInt;
+  coll     : IFRE_DB_COLLECTION;
+
+  procedure _getPools(const obj:IFRE_DB_Object);
+  var
+    poolObj: TFRE_DB_ZFS_POOL;
+  begin
+    if obj.IsA(TFRE_DB_ZFS_POOL,poolObj) then begin
+      if not poolObj.getIsNew and (poolObj.MachineID=machineId) then begin
+        poolCount:=poolCount+1;
+        if Assigned(store) then store.AddEntry.Describe(poolObj.caption,poolObj.UID_String);
+        pool:=poolObj;
+      end;
+    end;
+  end;
+
+begin
+  poolCount:=0;
+  coll:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
+  coll.ForAll(@_getPools);
+  Result:=poolCount;
+end;
+
+function TFOS_FIRMBOX_MANAGED_SERVICES_MOD._hasPool(const conn: IFRE_DB_CONNECTION; const machineId: TGuid): Boolean;
+var
+  coll     : IFRE_DB_COLLECTION;
+  hlt      : Boolean;
+
+  procedure _checkPools(const obj:IFRE_DB_Object; var halt:Boolean);
+  var
+    poolObj: TFRE_DB_ZFS_POOL;
+  begin
+    if obj.IsA(TFRE_DB_ZFS_POOL,poolObj) then begin
+      if not poolObj.getIsNew and (poolObj.MachineID=machineId) then begin
+        Result:=true;
+        halt:=true;
+      end;
+    end;
+  end;
+
+begin
+  Result:=false;
+  coll:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
+  coll.ForAllBreak(@_checkPools,hlt);
 end;
 
 procedure TFOS_FIRMBOX_MANAGED_SERVICES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -220,13 +274,21 @@ begin
     CreateModuleText(conn,'$zone_panel_cap','Properties');
 
     CreateModuleText(conn,'$tb_add_zone','Add Zone');
+    CreateModuleText(conn,'$cb_add_zone','Add Zone');
 
     CreateModuleText(conn,'$tb_add_service','Add Service');
     CreateModuleText(conn,'$tb_add_service_vm','Virtual Machine');
+    CreateModuleText(conn,'$tb_add_service_nas','Virtual NAS');
+    CreateModuleText(conn,'$tb_add_service_dns','DNS Server');
+    CreateModuleText(conn,'$cb_add_service_vm','Add Virtual Machine');
+    CreateModuleText(conn,'$cb_add_service_nas','Add Virtual NAS');
+    CreateModuleText(conn,'$cb_add_service_dns','Add DNS Server');
 
     CreateModuleText(conn,'$add_zone_diag_cap','Add Zone');
     CreateModuleText(conn,'$add_zone_diag_location_group','Pools');
     CreateModuleText(conn,'$add_zone_diag_pool','Pool');
+    CreateModuleText(conn,'$add_nas_diag_cap','Add NAS');
+    CreateModuleText(conn,'$add_dns_diag_cap','Add DNS');
 
   end;
   VersionInstallCheck(currentVersionId,newVersionId);
@@ -234,14 +296,38 @@ end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.GetToolbarMenu(const ses: IFRE_DB_Usersession): TFRE_DB_CONTENT_DESC;
 var
-  res    :TFRE_DB_MENU_DESC;
+  res    : TFRE_DB_MENU_DESC;
   submenu: TFRE_DB_SUBMENU_DESC;
+  hasMenu: Boolean;
+  conn   : IFRE_DB_CONNECTION;
 begin
+  conn:=ses.GetDBConnection;
+  hasMenu:=false;
   res:=TFRE_DB_MENU_DESC.create.Describe;
-  submenu:=res.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_add_service'),'',true,'add_service');
-  submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_service_vm'),'',CWSF(@WEB_AddVM));
-  res.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_zone'),'',CWSF(@WEB_AddZone),true,'add_zone');
-  Result:=res;
+  if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) or
+     (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) or
+     (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then begin
+    hasMenu:=true;
+    submenu:=res.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_add_service'),'',true,'add_service');
+    if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) then begin
+      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_service_vm'),'',CWSF(@WEB_AddVM));
+    end;
+    if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then begin
+      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_service_nas'),'',CWSF(@WEB_AddNAS),true,'add_service_nas');
+    end;
+    if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) then begin
+      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_service_dns'),'',CWSF(@WEB_AddDNS),true,'add_service_dns');
+    end;
+  end;
+  if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE)) then begin
+    hasMenu:=true;
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_zone'),'',CWSF(@WEB_AddZone),true,'add_zone');
+  end;
+  if hasMenu then begin;
+    Result:=res;
+  end else begin
+    Result:=nil;
+  end;
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -321,7 +407,52 @@ end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
   Result:=VM.WEB_NewVM(input,ses,app,conn);
+end;
+
+function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddNAS(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme    : IFRE_DB_SchemeObject;
+  zoneObj   : IFRE_DB_Object;
+  res       : TFRE_DB_FORM_DIALOG_DESC;
+begin
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
+  if (zoneObj.Implementor_HC as TFRE_DB_ZONE).hasNAS(conn) then
+    raise EFRE_DB_Exception.Create('The given Zone has already a NAS service');
+
+  GFRE_DBI.GetSystemSchemeByName('TFRE_DB_NAS',scheme);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_nas_diag_cap'),600);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
+  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CSCF('TFRE_DB_NAS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
+  Result:=res;
+end;
+
+function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddDNS(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme    : IFRE_DB_SchemeObject;
+  zoneObj   : IFRE_DB_Object;
+  res       : TFRE_DB_FORM_DIALOG_DESC;
+begin
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
+  if (zoneObj.Implementor_HC as TFRE_DB_ZONE).hasDNS(conn) then
+    raise EFRE_DB_Exception.Create('The given Zone has already a DNS service');
+
+  GFRE_DBI.GetSystemSchemeByName('TFRE_DB_DNS',scheme);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_dns_diag_cap'),600);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
+  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CSCF('TFRE_DB_DNS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
+  Result:=res;
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddZone(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -331,24 +462,10 @@ var
   res       : TFRE_DB_FORM_DIALOG_DESC;
   store     : TFRE_DB_STORE_DESC;
   group     : TFRE_DB_INPUT_GROUP_DESC;
-  coll      : IFRE_DB_COLLECTION;
-  poolCount : Integer;
   pool      : TFRE_DB_ZFS_POOL;
   machineId : TGuid;
   domainObj : IFRE_DB_Object;
-
-  procedure _getPools(const obj:IFRE_DB_Object);
-  var
-    poolObj: TFRE_DB_ZFS_POOL;
-  begin
-    if obj.IsA(TFRE_DB_ZFS_POOL,poolObj) then begin
-      if not poolObj.getIsNew and (poolObj.MachineID=machineID) then begin
-        poolCount:=poolCount+1;
-        store.AddEntry.Describe(poolObj.caption,poolObj.UID_String);
-        pool:=poolObj;
-      end;
-    end;
-  end;
+  poolCount : Integer;
 
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZONE)) then
@@ -360,10 +477,8 @@ begin
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),domainObj));
   machineId:=domainObj.Field('serviceParent').AsObjectLink;
 
-  coll:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
   store:=TFRE_DB_STORE_DESC.create.Describe();
-  poolCount:=0;
-  coll.ForAll(@_getPools);
+  poolCount:=_getPoolCount(conn,machineId,pool,store);
   if poolCount=0 then raise EFRE_DB_Exception.Create('No Pool(s) configured.');
   if poolCount=1 then begin
     res.AddInput.Describe('','pool',false,false,false,true,pool.UID_String);
@@ -379,8 +494,37 @@ begin
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_ServicesMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res       : TFRE_DB_MENU_DESC;
+  serviceObj: IFRE_DB_Object;
+  zone      : TFRE_DB_ZONE;
+  domain    : TFRE_DB_SERVICE_DOMAIN;
 begin
-  Result:=GFRE_DB_NIL_DESC;
+  res:=TFRE_DB_MENU_DESC.create.Describe;
+  if input.Field('selected').ValueCount=1 then begin
+    CheckDbResult(conn.Fetch(FREDB_String2Guid(input.Field('selected').AsString),serviceObj));
+    if serviceObj.IsA(TFRE_DB_ZONE,zone) then begin
+      if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) or
+         (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) or
+         (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then begin
+        if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) then begin
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cb_add_service_vm'),'',CWSF(@WEB_AddVM));
+        end;
+        if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then begin
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cb_add_service_nas'),'',CWSF(@WEB_AddNAS),zone.hasNAS(conn));
+        end;
+        if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) then begin
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cb_add_service_dns'),'',CWSF(@WEB_AddDNS),zone.hasDNS(conn));
+        end;
+      end;
+    end else
+    if serviceObj.IsA(TFRE_DB_SERVICE_DOMAIN,domain) then begin
+      if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE)) then begin
+        res.AddEntry.Describe(FetchModuleTextShort(ses,'$cb_add_zone'),'',CWSF(@WEB_AddZone),not _hasPool(conn,domain.Field('serviceParent').AsObjectLink));
+      end;
+    end;
+  end;
+  Result:=res;
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_ServicesSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;

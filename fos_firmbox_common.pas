@@ -76,6 +76,7 @@ var conn     : IFRE_DB_Connection;
     mobj        : TFRE_DB_MACHINE;
     dobj        : TFRE_DB_SERVICE_DOMAIN;
     sobjvm      : TFRE_DB_VMACHINE;
+    sobjdns     : TFRE_DB_DNS;
 
   function AddDatalink(const clname:string; const name: string; const parentid:TGUID; const show_virtual:boolean; const show_global:boolean; const icon:string; const ip:string; const desc:string='';const vlan:integer=0): TGUID;
   var
@@ -625,10 +626,10 @@ begin
   sobjvm.Field('serviceParent').AsObjectLink:=zguid;
   CheckDbResult(coll.Store(sobjvm));
 
-  sobj:=TFRE_DB_SERVICE.CreateForDB;
-  sobj.ObjectName:='DNS';
-  sobj.Field('serviceParent').AsObjectLink:=zguid;
-  CheckDbResult(coll.Store(sobj));
+  sobjdns:=TFRE_DB_DNS.CreateForDB;
+  sobjdns.ObjectName:='DNS';
+  sobjdns.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobjdns));
 
  CONN.Finalize;
 end;
