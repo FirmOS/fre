@@ -23,7 +23,7 @@ type
     procedure       MySessionPromotion        (const session: TFRE_DB_UserSession); override;
   public
     class procedure RegisterSystemScheme      (const scheme:IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
 
 procedure Register_DB_Extensions;
@@ -85,7 +85,7 @@ begin
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
-class procedure TFRE_FIRMBOX_INFRASTRUCTURE_APP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+class procedure TFRE_FIRMBOX_INFRASTRUCTURE_APP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
 
