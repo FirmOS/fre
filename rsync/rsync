@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+var=$2
+if ! [[ "$var" == *'rsync'* ]]
+then
+ echo "Only rsync is allowed for this ssh access!"
+ exit -1
+fi
+if ! [[ "$var" == *' . '* ]]
+then
+ var="$var"" "
+fi
+rsc="/usr/bin/rsync.cmd"
+rpath=" . /data/"
+opath=" . "
+cmd=${var//"$opath"/"$rpath"}
+cmd=${cmd//rsync/$rsc}
+sudo $cmd
+
