@@ -47,6 +47,7 @@ type
     function  WEB_VM_ShowVNC            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_VM_ShowPerf           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_ContentNote           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_VMSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_VM_Details            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_NewVM                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_CreateVM              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -554,7 +555,7 @@ begin
     vmc  := session.NewDerivedCollection('VMC');
     with VMC do begin
       SetDeriveTransformation(tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ColumnResizeable],'',nil,'',nil,nil,CWSF(@WEB_VM_Details));
+      SetDisplayType(cdt_Listview,[cdgf_ColumnResizeable],'',nil,'',nil,nil,CWSF(@WEB_VMSC));
       SetDeriveParent(vmcp);
     end;
 
@@ -802,6 +803,15 @@ begin
   Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CWSF(@WEB_NoteStartEdit),CWSF(@WEB_NoteStopEdit));
 end;
 
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VMSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_VMACHINE) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+
+  input.Field('selectedVM').AsStringArr:=input.Field('selected').AsStringArr;
+  Result:=WEB_VM_Details(input,ses,app,conn);
+end;
+
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_Details(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var   vm_sub       : TFRE_DB_SUBSECTIONS_DESC;
       vmo          : IFRE_DB_Object;
@@ -813,8 +823,8 @@ begin
   if not conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_VMACHINE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
-    sel_guid := input.Field('SELECTED').AsGUID;
+  if input.FieldExists('selectedVM') and (input.Field('selectedVM').ValueCount>0)  then begin
+    sel_guid := input.Field('selectedVM').AsGUID;
     _GetSelectedVMData(conn,sel_guid,vmkey,vncp,vnch,vmstate);
     vm_sub := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
     sf := CWSF(@WEB_VM_ShowInfo); sf.AddParam.Describe('VMKEY',vmkey);
@@ -825,7 +835,7 @@ begin
         vm_sub.AddSection.Describe(sf,app.FetchAppTextShort(ses,'$vm_details_console'),1);
       end;
     vm_sub.AddSection.Describe(CWSF(@WEB_VM_ShowPerf),app.FetchAppTextShort(ses,'$vm_details_perf'),3);
-    sf := CWSF(@WEB_ContentNote); sf.AddParam.Describe('linkid',input.Field('SELECTED').asstring);
+    sf := CWSF(@WEB_ContentNote); sf.AddParam.Describe('linkid',input.Field('selectedVM').asstring);
     vm_sub.AddSection.Describe(sf,app.FetchAppTextShort(ses,'$vm_details_note'),4);
     result := vm_sub;
   end else begin
@@ -854,7 +864,7 @@ begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VMACHINE) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  if not ses.GetSessionModuleData(ClassName).FieldExists('selectedZone') then
+  if not input.FieldExists('zoneId') then
     raise EFRE_DB_Exception.Create('Zone Id is missing.');
 
   vm_isos := ses.FetchDerivedCollection('VM_CH_ISOS_DERIVED');
@@ -865,7 +875,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$vm_new_caption'));
   res.AddButton.Describe(FetchModuleTextShort(ses,'$vm_new_save'),CWSF(@WEB_CreateVM),fdbbt_submit);
 
-  res.AddInput.Describe('','zone',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedZone').AsString);
+  res.AddInput.Describe('','zone',false,false,false,true,input.Field('zoneId').AsString);
   res.AddInput.Describe(FetchModuleTextShort(ses,'$vm_name'),'name',true);
   maxRAM:=getAvailableRAM; minRAM:=getMinimumRAM; stepRAM:=getRAMSteps;
   res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'$vm_mem'),'mem',minRAM,maxRAM,true,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);

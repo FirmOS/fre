@@ -70,7 +70,6 @@ type
     function        WEB_ContentUnknownSel               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentDomainSel                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentZoneSel                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentVMSel                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddVM                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddNAS                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddDNS                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -109,7 +108,8 @@ end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD._getServiceContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): TFRE_DB_CONTENT_DESC;
 var
-  res               : TFRE_DB_SUBSECTIONS_DESC;
+  res               : TFRE_DB_CONTENT_DESC;
+  subsec            : TFRE_DB_SUBSECTIONS_DESC;
   serviceObj        : IFRE_DB_Object;
   addServiceDisabled: Boolean;
   addZoneDisabled   : Boolean;
@@ -125,7 +125,6 @@ begin
   addDNSDisabled:=true;
   addNASDisabled:=true;
   addZoneDisabled:=true;
-  ses.GetSessionModuleData(VM.ClassName).DeleteField('selectedZone');
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedService') then begin
     if ses.GetSessionModuleData(ClassName).Field('selectedService').ValueCount=1 then begin
       CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
@@ -133,8 +132,9 @@ begin
         machineId:=serviceObj.Field('serviceParent').AsObjectLink;
 
         addZoneDisabled:=not _hasPool(conn,machineId);
-        res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-        res.AddSection.Describe(CWSF(@WEB_ContentDomainSel),FetchModuleTextShort(ses,'$domain_sel_general_tab'),1);
+        subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
+        subsec.AddSection.Describe(CWSF(@WEB_ContentDomainSel),FetchModuleTextShort(ses,'$domain_sel_general_tab'),1);
+        res:=subsec;
       end else
       if serviceObj.IsA(TFRE_DB_ZONE,zone) then begin
         addServiceDisabled:=false;
@@ -144,24 +144,27 @@ begin
         if not zone.hasDNS(conn) then begin
           addDNSDisabled:=false;
         end;
-        ses.GetSessionModuleData(VM.ClassName).Field('selectedZone').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedService').AsString;
-        res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-        res.AddSection.Describe(CWSF(@WEB_ContentZoneSel),FetchModuleTextShort(ses,'$zone_sel_general_tab'),1);
+        subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
+        subsec.AddSection.Describe(CWSF(@WEB_ContentZoneSel),FetchModuleTextShort(ses,'$zone_sel_general_tab'),1);
+        res:=subsec;
       end else
       if serviceObj.IsA('TFRE_DB_VMACHINE') then begin
-        res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-        res.AddSection.Describe(CWSF(@WEB_ContentVMSel),FetchModuleTextShort(ses,'$vm_sel_general_tab'),1);
+        input.Field('selectedVM').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringItem[0];
+        res:=VM.WEB_VM_Details(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
       end else begin
-        res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-        res.AddSection.Describe(CWSF(@WEB_ContentUnknownSel),FetchModuleTextShort(ses,'$unknown_sel_general_tab'),1);
+        subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
+        subsec.AddSection.Describe(CWSF(@WEB_ContentUnknownSel),FetchModuleTextShort(ses,'$unknown_sel_general_tab'),1);
+        res:=subsec;
       end;
     end else begin
-      res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-      res.AddSection.Describe(CWSF(@WEB_ContentMultiSel),FetchModuleTextShort(ses,'$multi_sel_general_tab'),1);
+      subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
+      subsec.AddSection.Describe(CWSF(@WEB_ContentMultiSel),FetchModuleTextShort(ses,'$multi_sel_general_tab'),1);
+      res:=subsec;
     end;
   end else begin
-    res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-    res.AddSection.Describe(CWSF(@WEB_ContentNoSel),FetchModuleTextShort(ses,'$no_sel_general_tab'),1);
+    subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
+    subsec.AddSection.Describe(CWSF(@WEB_ContentNoSel),FetchModuleTextShort(ses,'$no_sel_general_tab'),1);
+    res:=subsec;
   end;
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_service',addServiceDisabled));
   if not addServiceDisabled then begin
@@ -262,7 +265,6 @@ begin
     CreateModuleText(conn,'$multi_sel_general_tab','General');
     CreateModuleText(conn,'$unknown_sel_general_tab','General');
 
-    CreateModuleText(conn,'$vm_sel_general_tab','General');
     CreateModuleText(conn,'$zone_sel_general_tab','General');
     CreateModuleText(conn,'$domain_sel_general_tab','General');
 
@@ -336,7 +338,6 @@ var
   grid: TFRE_DB_VIEW_LIST_DESC;
 begin
   CheckClassVisibility4MyDomain(ses);
-  ses.GetSessionModuleData(VM.ClassName).DeleteField('selectedZone');
   ses.GetSessionModuleData(ClassName).DeleteField('selectedService');
 
   dc:=ses.FetchDerivedCollection('MANAGED_SERVICES_GRID');
@@ -398,18 +399,12 @@ begin
   Result:=res;
 end;
 
-function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_ContentVMSel(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-begin
-  CheckClassVisibility4MyDomain(ses);
-
-  Result:=TFRE_DB_HTML_DESC.create.Describe('VM CONTENT');
-end;
-
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
+  input.Field('zoneId').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedService').AsString;
   Result:=VM.WEB_NewVM(input,ses,app,conn);
 end;
 
