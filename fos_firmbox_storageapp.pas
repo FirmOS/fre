@@ -57,6 +57,7 @@ type
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
   public
+    class procedure InstallDBObjects                    (const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
     procedure       MyServerInitializeModule            (const admin_dbc : IFRE_DB_CONNECTION); override;
   published
@@ -1784,17 +1785,17 @@ var
         sf.AddParam.Describe('expand','true');
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[storageRL]);
         case storageRL of
-          zfs_rl_stripe: raid_str:=app.FetchAppTextShort(session,'$add_disks_rl_stripe');
-          zfs_rl_mirror: raid_str:=app.FetchAppTextShort(session,'$add_disks_rl_mirror');
-          zfs_rl_z1: raid_str:=app.FetchAppTextShort(session,'$add_disks_rl_z1');
-          zfs_rl_z2: raid_str:=app.FetchAppTextShort(session,'$add_disks_rl_z2');
-          zfs_rl_z3: raid_str:=app.FetchAppTextShort(session,'$add_disks_rl_z3');
+          zfs_rl_stripe: raid_str:=FetchModuleTextShort(session,'$add_disks_rl_stripe');
+          zfs_rl_mirror: raid_str:=FetchModuleTextShort(session,'$add_disks_rl_mirror');
+          zfs_rl_z1: raid_str:=FetchModuleTextShort(session,'$add_disks_rl_z1');
+          zfs_rl_z2: raid_str:=FetchModuleTextShort(session,'$add_disks_rl_z2');
+          zfs_rl_z3: raid_str:=FetchModuleTextShort(session,'$add_disks_rl_z3');
         end;
-        menu.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_ex_same'),'%raid_level%',raid_str,[rfReplaceAll]),'',sf);
+        menu.AddEntry.Describe(StringReplace(FetchModuleTextShort(session,'$add_disks_storage_ex_same'),'%raid_level%',raid_str,[rfReplaceAll]),'',sf);
       end;
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage_ex_other'),'');
+      sub:=menu.AddMenu.Describe(FetchModuleTextShort(session,'$add_disks_storage_ex_other'),'');
     end else begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage'),'');
+      sub:=menu.AddMenu.Describe(FetchModuleTextShort(session,'$add_disks_storage'),'');
     end;
     if storageRL<>zfs_rl_stripe then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1802,7 +1803,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'',sf);
+      sub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_stripe'),'',sf);
     end;
     if storageRL<>zfs_rl_mirror then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1810,7 +1811,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'',sf);
+      sub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_mirror'),'',sf);
     end;
     if storageRL<>zfs_rl_z1 then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1818,7 +1819,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z1'),'',sf);
+      sub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_z1'),'',sf);
     end;
     if storageRL<>zfs_rl_z2 then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1826,7 +1827,7 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z2'),'',sf);
+      sub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_z2'),'',sf);
     end;
     if storageRL<>zfs_rl_z3 then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
@@ -1834,53 +1835,53 @@ var
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('expand','true');
       sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
-      sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z3'),'',sf);
+      sub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_z3'),'',sf);
     end;
     if Length(addStorage)>1 then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_storage'),'');
+      sub:=menu.AddMenu.Describe(FetchModuleTextShort(session,'$add_disks_storage'),'');
     end else begin
       sub:=menu;
     end;
     for i := 0 to Length(addStorage) - 1 do begin
       vdev:=addStorage[i].Implementor_HC as TFRE_DB_ZFS_VDEV;
       if vdev.raidLevel=zfs_rl_undefined then begin
-        subsub:=sub.AddMenu.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'');
+        subsub:=sub.AddMenu.Describe(StringReplace(FetchModuleTextShort(session,'$add_disks_storage_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'');
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'',sf);
+        subsub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_stripe'),'',sf);
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'',sf);
+        subsub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_mirror'),'',sf);
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z1'),'',sf);
+        subsub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_z1'),'',sf);
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z2'),'',sf);
+        subsub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_z2'),'',sf);
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
         sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
-        subsub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_z3'),'',sf);
+        subsub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_z3'),'',sf);
       end else begin
         sf:=CWSF(@WEB_AssignStorageDisk);
         sf.AddParam.Describe('disks',disks);
         sf.AddParam.Describe('pool',pool.getId);
         sf.AddParam.Describe('add',vdev.getId);
-        sub.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_storage_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'',sf);
+        sub.AddEntry.Describe(StringReplace(FetchModuleTextShort(session,'$add_disks_storage_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'',sf);
       end;
     end;
   end;
@@ -1892,7 +1893,7 @@ var
     sf:=CWSF(@WEB_AssignCacheDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
-    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_cache'),'',sf);
+    menu.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_cache'),'',sf);
   end;
 
   procedure _addLogMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const expandLog: Boolean; const addLog: IFRE_DB_ObjectArray);
@@ -1903,24 +1904,24 @@ var
     sf   : TFRE_DB_SERVER_FUNC_DESC;
   begin
     if expandLog then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log_ex'),'');
+      sub:=menu.AddMenu.Describe(FetchModuleTextShort(session,'$add_disks_log_ex'),'');
     end else begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log'),'');
+      sub:=menu.AddMenu.Describe(FetchModuleTextShort(session,'$add_disks_log'),'');
     end;
     sf:=CWSF(@WEB_AssignLogDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('expand','true');
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_stripe]);
-    sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_stripe'),'',sf);
+    sub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_stripe'),'',sf);
     sf:=CWSF(@WEB_AssignLogDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('expand','true');
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-    sub.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_rl_mirror'),'',sf);
+    sub.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_rl_mirror'),'',sf);
     if Length(addLog)>1 then begin
-      sub:=menu.AddMenu.Describe(app.FetchAppTextShort(session,'$add_disks_log'),'');
+      sub:=menu.AddMenu.Describe(FetchModuleTextShort(session,'$add_disks_log'),'');
     end else begin
       sub:=menu;
     end;
@@ -1930,7 +1931,7 @@ var
       sf.AddParam.Describe('disks',disks);
       sf.AddParam.Describe('pool',pool.getId);
       sf.AddParam.Describe('add',vdev.getId);
-      sub.AddEntry.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_log_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'',sf);
+      sub.AddEntry.Describe(StringReplace(FetchModuleTextShort(session,'$add_disks_log_to'),'%vdev%',vdev.caption,[rfReplaceAll]),'',sf);
     end;
   end;
 
@@ -1941,7 +1942,7 @@ var
     sf:=CWSF(@WEB_AssignSpareDisk);
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
-    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_spare'),'',sf);
+    menu.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_spare'),'',sf);
   end;
 
   procedure _addVdevMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_VDEV);
@@ -1956,12 +1957,12 @@ var
     if parent.Implementor_HC is TFRE_DB_ZFS_DATASTORAGE then begin
       sf:=CWSF(@WEB_AssignStorageDisk);
     end else begin
-      raise EFRE_DB_Exception.Create(app.FetchAppTextShort(session,'$error_assign_vdev_unknown_parent_type'));
+      raise EFRE_DB_Exception.Create(FetchModuleTextShort(session,'$error_assign_vdev_unknown_parent_type'));
     end;
     sf.AddParam.Describe('disks',disks);
     sf.AddParam.Describe('pool',pool.getId);
     sf.AddParam.Describe('add',target.getId);
-    menu.AddEntry.Describe(app.FetchAppTextShort(session,'$add_disks_vdev'),'',sf);
+    menu.AddEntry.Describe(FetchModuleTextShort(session,'$add_disks_vdev'),'',sf);
   end;
 
   procedure _addPoolMenu(const menu: TFRE_DB_MENU_DESC; const pool: TFRE_DB_ZFS_ROOTOBJ; const target: TFRE_DB_ZFS_OBJ);
@@ -2071,7 +2072,7 @@ var
   begin
     if obj.Implementor_HC is TFRE_DB_ZFS_POOL then begin
       pool:=obj.Implementor_HC as TFRE_DB_ZFS_POOL;
-      sub:=menu.AddMenu.Describe(StringReplace(app.FetchAppTextShort(session,'$add_disks_pool'),'%pool%',pool.caption,[rfReplaceAll]),'');
+      sub:=menu.AddMenu.Describe(StringReplace(FetchModuleTextShort(session,'$add_disks_pool'),'%pool%',pool.caption,[rfReplaceAll]),'');
       _addPoolMenu(sub,pool,pool);
     end;
   end;
@@ -2086,7 +2087,7 @@ begin
         sf:=CWSF(@WEB_Replace);
         sf.AddParam.Describe('old',target.getId);
         sf.AddParam.Describe('new',disk.getId);
-        menu.AddEntry.Describe(app.FetchAppTextShort(session,'$cm_replace'),'',sf,target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
+        menu.AddEntry.Describe(FetchModuleTextShort(session,'$cm_replace'),'',sf,target.getZFSParent(conn).getId=disk.getZFSParent(conn).getId);
       end else begin
         _addPoolMenu(menu,pool,target as TFRE_DB_ZFS_OBJ);
       end;
@@ -2201,6 +2202,101 @@ begin
   InitModuleDesc('$pools_description')
 end;
 
+class procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  inherited InstallDBObjects(conn, currentVersionId, newVersionId);
+
+  newVersionId:='1.0';
+
+  if (currentVersionId='') then begin
+    currentVersionId:='1.0';
+
+    CreateModuleText(conn,'$pool_status_tab','Status');
+    CreateModuleText(conn,'$pool_space_tab','Space');
+
+    CreateModuleText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');
+    CreateModuleText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');
+
+    CreateModuleText(conn,'$tb_create_pool','Create Pool');
+    CreateModuleText(conn,'$create_pool_diag_cap','Create Pool');
+    CreateModuleText(conn,'$create_pool_diag_name','Name');
+    CreateModuleText(conn,'$create_pool_error_cap','Error creating a new pool');
+    CreateModuleText(conn,'$create_pool_error_not_unique','The name of the pool has to be unique. Please choose another one.');
+    CreateModuleText(conn,'$tb_import_pool','Import Pool');
+    CreateModuleText(conn,'$import_pool_diag_cap','Import Pool');
+    CreateModuleText(conn,'$import_pool_diag_msg','Feature disabled in Demo Mode.');
+    CreateModuleText(conn,'$tb_export_pool','Export Pool');
+    CreateModuleText(conn,'$tb_scrub_pool','Scrub Pool');
+    CreateModuleText(conn,'$tb_save_config','Save');
+    CreateModuleText(conn,'$tb_reset_config','Reset');
+    CreateModuleText(conn,'$tb_pools','Pool');
+    CreateModuleText(conn,'$tb_blockdevices','Disk');
+    CreateModuleText(conn,'$tb_switch_offline','Switch offline');
+    CreateModuleText(conn,'$tb_switch_online','Switch online');
+    CreateModuleText(conn,'$tb_identify_on','Identify on');
+    CreateModuleText(conn,'$tb_identify_off','Identify off');
+    CreateModuleText(conn,'$tb_assign','Assign');
+    CreateModuleText(conn,'$tb_replace','Replace');
+    CreateModuleText(conn,'$tb_remove','Remove');
+    CreateModuleText(conn,'$tb_change_rl','Change RL');
+    CreateModuleText(conn,'$tb_rl_mirror','Mirror');
+    CreateModuleText(conn,'$tb_rl_z1','Raid-Z1');
+    CreateModuleText(conn,'$tb_rl_z2','Raid-Z2');
+    CreateModuleText(conn,'$tb_rl_z3','Raid-Z3');
+    CreateModuleText(conn,'$tb_destroy_pool','Destroy');
+    CreateModuleText(conn,'$new_spare_caption','spare');
+    CreateModuleText(conn,'$new_log_caption','log');
+    CreateModuleText(conn,'$log_vdev_caption_rl_mirror','mirror-%num%');
+    CreateModuleText(conn,'$new_cache_caption','cache');
+    CreateModuleText(conn,'$storage_vdev_caption_rl_mirror','mirror-%num%');
+    CreateModuleText(conn,'$storage_vdev_caption_rl_z1','raidz1-%num%');
+    CreateModuleText(conn,'$storage_vdev_caption_rl_z2','raidz2-%num%');
+    CreateModuleText(conn,'$storage_vdev_caption_rl_z3','raidz3-%num%');
+    CreateModuleText(conn,'$error_assign_not_new','You can only assign disks which are not in use yet.');
+    CreateModuleText(conn,'$error_unassign_not_new','You can only unassign disks which are not in use yet.');
+    CreateModuleText(conn,'$error_assign_vdev_not_found','Assign disks: Vdev not found.');
+    CreateModuleText(conn,'$error_assign_vdev_unknown_parent_type','Parent of Vdev does not support disk drops.');
+    CreateModuleText(conn,'$error_remove_not_new','You can only remove zfs elements which are not in use yet.');
+    CreateModuleText(conn,'$error_change_rl_not_new','You can only change the raid level of a vdev which is not in use yet.');
+
+    CreateModuleText(conn,'$add_disks_pool','Assign to %pool%...');
+    CreateModuleText(conn,'$add_disks_storage_ex_same','Expand storage (%raid_level%)');
+    CreateModuleText(conn,'$add_disks_storage_ex_other','Expand storage...');
+    CreateModuleText(conn,'$add_disks_storage','Add as storage...');
+    CreateModuleText(conn,'$add_disks_storage_to','Add as storage to "%vdev%"');
+    CreateModuleText(conn,'$add_disks_vdev','Add to vdev');
+    CreateModuleText(conn,'$add_disks_cache','Add as read cache (L2ARC)');
+    CreateModuleText(conn,'$add_disks_log','Add as write cache (ZIL)...');
+    CreateModuleText(conn,'$add_disks_log_to','Add as write cache (ZIL) to "%vdev%"');
+    CreateModuleText(conn,'$add_disks_log_ex','Expand write cache (ZIL)...');
+    CreateModuleText(conn,'$add_disks_spare','Add as spare');
+    CreateModuleText(conn,'$add_disks_rl_mirror','Mirror');
+    CreateModuleText(conn,'$add_disks_rl_stripe','Stripe');
+    CreateModuleText(conn,'$add_disks_rl_z1','Raid-Z1');
+    CreateModuleText(conn,'$add_disks_rl_z2','Raid-Z2');
+    CreateModuleText(conn,'$add_disks_rl_z3','Raid-Z3');
+
+    CreateModuleText(conn,'$confirm_destroy_caption','Destroy pool');
+    CreateModuleText(conn,'$confirm_destroy_msg','This operation is irreversible! Destroy pool %pool% anyway?');
+
+    CreateModuleText(conn,'$cm_replace','Replace');
+    CreateModuleText(conn,'$cm_switch_offline','Switch offline');
+    CreateModuleText(conn,'$cm_switch_online','Switch online');
+    CreateModuleText(conn,'$cm_identify_on','Identify ON');
+    CreateModuleText(conn,'$cm_identify_off','Identify OFF');
+    CreateModuleText(conn,'$cm_multiple_remove','Remove %num% items');
+    CreateModuleText(conn,'$cm_remove','Remove item');
+    CreateModuleText(conn,'$cm_change_raid_level','Change raid level...');
+    CreateModuleText(conn,'$cm_rl_mirror','Mirror');
+    CreateModuleText(conn,'$cm_rl_z1','Raid-Z1');
+    CreateModuleText(conn,'$cm_rl_z2','Raid-Z2');
+    CreateModuleText(conn,'$cm_rl_z3','Raid-Z3');
+    CreateModuleText(conn,'$cm_destroy_pool','Destroy pool %pool%');
+    CreateModuleText(conn,'$cm_export_pool','Export pool %pool%');
+    CreateModuleText(conn,'$cm_scrub_pool','Scrub pool %pool%');
+  end;
+end;
+
 procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
   conn       : IFRE_DB_CONNECTION;
@@ -2306,58 +2402,58 @@ begin
     layout_grid.SetDropGrid(pool_grid,TFRE_DB_StringArray.create('TFRE_DB_ZFS_VDEV','TFRE_DB_ZFS_LOG','TFRE_DB_ZFS_CACHE','TFRE_DB_ZFS_SPARE','TFRE_DB_ZFS_DATASTORAGE','TFRE_DB_ZFS_POOL','TFRE_DB_ZFS_UNASSIGNED'),TFRE_DB_StringArray.create('TFRE_DB_ZFS_BLOCKDEVICE'));
 
     menu:=TFRE_DB_MENU_DESC.create.Describe;
-    menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_save_config'),'',CWSF(@WEB_SaveConfig),false,'pool_save');
-    menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_reset_config'),'',CWSF(@WEB_ResetConfig),true,'pool_reset');
+    menu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_save_config'),'',CWSF(@WEB_SaveConfig),false,'pool_save');
+    menu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_reset_config'),'',CWSF(@WEB_ResetConfig),true,'pool_reset');
 
-    submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_pools'),'');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_create_pool'),'',CWSF(@WEB_CreatePoolDiag));
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_import_pool'),'',CWSF(@WEB_ImportPoolDiag));
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_export_pool'),'',CWSF(@WEB_TBExportPool),true,'pool_export');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_scrub_pool'),'',CWSF(@WEB_TBScrubPool),true,'pool_scrub');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_destroy_pool'),'',CWSF(@WEB_TBDestroyPool),true,'pool_destroy');
+    submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_pools'),'');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_create_pool'),'',CWSF(@WEB_CreatePoolDiag));
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_import_pool'),'',CWSF(@WEB_ImportPoolDiag));
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_export_pool'),'',CWSF(@WEB_TBExportPool),true,'pool_export');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_scrub_pool'),'',CWSF(@WEB_TBScrubPool),true,'pool_scrub');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_destroy_pool'),'',CWSF(@WEB_TBDestroyPool),true,'pool_destroy');
 
-    submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_blockdevices'),'');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_on'),'',CWSF(@WEB_TBIdentifyOn),true,'pool_iden_on');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_off'),'',CWSF(@WEB_TBIdentifyOff),true,'pool_iden_off');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_online'),'',CWSF(@WEB_TBSwitchOnline),true,'pool_switch_online');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'pool_switch_offline');
+    submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_blockdevices'),'');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_identify_on'),'',CWSF(@WEB_TBIdentifyOn),true,'pool_iden_on');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_identify_off'),'',CWSF(@WEB_TBIdentifyOff),true,'pool_iden_off');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_switch_online'),'',CWSF(@WEB_TBSwitchOnline),true,'pool_switch_online');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'pool_switch_offline');
 
-    subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',true,'pool_assign');
+    subsubmenu:=submenu.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_assign'),'',true,'pool_assign');
     _addDisksToPool(subsubmenu,nil,nil,nil,app,conn,ses);
 
-    subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_replace'),'',true,'pool_replace');
+    subsubmenu:=submenu.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_replace'),'',true,'pool_replace');
     _replaceDisks(subsubmenu,'',conn);
 
-    submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_change_rl'),'');
+    submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_change_rl'),'');
     sf:=CWSF(@WEB_TBChangeRaidLevel);
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_mirror'),'',sf,true,'pool_rl_mirror');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_rl_mirror'),'',sf,true,'pool_rl_mirror');
     sf:=CWSF(@WEB_TBChangeRaidLevel);
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z1'),'',sf,true,'pool_rl_z1');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_rl_z1'),'',sf,true,'pool_rl_z1');
     sf:=CWSF(@WEB_TBChangeRaidLevel);
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z2'),'',sf,true,'pool_rl_z2');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_rl_z2'),'',sf,true,'pool_rl_z2');
     sf:=CWSF(@WEB_TBChangeRaidLevel);
     sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_rl_z3'),'',sf,true,'pool_rl_z3');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_rl_z3'),'',sf,true,'pool_rl_z3');
 
-    menu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_remove'),'',CWSF(@WEB_TBRemoveNew),true,'pool_remove');
+    menu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_remove'),'',CWSF(@WEB_TBRemoveNew),true,'pool_remove');
 
     pool_grid.SetMenu(menu);
 
     menu:=TFRE_DB_MENU_DESC.create.Describe;
 
-    submenu:=menu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_blockdevices'),'');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_on'),'',CWSF(@WEB_TBIdentifyOn),true,'layout_iden_on');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_identify_off'),'',CWSF(@WEB_TBIdentifyOff),true,'layout_iden_off');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_online'),'',CWSF(@WEB_TBSwitchOnline),true,'layout_switch_online');
-    submenu.AddEntry.Describe(app.FetchAppTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'layout_switch_offline');
+    submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_blockdevices'),'');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_identify_on'),'',CWSF(@WEB_TBIdentifyOn),true,'layout_iden_on');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_identify_off'),'',CWSF(@WEB_TBIdentifyOff),true,'layout_iden_off');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_switch_online'),'',CWSF(@WEB_TBSwitchOnline),true,'layout_switch_online');
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_switch_offline'),'',CWSF(@WEB_TBSwitchOffline),true,'layout_switch_offline');
 
-    subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_assign'),'',true,'layout_assign');
+    subsubmenu:=submenu.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_assign'),'',true,'layout_assign');
     _addDisksToPool(subsubmenu,nil,nil,nil,app,conn,ses);
 
-    subsubmenu:=submenu.AddMenu.Describe(app.FetchAppTextShort(ses,'$tb_replace'),'',true,'layout_replace');
+    subsubmenu:=submenu.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_replace'),'',true,'layout_replace');
     _replaceDisks(subsubmenu,'',conn);
 
     layout_grid.SetMenu(menu);
@@ -2542,27 +2638,27 @@ begin
       if fnRemove then begin
         sf:=CWSF(@WEB_RemoveNew);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_multiple_remove'),'%num%',IntToStr(input.field('selected').ValueCount),[rfReplaceAll]),'',sf);
+        res.AddEntry.Describe(StringReplace(FetchModuleTextShort(ses,'$cm_multiple_remove'),'%num%',IntToStr(input.field('selected').ValueCount),[rfReplaceAll]),'',sf);
       end;
       if fnIdentifyOn then begin
         sf:=CWSF(@WEB_IdentifyOn);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_on'),'',sf);
+        res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_identify_on'),'',sf);
       end;
       if fnIdentifyOff then begin
         sf:=CWSF(@WEB_IdentifyOff);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_off'),'',sf);
+        res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_identify_off'),'',sf);
       end;
       if fnSwitchOffline then begin
         sf:=CWSF(@WEB_SwitchOffline);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_offline'),'',sf,fnSwitchOfflineDisabled);
+        res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_switch_offline'),'',sf,fnSwitchOfflineDisabled);
       end;
       if fnSwitchOnline then begin
         sf:=CWSF(@WEB_SwitchOnline);
         sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-        res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_online'),'',sf,fnSwitchOnlineDisabled);
+        res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_switch_online'),'',sf,fnSwitchOnlineDisabled);
       end;
       Result:=res;
     end else begin //single selection
@@ -2572,73 +2668,73 @@ begin
         pool:=zfsObj.getPool(conn);
         if (pool is TFRE_DB_ZFS_UNASSIGNED) and (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) then begin
           _addDisksToPool(res,nil,nil,input.Field('selected').AsStringArr,app,conn,ses);
-          sub:=res.AddMenu.Describe(app.FetchAppTextShort(ses,'$cm_replace'),'');
+          sub:=res.AddMenu.Describe(FetchModuleTextShort(ses,'$cm_replace'),'');
           _replaceDisks(sub,input.Field('selected').AsString,conn);
         end else begin
           if (zfsObj is TFRE_DB_ZFS_BLOCKDEVICE) and not zfsObj.getIsNew then begin
             if (zfsObj as TFRE_DB_ZFS_BLOCKDEVICE).isOffline then begin
               sf:=CWSF(@WEB_SwitchOnline);
               sf.AddParam.Describe('selected',input.Field('selected').AsString);
-              res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_online'),'',sf);
+              res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_switch_online'),'',sf);
             end else begin
               sf:=CWSF(@WEB_SwitchOffline);
               sf.AddParam.Describe('selected',input.Field('selected').AsString);
-              res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_switch_offline'),'',sf);
+              res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_switch_offline'),'',sf);
             end;
           end;
         end;
         if zfsObj.getisNew then begin
           sf:=CWSF(@WEB_RemoveNew);
           sf.AddParam.Describe('selected',input.Field('selected').AsString);
-          res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_remove'),'',sf);
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_remove'),'',sf);
           if (zfsObj is TFRE_DB_ZFS_VDEV) and (zfsObj.getZFSParent(conn).Implementor_HC is TFRE_DB_ZFS_DATASTORAGE) then begin
-            sub:=res.AddMenu.Describe(app.FetchAppTextShort(ses,'$cm_change_raid_level'),'');
+            sub:=res.AddMenu.Describe(FetchModuleTextShort(ses,'$cm_change_raid_level'),'');
             rl:=(zfsObj as TFRE_DB_ZFS_VDEV).raidLevel;
             if rl<>zfs_rl_mirror then begin
               sf:=CWSF(@WEB_ChangeRaidLevel);
               sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_mirror]);
               sf.AddParam.Describe('selected',input.Field('selected').AsString);
-              sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_mirror'),'',sf);
+              sub.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_rl_mirror'),'',sf);
             end;
             if rl<>zfs_rl_z1 then begin
               sf:=CWSF(@WEB_ChangeRaidLevel);
               sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z1]);
               sf.AddParam.Describe('selected',input.Field('selected').AsString);
-              sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z1'),'',sf);
+              sub.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_rl_z1'),'',sf);
             end;
             if rl<>zfs_rl_z2 then begin
               sf:=CWSF(@WEB_ChangeRaidLevel);
               sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z2]);
               sf.AddParam.Describe('selected',input.Field('selected').AsString);
-              sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z2'),'',sf);
+              sub.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_rl_z2'),'',sf);
             end;
             if rl<>zfs_rl_z3 then begin
               sf:=CWSF(@WEB_ChangeRaidLevel);
               sf.AddParam.Describe('rl',CFRE_DB_ZFS_RAID_LEVEL[zfs_rl_z3]);
               sf.AddParam.Describe('selected',input.Field('selected').AsString);
-              sub.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_rl_z3'),'',sf);
+              sub.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_rl_z3'),'',sf);
             end;
           end;
         end else begin
           if zfsObj is TFRE_DB_ZFS_POOL then begin
             sf:=CWSF(@WEB_ScrubPool);
             sf.AddParam.Describe('pool',input.Field('selected').AsString);
-            res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_scrub_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
+            res.AddEntry.Describe(StringReplace(FetchModuleTextShort(ses,'$cm_scrub_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
             sf:=CWSF(@WEB_ExportPool);
             sf.AddParam.Describe('pool',input.Field('selected').AsString);
-            res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_export_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
+            res.AddEntry.Describe(StringReplace(FetchModuleTextShort(ses,'$cm_export_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
             sf:=CWSF(@WEB_DestroyPool);
             sf.AddParam.Describe('pool',input.Field('selected').AsString);
-            res.AddEntry.Describe(StringReplace(app.FetchAppTextShort(ses,'$cm_destroy_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
+            res.AddEntry.Describe(StringReplace(FetchModuleTextShort(ses,'$cm_destroy_pool'),'%pool%',zfsObj.caption,[rfReplaceAll]),'',sf,zfsObj.getIsModified);
           end;
         end;
         if zfsObj.canIdentify then begin
           sf:=CWSF(@WEB_IdentifyOn);
           sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-          res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_on'),'',sf);
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_identify_on'),'',sf);
           sf:=CWSF(@WEB_IdentifyOff);
           sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-          res.AddEntry.Describe(app.FetchAppTextShort(ses,'$cm_identify_off'),'',sf);
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cm_identify_off'),'',sf);
         end;
       end;
     end;
@@ -2678,7 +2774,7 @@ begin
   lastObj:=nil;
   pools.ForAll(@_checkPoolName);
   if not nameOk then begin
-    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppTextShort(ses,'$create_pool_error_cap'),app.FetchAppTextShort(ses,'$create_pool_error_not_unique'),fdbmt_error);
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'$create_pool_error_cap'),FetchModuleTextShort(ses,'$create_pool_error_not_unique'),fdbmt_error);
     exit;
   end;
 
@@ -2706,8 +2802,8 @@ begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'$create_pool_diag_cap'));
-  res.AddInput.Describe(app.FetchAppTextShort(ses,'$create_pool_diag_name'),'pool_name',true);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$create_pool_diag_cap'));
+  res.AddInput.Describe(FetchModuleTextShort(ses,'$create_pool_diag_name'),'pool_name',true);
   res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CWSF(@WEB_CreatePool),fdbbt_submit);
   result:=res;
 end;
@@ -2717,7 +2813,7 @@ begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppTextShort(ses,'$import_pool_diag_cap'),app.FetchAppTextShort(ses,'$import_pool_diag_msg'),fdbmt_info,nil);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'$import_pool_diag_cap'),FetchModuleTextShort(ses,'$import_pool_diag_msg'),fdbmt_info,nil);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_AssignSpareDisk(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2750,7 +2846,7 @@ begin
   for i := 0 to input.Field('disks').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('disks').AsStringArr[i]);
     spool:=disk.getPool(conn);
-    if not (disk.getIsNew or spool.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_assign_not_new'));
+    if not (disk.getIsNew or spool.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'$error_assign_not_new'));
     disk.removeFromPool;
     disk:=tspare.addBlockdevice(disk.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE);
     disk.setIsNew;
@@ -2785,7 +2881,7 @@ begin
   end else begin
     tcache:=tpool.createCache;
     tcache.setIsNew;
-    tcache.SetName(app.FetchAppTextShort(ses,'$new_cache_caption'));
+    tcache.SetName(FetchModuleTextShort(ses,'$new_cache_caption'));
     vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
     CheckDbResult(vdevs.Store(tcache.CloneToNewObject()),'Assign cache');
   end;
@@ -2794,7 +2890,7 @@ begin
   for i := 0 to input.Field('disks').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('disks').AsStringItem[i]);
     spool:=disk.getPool(conn);
-    if not (disk.getIsNew or spool.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_assign_not_new'));
+    if not (disk.getIsNew or spool.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'$error_assign_not_new'));
     disk:=tcache.addBlockdevice(disk.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE);
     disk.setIsNew;
     CheckDbResult(conn.Update(disk),'Assign cache');
@@ -2834,7 +2930,7 @@ begin
         vdev:=tlog;
       end else begin
         vdev:=tlog.createVdev;
-        vdev.setname(StringReplace(app.FetchAppTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tlog.getZFSChildren(conn))),[rfReplaceAll]));
+        vdev.setname(StringReplace(FetchModuleTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tlog.getZFSChildren(conn))),[rfReplaceAll]));
         vdev.setIsNew;
         vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
         CheckDbResult(vdevs.Store(vdev.CloneToNewObject()),'Assign log');
@@ -2847,14 +2943,14 @@ begin
           vdev:=children[i].Implementor_HC as TFRE_DB_ZFS_VDEV;
         end;
       end;
-      if not Assigned(vdev) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_assign_vdev_not_found'));
+      if not Assigned(vdev) then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'$error_assign_vdev_not_found'));
       vdev.setIsModified;
       CheckDbResult(conn.Update(vdev.CloneToNewObject),'Assign log');
     end;
   end else begin
     tlog:=tpool.createLog;
     tlog.setIsNew;
-    tlog.setName(app.FetchAppTextShort(ses,'$new_log_caption'));
+    tlog.setName(FetchModuleTextShort(ses,'$new_log_caption'));
     CheckDbResult(vdevs.Store(tlog.CloneToNewObject()),'Assign log');
     if String2DBZFSRaidLevelType(input.Field('rl').AsString)=zfs_rl_stripe then begin
       vdev:=tlog;
@@ -2862,14 +2958,14 @@ begin
       vdev:=tlog.createVdev;
       vdev.setIsNew;
       vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
-      vdev.SetName(StringReplace(app.FetchAppTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%','0',[rfReplaceAll]));
+      vdev.SetName(StringReplace(FetchModuleTextShort(ses,'$log_vdev_caption_'+input.Field('rl').AsString),'%num%','0',[rfReplaceAll]));
       CheckDbResult(vdevs.Store(vdev.CloneToNewObject()),'Assign log');
     end;
   end;
   for i := 0 to input.Field('disks').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('disks').AsStringItem[i]);
     spool:=disk.getPool(conn);
-    if not (disk.getIsNew or spool.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_assign_not_new'));
+    if not (disk.getIsNew or spool.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'$error_assign_not_new'));
     disk.removeFromPool;
     disk:=vdev.addBlockdevice(disk.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE);
     disk.setIsNew;
@@ -2912,7 +3008,7 @@ begin
     end else begin
       if input.FieldExists('expand') and input.Field('expand').AsBoolean then begin
         vdev     := tstorage.createVdev;
-        vdev.SetName(StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tstorage.getZFSChildren(conn))),[rfReplaceAll]));
+        vdev.SetName(StringReplace(FetchModuleTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(_getNextVdevNum(tstorage.getZFSChildren(conn))),[rfReplaceAll]));
         vdev.setIsNew;
         vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
         CheckDbResult(vdevs.store(vdev.CloneToNewObject),'Assign storage disk');
@@ -2924,7 +3020,7 @@ begin
             vdev:=children[i].Implementor_HC as TFRE_DB_ZFS_VDEV;
           end;
         end;
-        if not Assigned(vdev) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_assign_vdev_not_found'));
+        if not Assigned(vdev) then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'$error_assign_vdev_not_found'));
         vdev.setIsModified;
         CheckDbResult(conn.Update(vdev.CloneToNewObject),'Assign storage disk');
       end;
@@ -2940,14 +3036,14 @@ begin
       vdev:=tstorage.createVdev;
       vdev.setIsNew;
       vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
-      vdev.setname(StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%','0',[rfReplaceAll]));
+      vdev.setname(StringReplace(FetchModuleTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%','0',[rfReplaceAll]));
       CheckDbResult(vdevs.store(vdev.CloneToNewObject),'Assign storage disk');
     end;
   end;
   for i := 0 to input.Field('disks').ValueCount - 1 do begin
     disk:=_getZFSObj(conn,input.Field('disks').AsStringItem[i]);
     spool:=disk.getPool(conn);
-    if not (disk.getIsNew or spool.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_assign_not_new'));
+    if not (disk.getIsNew or spool.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'$error_assign_not_new'));
     disk.removeFromPool;
     disk:=vdev.addBlockdevice(disk.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE);
     disk.setIsNew;
@@ -3004,7 +3100,7 @@ begin
     zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
     pool:=zfsObj.getPool(conn);
     if assigned(ua) and (pool.getId=ua.getId) then continue; //skip: already unassigned
-    if not zfsObj.getIsNew then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_remove_not_new'));
+    if not zfsObj.getIsNew then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'$error_remove_not_new'));
     _handleObj(zfsObj);
   end;
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
@@ -3021,11 +3117,11 @@ var
   idx      : SizeInt;
 begin
   vdev:=_getZFSObj(conn,input.Field('selected').AsString).Implementor_HC as TFRE_DB_ZFS_VDEV;
-  if not vdev.getIsNew then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_change_rl_not_new'));
+  if not vdev.getIsNew then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'$error_change_rl_not_new'));
   vdev.raidLevel:=String2DBZFSRaidLevelType(input.Field('rl').AsString);
   idx:=Pos('-',vdev.caption)+1;
   num:=StrToInt(Copy(vdev.caption,idx,Length(vdev.caption)-idx+1));
-  vdev.setname(StringReplace(app.FetchAppTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(num),[rfReplaceAll]));
+  vdev.setname(StringReplace(FetchModuleTextShort(ses,'$storage_vdev_caption_'+input.Field('rl').AsString),'%num%',IntToStr(num),[rfReplaceAll]));
   CheckDbResult(conn.Update(vdev),'Change raid level');
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
@@ -3045,7 +3141,7 @@ begin
   pool:=_getZFSObj(conn,input.Field('pool').AsString).Implementor_HC as TFRE_DB_ZFS_ROOTOBJ;
   sf:=CWSF(@WEB_DestroyPoolConfirmed);
   sf.AddParam.Describe('pool',input.Field('pool').AsString);
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(app.FetchAppTextShort(ses,'$confirm_destroy_caption'),StringReplace(app.FetchAppTextShort(ses,'$confirm_destroy_msg'),'%pool%',pool.caption,[rfReplaceAll]),fdbmt_confirm,sf);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'$confirm_destroy_caption'),StringReplace(FetchModuleTextShort(ses,'$confirm_destroy_msg'),'%pool%',pool.caption,[rfReplaceAll]),fdbmt_confirm,sf);
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_DestroyPoolConfirmed(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -3175,7 +3271,7 @@ begin
     disk:=_getZFSObj(conn,disks[i]);
     spool:=disk.getPool(conn);
     if spool.getId=upool.getId then continue; //skip: already unassigned
-    if not disk.getIsNew then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(session,'$error_unassign_not_new'));
+    if not disk.getIsNew then raise EFRE_DB_Exception.Create(FetchModuleTextShort(session,'$error_unassign_not_new'));
 
     disk.removeFromPool;
     disk:=upool.addBlockdevice(disk.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE);
@@ -3578,89 +3674,89 @@ begin
       CreateAppText(conn,'$sitemap_filebrowser','Filebrowser','','Filebrowser');
       CreateAppText(conn,'$sitemap_backup_scheduler','Snapshot Schedulers','','Snapshot Schedulers');
 
-      CreateAppText(conn,'$pool_status_tab','Status');
-      CreateAppText(conn,'$pool_space_tab','Space');
+      CreateAppText(conn,'$pool_status_tab','Status');//moved to module in version 1.1
+      CreateAppText(conn,'$pool_space_tab','Space');//moved to module in version 1.1
 
-      CreateAppText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');
-      CreateAppText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');
+      CreateAppText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');//moved to module in version 1.1
+      CreateAppText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');//moved to module in version 1.1
 
-      CreateAppText(conn,'$tb_create_pool','Create Pool');
-      CreateAppText(conn,'$create_pool_diag_cap','Create Pool');
-      CreateAppText(conn,'$create_pool_diag_name','Name');
-      CreateAppText(conn,'$create_pool_error_cap','Error creating a new pool');
-      CreateAppText(conn,'$create_pool_error_not_unique','The name of the pool has to be unique. Please choose another one.');
-      CreateAppText(conn,'$tb_import_pool','Import Pool');
-      CreateAppText(conn,'$import_pool_diag_cap','Import Pool');
-      CreateAppText(conn,'$import_pool_diag_msg','Feature disabled in Demo Mode.');
-      CreateAppText(conn,'$tb_export_pool','Export Pool');
-      CreateAppText(conn,'$tb_scrub_pool','Scrub Pool');
-      CreateAppText(conn,'$tb_save_config','Save');
-      CreateAppText(conn,'$tb_reset_config','Reset');
-      CreateAppText(conn,'$tb_pools','Pool');
-      CreateAppText(conn,'$tb_blockdevices','Disk');
-      CreateAppText(conn,'$tb_switch_offline','Switch offline');
-      CreateAppText(conn,'$tb_switch_online','Switch online');
-      CreateAppText(conn,'$tb_identify_on','Identify on');
-      CreateAppText(conn,'$tb_identify_off','Identify off');
-      CreateAppText(conn,'$tb_assign','Assign');
-      CreateAppText(conn,'$tb_replace','Replace');
-      CreateAppText(conn,'$tb_remove','Remove');
-      CreateAppText(conn,'$tb_change_rl','Change RL');
-      CreateAppText(conn,'$tb_rl_mirror','Mirror');
-      CreateAppText(conn,'$tb_rl_z1','Raid-Z1');
-      CreateAppText(conn,'$tb_rl_z2','Raid-Z2');
-      CreateAppText(conn,'$tb_rl_z3','Raid-Z3');
-      CreateAppText(conn,'$tb_destroy_pool','Destroy');
-      CreateAppText(conn,'$new_spare_caption','spare');
-      CreateAppText(conn,'$new_log_caption','log');
-      CreateAppText(conn,'$log_vdev_caption_rl_mirror','mirror-%num%');
-      CreateAppText(conn,'$new_cache_caption','cache');
-      CreateAppText(conn,'$storage_vdev_caption_rl_mirror','mirror-%num%');
-      CreateAppText(conn,'$storage_vdev_caption_rl_z1','raidz1-%num%');
-      CreateAppText(conn,'$storage_vdev_caption_rl_z2','raidz2-%num%');
-      CreateAppText(conn,'$storage_vdev_caption_rl_z3','raidz3-%num%');
-      CreateAppText(conn,'$error_assign_not_new','You can only assign disks which are not in use yet.');
-      CreateAppText(conn,'$error_unassign_not_new','You can only unassign disks which are not in use yet.');
-      CreateAppText(conn,'$error_assign_vdev_not_found','Assign disks: Vdev not found.');
-      CreateAppText(conn,'$error_assign_vdev_unknown_parent_type','Parent of Vdev does not support disk drops.');
-      CreateAppText(conn,'$error_remove_not_new','You can only remove zfs elements which are not in use yet.');
-      CreateAppText(conn,'$error_change_rl_not_new','You can only change the raid level of a vdev which is not in use yet.');
+      CreateAppText(conn,'$tb_create_pool','Create Pool');//moved to module in version 1.1
+      CreateAppText(conn,'$create_pool_diag_cap','Create Pool');//moved to module in version 1.1
+      CreateAppText(conn,'$create_pool_diag_name','Name');//moved to module in version 1.1
+      CreateAppText(conn,'$create_pool_error_cap','Error creating a new pool');//moved to module in version 1.1
+      CreateAppText(conn,'$create_pool_error_not_unique','The name of the pool has to be unique. Please choose another one.');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_import_pool','Import Pool');//moved to module in version 1.1
+      CreateAppText(conn,'$import_pool_diag_cap','Import Pool');//moved to module in version 1.1
+      CreateAppText(conn,'$import_pool_diag_msg','Feature disabled in Demo Mode.');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_export_pool','Export Pool');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_scrub_pool','Scrub Pool');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_save_config','Save');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_reset_config','Reset');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_pools','Pool');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_blockdevices','Disk');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_switch_offline','Switch offline');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_switch_online','Switch online');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_identify_on','Identify on');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_identify_off','Identify off');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_assign','Assign');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_replace','Replace');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_remove','Remove');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_change_rl','Change RL');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_rl_mirror','Mirror');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_rl_z1','Raid-Z1');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_rl_z2','Raid-Z2');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_rl_z3','Raid-Z3');//moved to module in version 1.1
+      CreateAppText(conn,'$tb_destroy_pool','Destroy');//moved to module in version 1.1
+      CreateAppText(conn,'$new_spare_caption','spare');//moved to module in version 1.1
+      CreateAppText(conn,'$new_log_caption','log');//moved to module in version 1.1
+      CreateAppText(conn,'$log_vdev_caption_rl_mirror','mirror-%num%');//moved to module in version 1.1
+      CreateAppText(conn,'$new_cache_caption','cache');//moved to module in version 1.1
+      CreateAppText(conn,'$storage_vdev_caption_rl_mirror','mirror-%num%');//moved to module in version 1.1
+      CreateAppText(conn,'$storage_vdev_caption_rl_z1','raidz1-%num%');//moved to module in version 1.1
+      CreateAppText(conn,'$storage_vdev_caption_rl_z2','raidz2-%num%');//moved to module in version 1.1
+      CreateAppText(conn,'$storage_vdev_caption_rl_z3','raidz3-%num%');//moved to module in version 1.1
+      CreateAppText(conn,'$error_assign_not_new','You can only assign disks which are not in use yet.');//moved to module in version 1.1
+      CreateAppText(conn,'$error_unassign_not_new','You can only unassign disks which are not in use yet.');//moved to module in version 1.1
+      CreateAppText(conn,'$error_assign_vdev_not_found','Assign disks: Vdev not found.');//moved to module in version 1.1
+      CreateAppText(conn,'$error_assign_vdev_unknown_parent_type','Parent of Vdev does not support disk drops.');//moved to module in version 1.1
+      CreateAppText(conn,'$error_remove_not_new','You can only remove zfs elements which are not in use yet.');//moved to module in version 1.1
+      CreateAppText(conn,'$error_change_rl_not_new','You can only change the raid level of a vdev which is not in use yet.');//moved to module in version 1.1
 
-      CreateAppText(conn,'$add_disks_pool','Assign to %pool%...');
-      CreateAppText(conn,'$add_disks_storage_ex_same','Expand storage (%raid_level%)');
-      CreateAppText(conn,'$add_disks_storage_ex_other','Expand storage...');
-      CreateAppText(conn,'$add_disks_storage','Add as storage...');
-      CreateAppText(conn,'$add_disks_storage_to','Add as storage to "%vdev%"');
-      CreateAppText(conn,'$add_disks_vdev','Add to vdev');
-      CreateAppText(conn,'$add_disks_cache','Add as read cache (L2ARC)');
-      CreateAppText(conn,'$add_disks_log','Add as write cache (ZIL)...');
-      CreateAppText(conn,'$add_disks_log_to','Add as write cache (ZIL) to "%vdev%"');
-      CreateAppText(conn,'$add_disks_log_ex','Expand write cache (ZIL)...');
-      CreateAppText(conn,'$add_disks_spare','Add as spare');
-      CreateAppText(conn,'$add_disks_rl_mirror','Mirror');
-      CreateAppText(conn,'$add_disks_rl_stripe','Stripe');
-      CreateAppText(conn,'$add_disks_rl_z1','Raid-Z1');
-      CreateAppText(conn,'$add_disks_rl_z2','Raid-Z2');
-      CreateAppText(conn,'$add_disks_rl_z3','Raid-Z3');
+      CreateAppText(conn,'$add_disks_pool','Assign to %pool%...');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_storage_ex_same','Expand storage (%raid_level%)');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_storage_ex_other','Expand storage...');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_storage','Add as storage...');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_storage_to','Add as storage to "%vdev%"');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_vdev','Add to vdev');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_cache','Add as read cache (L2ARC)');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_log','Add as write cache (ZIL)...');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_log_to','Add as write cache (ZIL) to "%vdev%"');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_log_ex','Expand write cache (ZIL)...');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_spare','Add as spare');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_rl_mirror','Mirror');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_rl_stripe','Stripe');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_rl_z1','Raid-Z1');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_rl_z2','Raid-Z2');//moved to module in version 1.1
+      CreateAppText(conn,'$add_disks_rl_z3','Raid-Z3');//moved to module in version 1.1
 
-      CreateAppText(conn,'$confirm_destroy_caption','Destroy pool');
-      CreateAppText(conn,'$confirm_destroy_msg','This operation is irreversible! Destroy pool %pool% anyway?');
+      CreateAppText(conn,'$confirm_destroy_caption','Destroy pool');//moved to module in version 1.1
+      CreateAppText(conn,'$confirm_destroy_msg','This operation is irreversible! Destroy pool %pool% anyway?');//moved to module in version 1.1
 
-      CreateAppText(conn,'$cm_replace','Replace');
-      CreateAppText(conn,'$cm_switch_offline','Switch offline');
-      CreateAppText(conn,'$cm_switch_online','Switch online');
-      CreateAppText(conn,'$cm_identify_on','Identify ON');
-      CreateAppText(conn,'$cm_identify_off','Identify OFF');
-      CreateAppText(conn,'$cm_multiple_remove','Remove %num% items');
-      CreateAppText(conn,'$cm_remove','Remove item');
-      CreateAppText(conn,'$cm_change_raid_level','Change raid level...');
-      CreateAppText(conn,'$cm_rl_mirror','Mirror');
-      CreateAppText(conn,'$cm_rl_z1','Raid-Z1');
-      CreateAppText(conn,'$cm_rl_z2','Raid-Z2');
-      CreateAppText(conn,'$cm_rl_z3','Raid-Z3');
-      CreateAppText(conn,'$cm_destroy_pool','Destroy pool %pool%');
-      CreateAppText(conn,'$cm_export_pool','Export pool %pool%');
-      CreateAppText(conn,'$cm_scrub_pool','Scrub pool %pool%');
+      CreateAppText(conn,'$cm_replace','Replace');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_switch_offline','Switch offline');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_switch_online','Switch online');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_identify_on','Identify ON');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_identify_off','Identify OFF');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_multiple_remove','Remove %num% items');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_remove','Remove item');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_change_raid_level','Change raid level...');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_rl_mirror','Mirror');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_rl_z1','Raid-Z1');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_rl_z2','Raid-Z2');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_rl_z3','Raid-Z3');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_destroy_pool','Destroy pool %pool%');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_export_pool','Export pool %pool%');//moved to module in version 1.1
+      CreateAppText(conn,'$cm_scrub_pool','Scrub pool %pool%');//moved to module in version 1.1
 
       CreateAppText(conn,'$storage_global_filer_nfs','NFS Exports','NFS Exports','NFS Exports');
       CreateAppText(conn,'$storage_global_filer_lun','LUN Targets','LUN Targets','LUN Targets');
@@ -3792,7 +3888,90 @@ begin
     currentVersionId:='1.1';
 
     DeleteAppText(conn,'$pools_info');
-    //next update code
+
+    DeleteAppText(conn,'$pool_status_tab');
+    DeleteAppText(conn,'$pool_space_tab');
+
+    DeleteAppText(conn,'$error_delete_single_select');
+    DeleteAppText(conn,'$error_modify_single_select');
+
+    DeleteAppText(conn,'$tb_create_pool');
+    DeleteAppText(conn,'$create_pool_diag_cap');
+    DeleteAppText(conn,'$create_pool_diag_name');
+    DeleteAppText(conn,'$create_pool_error_cap');
+    DeleteAppText(conn,'$create_pool_error_not_unique');
+    DeleteAppText(conn,'$tb_import_pool');
+    DeleteAppText(conn,'$import_pool_diag_cap');
+    DeleteAppText(conn,'$import_pool_diag_msg');
+    DeleteAppText(conn,'$tb_export_pool');
+    DeleteAppText(conn,'$tb_scrub_pool');
+    DeleteAppText(conn,'$tb_save_config');
+    DeleteAppText(conn,'$tb_reset_config');
+    DeleteAppText(conn,'$tb_pools');
+    DeleteAppText(conn,'$tb_blockdevices');
+    DeleteAppText(conn,'$tb_switch_offline');
+    DeleteAppText(conn,'$tb_switch_online');
+    DeleteAppText(conn,'$tb_identify_on');
+    DeleteAppText(conn,'$tb_identify_off');
+    DeleteAppText(conn,'$tb_assign');
+    DeleteAppText(conn,'$tb_replace');
+    DeleteAppText(conn,'$tb_remove');
+    DeleteAppText(conn,'$tb_change_rl');
+    DeleteAppText(conn,'$tb_rl_mirror');
+    DeleteAppText(conn,'$tb_rl_z1');
+    DeleteAppText(conn,'$tb_rl_z2');
+    DeleteAppText(conn,'$tb_rl_z3');
+    DeleteAppText(conn,'$tb_destroy_pool');
+    DeleteAppText(conn,'$new_spare_caption');
+    DeleteAppText(conn,'$new_log_caption');
+    DeleteAppText(conn,'$log_vdev_caption_rl_mirror');
+    DeleteAppText(conn,'$new_cache_caption');
+    DeleteAppText(conn,'$storage_vdev_caption_rl_mirror');
+    DeleteAppText(conn,'$storage_vdev_caption_rl_z1');
+    DeleteAppText(conn,'$storage_vdev_caption_rl_z2');
+    DeleteAppText(conn,'$storage_vdev_caption_rl_z3');
+    DeleteAppText(conn,'$error_assign_not_new');
+    DeleteAppText(conn,'$error_unassign_not_new');
+    DeleteAppText(conn,'$error_assign_vdev_not_found');
+    DeleteAppText(conn,'$error_assign_vdev_unknown_parent_type');
+    DeleteAppText(conn,'$error_remove_not_new');
+    DeleteAppText(conn,'$error_change_rl_not_new');
+
+    DeleteAppText(conn,'$add_disks_pool');
+    DeleteAppText(conn,'$add_disks_storage_ex_same');
+    DeleteAppText(conn,'$add_disks_storage_ex_other');
+    DeleteAppText(conn,'$add_disks_storage');
+    DeleteAppText(conn,'$add_disks_storage_to');
+    DeleteAppText(conn,'$add_disks_vdev');
+    DeleteAppText(conn,'$add_disks_cache');
+    DeleteAppText(conn,'$add_disks_log');
+    DeleteAppText(conn,'$add_disks_log_to');
+    DeleteAppText(conn,'$add_disks_log_ex');
+    DeleteAppText(conn,'$add_disks_spare');
+    DeleteAppText(conn,'$add_disks_rl_mirror');
+    DeleteAppText(conn,'$add_disks_rl_stripe');
+    DeleteAppText(conn,'$add_disks_rl_z1');
+    DeleteAppText(conn,'$add_disks_rl_z2');
+    DeleteAppText(conn,'$add_disks_rl_z3');
+
+    DeleteAppText(conn,'$confirm_destroy_caption');
+    DeleteAppText(conn,'$confirm_destroy_msg');
+
+    DeleteAppText(conn,'$cm_replace');
+    DeleteAppText(conn,'$cm_switch_offline');
+    DeleteAppText(conn,'$cm_switch_online');
+    DeleteAppText(conn,'$cm_identify_on');
+    DeleteAppText(conn,'$cm_identify_off');
+    DeleteAppText(conn,'$cm_multiple_remove');
+    DeleteAppText(conn,'$cm_remove');
+    DeleteAppText(conn,'$cm_change_raid_level');
+    DeleteAppText(conn,'$cm_rl_mirror');
+    DeleteAppText(conn,'$cm_rl_z1');
+    DeleteAppText(conn,'$cm_rl_z2');
+    DeleteAppText(conn,'$cm_rl_z3');
+    DeleteAppText(conn,'$cm_destroy_pool');
+    DeleteAppText(conn,'$cm_export_pool');
+    DeleteAppText(conn,'$cm_scrub_pool');
   end;
 end;
 
