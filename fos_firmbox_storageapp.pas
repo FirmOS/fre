@@ -2338,7 +2338,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
 
     with tr_Grid do begin
-      AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('caption_layout','caption','displayname'),'caption',FetchModuleTextShort(session,'$pools_grid_caption'),dt_string,true,false,false,1,'icon_layout');
+      AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('caption_layout','caption','displayname'),'caption_layout',FetchModuleTextShort(session,'$pools_grid_caption'),dt_string,true,false,false,1,'icon_layout');
       AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('icon_layout','icon'),'icon_layout','',dt_string,false,false,false,1,'','',FREDB_getThemedResource('images_apps/firmbox_storage/Undefined.png'));
       AddOneToOnescheme('_disabledrag_','','',dt_string,false);
       AddOneToOnescheme('_disabledrop_','','',dt_string,false);
