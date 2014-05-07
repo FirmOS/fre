@@ -2314,8 +2314,8 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
 
     with tr_Grid do begin
-      AddOneToOnescheme('caption','',FetchModuleTextShort(session,'$pools_grid_caption'),dt_string,true,false,false,1,'icon');
-      AddOneToOnescheme('icon','','',dt_string,false);
+      AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('caption','displayname'),'caption',FetchModuleTextShort(session,'$pools_grid_caption'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('icon','','',dt_string,false,false,false,1,'','',FREDB_getThemedResource('images_apps/firmbox_storage/Undefined.png'));
       AddOneToOnescheme('iops_r','',FetchModuleTextShort(session,'$pools_grid_iops_r'));
       AddOneToOnescheme('iops_w','',FetchModuleTextShort(session,'$pools_grid_iops_w'));
       AddOneToOnescheme('transfer_r','',FetchModuleTextShort(session,'$pools_grid_transfer_r'));
@@ -2338,8 +2338,8 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
 
     with tr_Grid do begin
-      AddOneToOnescheme('caption_layout','',FetchModuleTextShort(session,'$layout_grid_caption'),dt_string,true,false,false,1,'icon_layout');
-      AddOneToOnescheme('icon_layout','','',dt_string,false);
+      AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('caption_layout','caption','displayname'),'caption',FetchModuleTextShort(session,'$pools_grid_caption'),dt_string,true,false,false,1,'icon_layout');
+      AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('icon_layout','icon'),'icon_layout','',dt_string,false,false,false,1,'','',FREDB_getThemedResource('images_apps/firmbox_storage/Undefined.png'));
       AddOneToOnescheme('_disabledrag_','','',dt_string,false);
       AddOneToOnescheme('_disabledrop_','','',dt_string,false);
       AddOneToOnescheme('dndclass','','',dt_string,false);
