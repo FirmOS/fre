@@ -2327,7 +2327,7 @@ begin
 
     pools_grid := session.NewDerivedCollection('POOL_DISKS');
     with pools_grid do begin
-      SetDeriveParent           (conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION));
+      SetDeriveParent           (conn.GetCollection(cFRE_DB_MACHINE_COLLECTION));
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_Multiselect],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_PoolStructureSC),nil,CWSF(@WEB_TreeDrop));
       SetParentToChildLinkField ('<PARENT_IN_ZFS_UID');
 
@@ -2347,9 +2347,9 @@ begin
 
     layout_grid := session.NewDerivedCollection('ENCLOSURE_DISKS');
     with layout_grid do begin
-      SetDeriveParent           (conn.GetCollection(CFRE_DB_ENCLOSURE_COLLECTION));
+      SetDeriveParent           (conn.GetCollection(cFRE_DB_MACHINE_COLLECTION));
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_Multiselect],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_LayoutSC),nil,CWSF(@WEB_TreeDrop));
-      SetParentToChildLinkField ('<ENCLOSURE_UID');
+      SetParentToChildLinkField ('<PARENT_IN_ENCLOSURE_UID');
 
       SetDeriveTransformation   (tr_Grid);
       SetDefaultOrderField      ('caption_layout',true);
