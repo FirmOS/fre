@@ -2211,11 +2211,12 @@ begin
   if (currentVersionId='') then begin
     currentVersionId:='1.0';
 
-    CreateModuleText(conn,'$pool_status_tab','Status');
-    CreateModuleText(conn,'$pool_space_tab','Space');
-
-    CreateModuleText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');
-    CreateModuleText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');
+    CreateModuleText(conn,'$pools_grid_caption','Caption');
+    CreateModuleText(conn,'$pools_grid_iops_r','IOPS R [1/s]');
+    CreateModuleText(conn,'$pools_grid_iops_w','IOPS W [1/s]');
+    CreateModuleText(conn,'$pools_grid_transfer_r','Read [MB/s]');
+    CreateModuleText(conn,'$pools_grid_transfer_w','Write [MB/s]');
+    CreateModuleText(conn,'$layout_grid_caption','Caption');
 
     CreateModuleText(conn,'$tb_create_pool','Create Pool');
     CreateModuleText(conn,'$create_pool_diag_cap','Create Pool');
@@ -2300,7 +2301,6 @@ end;
 procedure TFRE_FIRMBOX_STORAGE_POOLS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
   conn       : IFRE_DB_CONNECTION;
-  app        : TFRE_DB_APPLICATION;
   tr_Grid    : IFRE_DB_SIMPLE_TRANSFORM;
   pools_grid : IFRE_DB_DERIVED_COLLECTION;
   layout_grid: IFRE_DB_DERIVED_COLLECTION;
@@ -2309,18 +2309,17 @@ var
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
-    app  := GetEmbeddingApp;
     conn := session.GetDBConnection;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
 
     with tr_Grid do begin
-      AddOneToOnescheme('caption','','CAP',dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('caption','',FetchModuleTextShort(session,'$pools_grid_caption'),dt_string,true,false,false,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
-      AddOneToOnescheme('iops_r','','IOPS R [1/s]');
-      AddOneToOnescheme('iops_w','','IOPS W [1/s]');
-      AddOneToOnescheme('transfer_r','','Read [MB/s]');
-      AddOneToOnescheme('transfer_w','','Write [MB/s]');
+      AddOneToOnescheme('iops_r','',FetchModuleTextShort(session,'$pools_grid_iops_r'));
+      AddOneToOnescheme('iops_w','',FetchModuleTextShort(session,'$pools_grid_iops_w'));
+      AddOneToOnescheme('transfer_r','',FetchModuleTextShort(session,'$pools_grid_transfer_r'));
+      AddOneToOnescheme('transfer_w','',FetchModuleTextShort(session,'$pools_grid_transfer_w'));
       AddOneToOnescheme('_disabledrag_','','',dt_string,false);
       AddOneToOnescheme('_disabledrop_','','',dt_string,false);
       AddOneToOnescheme('dndclass','','',dt_string,false);
@@ -2339,7 +2338,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
 
     with tr_Grid do begin
-      AddOneToOnescheme('caption_layout','','CAP',dt_string,true,false,false,1,'icon_layout');
+      AddOneToOnescheme('caption_layout','',FetchModuleTextShort(session,'$layout_grid_caption'),dt_string,true,false,false,1,'icon_layout');
       AddOneToOnescheme('icon_layout','','',dt_string,false);
       AddOneToOnescheme('_disabledrag_','','',dt_string,false);
       AddOneToOnescheme('_disabledrop_','','',dt_string,false);
@@ -3674,11 +3673,8 @@ begin
       CreateAppText(conn,'$sitemap_filebrowser','Filebrowser','','Filebrowser');
       CreateAppText(conn,'$sitemap_backup_scheduler','Snapshot Schedulers','','Snapshot Schedulers');
 
-      CreateAppText(conn,'$pool_status_tab','Status');//moved to module in version 1.1
-      CreateAppText(conn,'$pool_space_tab','Space');//moved to module in version 1.1
-
-      CreateAppText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');//moved to module in version 1.1
-      CreateAppText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');//moved to module in version 1.1
+      CreateAppText(conn,'$pool_status_tab','Status');//deleted in version 1.1
+      CreateAppText(conn,'$pool_space_tab','Space');//deleted in version 1.1
 
       CreateAppText(conn,'$tb_create_pool','Create Pool');//moved to module in version 1.1
       CreateAppText(conn,'$create_pool_diag_cap','Create Pool');//moved to module in version 1.1
@@ -3880,6 +3876,8 @@ begin
       CreateAppText(conn,'$backup_snapshot_delete_diag_msg','The snapshot %snapshot_str% will be deleted permanently! Please confirm to continue.');
 
       //FIXXME - CHECK
+      CreateAppText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');
+      CreateAppText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');
       CreateAppText(conn,'$error_no_access','Access denied'); //global text?
       CreateAppText(conn,'$error_not_found','Not found'); //global text?
       CreateAppText(conn,'$button_save','Save'); //global text?
@@ -3891,9 +3889,6 @@ begin
 
     DeleteAppText(conn,'$pool_status_tab');
     DeleteAppText(conn,'$pool_space_tab');
-
-    DeleteAppText(conn,'$error_delete_single_select');
-    DeleteAppText(conn,'$error_modify_single_select');
 
     DeleteAppText(conn,'$tb_create_pool');
     DeleteAppText(conn,'$create_pool_diag_cap');
