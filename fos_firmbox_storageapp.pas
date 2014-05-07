@@ -2749,10 +2749,11 @@ var
   lastObj : IFRE_DB_Object;
   newPool : TFRE_DB_ZFS_POOL;
   dstore  : TFRE_DB_ZFS_DATASTORAGE;
+  muid    : TGUID;
 
   procedure _checkPoolName(const obj:IFRE_DB_Object);
   begin
-    if LowerCase(input.FieldPath('data.pool_name').AsString)=LowerCase(obj.Field('pool').AsString) then begin
+    if LowerCase(input.FieldPath('data.pool_name').AsString)=LowerCase(obj.Field('objname').AsString) then begin
       nameOk:=false;
     end;
     if (obj.Implementor_HC is TFRE_DB_ZFS_POOL) and not (obj.Implementor_HC is TFRE_DB_ZFS_UNASSIGNED) then begin
@@ -2779,6 +2780,16 @@ begin
 
   newPool:=TFRE_DB_ZFS_POOL.CreateForDB;
   newPool.SetName(input.FieldPath('data.pool_name').AsString);
+
+  //TODO: Select Machine depended on selection
+  if conn.GetCollection(cFRE_DB_MACHINE_COLLECTION).GetIndexedUID('firmbox',muid,'def') then
+    begin
+      newpool.parentInZFSId := muid;
+      newpool.MachineID := muid;
+    end
+  else
+    raise EFRE_DB_Exception.Create('WEB_CreatePool: No Machine for new pool found');
+
   newPool.setIsNew;
 
   dstore:=newPool.createDatastorage;

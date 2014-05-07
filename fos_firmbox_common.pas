@@ -574,7 +574,7 @@ begin
 
   coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
   mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.ObjectName:='franzmac';
+  mobj.ObjectName:='firmbox';
   mguid:=mobj.UID;
   CheckDbResult(coll.Store(mobj));
 
