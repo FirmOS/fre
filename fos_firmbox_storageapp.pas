@@ -916,7 +916,8 @@ begin
   hlt  := false;
   coll.ForAllBreak(@_get,hlt);
   if not hlt then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'GLOBAL FILESERVER ID NOT FOUND ????');
+    Result:=CFRE_DB_NullGUID;
+    //raise EFRE_DB_Exception.Create(edb_ERROR,'GLOBAL FILESERVER ID NOT FOUND ????');
   result := id;
 end;
 
@@ -3667,241 +3668,240 @@ begin
 
   newVersionId:='1.1';
 
-  if (currentVersionId='') then
-    begin
-      currentVersionId:='1.0';
+  if (currentVersionId='') then begin
+    currentVersionId:='1.0';
 
-      CreateAppText(conn,'$caption','Storage','Storage','Storage');
-      CreateAppText(conn,'$pools_description','Pools','Pools','Pools');
-      CreateAppText(conn,'$synch_description','Synchronization','Synchronization','Synchronization');
-      CreateAppText(conn,'$backup_description','Snapshots','Snapshots','Snapshots');
-      CreateAppText(conn,'$backup_scheduler_description','Snapshot Schedulers','Snapshot Schedulers','Snapshot Schedulers');
-      CreateAppText(conn,'$fileserver_global_description','Global SAN/NAS','Global SAN/NAS','Global SAN/NAS');
-      CreateAppText(conn,'$fileserver_virtual_description','Virtual NAS','Virtual NAS','Virtual NAS');
+    CreateAppText(conn,'$caption','Storage','Storage','Storage');
+    CreateAppText(conn,'$pools_description','Pools','Pools','Pools');
+    CreateAppText(conn,'$synch_description','Synchronization','Synchronization','Synchronization');
+    CreateAppText(conn,'$backup_description','Snapshots','Snapshots','Snapshots');
+    CreateAppText(conn,'$backup_scheduler_description','Snapshot Schedulers','Snapshot Schedulers','Snapshot Schedulers');
+    CreateAppText(conn,'$fileserver_global_description','Global SAN/NAS','Global SAN/NAS','Global SAN/NAS');
+    CreateAppText(conn,'$fileserver_virtual_description','Virtual NAS','Virtual NAS','Virtual NAS');
 
-      CreateAppText(conn,'$pools_info','Overview of disks and pools and their status.');//deleted in version 1.1
-      CreateAppText(conn,'$global_info','Overview of global SAN/NAS shares and LUNs.');
-      CreateAppText(conn,'$virtual_info','Overview of virtual NAS fileservers and shares.');
-      CreateAppText(conn,'$backup_info','Overview of snapshots for shares, block devices and virtual machines.');
+    CreateAppText(conn,'$pools_info','Overview of disks and pools and their status.');//deleted in version 1.1
+    CreateAppText(conn,'$global_info','Overview of global SAN/NAS shares and LUNs.');
+    CreateAppText(conn,'$virtual_info','Overview of virtual NAS fileservers and shares.');
+    CreateAppText(conn,'$backup_info','Overview of snapshots for shares, block devices and virtual machines.');
 
-      CreateAppText(conn,'$sitemap_main','Storage','','Storage');
-      CreateAppText(conn,'$sitemap_pools','Pools','','Pools');
-      CreateAppText(conn,'$sitemap_fileserver','SAN/NAS','','SAN/NAS');
-      CreateAppText(conn,'$sitemap_fileserver_global','Global SAN/NAS','','Global NFS, iSCSI, FC');
-      CreateAppText(conn,'$sitemap_fileserver_virtual','Virtual NAS','','Virtual Fileserver');
-      CreateAppText(conn,'$sitemap_backup','Snapshots','','Snapshots');
-      CreateAppText(conn,'$sitemap_filebrowser','Filebrowser','','Filebrowser');
-      CreateAppText(conn,'$sitemap_backup_scheduler','Snapshot Schedulers','','Snapshot Schedulers');
+    CreateAppText(conn,'$sitemap_main','Storage','','Storage');
+    CreateAppText(conn,'$sitemap_pools','Pools','','Pools');
+    CreateAppText(conn,'$sitemap_fileserver','SAN/NAS','','SAN/NAS');
+    CreateAppText(conn,'$sitemap_fileserver_global','Global SAN/NAS','','Global NFS, iSCSI, FC');
+    CreateAppText(conn,'$sitemap_fileserver_virtual','Virtual NAS','','Virtual Fileserver');
+    CreateAppText(conn,'$sitemap_backup','Snapshots','','Snapshots');
+    CreateAppText(conn,'$sitemap_filebrowser','Filebrowser','','Filebrowser');
+    CreateAppText(conn,'$sitemap_backup_scheduler','Snapshot Schedulers','','Snapshot Schedulers');
 
-      CreateAppText(conn,'$pool_status_tab','Status');//deleted in version 1.1
-      CreateAppText(conn,'$pool_space_tab','Space');//deleted in version 1.1
+    CreateAppText(conn,'$pool_status_tab','Status');//deleted in version 1.1
+    CreateAppText(conn,'$pool_space_tab','Space');//deleted in version 1.1
 
-      CreateAppText(conn,'$tb_create_pool','Create Pool');//moved to module in version 1.1
-      CreateAppText(conn,'$create_pool_diag_cap','Create Pool');//moved to module in version 1.1
-      CreateAppText(conn,'$create_pool_diag_name','Name');//moved to module in version 1.1
-      CreateAppText(conn,'$create_pool_error_cap','Error creating a new pool');//moved to module in version 1.1
-      CreateAppText(conn,'$create_pool_error_not_unique','The name of the pool has to be unique. Please choose another one.');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_import_pool','Import Pool');//moved to module in version 1.1
-      CreateAppText(conn,'$import_pool_diag_cap','Import Pool');//moved to module in version 1.1
-      CreateAppText(conn,'$import_pool_diag_msg','Feature disabled in Demo Mode.');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_export_pool','Export Pool');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_scrub_pool','Scrub Pool');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_save_config','Save');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_reset_config','Reset');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_pools','Pool');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_blockdevices','Disk');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_switch_offline','Switch offline');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_switch_online','Switch online');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_identify_on','Identify on');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_identify_off','Identify off');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_assign','Assign');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_replace','Replace');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_remove','Remove');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_change_rl','Change RL');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_rl_mirror','Mirror');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_rl_z1','Raid-Z1');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_rl_z2','Raid-Z2');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_rl_z3','Raid-Z3');//moved to module in version 1.1
-      CreateAppText(conn,'$tb_destroy_pool','Destroy');//moved to module in version 1.1
-      CreateAppText(conn,'$new_spare_caption','spare');//moved to module in version 1.1
-      CreateAppText(conn,'$new_log_caption','log');//moved to module in version 1.1
-      CreateAppText(conn,'$log_vdev_caption_rl_mirror','mirror-%num%');//moved to module in version 1.1
-      CreateAppText(conn,'$new_cache_caption','cache');//moved to module in version 1.1
-      CreateAppText(conn,'$storage_vdev_caption_rl_mirror','mirror-%num%');//moved to module in version 1.1
-      CreateAppText(conn,'$storage_vdev_caption_rl_z1','raidz1-%num%');//moved to module in version 1.1
-      CreateAppText(conn,'$storage_vdev_caption_rl_z2','raidz2-%num%');//moved to module in version 1.1
-      CreateAppText(conn,'$storage_vdev_caption_rl_z3','raidz3-%num%');//moved to module in version 1.1
-      CreateAppText(conn,'$error_assign_not_new','You can only assign disks which are not in use yet.');//moved to module in version 1.1
-      CreateAppText(conn,'$error_unassign_not_new','You can only unassign disks which are not in use yet.');//moved to module in version 1.1
-      CreateAppText(conn,'$error_assign_vdev_not_found','Assign disks: Vdev not found.');//moved to module in version 1.1
-      CreateAppText(conn,'$error_assign_vdev_unknown_parent_type','Parent of Vdev does not support disk drops.');//moved to module in version 1.1
-      CreateAppText(conn,'$error_remove_not_new','You can only remove zfs elements which are not in use yet.');//moved to module in version 1.1
-      CreateAppText(conn,'$error_change_rl_not_new','You can only change the raid level of a vdev which is not in use yet.');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_create_pool','Create Pool');//moved to module in version 1.1
+    CreateAppText(conn,'$create_pool_diag_cap','Create Pool');//moved to module in version 1.1
+    CreateAppText(conn,'$create_pool_diag_name','Name');//moved to module in version 1.1
+    CreateAppText(conn,'$create_pool_error_cap','Error creating a new pool');//moved to module in version 1.1
+    CreateAppText(conn,'$create_pool_error_not_unique','The name of the pool has to be unique. Please choose another one.');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_import_pool','Import Pool');//moved to module in version 1.1
+    CreateAppText(conn,'$import_pool_diag_cap','Import Pool');//moved to module in version 1.1
+    CreateAppText(conn,'$import_pool_diag_msg','Feature disabled in Demo Mode.');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_export_pool','Export Pool');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_scrub_pool','Scrub Pool');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_save_config','Save');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_reset_config','Reset');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_pools','Pool');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_blockdevices','Disk');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_switch_offline','Switch offline');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_switch_online','Switch online');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_identify_on','Identify on');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_identify_off','Identify off');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_assign','Assign');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_replace','Replace');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_remove','Remove');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_change_rl','Change RL');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_rl_mirror','Mirror');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_rl_z1','Raid-Z1');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_rl_z2','Raid-Z2');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_rl_z3','Raid-Z3');//moved to module in version 1.1
+    CreateAppText(conn,'$tb_destroy_pool','Destroy');//moved to module in version 1.1
+    CreateAppText(conn,'$new_spare_caption','spare');//moved to module in version 1.1
+    CreateAppText(conn,'$new_log_caption','log');//moved to module in version 1.1
+    CreateAppText(conn,'$log_vdev_caption_rl_mirror','mirror-%num%');//moved to module in version 1.1
+    CreateAppText(conn,'$new_cache_caption','cache');//moved to module in version 1.1
+    CreateAppText(conn,'$storage_vdev_caption_rl_mirror','mirror-%num%');//moved to module in version 1.1
+    CreateAppText(conn,'$storage_vdev_caption_rl_z1','raidz1-%num%');//moved to module in version 1.1
+    CreateAppText(conn,'$storage_vdev_caption_rl_z2','raidz2-%num%');//moved to module in version 1.1
+    CreateAppText(conn,'$storage_vdev_caption_rl_z3','raidz3-%num%');//moved to module in version 1.1
+    CreateAppText(conn,'$error_assign_not_new','You can only assign disks which are not in use yet.');//moved to module in version 1.1
+    CreateAppText(conn,'$error_unassign_not_new','You can only unassign disks which are not in use yet.');//moved to module in version 1.1
+    CreateAppText(conn,'$error_assign_vdev_not_found','Assign disks: Vdev not found.');//moved to module in version 1.1
+    CreateAppText(conn,'$error_assign_vdev_unknown_parent_type','Parent of Vdev does not support disk drops.');//moved to module in version 1.1
+    CreateAppText(conn,'$error_remove_not_new','You can only remove zfs elements which are not in use yet.');//moved to module in version 1.1
+    CreateAppText(conn,'$error_change_rl_not_new','You can only change the raid level of a vdev which is not in use yet.');//moved to module in version 1.1
 
-      CreateAppText(conn,'$add_disks_pool','Assign to %pool%...');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_storage_ex_same','Expand storage (%raid_level%)');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_storage_ex_other','Expand storage...');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_storage','Add as storage...');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_storage_to','Add as storage to "%vdev%"');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_vdev','Add to vdev');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_cache','Add as read cache (L2ARC)');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_log','Add as write cache (ZIL)...');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_log_to','Add as write cache (ZIL) to "%vdev%"');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_log_ex','Expand write cache (ZIL)...');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_spare','Add as spare');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_rl_mirror','Mirror');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_rl_stripe','Stripe');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_rl_z1','Raid-Z1');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_rl_z2','Raid-Z2');//moved to module in version 1.1
-      CreateAppText(conn,'$add_disks_rl_z3','Raid-Z3');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_pool','Assign to %pool%...');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_storage_ex_same','Expand storage (%raid_level%)');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_storage_ex_other','Expand storage...');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_storage','Add as storage...');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_storage_to','Add as storage to "%vdev%"');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_vdev','Add to vdev');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_cache','Add as read cache (L2ARC)');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_log','Add as write cache (ZIL)...');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_log_to','Add as write cache (ZIL) to "%vdev%"');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_log_ex','Expand write cache (ZIL)...');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_spare','Add as spare');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_rl_mirror','Mirror');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_rl_stripe','Stripe');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_rl_z1','Raid-Z1');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_rl_z2','Raid-Z2');//moved to module in version 1.1
+    CreateAppText(conn,'$add_disks_rl_z3','Raid-Z3');//moved to module in version 1.1
 
-      CreateAppText(conn,'$confirm_destroy_caption','Destroy pool');//moved to module in version 1.1
-      CreateAppText(conn,'$confirm_destroy_msg','This operation is irreversible! Destroy pool %pool% anyway?');//moved to module in version 1.1
+    CreateAppText(conn,'$confirm_destroy_caption','Destroy pool');//moved to module in version 1.1
+    CreateAppText(conn,'$confirm_destroy_msg','This operation is irreversible! Destroy pool %pool% anyway?');//moved to module in version 1.1
 
-      CreateAppText(conn,'$cm_replace','Replace');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_switch_offline','Switch offline');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_switch_online','Switch online');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_identify_on','Identify ON');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_identify_off','Identify OFF');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_multiple_remove','Remove %num% items');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_remove','Remove item');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_change_raid_level','Change raid level...');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_rl_mirror','Mirror');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_rl_z1','Raid-Z1');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_rl_z2','Raid-Z2');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_rl_z3','Raid-Z3');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_destroy_pool','Destroy pool %pool%');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_export_pool','Export pool %pool%');//moved to module in version 1.1
-      CreateAppText(conn,'$cm_scrub_pool','Scrub pool %pool%');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_replace','Replace');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_switch_offline','Switch offline');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_switch_online','Switch online');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_identify_on','Identify ON');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_identify_off','Identify OFF');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_multiple_remove','Remove %num% items');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_remove','Remove item');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_change_raid_level','Change raid level...');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_rl_mirror','Mirror');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_rl_z1','Raid-Z1');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_rl_z2','Raid-Z2');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_rl_z3','Raid-Z3');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_destroy_pool','Destroy pool %pool%');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_export_pool','Export pool %pool%');//moved to module in version 1.1
+    CreateAppText(conn,'$cm_scrub_pool','Scrub pool %pool%');//moved to module in version 1.1
 
-      CreateAppText(conn,'$storage_global_filer_nfs','NFS Exports','NFS Exports','NFS Exports');
-      CreateAppText(conn,'$storage_global_filer_lun','LUN Targets','LUN Targets','LUN Targets');
+    CreateAppText(conn,'$storage_global_filer_nfs','NFS Exports','NFS Exports','NFS Exports');
+    CreateAppText(conn,'$storage_global_filer_lun','LUN Targets','LUN Targets','LUN Targets');
 
-      CreateAppText(conn,'$nfs_export','Export');
-      CreateAppText(conn,'$nfs_refer','Refer');
-      CreateAppText(conn,'$nfs_used','Used');
-      CreateAppText(conn,'$nfs_avail','Avail');
-      CreateAppText(conn,'$nfs_pool','Diskpool');
-      CreateAppText(conn,'$nfs_desc','Description');
-      CreateAppText(conn,'$nfs_content_header','Details about the selected NFS export');
+    CreateAppText(conn,'$nfs_export','Export');
+    CreateAppText(conn,'$nfs_refer','Refer');
+    CreateAppText(conn,'$nfs_used','Used');
+    CreateAppText(conn,'$nfs_avail','Avail');
+    CreateAppText(conn,'$nfs_pool','Diskpool');
+    CreateAppText(conn,'$nfs_desc','Description');
+    CreateAppText(conn,'$nfs_content_header','Details about the selected NFS export');
 
-      CreateAppText(conn,'$nfs_access','NFS Access');
-      CreateAppText(conn,'$nfs_accesstype','Accesstype');
-      CreateAppText(conn,'$nfs_accesssubnet','Host/Subnet');
-      CreateAppText(conn,'$tb_create_nfs_access','Create access');
-      CreateAppText(conn,'$tb_delete_nfs_access','Delete access');
-      CreateAppText(conn,'$tb_modify_nfs_access','Modify access');
-      CreateAppText(conn,'$cm_delete_nfs_access','Delete access');
-      CreateAppText(conn,'$cm_modify_nfs_access','Modify access');
+    CreateAppText(conn,'$nfs_access','NFS Access');
+    CreateAppText(conn,'$nfs_accesstype','Accesstype');
+    CreateAppText(conn,'$nfs_accesssubnet','Host/Subnet');
+    CreateAppText(conn,'$tb_create_nfs_access','Create access');
+    CreateAppText(conn,'$tb_delete_nfs_access','Delete access');
+    CreateAppText(conn,'$tb_modify_nfs_access','Modify access');
+    CreateAppText(conn,'$cm_delete_nfs_access','Delete access');
+    CreateAppText(conn,'$cm_modify_nfs_access','Modify access');
 
-      CreateAppText(conn,'$nfs_access_delete_diag_cap','Confirm: Delete NFS access');
-      CreateAppText(conn,'$nfs_access_delete_diag_msg','The NFS %access_type% access for %access_host% will be deleted permanently! Please confirm to continue.');
+    CreateAppText(conn,'$nfs_access_delete_diag_cap','Confirm: Delete NFS access');
+    CreateAppText(conn,'$nfs_access_delete_diag_msg','The NFS %access_type% access for %access_host% will be deleted permanently! Please confirm to continue.');
 
-      CreateAppText(conn,'$tb_create_nfs_export','Create export');
-      CreateAppText(conn,'$tb_delete_nfs_export','Delete export');
-      CreateAppText(conn,'$cm_delete_nfs_export','Delete share');
-      CreateAppText(conn,'$nfs_delete_diag_cap','Confirm: Delete share');
-      CreateAppText(conn,'$nfs_delete_diag_msg','The share %share_str% will be deleted permanently! Please confirm to continue.');
-      CreateAppText(conn,'$nfs_add_diag_cap','New NFS Share');
-      CreateAppText(conn,'$nfsaccess_add_diag_cap','New NFS Access');
-      CreateAppText(conn,'$nfsaccess_modify_diag_cap','Modify NFS Access');
+    CreateAppText(conn,'$tb_create_nfs_export','Create export');
+    CreateAppText(conn,'$tb_delete_nfs_export','Delete export');
+    CreateAppText(conn,'$cm_delete_nfs_export','Delete share');
+    CreateAppText(conn,'$nfs_delete_diag_cap','Confirm: Delete share');
+    CreateAppText(conn,'$nfs_delete_diag_msg','The share %share_str% will be deleted permanently! Please confirm to continue.');
+    CreateAppText(conn,'$nfs_add_diag_cap','New NFS Share');
+    CreateAppText(conn,'$nfsaccess_add_diag_cap','New NFS Access');
+    CreateAppText(conn,'$nfsaccess_modify_diag_cap','Modify NFS Access');
 
-      CreateAppText(conn,'$tb_create_lun','Create LUN');
-      CreateAppText(conn,'$tb_delete_lun','Delete LUN');
-      CreateAppText(conn,'$cm_delete_lun','Delete LUN');
-      CreateAppText(conn,'$lun_view','LUN Views');
-      CreateAppText(conn,'$lun_guid','GUID');
-      CreateAppText(conn,'$lun_pool','Diskpool');
-      CreateAppText(conn,'$lun_desc','Description');
-      CreateAppText(conn,'$lun_size','Size [MB]');
-      CreateAppText(conn,'$lun_delete_diag_cap','Confirm: Delete LUN');
-      CreateAppText(conn,'$lun_delete_diag_msg','The LUN %guid_str% will be deleted permanently! Please confirm to continue.');
-      CreateAppText(conn,'$lun_content_header','Details about the selected LUN');
-      CreateAppText(conn,'$lun_add_diag_cap','New LUN');
+    CreateAppText(conn,'$tb_create_lun','Create LUN');
+    CreateAppText(conn,'$tb_delete_lun','Delete LUN');
+    CreateAppText(conn,'$cm_delete_lun','Delete LUN');
+    CreateAppText(conn,'$lun_view','LUN Views');
+    CreateAppText(conn,'$lun_guid','GUID');
+    CreateAppText(conn,'$lun_pool','Diskpool');
+    CreateAppText(conn,'$lun_desc','Description');
+    CreateAppText(conn,'$lun_size','Size [MB]');
+    CreateAppText(conn,'$lun_delete_diag_cap','Confirm: Delete LUN');
+    CreateAppText(conn,'$lun_delete_diag_msg','The LUN %guid_str% will be deleted permanently! Please confirm to continue.');
+    CreateAppText(conn,'$lun_content_header','Details about the selected LUN');
+    CreateAppText(conn,'$lun_add_diag_cap','New LUN');
 
-      CreateAppText(conn,'$lun_view_initiatorgroup','Initiators');
-      CreateAppText(conn,'$lun_view_targetgroup','Targets');
-      CreateAppText(conn,'$tb_create_lun_view','Create View');
-      CreateAppText(conn,'$tb_lunview_delete','Delete View');
-      CreateAppText(conn,'$tb_lunview_modify','Modify View');
-      CreateAppText(conn,'$cm_lunview_delete','Delete View');
-      CreateAppText(conn,'$cm_lunview_modify','Modify View');
-      CreateAppText(conn,'$lunview_delete_diag_cap','Confirm: Delete View');
-      CreateAppText(conn,'$lunview_delete_diag_msg','The View %guid_str% will be deleted permanently! Please confirm to continue.');
-      CreateAppText(conn,'$lunview_add_diag_cap','New LUN View');
-      CreateAppText(conn,'$lunview_modify_diag_cap','Modify LUN View');
+    CreateAppText(conn,'$lun_view_initiatorgroup','Initiators');
+    CreateAppText(conn,'$lun_view_targetgroup','Targets');
+    CreateAppText(conn,'$tb_create_lun_view','Create View');
+    CreateAppText(conn,'$tb_lunview_delete','Delete View');
+    CreateAppText(conn,'$tb_lunview_modify','Modify View');
+    CreateAppText(conn,'$cm_lunview_delete','Delete View');
+    CreateAppText(conn,'$cm_lunview_modify','Modify View');
+    CreateAppText(conn,'$lunview_delete_diag_cap','Confirm: Delete View');
+    CreateAppText(conn,'$lunview_delete_diag_msg','The View %guid_str% will be deleted permanently! Please confirm to continue.');
+    CreateAppText(conn,'$lunview_add_diag_cap','New LUN View');
+    CreateAppText(conn,'$lunview_modify_diag_cap','Modify LUN View');
 
-      CreateAppText(conn,'$tb_create_vfs','Create');
-      CreateAppText(conn,'$tb_delete_vfs','Delete');
-      CreateAppText(conn,'$cm_delete_vfs','Delete');
-      CreateAppText(conn,'$vfs_name','Fileserver');
-      CreateAppText(conn,'$vfs_pool','Diskpool');
-      CreateAppText(conn,'$vfs_desc','Description');
-      CreateAppText(conn,'$vfs_ip','IP/Subnet');
-      CreateAppText(conn,'$vfs_domain','Domain');
-      CreateAppText(conn,'$storage_virtual_filer_shares','Shares');
-      CreateAppText(conn,'$storage_virtual_filer_content','Virtual NAS Properties');
-      CreateAppText(conn,'$vfs_content_header','Details about the selected virtual NAS.');
-      CreateAppText(conn,'$vfs_add_diag_cap','New Virtual Fileserver');
-      CreateAppText(conn,'$vfs_delete_diag_cap','Confirm: Delete Virtual Fileserver');
-      CreateAppText(conn,'$vfs_delete_diag_msg','The virtual fileserver %vfs_str% will be deleted permanently! Please confirm to continue.');
+    CreateAppText(conn,'$tb_create_vfs','Create');
+    CreateAppText(conn,'$tb_delete_vfs','Delete');
+    CreateAppText(conn,'$cm_delete_vfs','Delete');
+    CreateAppText(conn,'$vfs_name','Fileserver');
+    CreateAppText(conn,'$vfs_pool','Diskpool');
+    CreateAppText(conn,'$vfs_desc','Description');
+    CreateAppText(conn,'$vfs_ip','IP/Subnet');
+    CreateAppText(conn,'$vfs_domain','Domain');
+    CreateAppText(conn,'$storage_virtual_filer_shares','Shares');
+    CreateAppText(conn,'$storage_virtual_filer_content','Virtual NAS Properties');
+    CreateAppText(conn,'$vfs_content_header','Details about the selected virtual NAS.');
+    CreateAppText(conn,'$vfs_add_diag_cap','New Virtual Fileserver');
+    CreateAppText(conn,'$vfs_delete_diag_cap','Confirm: Delete Virtual Fileserver');
+    CreateAppText(conn,'$vfs_delete_diag_msg','The virtual fileserver %vfs_str% will be deleted permanently! Please confirm to continue.');
 
-      CreateAppText(conn,'$vfs_share','Share');
-      CreateAppText(conn,'$vfs_share_desc','Description');
-      CreateAppText(conn,'$vfs_share_refer','Refer');
-      CreateAppText(conn,'$vfs_share_used','Used');
-      CreateAppText(conn,'$vfs_share_avail','Avail');
-      CreateAppText(conn,'$vfs_share_icon','Sharing');
-      CreateAppText(conn,'$tb_create_vfs_share','Create Share');
-      CreateAppText(conn,'$tb_delete_vfs_share','Delete Share');
-      CreateAppText(conn,'$cm_delete_vfs_share','Delete Share');
-      CreateAppText(conn,'$storage_virtual_filer_share_properties','Share Properties');
-      CreateAppText(conn,'$storage_virtual_filer_share_groups','Groups');
-      CreateAppText(conn,'$storage_virtual_filer_share_user','User');
-      CreateAppText(conn,'$vfs_share_content_header','Details about the selected share.');
-      CreateAppText(conn,'$vfs_share_add_diag_cap','New Fileshare');
-      CreateAppText(conn,'$vfs_share_add_no_fs_msg','Please select a virtual NAS first before adding a share.');
-      CreateAppText(conn,'$vfs_share_delete_diag_cap','Confirm: Delete share');
-      CreateAppText(conn,'$vfs_share_delete_diag_msg','The share %share_str% will be deleted permanently! Please confirm to continue.');
-      CreateAppText(conn,'$share_group_in_diag_cap','Adding Access to Group');
-      CreateAppText(conn,'$share_group_in_no_share_msg','Please select a share first before adding group access.');
+    CreateAppText(conn,'$vfs_share','Share');
+    CreateAppText(conn,'$vfs_share_desc','Description');
+    CreateAppText(conn,'$vfs_share_refer','Refer');
+    CreateAppText(conn,'$vfs_share_used','Used');
+    CreateAppText(conn,'$vfs_share_avail','Avail');
+    CreateAppText(conn,'$vfs_share_icon','Sharing');
+    CreateAppText(conn,'$tb_create_vfs_share','Create Share');
+    CreateAppText(conn,'$tb_delete_vfs_share','Delete Share');
+    CreateAppText(conn,'$cm_delete_vfs_share','Delete Share');
+    CreateAppText(conn,'$storage_virtual_filer_share_properties','Share Properties');
+    CreateAppText(conn,'$storage_virtual_filer_share_groups','Groups');
+    CreateAppText(conn,'$storage_virtual_filer_share_user','User');
+    CreateAppText(conn,'$vfs_share_content_header','Details about the selected share.');
+    CreateAppText(conn,'$vfs_share_add_diag_cap','New Fileshare');
+    CreateAppText(conn,'$vfs_share_add_no_fs_msg','Please select a virtual NAS first before adding a share.');
+    CreateAppText(conn,'$vfs_share_delete_diag_cap','Confirm: Delete share');
+    CreateAppText(conn,'$vfs_share_delete_diag_msg','The share %share_str% will be deleted permanently! Please confirm to continue.');
+    CreateAppText(conn,'$share_group_in_diag_cap','Adding Access to Group');
+    CreateAppText(conn,'$share_group_in_no_share_msg','Please select a share first before adding group access.');
 
-      CreateAppText(conn,'$share_group_in','Groups with access to the fileshare.');
-      CreateAppText(conn,'$share_group_out','Groups without access to the fileshare.');
-      CreateAppText(conn,'$share_group_read','Read Access');
-      CreateAppText(conn,'$share_group_write','Write Access');
-      CreateAppText(conn,'$share_group_group','Group');
-      CreateAppText(conn,'$share_group_desc','Description');
+    CreateAppText(conn,'$share_group_in','Groups with access to the fileshare.');
+    CreateAppText(conn,'$share_group_out','Groups without access to the fileshare.');
+    CreateAppText(conn,'$share_group_read','Read Access');
+    CreateAppText(conn,'$share_group_write','Write Access');
+    CreateAppText(conn,'$share_group_group','Group');
+    CreateAppText(conn,'$share_group_desc','Description');
 
-      CreateAppText(conn,'$tb_share_group_setread_on','Set Read Access');
-      CreateAppText(conn,'$tb_share_group_setread_off','Clear Read Access');
-      CreateAppText(conn,'$tb_share_group_setwrite_on','Set Write Access');
-      CreateAppText(conn,'$tb_share_group_setwrite_off','Clear Write Access');
+    CreateAppText(conn,'$tb_share_group_setread_on','Set Read Access');
+    CreateAppText(conn,'$tb_share_group_setread_off','Clear Read Access');
+    CreateAppText(conn,'$tb_share_group_setwrite_on','Set Write Access');
+    CreateAppText(conn,'$tb_share_group_setwrite_off','Clear Write Access');
 
-      CreateAppText(conn,'$cm_share_group_setread_on','Set Read Access');
-      CreateAppText(conn,'$cm_share_group_setread_off','Clear Read Access');
-      CreateAppText(conn,'$cm_share_group_setwrite_on','Set Write Access');
-      CreateAppText(conn,'$cm_share_group_setwrite_off','Clear Write Access');
+    CreateAppText(conn,'$cm_share_group_setread_on','Set Read Access');
+    CreateAppText(conn,'$cm_share_group_setread_off','Clear Read Access');
+    CreateAppText(conn,'$cm_share_group_setwrite_on','Set Write Access');
+    CreateAppText(conn,'$cm_share_group_setwrite_off','Clear Write Access');
 
-      CreateAppText(conn,'$backup_share','Source');
-      CreateAppText(conn,'$backup_snapshot','ZFS Snapshot');
-      CreateAppText(conn,'$backup_desc','Description');
-      CreateAppText(conn,'$backup_creation','Creation Timestamp');
-      CreateAppText(conn,'$backup_used','Used [MB]');
-      CreateAppText(conn,'$backup_refer','Refer [MB]');
-      CreateAppText(conn,'$backup_snapshot_properties','Snapshot Properties');
-      CreateAppText(conn,'$backup_content_header','Details about the selected snapshot.');
-      CreateAppText(conn,'$backup_snapshot_delete','Delete');
-      CreateAppText(conn,'$backup_snapshot_delete_diag_cap','Confirm: Delete snapshot');
-      CreateAppText(conn,'$backup_snapshot_delete_diag_msg','The snapshot %snapshot_str% will be deleted permanently! Please confirm to continue.');
+    CreateAppText(conn,'$backup_share','Source');
+    CreateAppText(conn,'$backup_snapshot','ZFS Snapshot');
+    CreateAppText(conn,'$backup_desc','Description');
+    CreateAppText(conn,'$backup_creation','Creation Timestamp');
+    CreateAppText(conn,'$backup_used','Used [MB]');
+    CreateAppText(conn,'$backup_refer','Refer [MB]');
+    CreateAppText(conn,'$backup_snapshot_properties','Snapshot Properties');
+    CreateAppText(conn,'$backup_content_header','Details about the selected snapshot.');
+    CreateAppText(conn,'$backup_snapshot_delete','Delete');
+    CreateAppText(conn,'$backup_snapshot_delete_diag_cap','Confirm: Delete snapshot');
+    CreateAppText(conn,'$backup_snapshot_delete_diag_msg','The snapshot %snapshot_str% will be deleted permanently! Please confirm to continue.');
 
-      //FIXXME - CHECK
-      CreateAppText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');
-      CreateAppText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');
-      CreateAppText(conn,'$error_no_access','Access denied'); //global text?
-      CreateAppText(conn,'$error_not_found','Not found'); //global text?
-      CreateAppText(conn,'$button_save','Save'); //global text?
-    end;
+    //FIXXME - CHECK
+    CreateAppText(conn,'$error_delete_single_select','Exactly one object has to be selected for deletion.');
+    CreateAppText(conn,'$error_modify_single_select','Exactly one object has to be selected to modify.');
+    CreateAppText(conn,'$error_no_access','Access denied'); //global text?
+    CreateAppText(conn,'$error_not_found','Not found'); //global text?
+    CreateAppText(conn,'$button_save','Save'); //global text?
+  end;
   if (currentVersionId='1.0') then begin
     currentVersionId:='1.1';
 
@@ -3994,39 +3994,112 @@ class procedure TFRE_FIRMBOX_STORAGE_APP.InstallDBObjects4Domain(const conn: IFR
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 
-  if currentVersionId='' then
-    begin
-      CheckDbResult(conn.AddGroup('STORAGEFEEDER','Group for Storage Data Feeder','Storage Feeder',domainUID),'could not create Storage feeder group');
+  if currentVersionId='' then begin
+    currentVersionId:='1.0';
+    CheckDbResult(conn.AddGroup('STORAGEFEEDER','Group for Storage Data Feeder','Storage Feeder',domainUID),'could not create Storage feeder group');
 
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID,TFRE_DB_StringArray.Create(
-        TFRE_FIRMBOX_STORAGE_APP.GetClassRoleNameFetch
-        )),'could not add roles for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID,TFRE_DB_StringArray.Create(
+      TFRE_FIRMBOX_STORAGE_APP.GetClassRoleNameFetch
+      )),'could not add roles for group STORAGEFEEDER');
 
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_UNCONFIGURED_MACHINE.GetClassStdRoles),'could not add roles TFRE_DB_UNCONFIGURED_MACHINE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_MACHINE.GetClassStdRoles),'could not add roles TFRE_DB_MACHINE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_POOL.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_POOL for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_BLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_BLOCKDEVICE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_VDEVCONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_VDEVCONTAINER for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DISKREPLACECONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DISKREPLACECONTAINER for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DISKSPARECONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DISKSPARECONTAINER for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_VDEV.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_VDEVfor group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DATASTORAGE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DATASTORAGE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_LOG.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_LOG for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_CACHE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_CACHE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_SPARE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_SPARE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_UNASSIGNED.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_SPARE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_PHYS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_PHYS_DISK for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_UNDEFINED_BLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_UNDEFINED_BLOCKDEVICE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SAS_DISK for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SATA_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SATA_DISK for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ENCLOSURE.GetClassStdRoles),'could not add roles TFRE_DB_ENCLOSURE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_EXPANDER.GetClassStdRoles),'could not add roles TFRE_DB_SAS_EXPANDER for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_DRIVESLOT.GetClassStdRoles),'could not add roles TFRE_DB_DRIVESLOT for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_UNCONFIGURED_MACHINE.GetClassStdRoles),'could not add roles TFRE_DB_UNCONFIGURED_MACHINE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_MACHINE.GetClassStdRoles),'could not add roles TFRE_DB_MACHINE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_POOL.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_POOL for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_BLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_BLOCKDEVICE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_VDEVCONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_VDEVCONTAINER for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DISKREPLACECONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DISKREPLACECONTAINER for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DISKSPARECONTAINER.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DISKSPARECONTAINER for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_VDEV.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_VDEVfor group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_DATASTORAGE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_DATASTORAGE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_LOG.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_LOG for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_CACHE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_CACHE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_SPARE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_SPARE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_UNASSIGNED.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_SPARE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_PHYS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_PHYS_DISK for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_UNDEFINED_BLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_UNDEFINED_BLOCKDEVICE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SAS_DISK for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SATA_DISK.GetClassStdRoles),'could not add roles TFRE_DB_SATA_DISK for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ENCLOSURE.GetClassStdRoles),'could not add roles TFRE_DB_ENCLOSURE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SAS_EXPANDER.GetClassStdRoles),'could not add roles TFRE_DB_SAS_EXPANDER for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_DRIVESLOT.GetClassStdRoles),'could not add roles TFRE_DB_DRIVESLOT for group STORAGEFEEDER');
 
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_FILEBLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_FILEBLOCKDEVICE for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZPOOL_IOSTAT.GetClassStdRoles),'could not add roles TFRE_DB_ZPOOL_IOSTAT for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_IOSTAT.GetClassStdRoles),'could not add roles TFRE_DB_IOSTAT for group STORAGEFEEDER');
-      CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SG_LOGS.GetClassStdRoles),'could not add roles TFRE_DB_SG_LOGS for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZFS_FILEBLOCKDEVICE.GetClassStdRoles),'could not add roles TFRE_DB_ZFS_FILEBLOCKDEVICE for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_ZPOOL_IOSTAT.GetClassStdRoles),'could not add roles TFRE_DB_ZPOOL_IOSTAT for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_IOSTAT.GetClassStdRoles),'could not add roles TFRE_DB_IOSTAT for group STORAGEFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_SG_LOGS.GetClassStdRoles),'could not add roles TFRE_DB_SG_LOGS for group STORAGEFEEDER');
+  end;
+  if currentVersionId='1.0' then begin
+    currentVersionId:='1.1';
+
+    CheckDbResult(conn.AddRole('STORAGEADMIN','Allowed to create, modify and delete Pools','',domainUID),'could not add role STORAGEADMIN');
+
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_StringArray.Create(
+      TFRE_FIRMBOX_STORAGE_APP.GetClassRoleNameFetch,
+      TFRE_FIRMBOX_STORAGE_POOLS_MOD.GetClassRoleNameFetch
+    )));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_UNCONFIGURED_MACHINE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_MACHINE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_POOL.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_BLOCKDEVICE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_VDEVCONTAINER.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_DISKREPLACECONTAINER.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_DISKSPARECONTAINER.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_VDEV.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_DATASTORAGE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_LOG.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_CACHE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_SPARE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_UNASSIGNED.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_PHYS_DISK.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_UNDEFINED_BLOCKDEVICE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_SAS_DISK.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_SATA_DISK.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ENCLOSURE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_DRIVESLOT.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZFS_FILEBLOCKDEVICE.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_ZPOOL_IOSTAT.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_IOSTAT.GetClassStdRoles));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_SG_LOGS.GetClassStdRoles));
+
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_NOTE.GetClassStdRoles));
+
+    CheckDbResult(conn.AddRole('STORAGEVIEWER','Allowed to view Pools','',domainUID),'could not add role STORAGEVIEWER');
+
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_StringArray.Create(
+      TFRE_FIRMBOX_STORAGE_APP.GetClassRoleNameFetch,
+      TFRE_FIRMBOX_STORAGE_POOLS_MOD.GetClassRoleNameFetch
+    )));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_UNCONFIGURED_MACHINE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_MACHINE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_POOL.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_BLOCKDEVICE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_VDEVCONTAINER.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_DISKREPLACECONTAINER.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_DISKSPARECONTAINER.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_VDEV.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_DATASTORAGE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_LOG.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_CACHE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_SPARE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_UNASSIGNED.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_PHYS_DISK.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_UNDEFINED_BLOCKDEVICE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_SAS_DISK.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_SATA_DISK.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ENCLOSURE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_DRIVESLOT.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZFS_FILEBLOCKDEVICE.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_ZPOOL_IOSTAT.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_IOSTAT.GetClassStdRoles(false,false,false,true)));
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEVIEWER',domainUID,TFRE_DB_SG_LOGS.GetClassStdRoles(false,false,false,true)));
+
+    CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_NOTE.GetClassStdRoles(false,false,false,true)));
+
+    CheckDbResult(conn.AddGroup('STORAGEADMINS','Admins of the Firmbox Storage','Storage Admins',domainUID),'could not create admins group');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEADMINS',domainUID,TFRE_DB_StringArray.Create('STORAGEADMIN')),'could not add role STORAGEADMIN for group Admins');
+
+    CheckDbResult(conn.AddGroup('STORAGEVIEWERS','Viewers of the Firmbox Storage','Storage Viewers',domainUID),'could not create viewers group');
+    CheckDbResult(conn.AddRolesToGroup('STORAGEVIEWERS',domainUID,TFRE_DB_StringArray.Create('STORAGEVIEWER')),'could not add role STORAGEVIEWER for group Viewers');
 
   end;
 end;

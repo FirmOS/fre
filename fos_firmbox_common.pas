@@ -77,6 +77,10 @@ var conn     : IFRE_DB_Connection;
     dobj        : TFRE_DB_SERVICE_DOMAIN;
     sobjvm      : TFRE_DB_VMACHINE;
     sobjdns     : TFRE_DB_DNS;
+    domainId    : TGuid;
+    userObj     : IFRE_DB_USER;
+    groups      : TFRE_DB_GUIDArray;
+    groupObj    : IFRE_DB_GROUP;
 
   function AddDatalink(const clname:string; const name: string; const parentid:TGUID; const show_virtual:boolean; const show_global:boolean; const icon:string; const ip:string; const desc:string='';const vlan:integer=0): TGUID;
   var
@@ -370,27 +374,34 @@ var conn     : IFRE_DB_Connection;
       SetLength(groups,3);
       CheckDbResult(conn.sys.FetchGroup('VMFEEDER',domainId,group));
       groups[0]:=group.UID;
-      SetLength(groups,3);
       CheckDbResult(conn.sys.FetchGroup('APPLIANCEFEEDER',domainId,group));
       groups[1]:=group.UID;
-      SetLength(groups,3);
       CheckDbResult(conn.sys.FetchGroup('STORAGEFEEDER',domainId,group));
       groups[2]:=group.UID;
 
       CheckDbResult(conn.sys.ModifyUserGroupsById(userObj.UID,groups,true),'cannot set user groups '+login);
 
-      login  :='firmviewer';
+      login  :='firmfeeder';
       passwd :='x';
+
+      domainId:=conn.sys.DomainID('test');
 
       if conn.sys.UserExists(login,domainId) then
         CheckDbResult(conn.sys.DeleteUser(login,domainId),'cannot delete user '+login);
-      CheckDbResult(conn.sys.AddUser(login,domainId,passwd,'Firmviewer','Firmviewer'),'cannot add user '+login);
+      CheckDbResult(conn.sys.AddUser(login,domainId,passwd,'Feeder','Feeder'),'cannot add user '+login);
 
       CheckDbResult(conn.sys.FetchUser(login,domainId,userObj));
 
-      CheckDbResult(conn.sys.FetchGroup('VMVIEWER',domainId,group));
+      groups:=TFRE_DB_GUIDArray.create;
+      SetLength(groups,3);
+      CheckDbResult(conn.sys.FetchGroup('VMFEEDER',domainId,group));
+      groups[0]:=group.UID;
+      CheckDbResult(conn.sys.FetchGroup('APPLIANCEFEEDER',domainId,group));
+      groups[1]:=group.UID;
+      CheckDbResult(conn.sys.FetchGroup('STORAGEFEEDER',domainId,group));
+      groups[2]:=group.UID;
 
-      CheckDbResult(conn.sys.ModifyUserGroupsById(userObj.UID,TFRE_DB_GUIDArray.Create(group.UID),true),'cannot set user groups '+login);
+      CheckDbResult(conn.sys.ModifyUserGroupsById(userObj.UID,groups,true),'cannot set user groups '+login);
   end;
 
 begin
@@ -574,7 +585,7 @@ begin
 
   coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
   mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.ObjectName:='firmbox';
+  mobj.ObjectName:='firmbox sys';
   mguid:=mobj.UID;
   CheckDbResult(coll.Store(mobj));
 
@@ -631,7 +642,29 @@ begin
   sobjdns.Field('serviceParent').AsObjectLink:=zguid;
   CheckDbResult(coll.Store(sobjdns));
 
- CONN.Finalize;
+  //add test user to groups
+  domainId:=conn.sys.DomainID('test');
+  CheckDbResult(conn.SYS.FetchUser('admin',domainId,userObj));
+  groups:=TFRE_DB_GUIDArray.create;
+  SetLength(groups,3);
+  conn.SYS.FetchGroup('ACADMINS',domainId,groupObj);
+  groups[0]:=groupObj.UID;
+  conn.SYS.FetchGroup('STORAGEADMINS',domainId,groupObj);
+  groups[1]:=groupObj.UID;
+  conn.SYS.FetchGroup('SERVICESADMINS',domainId,groupObj);
+  groups[2]:=groupObj.UID;
+  CheckDbResult(conn.SYS.ModifyUserGroupsById(userObj.UID,groups,true));
+
+  //test machine
+  coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
+  mobj:=TFRE_DB_MACHINE.CreateForDB;
+  mobj.ObjectName:='firmbox';
+  mobj.SetDomainID(domainId);
+  mguid:=mobj.UID;
+  CheckDbResult(coll.Store(mobj));
+
+
+  CONN.Finalize;
 end;
 
 procedure FIRMBOX_MetaRegister;

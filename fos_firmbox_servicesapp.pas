@@ -236,19 +236,17 @@ begin
     app  := GetEmbeddingApp;
     conn := session.GetDBConnection;
 
-    if session.IsInteractiveSession then begin
-      GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-      with transform do begin
-        AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'$grid_managed_services_name'),dt_string,true,true);
-      end;
-      grid := session.NewDerivedCollection('MANAGED_SERVICES_GRID');
-      with grid do begin
-        SetDeriveParent(conn.GetCollection(CFRE_DB_MACHINE_COLLECTION));
-        SetDeriveTransformation(transform);
-        SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_ServicesMenu),nil,CWSF(@WEB_ServicesSC));
-        SetParentToChildLinkField ('<SERVICEPARENT');
-        SetDefaultOrderField('displayname',true);
-      end;
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'$grid_managed_services_name'),dt_string,true,true);
+    end;
+    grid := session.NewDerivedCollection('MANAGED_SERVICES_GRID');
+    with grid do begin
+      SetDeriveParent(conn.GetCollection(CFRE_DB_MACHINE_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_ServicesMenu),nil,CWSF(@WEB_ServicesSC));
+      SetParentToChildLinkField ('<SERVICEPARENT');
+      SetDefaultOrderField('displayname',true);
     end;
   end;
 end;
