@@ -3527,6 +3527,8 @@ var
   i       :   NativeInt;
   zfsobj  :   TFRE_DB_ZFS_OBJ;
   em_pool :   TFRE_DB_ZFS_POOL;
+  zfs     :   TFRE_DB_ZFS;
+  res     :   IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
@@ -3535,8 +3537,15 @@ begin
 //  writeln('SWL:',input.DumpToString());
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
     zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
-    if (zfsobj.Implementor_HC is TFRE_DB_ZFS_POOL) then
-      em_pool:=TFRE_DB_ZFS_POOL.CreateEmbeddedPoolObjectfromDB(conn,zfsobj.UID);
+    if (zfsobj.Implementor_HC is TFRE_DB_ZFS_POOL) then begin
+        em_pool:=TFRE_DB_ZFS_POOL.CreateEmbeddedPoolObjectfromDB(conn,zfsobj.UID,True);
+        zfs := TFRE_DB_ZFS.create;
+        try
+          zfs.CreateDiskPool(em_pool,res);
+        finally
+          zfs.free;
+        end;
+      end;
     zfsobj.Finalize;
   end;
 
