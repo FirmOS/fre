@@ -52,7 +52,7 @@ type
     procedure       _getMultiselectionActions           (const conn: IFRE_DB_CONNECTION; const selected :TFRE_DB_StringArray;var fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled:Boolean);
     procedure       _updateToolbars                     (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession);
     procedure       _updateToolbarAssignAndReplaceEntry (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_UserSession; const app: IFRE_DB_APPLICATION);
-    function        _PoolNotes                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        _PoolObjContent                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   protected
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
@@ -62,6 +62,8 @@ type
     procedure       MyServerInitializeModule            (const admin_dbc : IFRE_DB_CONNECTION); override;
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolObjNotes                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolObjNoContent                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_PoolStructureSC                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_LayoutSC                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TBAssign                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -2296,6 +2298,10 @@ begin
     CreateModuleText(conn,'$cm_destroy_pool','Destroy pool %pool%');
     CreateModuleText(conn,'$cm_export_pool','Export pool %pool%');
     CreateModuleText(conn,'$cm_scrub_pool','Scrub pool %pool%');
+
+    CreateModuleText(conn,'$poolobj_notes_tab','Notes');
+    CreateModuleText(conn,'$poolobj_no_content_tab','General');
+    CreateModuleText(conn,'$poolobj_no_content_content','Please select exactly one pool object to get detailed information.');
   end;
 end;
 
@@ -2392,6 +2398,8 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
 
+  ses.GetSessionModuleData(ClassName).DeleteField('selectedZfsObjs');
+
   pool_grid:=ses.FetchDerivedCollection('POOL_DISKS').GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   layout_grid:=ses.FetchDerivedCollection('ENCLOSURE_DISKS').GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
@@ -2459,7 +2467,12 @@ begin
     layout_grid.SetMenu(menu);
   end;
 
-  Result:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(layout_grid,pool_grid,_PoolNotes(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC,nil,nil,true,1,3,3);
+  Result:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(layout_grid,pool_grid,_PoolObjContent(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC,nil,nil,true,1,3,3);
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolObjNoContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'$poolobj_no_content_content'));
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolStructureSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -2473,8 +2486,8 @@ begin
   end;
 
   _updateToolbars(conn,ses);
-  if ses.isUpdatableContentVisible('pools_notes') then begin
-    Result:=_PoolNotes(input,ses,app,conn);
+  if ses.isUpdatableContentVisible('pool_obj_content') then begin
+    Result:=_PoolObjContent(input,ses,app,conn);
   end else begin
     Result:=GFRE_DB_NIL_DESC;
   end;
@@ -2794,6 +2807,7 @@ begin
   newPool.setIsNew;
 
   dstore:=newPool.createDatastorage;
+  dstore.SetName(input.FieldPath('data.pool_name').AsString);
   dstore.setIsNew;
 
   CheckDbResult(pools.Store(newPool),'Add new pool');
@@ -3105,6 +3119,9 @@ var
   end;
 
 begin
+
+  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
+    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
 
   ua:=_getUnassignedPool(conn);
   for i := 0 to input.Field('selected').ValueCount - 1 do begin
@@ -3504,23 +3521,32 @@ begin
   ses.SendServerClientRequest(res);
 end;
 
-function TFRE_FIRMBOX_STORAGE_POOLS_MOD._PoolNotes(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD._PoolObjContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res : TFRE_DB_SUBSECTIONS_DESC;
+begin
+  res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedZfsObjs') and (ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').ValueCount=1) then begin
+    res.AddSection.Describe(CWSF(@WEB_PoolObjNotes),FetchModuleTextShort(ses,'$poolobj_notes_tab'),1);
+  end else begin
+    res.AddSection.Describe(CWSF(@WEB_PoolObjNoContent),FetchModuleTextShort(ses,'$poolobj_no_content_tab'),1);
+  end;
+  res.contentId:='pool_obj_content';
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_PoolObjNotes(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   load_func             : TFRE_DB_SERVER_FUNC_DESC;
   save_func             : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  if ses.GetSessionModuleData(ClassName).FieldExists('selectedZfsObjs') and (ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').ValueCount=1) then begin
-    load_func   := CWSF(@WEB_NoteLoad);
-    save_func   := CWSF(@WEB_NoteSave);
+  load_func   := CWSF(@WEB_NoteLoad);
+  save_func   := CWSF(@WEB_NoteSave);
 
-    load_func.AddParam.Describe('linkid',ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringItem[0]);
-    save_func.AddParam.Describe('linkid',ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringItem[0]);
+  load_func.AddParam.Describe('linkid',ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringItem[0]);
+  save_func.AddParam.Describe('linkid',ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringItem[0]);
 
-    Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CWSF(@WEB_NoteStartEdit),CWSF(@WEB_NoteStopEdit),ct_html,false);
-  end else begin
-    Result:=TFRE_DB_HTML_DESC.create.Describe('');
-  end;
-  (Result.Implementor_HC as TFRE_DB_CONTENT_DESC).contentId:='pools_notes';
+  Result:=TFRE_DB_EDITOR_DESC.create.Describe(load_func,save_func,CWSF(@WEB_NoteStartEdit),CWSF(@WEB_NoteStopEdit));
 end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD.WEB_SaveConfig(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
