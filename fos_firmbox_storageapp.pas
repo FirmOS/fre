@@ -2321,12 +2321,12 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
 
     with tr_Grid do begin
-      AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('caption','displayname'),'caption',FetchModuleTextShort(session,'$pools_grid_caption'),dt_string,true,false,false,1,'icon');
+      AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('caption','displayname'),'caption',FetchModuleTextShort(session,'$pools_grid_caption'),dt_string,true,false,false,2,'icon');
       AddOneToOnescheme('icon','','',dt_string,false,false,false,1,'','',FREDB_getThemedResource('images_apps/firmbox_storage/Undefined.png'));
-      AddOneToOnescheme('iops_r','',FetchModuleTextShort(session,'$pools_grid_iops_r'));
-      AddOneToOnescheme('iops_w','',FetchModuleTextShort(session,'$pools_grid_iops_w'));
-      AddOneToOnescheme('transfer_r','',FetchModuleTextShort(session,'$pools_grid_transfer_r'));
-      AddOneToOnescheme('transfer_w','',FetchModuleTextShort(session,'$pools_grid_transfer_w'));
+      AddMatchingReferencedField('TFRE_DB_ZPOOL_IOSTAT<ZFS_OBJ_ID','ZIO_TYPE_READ_OPS','iops_r',FetchModuleTextShort(session,'$pools_grid_iops_r'));
+      AddMatchingReferencedField('TFRE_DB_ZPOOL_IOSTAT<ZFS_OBJ_ID','ZIO_TYPE_WRITE_OPS','iops_w',FetchModuleTextShort(session,'$pools_grid_iops_w'));
+      AddMatchingReferencedField('TFRE_DB_ZPOOL_IOSTAT<ZFS_OBJ_ID','ZIO_TYPE_READ_BYTES','transfer_r',FetchModuleTextShort(session,'$pools_grid_transfer_r'));
+      AddMatchingReferencedField('TFRE_DB_ZPOOL_IOSTAT<ZFS_OBJ_ID','ZIO_TYPE_WRITE_BYTES','transfer_w',FetchModuleTextShort(session,'$pools_grid_transfer_w'));
       AddOneToOnescheme('_disabledrag_','','',dt_string,false);
       AddOneToOnescheme('_disabledrop_','','',dt_string,false);
       AddOneToOnescheme('dndclass','','',dt_string,false);
@@ -2863,6 +2863,7 @@ begin
   end else begin
     tspare:=tpool.createSpare;
     tspare.setIsNew;
+    tspare.SetName(FetchModuleTextShort(ses,'$new_spare_caption'));
     vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
     CheckDbResult(vdevs.Store(tspare.CloneToNewObject()),'Assign spare');
   end;
