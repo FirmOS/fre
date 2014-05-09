@@ -2299,6 +2299,7 @@ begin
     CreateModuleText(conn,'$cm_export_pool','Export pool %pool%');
     CreateModuleText(conn,'$cm_scrub_pool','Scrub pool %pool%');
 
+    CreateModuleText(conn,'$poolobj_content_tab','Details');
     CreateModuleText(conn,'$poolobj_notes_tab','Notes');
     CreateModuleText(conn,'$poolobj_no_content_tab','General');
     CreateModuleText(conn,'$poolobj_no_content_content','Please select exactly one pool object to get detailed information.');
@@ -3524,11 +3525,17 @@ end;
 
 function TFRE_FIRMBOX_STORAGE_POOLS_MOD._PoolObjContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res : TFRE_DB_SUBSECTIONS_DESC;
+  res   : TFRE_DB_SUBSECTIONS_DESC;
+  zfsObj: IFRE_DB_Object;
 begin
   res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedZfsObjs') and (ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').ValueCount=1) then begin
-    res.AddSection.Describe(CWSF(@WEB_PoolObjNotes),FetchModuleTextShort(ses,'$poolobj_notes_tab'),1);
+
+    CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr[0]),zfsObj));
+    if zfsObj.MethodExists('ZFSContent') then begin
+      res.AddSection.Describe(CSFT('ZFSContent',zfsObj),FetchModuleTextShort(ses,'$poolobj_content_tab'),2);
+    end;
+    res.AddSection.Describe(CWSF(@WEB_PoolObjNotes),FetchModuleTextShort(ses,'$poolobj_notes_tab'),2);
   end else begin
     res.AddSection.Describe(CWSF(@WEB_PoolObjNoContent),FetchModuleTextShort(ses,'$poolobj_no_content_tab'),1);
   end;
