@@ -381,27 +381,6 @@ var conn     : IFRE_DB_Connection;
 
       CheckDbResult(conn.sys.ModifyUserGroupsById(userObj.UID,groups,true),'cannot set user groups '+login);
 
-      login  :='firmfeeder';
-      passwd :='x';
-
-      domainId:=conn.sys.DomainID('test');
-
-      if conn.sys.UserExists(login,domainId) then
-        CheckDbResult(conn.sys.DeleteUser(login,domainId),'cannot delete user '+login);
-      CheckDbResult(conn.sys.AddUser(login,domainId,passwd,'Feeder','Feeder'),'cannot add user '+login);
-
-      CheckDbResult(conn.sys.FetchUser(login,domainId,userObj));
-
-      groups:=TFRE_DB_GUIDArray.create;
-      SetLength(groups,3);
-      CheckDbResult(conn.sys.FetchGroup('VMFEEDER',domainId,group));
-      groups[0]:=group.UID;
-      CheckDbResult(conn.sys.FetchGroup('APPLIANCEFEEDER',domainId,group));
-      groups[1]:=group.UID;
-      CheckDbResult(conn.sys.FetchGroup('STORAGEFEEDER',domainId,group));
-      groups[2]:=group.UID;
-
-      CheckDbResult(conn.sys.ModifyUserGroupsById(userObj.UID,groups,true),'cannot set user groups '+login);
   end;
 
 begin
@@ -585,7 +564,7 @@ begin
 
   coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
   mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.ObjectName:='firmbox sys';
+  mobj.ObjectName:='firmbox';
   mguid:=mobj.UID;
   CheckDbResult(coll.Store(mobj));
 
@@ -649,20 +628,11 @@ begin
   SetLength(groups,3);
   conn.SYS.FetchGroup('ACADMINS',domainId,groupObj);
   groups[0]:=groupObj.UID;
-  conn.SYS.FetchGroup('STORAGEADMINS',domainId,groupObj);
+  conn.SYS.FetchGroup('STORAGEADMINS',conn.GetSysDomainUID,groupObj);
   groups[1]:=groupObj.UID;
   conn.SYS.FetchGroup('SERVICESADMINS',domainId,groupObj);
   groups[2]:=groupObj.UID;
   CheckDbResult(conn.SYS.ModifyUserGroupsById(userObj.UID,groups,true));
-
-  //test machine
-  coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
-  mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.ObjectName:='firmbox';
-  mobj.SetDomainID(domainId);
-  mguid:=mobj.UID;
-  CheckDbResult(coll.Store(mobj));
-
 
   CONN.Finalize;
 end;

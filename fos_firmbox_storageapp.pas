@@ -4135,6 +4135,10 @@ begin
     CheckDbResult(conn.AddGroup('STORAGEVIEWERS','Viewers of the Firmbox Storage','Storage Viewers',domainUID),'could not create viewers group');
     CheckDbResult(conn.AddRolesToGroup('STORAGEVIEWERS',domainUID,TFRE_DB_StringArray.Create('STORAGEVIEWER')),'could not add role STORAGEVIEWER for group Viewers');
 
+    if domainUID<>conn.GetSysDomainUID then begin
+      CheckDbResult(conn.DeleteGroup('STORAGEFEEDER',domainUID));
+    end;
+
   end;
 end;
 
