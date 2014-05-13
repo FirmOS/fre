@@ -48,7 +48,7 @@ type
   public
     class procedure RegisterSystemScheme          (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects              (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallDBObjects4Domain       (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallDBObjects4SysDomain    (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
   published
     function        WEB_RAW_DATA_FEED             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_RAW_DATA_FEED30           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -1119,20 +1119,19 @@ begin
    
 end;
 
-class procedure TFRE_FIRMBOX_APPLIANCE_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFRE_FIRMBOX_APPLIANCE_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
 begin
-  inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
+  inherited InstallDBObjects4SysDomain(conn, currentVersionId, domainUID);
 
-  if currentVersionId='' then
-    begin
-      currentVersionId := '1.0';
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
 
-      CheckDbResult(conn.AddGroup('APPLIANCEFEEDER','Group for Appliance Data Feeder','VM Feeder',domainUID),'could not create Appliance feeder group');
+    CheckDbResult(conn.AddGroup('APPLIANCEFEEDER','Group for Appliance Data Feeder','VM Feeder',domainUID,true,true),'could not create Appliance feeder group');
 
-      CheckDbResult(conn.AddRolesToGroup('APPLIANCEFEEDER',domainUID,TFRE_DB_StringArray.Create(
-        TFRE_FIRMBOX_APPLIANCE_APP.GetClassRoleNameFetch
-        )),'could not add roles for group APPLIANCEFEEDER');
-    end;
+    CheckDbResult(conn.AddRolesToGroup('APPLIANCEFEEDER',domainUID,TFRE_DB_StringArray.Create(
+      TFRE_FIRMBOX_APPLIANCE_APP.GetClassRoleNameFetch
+      )),'could not add roles for group APPLIANCEFEEDER');
+  end;
 end;
 
 function TFRE_FIRMBOX_APPLIANCE_APP.WEB_RAW_DATA_FEED(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;

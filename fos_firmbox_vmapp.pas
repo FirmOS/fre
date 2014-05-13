@@ -28,6 +28,7 @@ type
     class procedure RegisterSystemScheme      (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     class procedure InstallDBObjects4Domain   (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
   published
     function  WEB_VM_Feed_Update              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
@@ -164,23 +165,31 @@ class procedure TFRE_FIRMBOX_VM_APP.InstallDBObjects4Domain(const conn: IFRE_DB_
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 
-  if currentVersionId='' then
-    begin
-      currentVersionId:='1.0';
-      CheckDbResult(conn.AddGroup('VMFEEDER','Group for VM Data Feeder','VM Feeder',domainUID),'could not create VM feeder group');
-      CheckDbResult(conn.AddGroup('VMVIEWER','Group for VM Viewer','VM Viewer',domainUID),'could not create VM viewer group');
+  if currentVersionId='' then begin
+    currentVersionId:='1.0';
+    CheckDbResult(conn.AddGroup('VMVIEWER','Group for VM Viewer','VM Viewer',domainUID),'could not create VM viewer group');
 
-      CheckDbResult(conn.AddRolesToGroup('VMFEEDER',domainUID,TFRE_DB_StringArray.Create(
-        TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch
-        )),'could not add roles for group VMFEEDER');
+    CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID,TFRE_DB_StringArray.Create(
+       TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch,
+        TFRE_FIRMBOX_VM_MACHINES_MOD.GetClassRoleNameFetch
+      )),'could not add GUI roles for group VMVIEWER');
 
-      CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID,TFRE_DB_StringArray.Create(
-         TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch,
-          TFRE_FIRMBOX_VM_MACHINES_MOD.GetClassRoleNameFetch
-        )),'could not add GUI roles for group VMVIEWER');
+    CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID, TFRE_DB_VMACHINE.GetClassStdRoles(false,false,false,true)),'could not add roles of TFRE_DB_VMACHINE to group VMVIEWER');
+  end;
+end;
 
-      CheckDbResult(conn.AddRolesToGroup('VMVIEWER',domainUID, TFRE_DB_VMACHINE.GetClassStdRoles(false,false,false,true)),'could not add roles of TFRE_DB_VMACHINE to group VMVIEWER');
-    end;
+class procedure TFRE_FIRMBOX_VM_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+begin
+  inherited InstallDBObjects4SysDomain(conn, currentVersionId, domainUID);
+
+  if currentVersionId='' then begin
+    currentVersionId:='1.0';
+    CheckDbResult(conn.AddGroup('VMFEEDER','Group for VM Data Feeder','VM Feeder',domainUID,true,true),'could not create VM feeder group');
+
+    CheckDbResult(conn.AddRolesToGroup('VMFEEDER',domainUID,TFRE_DB_StringArray.Create(
+      TFRE_FIRMBOX_VM_APP.GetClassRoleNameFetch
+      )),'could not add roles for group VMFEEDER');
+  end;
 end;
 
 function TFRE_FIRMBOX_VM_APP.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;

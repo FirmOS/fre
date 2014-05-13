@@ -366,7 +366,7 @@ var conn     : IFRE_DB_Connection;
 
       if conn.sys.UserExists(login,domainId) then
         CheckDbResult(conn.sys.DeleteUser(login,domainId),'cannot delete user '+login);
-      CheckDbResult(conn.sys.AddUser(login,domainId,passwd,'Feeder','Feeder'),'cannot add user '+login);
+      CheckDbResult(conn.sys.AddUser(login,domainId,passwd,'Feeder','Feeder',nil,'',true),'cannot add user '+login);
 
       CheckDbResult(conn.sys.FetchUser(login,domainId,userObj));
 

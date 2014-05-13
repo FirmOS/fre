@@ -32,6 +32,7 @@ type
     class procedure RegisterSystemScheme        (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects            (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     class procedure InstallDBObjects4Domain     (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallDBObjects4SysDomain  (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
     class procedure InstallUserDBObjects        (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
 
   published
@@ -4030,11 +4031,29 @@ begin
 
   if currentVersionId='' then begin
     currentVersionId:='1.0';
+
+    CheckDbResult(conn.AddGroup('STORAGEFEEDER','Group for Storage Data Feeder','Storage Feeder',domainUID),'could not create Storage feeder group');
+  end;
+  if currentVersionId='1.0' then begin
+    currentVersionId:='1.1';
+
+    CheckDbResult(conn.DeleteGroup('STORAGEFEEDER',domainUID));
+  end;
+end;
+
+class procedure TFRE_FIRMBOX_STORAGE_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+var
+  group: IFRE_DB_GROUP;
+begin
+  inherited InstallDBObjects4SysDomain(conn, currentVersionId, domainUID);
+
+  if currentVersionId='' then begin
+    currentVersionId:='1.0';
     CheckDbResult(conn.AddGroup('STORAGEFEEDER','Group for Storage Data Feeder','Storage Feeder',domainUID),'could not create Storage feeder group');
 
     CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID,TFRE_DB_StringArray.Create(
       TFRE_FIRMBOX_STORAGE_APP.GetClassRoleNameFetch
-      )),'could not add roles for group STORAGEFEEDER');
+    )),'could not add roles for group STORAGEFEEDER');
 
     CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_UNCONFIGURED_MACHINE.GetClassStdRoles),'could not add roles TFRE_DB_UNCONFIGURED_MACHINE for group STORAGEFEEDER');
     CheckDbResult(conn.AddRolesToGroup('STORAGEFEEDER',domainUID, TFRE_DB_MACHINE.GetClassStdRoles),'could not add roles TFRE_DB_MACHINE for group STORAGEFEEDER');
@@ -4129,15 +4148,16 @@ begin
 
     CheckDbResult(conn.AddRoleRightsToRole('STORAGEADMIN',domainUID,TFRE_DB_NOTE.GetClassStdRoles(false,false,false,true)));
 
-    CheckDbResult(conn.AddGroup('STORAGEADMINS','Admins of the Firmbox Storage','Storage Admins',domainUID),'could not create admins group');
+    CheckDbResult(conn.AddGroup('STORAGEADMINS','Admins of the Firmbox Storage','Storage Admins',domainUID,true),'could not create admins group');
     CheckDbResult(conn.AddRolesToGroup('STORAGEADMINS',domainUID,TFRE_DB_StringArray.Create('STORAGEADMIN')),'could not add role STORAGEADMIN for group Admins');
 
-    CheckDbResult(conn.AddGroup('STORAGEVIEWERS','Viewers of the Firmbox Storage','Storage Viewers',domainUID),'could not create viewers group');
+    CheckDbResult(conn.AddGroup('STORAGEVIEWERS','Viewers of the Firmbox Storage','Storage Viewers',domainUID,true),'could not create viewers group');
     CheckDbResult(conn.AddRolesToGroup('STORAGEVIEWERS',domainUID,TFRE_DB_StringArray.Create('STORAGEVIEWER')),'could not add role STORAGEVIEWER for group Viewers');
 
-    if domainUID<>conn.GetSysDomainUID then begin
-      CheckDbResult(conn.DeleteGroup('STORAGEFEEDER',domainUID));
-    end;
+    CheckDbResult(conn.FetchGroup('STORAGEFEEDER',domainUID,group));
+    group.isInternal:=true;
+    group.isProtected:=true;
+    CheckDbResult(conn.UpdateGroup(group));
 
   end;
 end;
