@@ -153,16 +153,15 @@ var conn : IFRE_DB_CONNECTION;
     procedure ObjectPatch(const obj:IFRE_DB_Object; var halt:boolean ; const current,max : NativeInt);
     begin
       writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
-      if obj.SchemeClass='TFRE_DB_TEXT' then { don't use IsA() (schemes not registered) }
+      if obj.SchemeClass='TFOS_DB_CITYCOM_PROD_MOD_VARIATION_PRICE' then { don't use IsA() (schemes not registered) }
         begin
-          //writeln('Processing ',current,'/',max);
           writeln(obj.DumpToString());
-          //coll.Store(obj);
+          coll.Store(obj);
         end;
     end;
 
 begin
-   conn := GFRE_DBI.NewConnection;
+   conn := GFRE_DB.NewConnection;
    GDBPS_SKIP_STARTUP_CHECKS := true; { skip inkonsitency checks, to enable consistency restoration  }
    CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
    coll := conn.GetDomainCollection(CFOS_DB_PROD_MOD_VARIATION_PRICES_COLLECTION,'CITYCOM');
@@ -180,7 +179,7 @@ end;
 begin
   cFRE_PS_LAYER_USE_EMBEDDED := true; { always patch local ? }
   Application:=TFRE_Testserver.Create(nil);
-  Application.Title:='FirmOS Manual Patch Process';
+  Application.Title:='FirmOS Generic #Patcher';
   Application.DefaultExtensions := 'TEST';
   Application.Run;
   Application.Free;
