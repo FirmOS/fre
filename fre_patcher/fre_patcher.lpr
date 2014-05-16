@@ -74,6 +74,7 @@ type
     function    AfterInitDBTerminatingCommands:boolean  ; override; { cmd's that should be executed with full db init, they terminate}
     procedure   ParseSetSystemFlags                     ; override; { Setting of global flags before startup go here }
     procedure   Patch                                   (const option:string);
+    procedure   PatchDeleteVersions                     ;
   end;
 
   { TFRE_Testserver }
@@ -141,8 +142,27 @@ begin
   _CheckAdminUserSupplied;
   _CheckAdminPassSupplied;
   case option of
-    'city1' : PatchCity1;
+    'delversions' : PatchDeleteVersions;
+    'city1'       : PatchCity1;
   end;
+end;
+
+procedure TFRE_Testserver.PatchDeleteVersions;
+var conn : IFRE_DB_SYS_CONNECTION;
+begin
+   conn := GFRE_DBI.NewSysOnlyConnection;
+   writeln('EXISTING VERSIONS:');
+   writeln('------');
+   CheckDbResult(conn.Connect(cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+   writeln(conn.GetClassesVersionDirectory.DumpToString());
+   CheckDbResult(conn.DelClassesVersionDirectory);
+   conn.Finalize;
+   writeln('------');
+   writeln('FRESH VERSIONS:');
+   conn := GFRE_DBI.NewSysOnlyConnection;
+   CheckDbResult(conn.Connect(cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+   writeln(conn.GetClassesVersionDirectory.DumpToString());
+   conn.Finalize;
 end;
 
 procedure TFRE_Testserver.PatchCity1;
