@@ -1013,7 +1013,7 @@ end;
 procedure TFRE_DB_MONSYS_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('$monitoring_description');
+  InitModuleDesc('monitoring_description');
 end;
 
 
@@ -1168,7 +1168,7 @@ end;
 
 procedure TFRE_DB_MONSYS.SetupApplicationStructure;
 begin
-  InitAppDesc('$description');
+  InitAppDesc('description');
   AddApplicationModule(TFRE_DB_MONSYS_MOD.create);
 end;
 
@@ -1220,8 +1220,8 @@ begin
 
   if (currentVersionId='') then
     begin
-      CreateAppText(conn,'$caption','Monitoring','Monitoring','Monitoring');
-      CreateAppText(conn,'$monitoring_description','Monitoring','Monitoring','Monitoring');
+      CreateAppText(conn,'caption','Monitoring','Monitoring','Monitoring');
+      CreateAppText(conn,'monitoring_description','Monitoring','Monitoring','Monitoring');
 
       currentVersionId:='1.0';
     end;
