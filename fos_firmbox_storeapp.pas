@@ -42,7 +42,7 @@ end;
 procedure TFRE_FIRMBOX_STORE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('$description');
+  InitAppDesc('description');
 end;
 
 
@@ -91,7 +91,7 @@ begin
 
   if (currentVersionId='') then
     begin
-      CreateAppText(conn,'$caption','Store','Store','Store');
+      CreateAppText(conn,'caption','Store','Store','Store');
       currentVersionId:='1.0';
     end;
   if (currentVersionId='1.0') then

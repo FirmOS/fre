@@ -91,7 +91,7 @@ begin
 
   if (currentVersionId='') then
     begin
-      CreateAppText(conn,'$caption','Infrastructure','Infrastructure','Infrastructure');
+      CreateAppText(conn,'caption','Infrastructure','Infrastructure','Infrastructure');
       currentVersionId:='1.0';
     end;
   if (currentVersionId='1.0') then

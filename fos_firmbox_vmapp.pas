@@ -46,7 +46,7 @@ implementation
 procedure TFRE_FIRMBOX_VM_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('$description');
+  InitAppDesc('description');
   AddApplicationModule(TFRE_FIRMBOX_VM_NETWORK_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VM_MACHINES_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VM_RESOURCES_MOD.create);
@@ -59,13 +59,13 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization',FetchAppTextShort(session,'$caption'),'images_apps/firmbox_vm/monitor_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_APP));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch',FetchAppTextShort(session,'$vnetwork_description'),'images_apps/firmbox_vm/network_white.svg',TFRE_FIRMBOX_VM_NETWORK_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization',FetchAppTextShort(session,'caption'),'images_apps/firmbox_vm/monitor_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch',FetchAppTextShort(session,'vnetwork_description'),'images_apps/firmbox_vm/network_white.svg',TFRE_FIRMBOX_VM_NETWORK_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD));
 //  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VSwitch/Interfaces','Interfaces','images_apps/firmbox_vm/plug_white.svg','',0,CheckAppRightModule(conn,'interfaces'));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/Machines',FetchAppTextShort(session,'$machines_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_MACHINES_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_MACHINES_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources',FetchAppTextShort(session,'$vm_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources/Disks',FetchAppTextShort(session,'$vm_disk_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname+':DISKS',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources/ISOs',FetchAppTextShort(session,'$vm_iso_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname+':ISOS',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/Machines',FetchAppTextShort(session,'machines_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_MACHINES_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_MACHINES_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources',FetchAppTextShort(session,'vm_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources/Disks',FetchAppTextShort(session,'vm_disk_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname+':DISKS',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Virtualization/VMResources/ISOs',FetchAppTextShort(session,'vm_iso_resources_description'),'images_apps/firmbox_vm/server_white.svg',TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname+':ISOS',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(ClassName).Field('SITEMAP').AsObject := SiteMapData;
 end;
@@ -100,58 +100,58 @@ begin
 
   if (currentVersionId='') then
     begin
-      CreateAppText(conn,'$caption','Virtualization','Virtualization','Virtualization');
-      CreateAppText(conn,'$vnetwork_description','Virtual Network','Virtual Network','Virtual Network');
-      CreateAppText(conn,'$machines_description','Machines','Machines','Machines');
-      CreateAppText(conn,'$vm_resources_description','VM Resources','VM Resources','VM Resources');
-      CreateAppText(conn,'$vm_disk_resources_description','Disks','Disks','Disks');
-      CreateAppText(conn,'$vm_iso_resources_description','ISOs','ISOs','ISOs');
+      CreateAppText(conn,'caption','Virtualization','Virtualization','Virtualization');
+      CreateAppText(conn,'vnetwork_description','Virtual Network','Virtual Network','Virtual Network');
+      CreateAppText(conn,'machines_description','Machines','Machines','Machines');
+      CreateAppText(conn,'vm_resources_description','VM Resources','VM Resources','VM Resources');
+      CreateAppText(conn,'vm_disk_resources_description','Disks','Disks','Disks');
+      CreateAppText(conn,'vm_iso_resources_description','ISOs','ISOs','ISOs');
 
-      CreateAppText(conn,'$datalink_content_header','Details about the selected Network Interface');
-      CreateAppText(conn,'$datalink_name','Name');
-      CreateAppText(conn,'$datalink_zoned','Zoned');
-      CreateAppText(conn,'$datalink_desc','Description');
-      CreateAppText(conn,'$datalink_add_vnic','Add new Virtual Interface');
-      CreateAppText(conn,'$datalink_delete_vnic','Delete Virtual Interface');
-      CreateAppText(conn,'$datalink_delete_stub','Delete Virtual Switch');
-      CreateAppText(conn,'$datalink_delete_aggr','Delete Aggregation');
-      CreateAppText(conn,'$datalink_create_stub','Create Virtual Switch');
+      CreateAppText(conn,'datalink_content_header','Details about the selected Network Interface');
+      CreateAppText(conn,'datalink_name','Name');
+      CreateAppText(conn,'datalink_zoned','Zoned');
+      CreateAppText(conn,'datalink_desc','Description');
+      CreateAppText(conn,'datalink_add_vnic','Add new Virtual Interface');
+      CreateAppText(conn,'datalink_delete_vnic','Delete Virtual Interface');
+      CreateAppText(conn,'datalink_delete_stub','Delete Virtual Switch');
+      CreateAppText(conn,'datalink_delete_aggr','Delete Aggregation');
+      CreateAppText(conn,'datalink_create_stub','Create Virtual Switch');
 
-      CreateAppText(conn,'$vmnetwork_no_access','No Access to settings!');
+      CreateAppText(conn,'vmnetwork_no_access','No Access to settings!');
 
-      CreateAppText(conn,'$machines_content_header','<b>Overview of all configured virtual machines.</b>');
-      CreateAppText(conn,'$machines_no_info','- could not get info -');
+      CreateAppText(conn,'machines_content_header','<b>Overview of all configured virtual machines.</b>');
+      CreateAppText(conn,'machines_no_info','- could not get info -');
 
-      CreateAppText(conn,'$machines_new_vm','New','','New VM');
-      CreateAppText(conn,'$machines_start','Start','','Start the selected VM');
-      CreateAppText(conn,'$machines_stop','Stop','','Stop the selected VM');
-      CreateAppText(conn,'$machines_kill','Kill','','Stop the selected VM (FORCED)');
+      CreateAppText(conn,'machines_new_vm','New','','New VM');
+      CreateAppText(conn,'machines_start','Start','','Start the selected VM');
+      CreateAppText(conn,'machines_stop','Stop','','Stop the selected VM');
+      CreateAppText(conn,'machines_kill','Kill','','Stop the selected VM (FORCED)');
 
-      CreateAppText(conn,'$vm_details_config','Configuration');
-      CreateAppText(conn,'$vm_details_console','Console');
-      CreateAppText(conn,'$vm_details_perf','Performance');
-      CreateAppText(conn,'$vm_details_note','Note');
+      CreateAppText(conn,'vm_details_config','Configuration');
+      CreateAppText(conn,'vm_details_console','Console');
+      CreateAppText(conn,'vm_details_perf','Performance');
+      CreateAppText(conn,'vm_details_note','Note');
 
-      CreateAppText(conn,'$gc_vm_name','Name');
-      CreateAppText(conn,'$gc_vm_type','Type');
-      CreateAppText(conn,'$gc_vm_state','State');
-      CreateAppText(conn,'$gc_vm_cpu','CPU');
-      CreateAppText(conn,'$gc_vm_used_mem','Used Mem');
-      CreateAppText(conn,'$gc_vm_paged_mem','Paged Mem');
-      CreateAppText(conn,'$gc_vm_virtual_mem','Virtual Mem');
+      CreateAppText(conn,'gc_vm_name','Name');
+      CreateAppText(conn,'gc_vm_type','Type');
+      CreateAppText(conn,'gc_vm_state','State');
+      CreateAppText(conn,'gc_vm_cpu','CPU');
+      CreateAppText(conn,'gc_vm_used_mem','Used Mem');
+      CreateAppText(conn,'gc_vm_paged_mem','Paged Mem');
+      CreateAppText(conn,'gc_vm_virtual_mem','Virtual Mem');
 
-      CreateAppText(conn,'$vm_resources_disks','Disks');
-      CreateAppText(conn,'$vm_resources_isos','ISOs');
-      CreateAppText(conn,'$vm_resources_add_disk','Create','','Create a new disk');
-      CreateAppText(conn,'$vm_resources_delete_disk','Remove','','Remove selected disk');
-      CreateAppText(conn,'$vm_resources_add_iso','Upload','','Upload a new ISO');
-      CreateAppText(conn,'$vm_resources_delete_iso','Remove','','Remove selected ISO');
+      CreateAppText(conn,'vm_resources_disks','Disks');
+      CreateAppText(conn,'vm_resources_isos','ISOs');
+      CreateAppText(conn,'vm_resources_add_disk','Create','','Create a new disk');
+      CreateAppText(conn,'vm_resources_delete_disk','Remove','','Remove selected disk');
+      CreateAppText(conn,'vm_resources_add_iso','Upload','','Upload a new ISO');
+      CreateAppText(conn,'vm_resources_delete_iso','Remove','','Remove selected ISO');
 
-      CreateAppText(conn,'$gc_disk_name','Disk name');
-      CreateAppText(conn,'$gc_iso_name','ISO name');
+      CreateAppText(conn,'gc_disk_name','Disk name');
+      CreateAppText(conn,'gc_iso_name','ISO name');
 
-      CreateAppText(conn,'$button_save','Save');
-      CreateAppText(conn,'$error_no_access','Access denied');
+      CreateAppText(conn,'button_save','Save');
+      CreateAppText(conn,'error_no_access','Access denied');
 
       currentVersionId:='1.0';
     end;
@@ -194,7 +194,7 @@ end;
 
 function TFRE_FIRMBOX_VM_APP.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
-//  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access'))); //FIXME: Use the right right for the feeder
+//  if not conn.CheckRight(Get_Rightname('view_vms')) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access'))); //FIXME: Use the right right for the feeder
   result := DelegateInvoke('VMCONTROLLER','VM_Feed_Update',input);
 end;
 

@@ -54,7 +54,7 @@ end;
 
 procedure TFOS_FIRMBOX_USER_APP.SetupApplicationStructure;
 begin
-  InitAppDesc('$description');
+  InitAppDesc('description');
   AddApplicationModule(TFOS_FIRMBOX_DOMAIN_MOD.create);
   AddApplicationModule(TFOS_FIRMBOX_USER_MOD.create);
   AddApplicationModule(TFOS_FIRMBOX_GROUP_MOD.create);

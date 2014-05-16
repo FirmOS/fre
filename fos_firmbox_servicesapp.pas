@@ -103,7 +103,7 @@ end;
 procedure TFOS_FIRMBOX_MANAGED_SERVICES_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('$managed_services_description')
+  InitModuleDesc('managed_services_description')
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD._getServiceContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): TFRE_DB_CONTENT_DESC;
@@ -133,7 +133,7 @@ begin
 
         addZoneDisabled:=not _hasPool(conn,machineId);
         subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-        subsec.AddSection.Describe(CWSF(@WEB_ContentDomainSel),FetchModuleTextShort(ses,'$domain_sel_general_tab'),1);
+        subsec.AddSection.Describe(CWSF(@WEB_ContentDomainSel),FetchModuleTextShort(ses,'domain_sel_general_tab'),1);
         res:=subsec;
       end else
       if serviceObj.IsA(TFRE_DB_ZONE,zone) then begin
@@ -145,7 +145,7 @@ begin
           addDNSDisabled:=false;
         end;
         subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-        subsec.AddSection.Describe(CWSF(@WEB_ContentZoneSel),FetchModuleTextShort(ses,'$zone_sel_general_tab'),1);
+        subsec.AddSection.Describe(CWSF(@WEB_ContentZoneSel),FetchModuleTextShort(ses,'zone_sel_general_tab'),1);
         res:=subsec;
       end else
       if serviceObj.IsA('TFRE_DB_VMACHINE') then begin
@@ -153,17 +153,17 @@ begin
         res:=VM.WEB_VM_Details(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
       end else begin
         subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-        subsec.AddSection.Describe(CWSF(@WEB_ContentUnknownSel),FetchModuleTextShort(ses,'$unknown_sel_general_tab'),1);
+        subsec.AddSection.Describe(CWSF(@WEB_ContentUnknownSel),FetchModuleTextShort(ses,'unknown_sel_general_tab'),1);
         res:=subsec;
       end;
     end else begin
       subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-      subsec.AddSection.Describe(CWSF(@WEB_ContentMultiSel),FetchModuleTextShort(ses,'$multi_sel_general_tab'),1);
+      subsec.AddSection.Describe(CWSF(@WEB_ContentMultiSel),FetchModuleTextShort(ses,'multi_sel_general_tab'),1);
       res:=subsec;
     end;
   end else begin
     subsec:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe;
-    subsec.AddSection.Describe(CWSF(@WEB_ContentNoSel),FetchModuleTextShort(ses,'$no_sel_general_tab'),1);
+    subsec.AddSection.Describe(CWSF(@WEB_ContentNoSel),FetchModuleTextShort(ses,'no_sel_general_tab'),1);
     res:=subsec;
   end;
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_service',addServiceDisabled));
@@ -238,7 +238,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'$grid_managed_services_name'),dt_string,true,true);
+      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'grid_managed_services_name'),dt_string,true,true);
     end;
     grid := session.NewDerivedCollection('MANAGED_SERVICES_GRID');
     with grid do begin
@@ -257,38 +257,38 @@ begin
   if currentVersionId='' then begin
     currentVersionId := '1.0';
 
-    CreateModuleText(conn,'$grid_managed_services_name','Name');
+    CreateModuleText(conn,'grid_managed_services_name','Name');
 
-    CreateModuleText(conn,'$no_sel_general_tab','General');
-    CreateModuleText(conn,'$multi_sel_general_tab','General');
-    CreateModuleText(conn,'$unknown_sel_general_tab','General');
+    CreateModuleText(conn,'no_sel_general_tab','General');
+    CreateModuleText(conn,'multi_sel_general_tab','General');
+    CreateModuleText(conn,'unknown_sel_general_tab','General');
 
-    CreateModuleText(conn,'$zone_sel_general_tab','General');
-    CreateModuleText(conn,'$domain_sel_general_tab','General');
+    CreateModuleText(conn,'zone_sel_general_tab','General');
+    CreateModuleText(conn,'domain_sel_general_tab','General');
 
-    CreateModuleText(conn,'$no_sel_general_content','Please select a service to get detailed information about it.');
-    CreateModuleText(conn,'$multi_sel_general_content','Please select exactly one service to get detailed information about it.');
-    CreateModuleText(conn,'$unknown_sel_general_content','No detailed information available for %service_name%.');
-    CreateModuleText(conn,'$domain_sel_general_content','No detailed information available for %domain_name%.');
+    CreateModuleText(conn,'no_sel_general_content','Please select a service to get detailed information about it.');
+    CreateModuleText(conn,'multi_sel_general_content','Please select exactly one service to get detailed information about it.');
+    CreateModuleText(conn,'unknown_sel_general_content','No detailed information available for %service_name%.');
+    CreateModuleText(conn,'domain_sel_general_content','No detailed information available for %domain_name%.');
 
-    CreateModuleText(conn,'$zone_panel_cap','Properties');
+    CreateModuleText(conn,'zone_panel_cap','Properties');
 
-    CreateModuleText(conn,'$tb_add_zone','Add Zone');
-    CreateModuleText(conn,'$cb_add_zone','Add Zone');
+    CreateModuleText(conn,'tb_add_zone','Add Zone');
+    CreateModuleText(conn,'cb_add_zone','Add Zone');
 
-    CreateModuleText(conn,'$tb_add_service','Add Service');
-    CreateModuleText(conn,'$tb_add_service_vm','Virtual Machine');
-    CreateModuleText(conn,'$tb_add_service_nas','Virtual NAS');
-    CreateModuleText(conn,'$tb_add_service_dns','DNS Server');
-    CreateModuleText(conn,'$cb_add_service_vm','Add Virtual Machine');
-    CreateModuleText(conn,'$cb_add_service_nas','Add Virtual NAS');
-    CreateModuleText(conn,'$cb_add_service_dns','Add DNS Server');
+    CreateModuleText(conn,'tb_add_service','Add Service');
+    CreateModuleText(conn,'tb_add_service_vm','Virtual Machine');
+    CreateModuleText(conn,'tb_add_service_nas','Virtual NAS');
+    CreateModuleText(conn,'tb_add_service_dns','DNS Server');
+    CreateModuleText(conn,'cb_add_service_vm','Add Virtual Machine');
+    CreateModuleText(conn,'cb_add_service_nas','Add Virtual NAS');
+    CreateModuleText(conn,'cb_add_service_dns','Add DNS Server');
 
-    CreateModuleText(conn,'$add_zone_diag_cap','Add Zone');
-    CreateModuleText(conn,'$add_zone_diag_location_group','Pools');
-    CreateModuleText(conn,'$add_zone_diag_pool','Pool');
-    CreateModuleText(conn,'$add_nas_diag_cap','Add NAS');
-    CreateModuleText(conn,'$add_dns_diag_cap','Add DNS');
+    CreateModuleText(conn,'add_zone_diag_cap','Add Zone');
+    CreateModuleText(conn,'add_zone_diag_location_group','Pools');
+    CreateModuleText(conn,'add_zone_diag_pool','Pool');
+    CreateModuleText(conn,'add_nas_diag_cap','Add NAS');
+    CreateModuleText(conn,'add_dns_diag_cap','Add DNS');
 
   end;
    
@@ -308,20 +308,20 @@ begin
      (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) or
      (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then begin
     hasMenu:=true;
-    submenu:=res.AddMenu.Describe(FetchModuleTextShort(ses,'$tb_add_service'),'',true,'add_service');
+    submenu:=res.AddMenu.Describe(FetchModuleTextShort(ses,'tb_add_service'),'',true,'add_service');
     if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) then begin
-      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_service_vm'),'',CWSF(@WEB_AddVM));
+      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_add_service_vm'),'',CWSF(@WEB_AddVM));
     end;
     if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then begin
-      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_service_nas'),'',CWSF(@WEB_AddNAS),true,'add_service_nas');
+      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_add_service_nas'),'',CWSF(@WEB_AddNAS),true,'add_service_nas');
     end;
     if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) then begin
-      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_service_dns'),'',CWSF(@WEB_AddDNS),true,'add_service_dns');
+      submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_add_service_dns'),'',CWSF(@WEB_AddDNS),true,'add_service_dns');
     end;
   end;
   if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE)) then begin
     hasMenu:=true;
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'$tb_add_zone'),'',CWSF(@WEB_AddZone),true,'add_zone');
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'tb_add_zone'),'',CWSF(@WEB_AddZone),true,'add_zone');
   end;
   if hasMenu then begin;
     Result:=res;
@@ -348,14 +348,14 @@ function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_ContentNoSel(const input: IFRE_DB
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  Result:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'$no_sel_general_content'));
+  Result:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'no_sel_general_content'));
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_ContentMultiSel(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  Result:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'$multi_sel_general_content'));
+  Result:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'multi_sel_general_content'));
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_ContentUnknownSel(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -365,7 +365,7 @@ begin
   CheckClassVisibility4MyDomain(ses);
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
-  Result:=TFRE_DB_HTML_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'$unknown_sel_general_content'),'%service_name%',serviceObj.Field('objname').AsString,[rfReplaceAll]));
+  Result:=TFRE_DB_HTML_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'unknown_sel_general_content'),'%service_name%',serviceObj.Field('objname').AsString,[rfReplaceAll]));
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_ContentDomainSel(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -375,7 +375,7 @@ begin
   CheckClassVisibility4MyDomain(ses);
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
-  Result:=TFRE_DB_HTML_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'$domain_sel_general_content'),'%domain_name%',serviceObj.Field('objname').AsString,[rfReplaceAll]));
+  Result:=TFRE_DB_HTML_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'domain_sel_general_content'),'%domain_name%',serviceObj.Field('objname').AsString,[rfReplaceAll]));
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_ContentZoneSel(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -385,22 +385,22 @@ var
   zoneObj: IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZONE)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
-  res:=TFRE_DB_FORM_PANEL_DESC.create.Describe(FetchModuleTextShort(ses,'$zone_panel_cap'),true,conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZONE));
+  res:=TFRE_DB_FORM_PANEL_DESC.create.Describe(FetchModuleTextShort(ses,'zone_panel_cap'),true,conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZONE));
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.FillWithObjectValues(zoneObj,ses);
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),CSFT('saveOperation',zoneObj),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSFT('saveOperation',zoneObj),fdbbt_submit);
   Result:=res;
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   input.Field('zoneId').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedService').AsString;
   Result:=VM.WEB_NewVM(input,ses,app,conn);
@@ -413,17 +413,17 @@ var
   res       : TFRE_DB_FORM_DIALOG_DESC;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
   if (zoneObj.Implementor_HC as TFRE_DB_ZONE).hasNAS(conn) then
     raise EFRE_DB_Exception.Create('The given Zone has already a NAS service');
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_NAS',scheme);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_nas_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_nas_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),CSCF('TFRE_DB_NAS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSCF('TFRE_DB_NAS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
   Result:=res;
 end;
 
@@ -434,17 +434,17 @@ var
   res       : TFRE_DB_FORM_DIALOG_DESC;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
   if (zoneObj.Implementor_HC as TFRE_DB_ZONE).hasDNS(conn) then
     raise EFRE_DB_Exception.Create('The given Zone has already a DNS service');
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_DNS',scheme);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_dns_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_dns_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),CSCF('TFRE_DB_DNS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSCF('TFRE_DB_DNS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
   Result:=res;
 end;
 
@@ -462,10 +462,10 @@ var
 
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZONE)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_zone_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_zone_diag_cap'),600);
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),domainObj));
   machineId:=domainObj.Field('serviceParent').AsObjectLink;
@@ -476,13 +476,13 @@ begin
   if poolCount=1 then begin
     res.AddInput.Describe('','pool',false,false,false,true,pool.UID_String);
   end else begin
-    group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'$add_zone_diag_location_group'));
-    group.AddChooser.Describe(FetchModuleTextShort(ses,'$add_zone_diag_pool'),'pool',store,true,dh_chooser_combo,true);
+    group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'add_zone_diag_location_group'));
+    group.AddChooser.Describe(FetchModuleTextShort(ses,'add_zone_diag_pool'),'pool',store,true,dh_chooser_combo,true);
   end;
 
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),CSCF('TFRE_DB_ZONE','newOperation','collection',CFOS_DB_ZONES_COLLECTION),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSCF('TFRE_DB_ZONE','newOperation','collection',CFOS_DB_ZONES_COLLECTION),fdbbt_submit);
   Result:=res;
 end;
 
@@ -501,19 +501,19 @@ begin
          (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) or
          (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then begin
         if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) then begin
-          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cb_add_service_vm'),'',CWSF(@WEB_AddVM));
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'cb_add_service_vm'),'',CWSF(@WEB_AddVM));
         end;
         if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then begin
-          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cb_add_service_nas'),'',CWSF(@WEB_AddNAS),zone.hasNAS(conn));
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'cb_add_service_nas'),'',CWSF(@WEB_AddNAS),zone.hasNAS(conn));
         end;
         if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) then begin
-          res.AddEntry.Describe(FetchModuleTextShort(ses,'$cb_add_service_dns'),'',CWSF(@WEB_AddDNS),zone.hasDNS(conn));
+          res.AddEntry.Describe(FetchModuleTextShort(ses,'cb_add_service_dns'),'',CWSF(@WEB_AddDNS),zone.hasDNS(conn));
         end;
       end;
     end else
     if serviceObj.IsA(TFRE_DB_SERVICE_DOMAIN,domain) then begin
       if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE)) then begin
-        res.AddEntry.Describe(FetchModuleTextShort(ses,'$cb_add_zone'),'',CWSF(@WEB_AddZone),not _hasPool(conn,domain.Field('serviceParent').AsObjectLink));
+        res.AddEntry.Describe(FetchModuleTextShort(ses,'cb_add_zone'),'',CWSF(@WEB_AddZone),not _hasPool(conn,domain.Field('serviceParent').AsObjectLink));
       end;
     end;
   end;
@@ -540,7 +540,7 @@ var
   vm_machines: TFRE_FIRMBOX_VM_MACHINES_MOD;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('$description');
+  InitAppDesc('description');
   services:=TFOS_FIRMBOX_MANAGED_SERVICES_MOD.create;
   vm_machines:=TFRE_FIRMBOX_VM_MACHINES_MOD.create;
   services.VM:=vm_machines;
@@ -554,8 +554,8 @@ var
 begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services',FetchAppTextShort(session,'$sitemap_main'),'images_apps/firmbox_services/main_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_FIRMBOX_SERVICES_APP));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Managed',FetchAppTextShort(session,'$sitemap_managed_services'),'images_apps/firmbox_services/managed_services_white.svg',TFOS_FIRMBOX_MANAGED_SERVICES_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_FIRMBOX_MANAGED_SERVICES_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services',FetchAppTextShort(session,'sitemap_main'),'images_apps/firmbox_services/main_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_FIRMBOX_SERVICES_APP));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'Services/Managed',FetchAppTextShort(session,'sitemap_managed_services'),'images_apps/firmbox_services/managed_services_white.svg',TFOS_FIRMBOX_MANAGED_SERVICES_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_FIRMBOX_MANAGED_SERVICES_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;
@@ -591,15 +591,15 @@ begin
     begin
       currentVersionId:='1.0';
 
-      CreateAppText(conn,'$caption','Services','Services','Services');
-      CreateAppText(conn,'$managed_services_description','Managed Services','Managed Services','Managed Services');
+      CreateAppText(conn,'caption','Services','Services','Services');
+      CreateAppText(conn,'managed_services_description','Managed Services','Managed Services','Managed Services');
 
-      CreateAppText(conn,'$sitemap_main','Services','','Services');
-      CreateAppText(conn,'$sitemap_managed_services','Managed','','Managed');
+      CreateAppText(conn,'sitemap_main','Services','','Services');
+      CreateAppText(conn,'sitemap_managed_services','Managed','','Managed');
 
       //FIXXME - CHECK
-      //CreateAppText(conn,'$error_no_access','Access denied'); //delete with patch
-      //CreateAppText(conn,'$button_save','Save'); //delete with patch
+      //CreateAppText(conn,'error_no_access','Access denied'); //delete with patch
+      //CreateAppText(conn,'button_save','Save'); //delete with patch
     end;
   if (currentVersionId='1.0') then
     begin
