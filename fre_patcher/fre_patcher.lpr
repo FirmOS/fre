@@ -67,6 +67,7 @@ type
   TFRE_Testserver = class(TFRE_CLISRV_APP)
   private
     procedure   PatchCity1;
+    procedure   PatchTextResources;
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -144,6 +145,7 @@ begin
   case option of
     'delversions' : PatchDeleteVersions;
     'city1'       : PatchCity1;
+    'texts'       : PatchTextResources;
   end;
 end;
 
@@ -194,6 +196,31 @@ begin
    cnt:=0;
    conn.sys.ForAllDatabaseObjectsDo(@ObjectPatch);
    writeln('DONE');
+end;
+
+procedure TFRE_Testserver.PatchTextResources;
+var
+  conn: IFRE_DB_CONNECTION;
+
+    procedure ObjectPatch(const obj:IFRE_DB_Object; var halt:boolean ; const current,max : NativeInt);
+    begin
+      writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
+      if obj.SchemeClass='TFRE_DB_TEXT' then { don't use IsA() (schemes not registered) }
+        begin
+          writeln('Delete ',obj.Field('t_key').AsString);
+          CheckDbResult(conn.sys.DeleteTranslateableText(obj.Field('t_key').AsString));
+        end;
+    end;
+
+begin
+  conn := GFRE_DBI.NewConnection;
+  GDBPS_SKIP_STARTUP_CHECKS := true; { skip inkonsitency checks, to enable consistency restoration  }
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+
+  writeln('PATCHING SYSTEM');
+  writeln('----');
+  conn.sys.ForAllDatabaseObjectsDo(@ObjectPatch);
+  writeln('DONE');
 end;
 
 begin
