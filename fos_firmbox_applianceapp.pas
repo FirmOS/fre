@@ -417,7 +417,7 @@ begin
 
   serverfunc := TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_DATALINK_AGGR.ClassName,'NewOperation');
   serverFunc.AddParam.Describe('collection','datalink');
-  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverfunc,fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),serverfunc,fdbbt_submit);
   Result:=res;
 end;
 
@@ -1110,7 +1110,7 @@ begin
       CreateAppText(conn,'$overview_cache_hits_legend','Hits [%]');
       CreateAppText(conn,'$overview_cache_misses_legend','Misses [%]');
 
-      CreateAppText(conn,'$button_save','Save'); //global text?
+      //CreateAppText(conn,'$button_save','Save'); //delete with patch
     end;
   if (currentVersionId='1.0') then
     begin

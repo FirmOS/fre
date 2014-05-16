@@ -385,7 +385,7 @@ var
   zoneObj: IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZONE)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
 
@@ -393,14 +393,14 @@ begin
   res:=TFRE_DB_FORM_PANEL_DESC.create.Describe(FetchModuleTextShort(ses,'$zone_panel_cap'),true,conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZONE));
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.FillWithObjectValues(zoneObj,ses);
-  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CSFT('saveOperation',zoneObj),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),CSFT('saveOperation',zoneObj),fdbbt_submit);
   Result:=res;
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   input.Field('zoneId').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedService').AsString;
   Result:=VM.WEB_NewVM(input,ses,app,conn);
@@ -413,7 +413,7 @@ var
   res       : TFRE_DB_FORM_DIALOG_DESC;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
   if (zoneObj.Implementor_HC as TFRE_DB_ZONE).hasNAS(conn) then
@@ -423,7 +423,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_nas_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
-  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CSCF('TFRE_DB_NAS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),CSCF('TFRE_DB_NAS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
   Result:=res;
 end;
 
@@ -434,7 +434,7 @@ var
   res       : TFRE_DB_FORM_DIALOG_DESC;
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
   if (zoneObj.Implementor_HC as TFRE_DB_ZONE).hasDNS(conn) then
@@ -444,7 +444,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_dns_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
-  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CSCF('TFRE_DB_DNS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),CSCF('TFRE_DB_DNS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
   Result:=res;
 end;
 
@@ -462,7 +462,7 @@ var
 
 begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZONE)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'$add_zone_diag_cap'),600);
@@ -482,7 +482,7 @@ begin
 
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
-  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),CSCF('TFRE_DB_ZONE','newOperation','collection',CFOS_DB_ZONES_COLLECTION),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),CSCF('TFRE_DB_ZONE','newOperation','collection',CFOS_DB_ZONES_COLLECTION),fdbbt_submit);
   Result:=res;
 end;
 
@@ -598,8 +598,8 @@ begin
       CreateAppText(conn,'$sitemap_managed_services','Managed','','Managed');
 
       //FIXXME - CHECK
-      CreateAppText(conn,'$error_no_access','Access denied'); //global text?
-      CreateAppText(conn,'$button_save','Save'); //global text?
+      //CreateAppText(conn,'$error_no_access','Access denied'); //delete with patch
+      //CreateAppText(conn,'$button_save','Save'); //delete with patch
     end;
   if (currentVersionId='1.0') then
     begin

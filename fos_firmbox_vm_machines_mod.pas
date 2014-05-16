@@ -257,7 +257,7 @@ var
   res : TFRE_DB_VIEW_LIST_DESC;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_DISK)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   coll := ses.FetchDerivedCollection('VM_DISKS_DERIVED');
   res := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -272,7 +272,7 @@ var
   res : TFRE_DB_VIEW_LIST_DESC;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_ISO)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   coll := ses.FetchDerivedCollection('VM_ISOS_DERIVED');
   res := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -289,13 +289,13 @@ var
   serverFunc: TFRE_DB_SERVER_FUNC_DESC;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_FIRMBOX_VM_DISK)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_DISK',scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'ADD_DISK'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   serverFunc:=CSCF('TFRE_FIRMBOX_VM_DISK','NewOperation','collection','VM_DISKS');
-  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverFunc,fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),serverFunc,fdbbt_submit);
   Result:=res;
 end;
 
@@ -304,7 +304,7 @@ var
   obj: IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_FIRMBOX_VM_DISK)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
   Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_DISK).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
@@ -317,13 +317,13 @@ var
   scheme: IFRE_DB_SchemeObject;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_FIRMBOX_VM_ISO)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_ISO',scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'UPLOAD_ISO'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   serverFunc:=CSCF('TFRE_FIRMBOX_VM_ISO','NewOperation','collection','VM_ISOS');
-  res.AddButton.Describe(app.FetchAppTextShort(ses,'$button_save'),serverFunc,fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$button_save')),serverFunc,fdbbt_submit);
   Result:=res;
 end;
 
@@ -332,7 +332,7 @@ var
   obj: IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_FIRMBOX_VM_ISO)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
   Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_ISO).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
@@ -398,7 +398,7 @@ var
   txt             : IFRE_DB_TEXT;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   dc_datalink                := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
   grid_datalink              := dc_datalink.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -421,7 +421,7 @@ var
 
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
@@ -452,7 +452,7 @@ var
   sclass    : TFRE_DB_NameType;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_DATALINK)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   Result:=GFRE_DB_NIL_DESC;
   if input.Field('SELECTED').ValueCount=1  then begin
@@ -473,7 +473,7 @@ end;
 function TFRE_FIRMBOX_VM_NETWORK_MOD.WEB_DatalinkCreateStub(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_DATALINK_STUB)) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   result :=  TFRE_DB_MESSAGE_DESC.create.Describe('','Feature disabled in Demo Mode',fdbmt_info,nil);//FIXXME: Please implement me
 end;
@@ -790,7 +790,7 @@ var
   save_func             : TFRE_DB_SERVER_FUNC_DESC;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_NOTE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   writeln('CONTENTNOTE');
   writeln(input.DumpToString);
@@ -806,7 +806,7 @@ end;
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VMSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_VMACHINE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   input.Field('selectedVM').AsStringArr:=input.Field('selected').AsStringArr;
   Result:=WEB_VM_Details(input,ses,app,conn);
@@ -821,7 +821,7 @@ var   vm_sub       : TFRE_DB_SUBSECTIONS_DESC;
       vnch,vmstate : string;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_VMACHINE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   if input.FieldExists('selectedVM') and (input.Field('selectedVM').ValueCount>0)  then begin
     sel_guid := input.Field('selectedVM').AsGUID;
@@ -862,7 +862,7 @@ var
   group                : TFRE_DB_INPUT_GROUP_DESC;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VMACHINE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   if not input.FieldExists('zoneId') then
     raise EFRE_DB_Exception.Create('Zone Id is missing.');
@@ -956,7 +956,7 @@ end;
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VMACHINE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
   //FIXXME: please implement me
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
@@ -969,7 +969,7 @@ var   vmc   : IFOS_VM_HOST_CONTROL;
     vmstate : string;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','START VM',fdbmt_info);
   //exit;
@@ -990,7 +990,7 @@ var   vmc     : IFOS_VM_HOST_CONTROL;
       vmstate : string;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   //Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DEMO','STOP VM',fdbmt_info);
   //exit;
@@ -1011,7 +1011,7 @@ var   vmc     : IFOS_VM_HOST_CONTROL;
       vmstate : string;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then
-    raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'$error_no_access'));
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('$error_no_access')));
 
   if input.FieldExists('SELECTED') then begin
     _GetSelectedVMData(conn,input.Field('SELECTED').AsGUID,vmkey,vncp,vnch,vmstate);
