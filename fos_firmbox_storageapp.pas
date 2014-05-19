@@ -3701,7 +3701,7 @@ class procedure TFRE_FIRMBOX_STORAGE_APP.InstallDBObjects(const conn: IFRE_DB_SY
 begin
   inherited InstallDBObjects(conn, currentVersionId, newVersionId);
 
-  newVersionId:='1.1';
+  newVersionId:='1.0';
 
   if (currentVersionId='') then begin
     currentVersionId:='1.0';
@@ -3714,11 +3714,6 @@ begin
     CreateAppText(conn,'fileserver_global_description','Global SAN/NAS','Global SAN/NAS','Global SAN/NAS');
     CreateAppText(conn,'fileserver_virtual_description','Virtual NAS','Virtual NAS','Virtual NAS');
 
-    CreateAppText(conn,'pools_info','Overview of disks and pools and their status.');//deleted in version 1.1
-    CreateAppText(conn,'global_info','Overview of global SAN/NAS shares and LUNs.');
-    CreateAppText(conn,'virtual_info','Overview of virtual NAS fileservers and shares.');
-    CreateAppText(conn,'backup_info','Overview of snapshots for shares, block devices and virtual machines.');
-
     CreateAppText(conn,'sitemap_main','Storage','','Storage');
     CreateAppText(conn,'sitemap_pools','Pools','','Pools');
     CreateAppText(conn,'sitemap_fileserver','SAN/NAS','','SAN/NAS');
@@ -3728,86 +3723,9 @@ begin
     CreateAppText(conn,'sitemap_filebrowser','Filebrowser','','Filebrowser');
     CreateAppText(conn,'sitemap_backup_scheduler','Snapshot Schedulers','','Snapshot Schedulers');
 
-    CreateAppText(conn,'pool_status_tab','Status');//deleted in version 1.1
-    CreateAppText(conn,'pool_space_tab','Space');//deleted in version 1.1
-
-    CreateAppText(conn,'tb_create_pool','Create Pool');//moved to module in version 1.1
-    CreateAppText(conn,'create_pool_diag_cap','Create Pool');//moved to module in version 1.1
-    CreateAppText(conn,'create_pool_diag_name','Name');//moved to module in version 1.1
-    CreateAppText(conn,'create_pool_error_cap','Error creating a new pool');//moved to module in version 1.1
-    CreateAppText(conn,'create_pool_error_not_unique','The name of the pool has to be unique. Please choose another one.');//moved to module in version 1.1
-    CreateAppText(conn,'tb_import_pool','Import Pool');//moved to module in version 1.1
-    CreateAppText(conn,'import_pool_diag_cap','Import Pool');//moved to module in version 1.1
-    CreateAppText(conn,'import_pool_diag_msg','Feature disabled in Demo Mode.');//moved to module in version 1.1
-    CreateAppText(conn,'tb_export_pool','Export Pool');//moved to module in version 1.1
-    CreateAppText(conn,'tb_scrub_pool','Scrub Pool');//moved to module in version 1.1
-    CreateAppText(conn,'tb_save_config','Save');//moved to module in version 1.1
-    CreateAppText(conn,'tb_reset_config','Reset');//moved to module in version 1.1
-    CreateAppText(conn,'tb_pools','Pool');//moved to module in version 1.1
-    CreateAppText(conn,'tb_blockdevices','Disk');//moved to module in version 1.1
-    CreateAppText(conn,'tb_switch_offline','Switch offline');//moved to module in version 1.1
-    CreateAppText(conn,'tb_switch_online','Switch online');//moved to module in version 1.1
-    CreateAppText(conn,'tb_identify_on','Identify on');//moved to module in version 1.1
-    CreateAppText(conn,'tb_identify_off','Identify off');//moved to module in version 1.1
-    CreateAppText(conn,'tb_assign','Assign');//moved to module in version 1.1
-    CreateAppText(conn,'tb_replace','Replace');//moved to module in version 1.1
-    CreateAppText(conn,'tb_remove','Remove');//moved to module in version 1.1
-    CreateAppText(conn,'tb_change_rl','Change RL');//moved to module in version 1.1
-    CreateAppText(conn,'tb_rl_mirror','Mirror');//moved to module in version 1.1
-    CreateAppText(conn,'tb_rl_z1','Raid-Z1');//moved to module in version 1.1
-    CreateAppText(conn,'tb_rl_z2','Raid-Z2');//moved to module in version 1.1
-    CreateAppText(conn,'tb_rl_z3','Raid-Z3');//moved to module in version 1.1
-    CreateAppText(conn,'tb_destroy_pool','Destroy');//moved to module in version 1.1
-    CreateAppText(conn,'new_spare_caption','spare');//moved to module in version 1.1
-    CreateAppText(conn,'new_log_caption','log');//moved to module in version 1.1
-    CreateAppText(conn,'log_vdev_caption_rl_mirror','mirror-%num%');//moved to module in version 1.1
-    CreateAppText(conn,'new_cache_caption','cache');//moved to module in version 1.1
-    CreateAppText(conn,'storage_vdev_caption_rl_mirror','mirror-%num%');//moved to module in version 1.1
-    CreateAppText(conn,'storage_vdev_caption_rl_z1','raidz1-%num%');//moved to module in version 1.1
-    CreateAppText(conn,'storage_vdev_caption_rl_z2','raidz2-%num%');//moved to module in version 1.1
-    CreateAppText(conn,'storage_vdev_caption_rl_z3','raidz3-%num%');//moved to module in version 1.1
-    CreateAppText(conn,'error_assign_not_new','You can only assign disks which are not in use yet.');//moved to module in version 1.1
-    CreateAppText(conn,'error_unassign_not_new','You can only unassign disks which are not in use yet.');//moved to module in version 1.1
-    CreateAppText(conn,'error_assign_vdev_not_found','Assign disks: Vdev not found.');//moved to module in version 1.1
-    CreateAppText(conn,'error_assign_vdev_unknown_parent_type','Parent of Vdev does not support disk drops.');//moved to module in version 1.1
-    CreateAppText(conn,'error_remove_not_new','You can only remove zfs elements which are not in use yet.');//moved to module in version 1.1
-    CreateAppText(conn,'error_change_rl_not_new','You can only change the raid level of a vdev which is not in use yet.');//moved to module in version 1.1
-
-    CreateAppText(conn,'add_disks_pool','Assign to %pool%...');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_storage_ex_same','Expand storage (%raid_level%)');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_storage_ex_other','Expand storage...');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_storage','Add as storage...');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_storage_to','Add as storage to "%vdev%"');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_vdev','Add to vdev');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_cache','Add as read cache (L2ARC)');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_log','Add as write cache (ZIL)...');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_log_to','Add as write cache (ZIL) to "%vdev%"');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_log_ex','Expand write cache (ZIL)...');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_spare','Add as spare');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_rl_mirror','Mirror');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_rl_stripe','Stripe');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_rl_z1','Raid-Z1');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_rl_z2','Raid-Z2');//moved to module in version 1.1
-    CreateAppText(conn,'add_disks_rl_z3','Raid-Z3');//moved to module in version 1.1
-
-    CreateAppText(conn,'confirm_destroy_caption','Destroy pool');//moved to module in version 1.1
-    CreateAppText(conn,'confirm_destroy_msg','This operation is irreversible! Destroy pool %pool% anyway?');//moved to module in version 1.1
-
-    CreateAppText(conn,'cm_replace','Replace');//moved to module in version 1.1
-    CreateAppText(conn,'cm_switch_offline','Switch offline');//moved to module in version 1.1
-    CreateAppText(conn,'cm_switch_online','Switch online');//moved to module in version 1.1
-    CreateAppText(conn,'cm_identify_on','Identify ON');//moved to module in version 1.1
-    CreateAppText(conn,'cm_identify_off','Identify OFF');//moved to module in version 1.1
-    CreateAppText(conn,'cm_multiple_remove','Remove %num% items');//moved to module in version 1.1
-    CreateAppText(conn,'cm_remove','Remove item');//moved to module in version 1.1
-    CreateAppText(conn,'cm_change_raid_level','Change raid level...');//moved to module in version 1.1
-    CreateAppText(conn,'cm_rl_mirror','Mirror');//moved to module in version 1.1
-    CreateAppText(conn,'cm_rl_z1','Raid-Z1');//moved to module in version 1.1
-    CreateAppText(conn,'cm_rl_z2','Raid-Z2');//moved to module in version 1.1
-    CreateAppText(conn,'cm_rl_z3','Raid-Z3');//moved to module in version 1.1
-    CreateAppText(conn,'cm_destroy_pool','Destroy pool %pool%');//moved to module in version 1.1
-    CreateAppText(conn,'cm_export_pool','Export pool %pool%');//moved to module in version 1.1
-    CreateAppText(conn,'cm_scrub_pool','Scrub pool %pool%');//moved to module in version 1.1
+    CreateAppText(conn,'global_info','Overview of global SAN/NAS shares and LUNs.');
+    CreateAppText(conn,'virtual_info','Overview of virtual NAS fileservers and shares.');
+    CreateAppText(conn,'backup_info','Overview of snapshots for shares, block devices and virtual machines.');
 
     CreateAppText(conn,'storage_global_filer_nfs','NFS Exports','NFS Exports','NFS Exports');
     CreateAppText(conn,'storage_global_filer_lun','LUN Targets','LUN Targets','LUN Targets');
@@ -3933,96 +3851,6 @@ begin
     CreateAppText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
     CreateAppText(conn,'error_modify_single_select','Exactly one object has to be selected to modify.');
 
-    //FIXXME - CHECK
-    //CreateAppText(conn,'error_no_access','Access denied'); //delete with patch
-    //CreateAppText(conn,'button_save','Save'); //delete with patch
-    //CreateAppText(conn,'error_not_found','Not found'); //delete with patch
-  end;
-  if (currentVersionId='1.0') then begin
-    currentVersionId:='1.1';
-
-    DeleteAppText(conn,'pools_info');
-
-    DeleteAppText(conn,'pool_status_tab');
-    DeleteAppText(conn,'pool_space_tab');
-
-    DeleteAppText(conn,'tb_create_pool');
-    DeleteAppText(conn,'create_pool_diag_cap');
-    DeleteAppText(conn,'create_pool_diag_name');
-    DeleteAppText(conn,'create_pool_error_cap');
-    DeleteAppText(conn,'create_pool_error_not_unique');
-    DeleteAppText(conn,'tb_import_pool');
-    DeleteAppText(conn,'import_pool_diag_cap');
-    DeleteAppText(conn,'import_pool_diag_msg');
-    DeleteAppText(conn,'tb_export_pool');
-    DeleteAppText(conn,'tb_scrub_pool');
-    DeleteAppText(conn,'tb_save_config');
-    DeleteAppText(conn,'tb_reset_config');
-    DeleteAppText(conn,'tb_pools');
-    DeleteAppText(conn,'tb_blockdevices');
-    DeleteAppText(conn,'tb_switch_offline');
-    DeleteAppText(conn,'tb_switch_online');
-    DeleteAppText(conn,'tb_identify_on');
-    DeleteAppText(conn,'tb_identify_off');
-    DeleteAppText(conn,'tb_assign');
-    DeleteAppText(conn,'tb_replace');
-    DeleteAppText(conn,'tb_remove');
-    DeleteAppText(conn,'tb_change_rl');
-    DeleteAppText(conn,'tb_rl_mirror');
-    DeleteAppText(conn,'tb_rl_z1');
-    DeleteAppText(conn,'tb_rl_z2');
-    DeleteAppText(conn,'tb_rl_z3');
-    DeleteAppText(conn,'tb_destroy_pool');
-    DeleteAppText(conn,'new_spare_caption');
-    DeleteAppText(conn,'new_log_caption');
-    DeleteAppText(conn,'log_vdev_caption_rl_mirror');
-    DeleteAppText(conn,'new_cache_caption');
-    DeleteAppText(conn,'storage_vdev_caption_rl_mirror');
-    DeleteAppText(conn,'storage_vdev_caption_rl_z1');
-    DeleteAppText(conn,'storage_vdev_caption_rl_z2');
-    DeleteAppText(conn,'storage_vdev_caption_rl_z3');
-    DeleteAppText(conn,'error_assign_not_new');
-    DeleteAppText(conn,'error_unassign_not_new');
-    DeleteAppText(conn,'error_assign_vdev_not_found');
-    DeleteAppText(conn,'error_assign_vdev_unknown_parent_type');
-    DeleteAppText(conn,'error_remove_not_new');
-    DeleteAppText(conn,'error_change_rl_not_new');
-
-    DeleteAppText(conn,'add_disks_pool');
-    DeleteAppText(conn,'add_disks_storage_ex_same');
-    DeleteAppText(conn,'add_disks_storage_ex_other');
-    DeleteAppText(conn,'add_disks_storage');
-    DeleteAppText(conn,'add_disks_storage_to');
-    DeleteAppText(conn,'add_disks_vdev');
-    DeleteAppText(conn,'add_disks_cache');
-    DeleteAppText(conn,'add_disks_log');
-    DeleteAppText(conn,'add_disks_log_to');
-    DeleteAppText(conn,'add_disks_log_ex');
-    DeleteAppText(conn,'add_disks_spare');
-    DeleteAppText(conn,'add_disks_rl_mirror');
-    DeleteAppText(conn,'add_disks_rl_stripe');
-    DeleteAppText(conn,'add_disks_rl_z1');
-    DeleteAppText(conn,'add_disks_rl_z2');
-    DeleteAppText(conn,'add_disks_rl_z3');
-
-    DeleteAppText(conn,'confirm_destroy_caption');
-    DeleteAppText(conn,'confirm_destroy_msg');
-
-    DeleteAppText(conn,'cm_replace');
-    DeleteAppText(conn,'cm_switch_offline');
-    DeleteAppText(conn,'cm_switch_online');
-    DeleteAppText(conn,'cm_identify_on');
-    DeleteAppText(conn,'cm_identify_off');
-    DeleteAppText(conn,'cm_multiple_remove');
-    DeleteAppText(conn,'cm_remove');
-    DeleteAppText(conn,'cm_change_raid_level');
-    DeleteAppText(conn,'cm_rl_mirror');
-    DeleteAppText(conn,'cm_rl_z1');
-    DeleteAppText(conn,'cm_rl_z2');
-    DeleteAppText(conn,'cm_rl_z3');
-    DeleteAppText(conn,'cm_destroy_pool');
-    DeleteAppText(conn,'cm_export_pool');
-    DeleteAppText(conn,'cm_scrub_pool');
   end;
 end;
 
