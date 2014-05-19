@@ -67,7 +67,8 @@ type
   TFRE_Testserver = class(TFRE_CLISRV_APP)
   private
     procedure   PatchCity1;
-    procedure   PatchTextResources;
+    procedure   PatchDeleteVersions                     ;
+    procedure   PatchVersions;
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -75,7 +76,6 @@ type
     function    AfterInitDBTerminatingCommands:boolean  ; override; { cmd's that should be executed with full db init, they terminate}
     procedure   ParseSetSystemFlags                     ; override; { Setting of global flags before startup go here }
     procedure   Patch                                   (const option:string);
-    procedure   PatchDeleteVersions                     ;
   end;
 
   { TFRE_Testserver }
@@ -143,9 +143,8 @@ begin
   _CheckAdminUserSupplied;
   _CheckAdminPassSupplied;
   case option of
-    'delversions' : PatchDeleteVersions;
-    'city1'       : PatchCity1;
-    'texts'       : PatchTextResources;
+    'city1'        : PatchCity1;
+    'resetversions': PatchVersions;
   end;
 end;
 
@@ -198,17 +197,44 @@ begin
    writeln('DONE');
 end;
 
-procedure TFRE_Testserver.PatchTextResources;
+procedure TFRE_Testserver.PatchVersions;
 var
   conn: IFRE_DB_CONNECTION;
 
     procedure ObjectPatch(const obj:IFRE_DB_Object; var halt:boolean ; const current,max : NativeInt);
+    var
+      refs : TFRE_DB_GUIDArray;
+      i    : Integer;
+      group: IFRE_DB_GROUP;
     begin
-      writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
+      //writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
       if obj.SchemeClass='TFRE_DB_TEXT' then { don't use IsA() (schemes not registered) }
         begin
           writeln('Delete ',obj.Field('t_key').AsString);
           CheckDbResult(conn.sys.DeleteTranslateableText(obj.Field('t_key').AsString));
+        end;
+      if obj.SchemeClass='TFRE_DB_GROUP' then { don't use IsA() (schemes not registered) }
+        begin
+          writeln('Delete ',obj.Field('objname').AsString);
+          refs:=conn.GetReferences(obj.UID,false);
+          if Length(refs)>0 then begin
+            for i := 0 to High(refs) do begin
+              CheckDbResult(conn.sys.RemoveUserGroupsById(refs[i],TFRE_DB_GUIDArray.create(obj.UID)));
+            end;
+          end;
+          CheckDbResult(conn.sys.DeleteGroupById(obj.UID));
+        end;
+      if obj.SchemeClass='TFRE_DB_ROLE' then { don't use IsA() (schemes not registered) }
+        begin
+          writeln('Delete ',obj.Field('objname').AsString);
+          refs:=conn.GetReferences(obj.UID,false);
+          if Length(refs)>0 then begin
+            for i := 0 to High(refs) do begin
+              CheckDbResult(conn.SYS.FetchGroupById(refs[i],group));
+              CheckDbResult(conn.sys.RemoveRolesFromGroupById(group.GetName,group.DomainID,TFRE_DB_GUIDArray.create(obj.UID),false));
+            end;
+          end;
+          CheckDbResult(conn.sys.DeleteRole(obj.Field('objname').AsString,obj.DomainID));
         end;
     end;
 
@@ -220,6 +246,7 @@ begin
   writeln('PATCHING SYSTEM');
   writeln('----');
   conn.sys.ForAllDatabaseObjectsDo(@ObjectPatch);
+  PatchDeleteVersions;
   writeln('DONE');
 end;
 
