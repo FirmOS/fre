@@ -374,7 +374,7 @@ begin
     with datalink_dc do begin
       SetDeriveParent(conn.GetCollection('datalink'));
       SetDeriveTransformation(datalink_tr_Grid);
-      AddBooleanFieldFilter('showvirtual','showvirtual',true,false);
+      AddBooleanFieldFilter('showvirtual','showvirtual',true);
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
       SetParentToChildLinkField ('<PARENTID');
     end;

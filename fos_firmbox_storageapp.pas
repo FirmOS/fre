@@ -983,7 +983,7 @@ begin
     with nfs_share_dc do begin
       SetDeriveParent(conn.GetCollection('fileshare'));
       fileserverId:= _GetFileserverID(conn);
-      AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT,false);
+      AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT);
       AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_NFS_FILESHARE.ClassName));
       SetDeriveTransformation(nfs_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NFSMenu),nil,CWSF(@WEB_NFSContent));
@@ -1014,7 +1014,7 @@ begin
     with lun_dc do begin
       SetDeriveParent(conn.GetCollection('fileshare'));
       fileserverId:= _GetFileserverID(conn);
-      AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT,false);
+      AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT);
       AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_LUN.ClassName));
       SetDeriveTransformation(lun_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_LUNMenu),nil,CWSF(@WEB_LUNContent));
