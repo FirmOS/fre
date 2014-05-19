@@ -37,15 +37,15 @@ if [ $? != 0 ] ; then
   echo "Aborted."
   exit 99
 fi
-echo "citycom"
-cd ../../citycom/fos_buildtools
+echo "monsys"
+cd ../../monsys/fos_buildtools
 ./matrix_build.sh $1
 if [ $? != 0 ] ; then
   echo "Aborted."
   exit 99
 fi
-echo "monsys"
-cd ../../monsys/fos_buildtools
+echo "citycom"
+cd ../../citycom/fos_buildtools
 ./matrix_build.sh $1
 if [ $? != 0 ] ; then
   echo "Aborted."
