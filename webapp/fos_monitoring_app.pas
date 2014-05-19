@@ -1400,7 +1400,7 @@ begin
 end;
 
 initialization
-  GFRE_DBI_REG_EXTMGR.RegisterNewExtension('MONSYS',@MONSYS_MetaRegister,@MONSYS_MetaInitializeDatabase,@MONSYS_MetaRemove);
+  GFRE_DBI_REG_EXTMGR.RegisterNewExtension('MONSYS_OLD',@MONSYS_MetaRegister,@MONSYS_MetaInitializeDatabase,@MONSYS_MetaRemove);
 
 end.
 
