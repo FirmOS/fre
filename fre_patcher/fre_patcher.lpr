@@ -176,8 +176,14 @@ var conn : IFRE_DB_CONNECTION;
       writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
       if obj.SchemeClass='TFOS_DB_CITYCOM_PROD_MOD_VARIATION_PRICE' then { don't use IsA() (schemes not registered) }
         begin
-          writeln(obj.DumpToString());
           coll.Store(obj);
+        end
+      else begin
+        if obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION' then { don't use IsA() (schemes not registered) }
+          begin
+            obj.Field('override_price').AsBoolean:=true;
+            conn.Update(obj);
+          end;
         end;
     end;
 
@@ -188,12 +194,7 @@ begin
    coll := conn.GetDomainCollection(CFOS_DB_PROD_MOD_VARIATION_PRICES_COLLECTION,'CITYCOM');
    writeln('PATCHING BASE DB ',FDBName);
    writeln('----');
-   cnt:=0;
    conn.ForAllDatabaseObjectsDo(@ObjectPatch);
-   writeln('PATCHING SYSTEM');
-   writeln('----');
-   cnt:=0;
-   conn.sys.ForAllDatabaseObjectsDo(@ObjectPatch);
    writeln('DONE');
 end;
 
