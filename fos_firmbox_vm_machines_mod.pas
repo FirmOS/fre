@@ -896,7 +896,7 @@ begin
   diskstore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_create_new_disk'),'create');
 
   group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide0'));
-  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide0',idestore,true,dh_chooser_combo,false,false,false,'disk');
+  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide0',idestore,true,dh_chooser_combo,false,false,false,false,'disk');
 
   diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk0',diskstore,true,dh_chooser_combo,true);
   chooser.addDependentInput('disk0','disk');
