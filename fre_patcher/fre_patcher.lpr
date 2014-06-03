@@ -58,8 +58,13 @@ uses
   fre_basecli_app,
   fre_certificate_app,
   sysutils,
-  fos_citycom_base
+  fos_citycom_base,
+  fre_mysql_ll,
+  fre_dbbusiness,
+  sqldb
   ;
+
+{ mysql client on osx : brew install mysql-connector-c}
 
 
 type
@@ -69,6 +74,7 @@ type
     procedure   PatchCity1;
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
+    procedure   ImportCitycomAccounts                   (domainname:string='test' ; domainuser:string='admin@test' ; domainpass:string='test');
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -145,6 +151,7 @@ begin
   case option of
     'city1'        : PatchCity1;
     'resetversions': PatchVersions;
+    'importacc'    : ImportCitycomAccounts;
   end;
 end;
 
@@ -249,6 +256,91 @@ begin
   conn.sys.ForAllDatabaseObjectsDo(@ObjectPatch);
   PatchDeleteVersions;
   writeln('DONE');
+end;
+
+procedure TFRE_Testserver.ImportCitycomAccounts(domainname: string; domainuser: string; domainpass: string);
+var
+  C            : TSQLConnection;
+  T            : TSQLTransaction;
+  Q            : TSQLQuery;
+  i            : NativeInt;
+  importfields : TFRE_DB_StringArray;
+  importnames  : TFRE_DB_StringArray;
+  importtypes  : TFRE_DB_FIELDTYPE_Array;
+  cc_cust      : TFOS_DB_CITYCOM_CUSTOMER;
+  conn         : IFRE_DB_CONNECTION;
+  coll         : IFRE_DB_COLLECTION;
+  res          : TFRE_DB_Errortype;
+  cname        : string;
+
+  procedure AddField(const crm_name,import_name : string;const ft : TFRE_DB_FIELDTYPE);
+  begin
+    SetLength(importfields,Length(importfields)+1);
+    SetLength(importnames,Length(importnames)+1);
+    SetLength(importtypes,Length(importtypes)+1);
+    importfields[high(importfields)] := crm_name;
+    importnames[high(importnames)]   := import_name;
+    importtypes[high(importtypes)]   := ft;
+  end;
+
+  procedure Import;
+  begin
+    cc_cust.FieldPathCreate(importnames[i]).AsString:=q.FieldByName(importfields[i]).AsString
+  end;
+begin
+  conn := GFRE_DBI.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
+  if not conn.DomainCollectionExists(CFOS_DB_CUSTOMERS_COLLECTION,domainname) then
+    conn.CreateCollection(CFOS_DB_CUSTOMERS_COLLECTION);
+  coll := conn.GetDomainCollection(CFOS_DB_CUSTOMERS_COLLECTION);
+
+  C:=TFOSMySqlConn.Create(Nil);
+  try
+    C.UserName:='root';
+    C.Password:='kmuRZ2013$';
+    //c.HostName:='crm';
+    c.HostName:='10.1.0.124';
+    C.DatabaseName:='crm_citycom';
+    T:=TSQLTransaction.Create(C);
+    T.Database:=C;
+    C.Connected:=True;
+    Q:=TSQLQuery.Create(C);
+    Q.Database:=C;
+    Q.Transaction:=T;
+    q.sql.Text := 'SET CHARACTER SET `utf8`';
+    q.ExecSQL;
+    q.sql.Text := 'SET NAMES `utf8`';
+    q.ExecSQL;
+    Q.SQL.Text:='SELECT accounts.*,accounts_cstm.* FROM `accounts_cstm` RIGHT OUTER JOIN `accounts` ON (`accounts_cstm`.`id_c` = `accounts`.`id`)';
+    Q.Open;
+
+    AddField('id','cc_crm_id',fdbft_String);
+    AddField('name','objname',fdbft_String);
+    AddField('billing_address_street','mainaddress.street',fdbft_String);
+    AddField('billing_address_city','mainaddress.city',fdbft_String);
+    AddField('billing_address_postalcode','mainaddress.zip',fdbft_String);
+    AddField('billing_address_country','mainaddress.country',fdbft_String);
+    AddField('website','http.url',fdbft_String);
+    AddField('debitorennummer_c','cc_debitorennummer_c',fdbft_String);
+    While not Q.EOF do
+      begin
+        cc_cust := TFOS_DB_CITYCOM_CUSTOMER.CreateForDB;
+        for i:=0 to high(importfields) do
+          begin
+            write(q.FieldByName(importfields[i]).AsString,' ');
+            Import;
+          end;
+        //WriteLn;
+        //writeln(cc_cust.DumpToString);
+        cname := cc_cust.Field('cc_crm_id').AsString+' - '+cc_cust.ObjectName;
+        res := coll.Store(cc_cust);
+        writeln(cname,' : ',CFRE_DB_Errortype[res]);
+        Q.Next
+      end;
+    Q.Close;
+  finally
+    C.Free;
+  end;
 end;
 
 begin
