@@ -712,11 +712,12 @@ begin
   //obsolete
   exit;
   debugs := '';
-  pool_disks.StartBlockUpdating;
+  {TODO - Use Explicit Transactions}
+  //pool_disks.StartBlockUpdating;
   try
     data.ForAllFields(@UpdateDisks);
   finally
-    pool_disks.FinishBlockUpdating;
+    //pool_disks.FinishBlockUpdating;
   end;
 end;
 
