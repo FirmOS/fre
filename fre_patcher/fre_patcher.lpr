@@ -372,6 +372,15 @@ begin
   //conn.Free;
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  coll := conn.SYSC.Collection('SysWorkflowScheme');
+  try
+   writeln('DEF INDEX ',coll.DefineIndexOnField('error_idx',fdbft_String,true,true));
+  except
+  end;
+  conn.Free;
+
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,'ckoch@citycom','pepe'));
   coll  := conn.AdmGetWorkFlowAutoMethCollection;
   _AddStep('GETDOMAIN','Register a domain via interface');
   _AddStep('SENDMAIL','Send a status Mail ');
