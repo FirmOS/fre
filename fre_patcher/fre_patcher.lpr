@@ -75,6 +75,7 @@ type
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
     procedure   ImportCitycomAccounts                   (domainname:string='test' ; domainuser:string='admin@test' ; domainpass:string='test');
+    procedure   GenerateAutomaticWFSteps                ;
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -152,6 +153,7 @@ begin
     'city1'        : PatchCity1;
     'resetversions': PatchVersions;
     'importacc'    : ImportCitycomAccounts;
+    'genauto'      : GenerateAutomaticWFSteps;
   end;
 end;
 
@@ -341,6 +343,36 @@ begin
   finally
     C.Free;
   end;
+end;
+
+procedure TFRE_Testserver.GenerateAutomaticWFSteps;
+var conn  : TFRE_DB_CONNECTION;
+    autos : TFRE_DB_WORKFLOW_AUTOMATIC_METHOD;
+    coll  : IFRE_DB_COLLECTION;
+    res   : TFRE_DB_Errortype;
+
+    procedure _AddStep(const key,desc : string);
+    begin
+      autos := TFRE_DB_WORKFLOW_AUTOMATIC_METHOD.CreateForDB;
+      autos.Field('auto_key').AsString := key;
+      autos.Field('auto_desc').AsString    := desc;
+      res := coll.Store(autos);
+      writeln('Adding Automatic Step',key,' : ',CFRE_DB_Errortype[res]);
+    end;
+
+begin
+  //conn := GFRE_DB.NewConnection;
+  //CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  //writeln('REMOVE WorkflowSchemes ', conn.SYSC.DeleteCollection('SysWorkflowScheme'));
+  //writeln('REMOVE WorkflowAutoMeths ', conn.SYSC.DeleteCollection('SysWorkflowAutoMethods'));
+  //conn.Free;
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  coll  := conn.AdmGetWorkFlowAutoMethCollection;
+  _AddStep('GETDOMAIN','Register a domain via interface');
+  _AddStep('SENDMAIL','Send a status Mail ');
+  _AddStep('PROVSTORAGE','Provision Storage');
+  _AddStep('UPDATECRMCUST','Update CRM Customer');
 end;
 
 begin
