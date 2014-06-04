@@ -74,7 +74,7 @@ type
     procedure   PatchCity1;
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
-    procedure   ImportCitycomAccounts                   (domainname:string='test' ; domainuser:string='admin@test' ; domainpass:string='test');
+    procedure   ImportCitycomAccounts                   (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -272,6 +272,7 @@ var
   coll         : IFRE_DB_COLLECTION;
   res          : TFRE_DB_Errortype;
   cname        : string;
+  cnt: Integer;
 
   procedure AddField(const crm_name,import_name : string;const ft : TFRE_DB_FIELDTYPE);
   begin
@@ -322,8 +323,11 @@ begin
     AddField('billing_address_country','mainaddress.country',fdbft_String);
     AddField('website','http.url',fdbft_String);
     AddField('debitorennummer_c','cc_debitorennummer_c',fdbft_String);
+    cnt:=0;
     While not Q.EOF do
       begin
+        cnt:=cnt+1;
+        if cnt=300 then break;
         cc_cust := TFOS_DB_CITYCOM_CUSTOMER.CreateForDB;
         for i:=0 to high(importfields) do
           begin
