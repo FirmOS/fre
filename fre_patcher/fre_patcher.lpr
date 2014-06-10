@@ -350,25 +350,26 @@ begin
 end;
 
 procedure TFRE_Testserver.GenerateAutomaticWFSteps;
-var conn  : TFRE_DB_CONNECTION;
-    autos : TFRE_DB_WORKFLOW_AUTOMATIC_METHOD;
-    coll  : IFRE_DB_COLLECTION;
-    res   : TFRE_DB_Errortype;
+var conn   : TFRE_DB_CONNECTION;
+    action : TFRE_DB_WORKFLOW_ACTION;
+    coll   : IFRE_DB_COLLECTION;
+    res    : TFRE_DB_Errortype;
 
     procedure _AddStep(const key,desc : string);
     begin
-      autos := TFRE_DB_WORKFLOW_AUTOMATIC_METHOD.CreateForDB;
-      autos.Field('auto_key').AsString := key;
-      autos.Field('auto_desc').AsString    := desc;
-      res := coll.Store(autos);
-      writeln('Adding Automatic Step',key,' : ',CFRE_DB_Errortype[res]);
+      action := TFRE_DB_WORKFLOW_ACTION.CreateForDB;
+      action.Field('key').AsString     := key;
+      action.Field('action_desc').AsString    := desc;
+      action.Field('is_auto').AsBoolean:= true;
+      res := coll.Store(action);
+      writeln('Adding Automatic Action',key,' : ',CFRE_DB_Errortype[res]);
     end;
 
 begin
   //conn := GFRE_DB.NewConnection;
   //CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
   //writeln('REMOVE WorkflowSchemes ', conn.SYSC.DeleteCollection('SysWorkflowScheme'));
-  //writeln('REMOVE WorkflowAutoMeths ', conn.SYSC.DeleteCollection('SysWorkflowAutoMethods'));
+  //writeln('REMOVE WorkflowAutoMeths ', conn.SYSC.DeleteCollection('SysWorkflowMethods'));
   //conn.Free;
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
@@ -381,7 +382,7 @@ begin
 
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,'ckoch@citycom','pepe'));
-  coll  := conn.AdmGetWorkFlowAutoMethCollection;
+  coll  := conn.AdmGetWorkFlowMethCollection;
   _AddStep('GETDOMAIN','Register a domain via interface');
   _AddStep('SENDMAIL','Send a status Mail ');
   _AddStep('PROVSTORAGE','Provision Storage');
