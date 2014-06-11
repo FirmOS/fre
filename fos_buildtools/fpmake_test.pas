@@ -40,6 +40,32 @@ program fpmake_test;
          AddProgram('fre_testdatafeed.lpr').ExtraEnvironment.Values['FOS_PRODUCT_NAME'] := 'FIRMOSDEV TestFeeder';
        end;
      end;
+     P := AddPackage('FIRMOSPATCHER');
+     with p do begin
+       OSes := cFOS_BUILD_OSes;
+       FOS_OS_SPEC_OPTIONS(Options);
+       with Dependencies do begin
+         Add('FRE_CORE');
+         Add('FRE_INTF');
+         Add('FRE_FCOM');
+         Add('FRE_APS');
+         Add('FRE_DB');
+         Add('FRE_APPS');
+         Add('FRE_BLKCOM');
+         Add('FRE_SYNAPSE');
+         Add('FRE_HAL');
+         Add('FOS_FIRMBOX');
+         Add('FOS_ARTEMES');
+         Add('FOS_MONSYS');
+         Add('FOS_CAPTIVEPORTAL');
+         Add('FOS_CITYCOM_APP');
+       end;
+       Directory:=cFOS_BUILD_PREFIX+'fre_patcher/';
+       InstallProgramSuffix := FOSBuild.FOS_Suffix;
+       with targets do begin
+         AddProgram('fre_patcher.lpr').ExtraEnvironment.Values['FOS_PRODUCT_NAME'] := 'FIRMOSDEV Patcher';
+       end;
+     end;
      Run;
    end;
  end.

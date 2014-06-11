@@ -41,6 +41,10 @@ program fre_patcher;
 {$modeswitch nestedprocvars}
 {$LIBRARYPATH ../../lib}
 
+{$IFDEF DARWIN}
+{$DEFINE FREMYSQL}
+{$ENDIF}
+
 uses
 //  cmem,
   {$IFDEF UNIX}
@@ -59,9 +63,11 @@ uses
   fre_certificate_app,
   sysutils,
   fos_citycom_base,
+  {$IFDEF FREMYSQL}
   fre_mysql_ll,
-  fre_dbbusiness,
-  sqldb
+  sqldb,
+  {$ENDIF}
+  fre_dbbusiness
   ;
 
 { mysql client on osx : brew install mysql-connector-c}
@@ -74,7 +80,9 @@ type
     procedure   PatchCity1;
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
+    {$IFDEF FREMYSQL}
     procedure   ImportCitycomAccounts                   (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
+    {$ENDIF}
     procedure   GenerateAutomaticWFSteps                ;
   protected
     procedure   AddCommandLineOptions                   ; override;
@@ -152,7 +160,9 @@ begin
   case option of
     'city1'        : PatchCity1;
     'resetversions': PatchVersions;
+    {$IFDEF FREMYSQL}
     'importacc'    : ImportCitycomAccounts;
+    {$ENDIF}
     'genauto'      : GenerateAutomaticWFSteps;
   end;
 end;
@@ -260,6 +270,7 @@ begin
   writeln('DONE');
 end;
 
+{$IFDEF FREMYSQL}
 procedure TFRE_Testserver.ImportCitycomAccounts(domainname: string; domainuser: string; domainpass: string);
 var
   C            : TSQLConnection;
@@ -348,6 +359,8 @@ begin
     C.Free;
   end;
 end;
+{$ENDIF}
+
 
 procedure TFRE_Testserver.GenerateAutomaticWFSteps;
 var conn   : TFRE_DB_CONNECTION;
