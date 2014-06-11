@@ -380,13 +380,13 @@ begin
   end;
   conn.Free;
 
-  conn := GFRE_DB.NewConnection;
-  CheckDbResult(conn.Connect(FDBName,'ckoch@citycom','pepe'));
-  coll  := conn.AdmGetWorkFlowMethCollection;
-  _AddStep('GETDOMAIN','Register a domain via interface');
-  _AddStep('SENDMAIL','Send a status Mail ');
-  _AddStep('PROVSTORAGE','Provision Storage');
-  _AddStep('UPDATECRMCUST','Update CRM Customer');
+  //conn := GFRE_DB.NewConnection;
+  //CheckDbResult(conn.Connect(FDBName,'ckoch@citycom','pepe'));
+  //coll  := conn.AdmGetWorkFlowMethCollection;
+  //_AddStep('GETDOMAIN','Register a domain via interface');
+  //_AddStep('SENDMAIL','Send a status Mail ');
+  //_AddStep('PROVSTORAGE','Provision Storage');
+  //_AddStep('UPDATECRMCUST','Update CRM Customer');
 end;
 
 begin
