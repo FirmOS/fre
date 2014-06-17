@@ -78,6 +78,7 @@ type
   TFRE_Testserver = class(TFRE_CLISRV_APP)
   private
     procedure   PatchCity1;
+    procedure   PatchCityAddons                         (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
     {$IFDEF FREMYSQL}
@@ -159,6 +160,7 @@ begin
   _CheckAdminPassSupplied;
   case option of
     'city1'        : PatchCity1;
+    'cityaddons'   : PatchCityAddons;
     'resetversions': PatchVersions;
     {$IFDEF FREMYSQL}
     'importacc'    : ImportCitycomAccounts;
@@ -214,6 +216,46 @@ begin
    writeln('PATCHING BASE DB ',FDBName);
    writeln('----');
    conn.ForAllDatabaseObjectsDo(@ObjectPatch);
+   writeln('DONE');
+end;
+
+procedure TFRE_Testserver.PatchCityAddons(domainname:string; domainuser:string; domainpass:string);
+var conn     : IFRE_DB_CONNECTION;
+    cnt      : NativeInt;
+    coll_p   : IFRE_DB_COLLECTION;
+    coll_pv  : IFRE_DB_COLLECTION;
+    coll_rel : IFRE_DB_COLLECTION;
+
+    procedure ObjectPatch(const obj:IFRE_DB_Object);
+    var
+      addons : fre_db_interface.TFRE_DB_ObjLinkArray;
+      rel_obj: TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION;
+      i      : Integer;
+      r_guid : TGuid;
+    begin
+      addons:=obj.Field('addons').AsObjectLinkArray;
+      obj.DeleteField('addons');
+      for i := 0 to High(addons) do begin
+        rel_obj:=TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION.CreateForDB;
+        rel_obj.module:=addons[i];
+        r_guid:=rel_obj.UID;
+        CheckDbResult(coll_rel.Store(rel_obj));
+        obj.Field('addons').AddObjectLink(r_guid);
+      end;
+      CheckDbResult(conn.Update(obj));
+    end;
+
+begin
+   conn := GFRE_DB.NewConnection;
+   CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
+   coll_p    := conn.GetDomainCollection(CFOS_DB_PRODUCTS_COLLECTION,domainname);
+   coll_pv   := conn.GetDomainCollection(CFOS_DB_PRODUCT_VARIATIONS_COLLECTION,domainname);
+   writeln('PATCHING BASE DB ',FDBName);
+   coll_rel  := conn.GetDomainCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION,domainname);
+   coll_p.ForAll(@ObjectPatch);
+   coll_rel  := conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION,domainname);
+   coll_pv.ForAll(@ObjectPatch);
+   writeln('----');
    writeln('DONE');
 end;
 
