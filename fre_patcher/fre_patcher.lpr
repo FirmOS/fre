@@ -79,7 +79,7 @@ type
   private
     procedure   PatchCity1;
     procedure   PatchCityAddons                         (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
-    procedure   PatchReferences                         (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
+    procedure   PatchCityObjs                           (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
     {$IFDEF FREMYSQL}
@@ -162,7 +162,7 @@ begin
   case option of
     'city1'        : PatchCity1;
     'cityaddons'   : PatchCityAddons;
-    'refs'         : PatchReferences;
+    'cityobjs'     : PatchCityObjs;
     'resetversions': PatchVersions;
     {$IFDEF FREMYSQL}
     'importacc'    : ImportCitycomAccounts;
@@ -297,7 +297,7 @@ begin
    coll_pv.ForAll(@AddonsPatch);
 end;
 
-procedure TFRE_Testserver.PatchReferences(domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
+procedure TFRE_Testserver.PatchCityObjs(domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
 var
   conn: IFRE_DB_CONNECTION;
 
@@ -311,47 +311,52 @@ var
       refObj    : IFRE_DB_Object;
     begin
       //writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
-      if (obj.SchemeClass='TFOS_DB_CITYCOM_PROD_MOD_VARIATION_PRICE') or
-         (obj.SchemeClass='TFOS_DB_CITYCOM_PROD_MOD_VARIATION_COST_PRICE') or
-         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_PRICE') or
-         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION') or
-         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin{ don't use IsA() (schemes not registered) }
-        refs:=conn.GetReferences(obj.UID,false);
-        if Length(refs)=0 then begin
-          writeln('NOT OK 0 ' + obj.SchemeClass);
-          CheckDbResult(conn.Delete(obj.UID));
-        end;
-        //if Length(refs)=1 then begin
-        //  writeln('OK 1 ' + obj.SchemeClass);
-        //end;
-        if Length(refs)>1 then begin
-          writeln('NOT OK >1 ' + IntToStr(Length(refs)) + ' ' + obj.SchemeClass);
-          if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION') or
-             (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin
-            for i := 0 to High(refs)-1 do begin
-              CheckDbResult(conn.Fetch(refs[i],dbo));
-              writeln(IntToStr(i) + ' ' + dbo.Field('name').AsString + ' ' + dbo.SchemeClass + ' ' + FREDB_G2H(dbo.UID));
+      if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE') then begin
+        obj.Field('type').AsString:='SERVICE';
+        CheckDbResult(conn.Update(obj));
+      end else begin
+        if (obj.SchemeClass='TFOS_DB_CITYCOM_PROD_MOD_VARIATION_PRICE') or
+           (obj.SchemeClass='TFOS_DB_CITYCOM_PROD_MOD_VARIATION_COST_PRICE') or
+           (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_PRICE') or
+           (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION') or
+           (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin{ don't use IsA() (schemes not registered) }
+          refs:=conn.GetReferences(obj.UID,false);
+          if Length(refs)=0 then begin
+            writeln('NOT OK 0 ' + obj.SchemeClass);
+            CheckDbResult(conn.Delete(obj.UID));
+          end;
+          //if Length(refs)=1 then begin
+          //  writeln('OK 1 ' + obj.SchemeClass);
+          //end;
+          if Length(refs)>1 then begin
+            writeln('NOT OK >1 ' + IntToStr(Length(refs)) + ' ' + obj.SchemeClass);
+            if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION') or
+               (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin
+              for i := 0 to High(refs)-1 do begin
+                CheckDbResult(conn.Fetch(refs[i],dbo));
+                writeln(IntToStr(i) + ' ' + dbo.Field('name').AsString + ' ' + dbo.SchemeClass + ' ' + FREDB_G2H(dbo.UID));
 
-              if dbo.SchemeClass='TFOS_DB_CITYCOM_PRODUCT' then begin
-                moduleColl:=conn.GetDomainCollection(CFOS_DB_PRODUCT_MODULE_RELATIONS_COLLECTION,'citycom');
-                addonColl:=conn.GetDomainCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION,'citycom');
-              end else begin
-                moduleColl:=conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_MODULE_RELATIONS_COLLECTION,'citycom');
-                addonColl:=conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION,'citycom');
-              end;
+                if dbo.SchemeClass='TFOS_DB_CITYCOM_PRODUCT' then begin
+                  moduleColl:=conn.GetDomainCollection(CFOS_DB_PRODUCT_MODULE_RELATIONS_COLLECTION,'citycom');
+                  addonColl:=conn.GetDomainCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION,'citycom');
+                end else begin
+                  moduleColl:=conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_MODULE_RELATIONS_COLLECTION,'citycom');
+                  addonColl:=conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION,'citycom');
+                end;
 
-              if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin
-                dbo.Field('modules').RemoveObjectLinkByUID(obj.UID);
-                refObj:=obj.CloneToNewObject(true);
-                dbo.Field('modules').AddObjectLink(refObj.UID);
-                CheckDbResult(moduleColl.Store(refObj));
-                CheckDbResult(conn.Update(dbo));
-              end else begin
-                dbo.Field('addons').RemoveObjectLinkByUID(obj.UID);
-                refObj:=obj.CloneToNewObject(true);
-                dbo.Field('addons').AddObjectLink(refObj.UID);
-                CheckDbResult(addonColl.Store(refObj));
-                CheckDbResult(conn.Update(dbo));
+                if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin
+                  dbo.Field('modules').RemoveObjectLinkByUID(obj.UID);
+                  refObj:=obj.CloneToNewObject(true);
+                  dbo.Field('modules').AddObjectLink(refObj.UID);
+                  CheckDbResult(moduleColl.Store(refObj));
+                  CheckDbResult(conn.Update(dbo));
+                end else begin
+                  dbo.Field('addons').RemoveObjectLinkByUID(obj.UID);
+                  refObj:=obj.CloneToNewObject(true);
+                  dbo.Field('addons').AddObjectLink(refObj.UID);
+                  CheckDbResult(addonColl.Store(refObj));
+                  CheckDbResult(conn.Update(dbo));
+                end;
               end;
             end;
           end;
