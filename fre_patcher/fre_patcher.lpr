@@ -79,6 +79,7 @@ type
   private
     procedure   PatchCity1;
     procedure   PatchCityAddons                         (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
+    procedure   PatchReferences                         (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
     {$IFDEF FREMYSQL}
@@ -161,6 +162,7 @@ begin
   case option of
     'city1'        : PatchCity1;
     'cityaddons'   : PatchCityAddons;
+    'refs'         : PatchReferences;
     'resetversions': PatchVersions;
     {$IFDEF FREMYSQL}
     'importacc'    : ImportCitycomAccounts;
@@ -226,7 +228,7 @@ var conn     : IFRE_DB_CONNECTION;
     coll_pv  : IFRE_DB_COLLECTION;
     coll_rel : IFRE_DB_COLLECTION;
 
-    procedure ObjectPatch(const obj:IFRE_DB_Object);
+    procedure AddonsPatch(const obj:IFRE_DB_Object);
     var
       addons : fre_db_interface.TFRE_DB_ObjLinkArray;
       rel_obj: TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION;
@@ -245,6 +247,44 @@ var conn     : IFRE_DB_CONNECTION;
       CheckDbResult(conn.Update(obj));
     end;
 
+    procedure ObjectPatch(const obj:IFRE_DB_Object; var halt:boolean ; const current,max : NativeInt);
+    var
+      refs : TFRE_DB_GUIDArray;
+      i    : Integer;
+      group: IFRE_DB_GROUP;
+    begin
+      //writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
+      if obj.SchemeClass='TFRE_DB_TEXT' then { don't use IsA() (schemes not registered) }
+        begin
+          writeln('Delete ',obj.Field('t_key').AsString);
+          CheckDbResult(conn.sys.DeleteTranslateableText(obj.Field('t_key').AsString));
+        end;
+      if obj.SchemeClass='TFRE_DB_GROUP' then { don't use IsA() (schemes not registered) }
+        begin
+          writeln('Delete ',obj.Field('objname').AsString);
+          refs:=conn.GetReferences(obj.UID,false);
+          if Length(refs)>0 then begin
+            for i := 0 to High(refs) do begin
+              CheckDbResult(conn.sys.RemoveUserGroupsById(refs[i],TFRE_DB_GUIDArray.create(obj.UID)));
+            end;
+          end;
+          CheckDbResult(conn.sys.DeleteGroupById(obj.UID));
+        end;
+      if obj.SchemeClass='TFRE_DB_ROLE' then { don't use IsA() (schemes not registered) }
+        begin
+          writeln('Delete ',obj.Field('objname').AsString);
+          refs:=conn.GetReferences(obj.UID,false);
+          if Length(refs)>0 then begin
+            for i := 0 to High(refs) do begin
+              CheckDbResult(conn.SYS.FetchGroupById(refs[i],group));
+              CheckDbResult(conn.sys.RemoveRolesFromGroupById(group.GetName,group.DomainID,TFRE_DB_GUIDArray.create(obj.UID),false));
+            end;
+          end;
+          CheckDbResult(conn.sys.DeleteRole(obj.Field('objname').AsString,obj.DomainID));
+        end;
+    end;
+
+
 begin
    conn := GFRE_DB.NewConnection;
    CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
@@ -252,11 +292,80 @@ begin
    coll_pv   := conn.GetDomainCollection(CFOS_DB_PRODUCT_VARIATIONS_COLLECTION,domainname);
    writeln('PATCHING BASE DB ',FDBName);
    coll_rel  := conn.GetDomainCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION,domainname);
-   coll_p.ForAll(@ObjectPatch);
+   coll_p.ForAll(@AddonsPatch);
    coll_rel  := conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION,domainname);
-   coll_pv.ForAll(@ObjectPatch);
-   writeln('----');
-   writeln('DONE');
+   coll_pv.ForAll(@AddonsPatch);
+end;
+
+procedure TFRE_Testserver.PatchReferences(domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
+var
+  conn: IFRE_DB_CONNECTION;
+
+    procedure ObjectPatch(const obj:IFRE_DB_Object; var halt:boolean ; const current,max : NativeInt);
+    var
+      refs      : TFRE_DB_GUIDArray;
+      i         : Integer;
+      dbo       : IFRE_DB_Object;
+      moduleColl: IFRE_DB_COLLECTION;
+      addonColl : IFRE_DB_COLLECTION;
+      refObj    : IFRE_DB_Object;
+    begin
+      //writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
+      if (obj.SchemeClass='TFOS_DB_CITYCOM_PROD_MOD_VARIATION_PRICE') or
+         (obj.SchemeClass='TFOS_DB_CITYCOM_PROD_MOD_VARIATION_COST_PRICE') or
+         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_PRICE') or
+         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION') or
+         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin{ don't use IsA() (schemes not registered) }
+        refs:=conn.GetReferences(obj.UID,false);
+        if Length(refs)=0 then begin
+          writeln('NOT OK 0 ' + obj.SchemeClass);
+          CheckDbResult(conn.Delete(obj.UID));
+        end;
+        //if Length(refs)=1 then begin
+        //  writeln('OK 1 ' + obj.SchemeClass);
+        //end;
+        if Length(refs)>1 then begin
+          writeln('NOT OK >1 ' + IntToStr(Length(refs)) + ' ' + obj.SchemeClass);
+          if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION') or
+             (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin
+            for i := 0 to High(refs)-1 do begin
+              CheckDbResult(conn.Fetch(refs[i],dbo));
+              writeln(IntToStr(i) + ' ' + dbo.Field('name').AsString + ' ' + dbo.SchemeClass + ' ' + FREDB_G2H(dbo.UID));
+
+              if dbo.SchemeClass='TFOS_DB_CITYCOM_PRODUCT' then begin
+                moduleColl:=conn.GetDomainCollection(CFOS_DB_PRODUCT_MODULE_RELATIONS_COLLECTION,'citycom');
+                addonColl:=conn.GetDomainCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION,'citycom');
+              end else begin
+                moduleColl:=conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_MODULE_RELATIONS_COLLECTION,'citycom');
+                addonColl:=conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION,'citycom');
+              end;
+
+              if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin
+                dbo.Field('modules').RemoveObjectLinkByUID(obj.UID);
+                refObj:=obj.CloneToNewObject(true);
+                dbo.Field('modules').AddObjectLink(refObj.UID);
+                CheckDbResult(moduleColl.Store(refObj));
+                CheckDbResult(conn.Update(dbo));
+              end else begin
+                dbo.Field('addons').RemoveObjectLinkByUID(obj.UID);
+                refObj:=obj.CloneToNewObject(true);
+                dbo.Field('addons').AddObjectLink(refObj.UID);
+                CheckDbResult(addonColl.Store(refObj));
+                CheckDbResult(conn.Update(dbo));
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+
+begin
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
+  writeln('PATCHING BASE DB ',FDBName);
+  writeln('----');
+  conn.ForAllDatabaseObjectsDo(@ObjectPatch);
+  writeln('DONE');
 end;
 
 procedure TFRE_Testserver.PatchVersions;
