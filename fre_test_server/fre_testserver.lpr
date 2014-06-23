@@ -50,6 +50,7 @@ uses
   fos_firmbox_common,
   fos_artemes_common,
   fos_citycom_common,
+  fos_citycom_adc_common,
   fos_mos_common,
   fre_certificate_common,
   fos_artemes_testapp,
