@@ -477,7 +477,7 @@ begin
     res.AddInput.Describe('','pool',false,false,false,true,pool.UID_String);
   end else begin
     group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'add_zone_diag_location_group'));
-    group.AddChooser.Describe(FetchModuleTextShort(ses,'add_zone_diag_pool'),'pool',store,true,dh_chooser_combo,true);
+    group.AddChooser.Describe(FetchModuleTextShort(ses,'add_zone_diag_pool'),'pool',store,dh_chooser_combo,true);
   end;
 
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
