@@ -461,8 +461,8 @@ begin
   conn := GFRE_DBI.NewConnection;
   CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
   if not conn.DomainCollectionExists(CFOS_DB_CUSTOMERS_COLLECTION,domainname) then
-    conn.CreateCollection(CFOS_DB_CUSTOMERS_COLLECTION);
-  coll := conn.GetDomainCollection(CFOS_DB_CUSTOMERS_COLLECTION);
+    conn.CreateDomainCollection(CFOS_DB_CUSTOMERS_COLLECTION,false,domainname);
+  coll := conn.GetDomainCollection(CFOS_DB_CUSTOMERS_COLLECTION,domainname);
 
   C:=TFOSMySqlConn.Create(Nil);
   try
@@ -495,8 +495,7 @@ begin
     cnt:=0;
     While not Q.EOF do
       begin
-        cnt:=cnt+1;
-        if cnt=300 then break;
+        if cnt=50 then break;
         cc_cust := TFOS_DB_CITYCOM_CUSTOMER.CreateForDB;
         for i:=0 to high(importfields) do
           begin
@@ -506,8 +505,11 @@ begin
         //WriteLn;
         //writeln(cc_cust.DumpToString);
         cname := cc_cust.Field('cc_crm_id').AsString+' - '+cc_cust.ObjectName;
-        res := coll.Store(cc_cust);
-        writeln(cname,' : ',CFRE_DB_Errortype[res]);
+        if cc_cust.Field('cc_debitorennummer_c').AsString<>'' then begin
+          cnt:=cnt+1;
+          res := coll.Store(cc_cust);
+          writeln(cname,' : ',CFRE_DB_Errortype[res]);
+        end;
         Q.Next
       end;
     Q.Close;
