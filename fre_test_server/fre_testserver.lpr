@@ -46,6 +46,7 @@ uses
   cthreads,
   {$ENDIF}
   classes,
+  fre_system,
   FRE_DBTEST,
   fos_firmbox_common,
   fos_artemes_common,
@@ -144,6 +145,7 @@ end;
 
 
 begin
+  cFRE_LOGIN_OVERRIDE:='vCompany Login';
   Application:=TFRE_Testserver.Create(nil);
   Application.Title:='FirmOS Testserver';
   Application.DefaultExtensions := 'TEST';
