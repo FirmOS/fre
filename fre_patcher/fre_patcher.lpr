@@ -495,7 +495,7 @@ begin
     cnt:=0;
     While not Q.EOF do
       begin
-        if cnt=50 then break;
+        //if cnt=50 then break;
         cc_cust := TFOS_DB_CITYCOM_CUSTOMER.CreateForDB;
         for i:=0 to high(importfields) do
           begin
