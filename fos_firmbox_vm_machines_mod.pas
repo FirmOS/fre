@@ -16,7 +16,12 @@ uses
 
 const
 
-  CFRE_DB_VM_COLLECTION            = 'virtualmachine';
+  CFRE_DB_VM_COLLECTION            = 'VIRTUAL_MACHINES';
+  CFRE_DB_VM_SC_COLLECTION         = 'VM_SOUND_CARDS';
+  CFRE_DB_VM_KB_COLLECTION         = 'VM_KEYBOARDS';
+
+  CFRE_DB_VM_DISKS_COLLECTION      = 'VM_DISKS';
+  CFRE_DB_VM_ISOS_COLLECTION       = 'VM_ISOS';
 
   //var
 //     cVM_HostUser:string   = ''; // 'root';
@@ -65,6 +70,7 @@ type
     procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   public
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects      (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   published
     function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentDisks          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -208,7 +214,7 @@ begin
 
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
-    tr_Grid.AddOneToOnescheme('name','',app.FetchAppTextShort(session,'gc_iso_name'));
+    tr_Grid.AddOneToOnescheme('name','',FetchModuleTextShort(session,'gc_iso_name'));
 
     isosp := conn.GetCollection('VM_ISOS');
     isos:= session.NewDerivedCollection('VM_ISOS_DERIVED');
@@ -219,7 +225,7 @@ begin
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
-    tr_Grid.AddOneToOnescheme('name','',app.FetchAppTextShort(session,'gc_disk_name'));
+    tr_Grid.AddOneToOnescheme('name','',FetchModuleTextShort(session,'gc_disk_name'));
 
     diskp := conn.GetCollection('VM_DISKS');
     disks:= session.NewDerivedCollection('VM_DISKS_DERIVED');
@@ -233,10 +239,38 @@ end;
 
 class procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='1.0';
+  newVersionId:='0.9';
   if currentVersionId='' then begin
-    currentVersionId := '1.0';
+    currentVersionId := '0.9';
+
+    CreateModuleText(conn,'vm_resources_disks','Disks');
+    CreateModuleText(conn,'vm_resources_isos','ISOs');
+    CreateModuleText(conn,'vm_resources_add_disk','Create','','Create a new disk');
+    CreateModuleText(conn,'vm_resources_delete_disk','Remove','','Remove selected disk');
+    CreateModuleText(conn,'vm_resources_add_iso','Upload','','Upload a new ISO');
+    CreateModuleText(conn,'vm_resources_delete_iso','Remove','','Remove selected ISO');
+
+    CreateModuleText(conn,'gc_disk_name','Disk name');
+    CreateModuleText(conn,'gc_iso_name','ISO name');
+
+    CreateModuleText(conn,'disk_add_diag_cap','Create Disk');
+    CreateModuleText(conn,'iso_upload_diag_cap','Upload ISO');
   end;
+end;
+
+class procedure TFRE_FIRMBOX_VM_RESOURCES_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+var
+  coll: IFRE_DB_COLLECTION;
+begin
+  inherited InstallUserDBObjects(conn, currentVersionId);
+   if currentVersionId='' then begin
+     currentVersionId:='0.9';
+     coll:=conn.CreateCollection(CFRE_DB_VM_ISOS_COLLECTION);
+     coll.DefineIndexOnField('isoid',fdbft_String,true,true);
+
+     coll:=conn.CreateCollection(CFRE_DB_VM_DISKS_COLLECTION);
+     coll.DefineIndexOnField('diskid',fdbft_String,true,true);
+   end;
 end;
 
 function TFRE_FIRMBOX_VM_RESOURCES_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -246,8 +280,8 @@ begin
   CheckClassVisibility4MyDomain(ses);
 
   res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
-  res.AddSection.Describe(CWSF(@WEB_ContentDisks),app.FetchAppTextShort(ses,'vm_resources_disks'),1,'DISKS');
-  res.AddSection.Describe(CWSF(@WEB_ContentISOs),app.FetchAppTextShort(ses,'vm_resources_isos'),2,'ISOS');
+  res.AddSection.Describe(CWSF(@WEB_ContentDisks),FetchModuleTextShort(ses,'vm_resources_disks'),1,'DISKS');
+  res.AddSection.Describe(CWSF(@WEB_ContentISOs),FetchModuleTextShort(ses,'vm_resources_isos'),2,'ISOS');
   Result:=res;
 end;
 
@@ -261,8 +295,8 @@ begin
 
   coll := ses.FetchDerivedCollection('VM_DISKS_DERIVED');
   res := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  res.AddButton.Describe(CWSF(@WEB_CreateDisk),'/images_apps/hal/add_disk.png',app.FetchAppTextShort(ses,'vm_resources_add_disk'),app.FetchAppTextHint(ses,'vm_resources_add_disk'));
-  res.AddButton.Describe(CWSF(@WEB_DeleteDisk),'/images_apps/hal/delete_disk.png',app.FetchAppTextShort(ses,'vm_resources_delete_disk'),app.FetchAppTextHint(ses,'vm_resources_delete_disk'),fdgbd_multi);
+  res.AddButton.Describe(CWSF(@WEB_CreateDisk),'/images_apps/hal/add_disk.png',FetchModuleTextShort(ses,'vm_resources_add_disk'),FetchModuleTextHint(ses,'vm_resources_add_disk'));
+  res.AddButton.Describe(CWSF(@WEB_DeleteDisk),'/images_apps/hal/delete_disk.png',FetchModuleTextShort(ses,'vm_resources_delete_disk'),FetchModuleTextHint(ses,'vm_resources_delete_disk'),fdgbd_multi);
   Result:=res;
 end;
 
@@ -276,8 +310,8 @@ begin
 
   coll := ses.FetchDerivedCollection('VM_ISOS_DERIVED');
   res := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  res.AddButton.Describe(CWSF(@WEB_UploadISO),'/images_apps/hal/add_iso.png',app.FetchAppTextShort(ses,'vm_resources_add_iso'),app.FetchAppTextHint(ses,'vm_resources_add_iso'));
-  res.AddButton.Describe(CWSF(@WEB_DeleteISO),'/images_apps/hal/delete_iso.png',app.FetchAppTextShort(ses,'vm_resources_delete_iso'),app.FetchAppTextHint(ses,'vm_resources_delete_iso'),fdgbd_multi);
+  res.AddButton.Describe(CWSF(@WEB_UploadISO),'/images_apps/hal/add_iso.png',FetchModuleTextShort(ses,'vm_resources_add_iso'),FetchModuleTextHint(ses,'vm_resources_add_iso'));
+  res.AddButton.Describe(CWSF(@WEB_DeleteISO),'/images_apps/hal/delete_iso.png',FetchModuleTextShort(ses,'vm_resources_delete_iso'),FetchModuleTextHint(ses,'vm_resources_delete_iso'),fdgbd_multi);
 
   Result:=res;
 end;
@@ -292,7 +326,7 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_DISK',scheme);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'ADD_DISK'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'disk_add_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   serverFunc:=CSCF('TFRE_FIRMBOX_VM_DISK','NewOperation','collection','VM_DISKS');
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),serverFunc,fdbbt_submit);
@@ -320,7 +354,7 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_FIRMBOX_VM_ISO',scheme);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'UPLOAD_ISO'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'iso_upload_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   serverFunc:=CSCF('TFRE_FIRMBOX_VM_ISO','NewOperation','collection','VM_ISOS');
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),serverFunc,fdbbt_submit);
@@ -543,13 +577,13 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     with tr_Grid do begin
-      AddOneToOnescheme('Objname','',app.FetchAppTextShort(session,'gc_vm_name'),dt_string,true,false,false,4);
-      AddOneToOnescheme('MType','',app.FetchAppTextShort(session,'gc_vm_type'));
-      AddOneToOnescheme('MStateIcon','',app.FetchAppTextShort(session,'gc_vm_state'),dt_icon);
-      AddOneToOnescheme('PERFPCPU','',app.FetchAppTextShort(session,'gc_vm_cpu'),dt_number,true,false,false,2);
-      AddOneToOnescheme('PERFPMEM','',app.FetchAppTextShort(session,'gc_vm_used_mem'),dt_number,true,false,false,2);
-      AddOneToOnescheme('PERFRSS','',app.FetchAppTextShort(session,'gc_vm_paged_mem'),dt_number,true,false,false,2);
-      AddOneToOnescheme('PERFVSZ','',app.FetchAppTextShort(session,'gc_vm_virtual_mem'),dt_number,true,false,false,2);
+      AddOneToOnescheme('Objname','',FetchModuleTextShort(session,'gc_vm_name'),dt_string,true,false,false,4);
+      AddOneToOnescheme('MType','',FetchModuleTextShort(session,'gc_vm_type'));
+      AddOneToOnescheme('MStateIcon','',FetchModuleTextShort(session,'gc_vm_state'),dt_icon);
+      AddOneToOnescheme('PERFPCPU','',FetchModuleTextShort(session,'gc_vm_cpu'),dt_number,true,false,false,2);
+      AddOneToOnescheme('PERFPMEM','',FetchModuleTextShort(session,'gc_vm_used_mem'),dt_number,true,false,false,2);
+      AddOneToOnescheme('PERFRSS','',FetchModuleTextShort(session,'gc_vm_paged_mem'),dt_number,true,false,false,2);
+      AddOneToOnescheme('PERFVSZ','',FetchModuleTextShort(session,'gc_vm_virtual_mem'),dt_number,true,false,false,2);
     end;
     vmcp := conn.GetCollection(CFRE_DB_VM_COLLECTION);
     vmc  := session.NewDerivedCollection('VMC');
@@ -562,7 +596,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     transform.AddOneToOnescheme('name');
 
-    isosp := conn.GetCollection('VM_ISOS');
+    isosp := conn.GetCollection(CFRE_DB_VM_ISOS_COLLECTION);
     isos:= session.NewDerivedCollection('VM_CH_ISOS_DERIVED');
     with isos do begin
       SetDeriveTransformation(transform);
@@ -573,7 +607,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     transform.AddOneToOnescheme('name');
 
-    disksp := conn.GetCollection('VM_DISKS');
+    disksp := conn.GetCollection(CFRE_DB_VM_DISKS_COLLECTION);
     disks:= session.NewDerivedCollection('VM_CH_DISKS_DERIVED');
     with disks do begin
       SetDeriveTransformation(transform);
@@ -584,7 +618,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     transform.AddOneToOnescheme('name');
 
-    scsp := conn.GetCollection('VM_SCS');
+    scsp := conn.GetCollection(CFRE_DB_VM_SC_COLLECTION);
     scs:= session.NewDerivedCollection('VM_CH_SCS_DERIVED');
     with scs do begin
       SetDeriveTransformation(transform);
@@ -596,7 +630,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     transform.AddOneToOnescheme('name');
 
-    keyboardsp := conn.GetCollection('VM_KEYBOARDS');
+    keyboardsp := conn.GetCollection(CFRE_DB_VM_KB_COLLECTION);
     keyboards:= session.NewDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
     with keyboards do begin
       SetDeriveTransformation(transform);
@@ -626,9 +660,22 @@ end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-   newVersionId:='1.0';
+   newVersionId:='0.9';
    if currentVersionId='' then begin
-     currentVersionId:='1.0';
+     currentVersionId:='0.9';
+
+     CreateModuleText(conn,'gc_vm_name','Name');
+     CreateModuleText(conn,'gc_vm_type','Type');
+     CreateModuleText(conn,'gc_vm_state','State');
+     CreateModuleText(conn,'gc_vm_cpu','CPU');
+     CreateModuleText(conn,'gc_vm_used_mem','Used Mem');
+     CreateModuleText(conn,'gc_vm_paged_mem','Paged Mem');
+     CreateModuleText(conn,'gc_vm_virtual_mem','Virtual Mem');
+
+     CreateModuleText(conn,'machines_new_vm','New','','New VM');
+     CreateModuleText(conn,'machines_start','Start','','Start the selected VM');
+     CreateModuleText(conn,'machines_stop','Stop','','Stop the selected VM');
+     CreateModuleText(conn,'machines_kill','Kill','','Stop the selected VM (FORCED)');
 
      CreateModuleText(conn,'vm_new_caption','New Virtual Machine');
      CreateModuleText(conn,'vm_new_save','Create');
@@ -665,9 +712,20 @@ begin
 end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+var
+  coll: IFRE_DB_COLLECTION;
 begin
   inherited InstallUserDBObjects(conn, currentVersionId);
-  conn.CreateCollection(CFRE_DB_VM_COLLECTION);
+   if currentVersionId='' then begin
+     currentVersionId:='0.9';
+     coll:=conn.CreateCollection(CFRE_DB_VM_COLLECTION);
+     coll.DefineIndexOnField('Mkey',fdbft_String,true,true);
+
+     coll:=conn.CreateCollection(CFRE_DB_VM_SC_COLLECTION);
+     coll.DefineIndexOnField('scid',fdbft_String,true,true);
+     coll:=conn.CreateCollection(CFRE_DB_VM_KB_COLLECTION);
+     coll.DefineIndexOnField('keyboardid',fdbft_String,true,true);
+   end;
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -687,7 +745,6 @@ function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_Content(const input:IFRE_DB_Object; co
 var
   coll   : IFRE_DB_DERIVED_COLLECTION;
   list   : TFRE_DB_VIEW_LIST_DESC;
-  main   : TFRE_DB_LAYOUT_DESC;
   text   : IFRE_DB_TEXT;
 begin
   CheckClassVisibility4MyDomain(ses);
@@ -695,22 +752,20 @@ begin
   coll := ses.FetchDerivedCollection('VMC');
   list := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VMACHINE) then begin
-    text:=app.FetchAppTextFull(ses,'machines_new_vm');
+    text:=FetchModuleTextFull(ses,'machines_new_vm');
     list.AddButton.Describe(CWSF(@WEB_NewVM)         , '/images_apps/hal/add_vm.png',text.Getshort,text.GetHint);
     text.Finalize;
   end;
-  text:=app.FetchAppTextFull(ses,'machines_start');
+  text:=FetchModuleTextFull(ses,'machines_start');
   list.AddButton.Describe(CWSF(@WEB_StartVM)       , '/images_apps/hal/start_vm.png',text.Getshort,text.GetHint,fdgbd_single);
   text.Finalize;
-  text:=app.FetchAppTextFull(ses,'machines_stop');
+  text:=FetchModuleTextFull(ses,'machines_stop');
   list.AddButton.Describe(CWSF(@WEB_StopVM)        , '/images_apps/hal/stop_vm.png',text.Getshort,text.GetHint,fdgbd_single);
   text.Finalize;
-  text:=app.FetchAppTextFull(ses,'machines_kill');
+  text:=FetchModuleTextFull(ses,'machines_kill');
   list.AddButton.Describe(CWSF(@WEB_StopVMF)       , '/images_apps/hal/stop_vm.png',text.Getshort,text.GetHint,fdgbd_single);
   text.Finalize;
-  main := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(list,nil,nil,nil,nil,true,2);
-
-  result  := TFRE_DB_LAYOUT_DESC.create.Describe.SetAutoSizedLayout(nil,main,nil,TFRE_DB_HTML_DESC.create.Describe(app.FetchAppTextShort(ses,'machines_content_header')));
+  Result := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(list,nil,nil,nil,nil,true,2);
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_ShowInfo(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;

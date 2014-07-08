@@ -119,36 +119,12 @@ begin
 
       CreateAppText(conn,'vmnetwork_no_access','No Access to settings!');
 
-      CreateAppText(conn,'machines_content_header','<b>Overview of all configured virtual machines.</b>');
       CreateAppText(conn,'machines_no_info','- could not get info -');
-
-      CreateAppText(conn,'machines_new_vm','New','','New VM');
-      CreateAppText(conn,'machines_start','Start','','Start the selected VM');
-      CreateAppText(conn,'machines_stop','Stop','','Stop the selected VM');
-      CreateAppText(conn,'machines_kill','Kill','','Stop the selected VM (FORCED)');
 
       CreateAppText(conn,'vm_details_config','Configuration');
       CreateAppText(conn,'vm_details_console','Console');
       CreateAppText(conn,'vm_details_perf','Performance');
       CreateAppText(conn,'vm_details_note','Note');
-
-      CreateAppText(conn,'gc_vm_name','Name');
-      CreateAppText(conn,'gc_vm_type','Type');
-      CreateAppText(conn,'gc_vm_state','State');
-      CreateAppText(conn,'gc_vm_cpu','CPU');
-      CreateAppText(conn,'gc_vm_used_mem','Used Mem');
-      CreateAppText(conn,'gc_vm_paged_mem','Paged Mem');
-      CreateAppText(conn,'gc_vm_virtual_mem','Virtual Mem');
-
-      CreateAppText(conn,'vm_resources_disks','Disks');
-      CreateAppText(conn,'vm_resources_isos','ISOs');
-      CreateAppText(conn,'vm_resources_add_disk','Create','','Create a new disk');
-      CreateAppText(conn,'vm_resources_delete_disk','Remove','','Remove selected disk');
-      CreateAppText(conn,'vm_resources_add_iso','Upload','','Upload a new ISO');
-      CreateAppText(conn,'vm_resources_delete_iso','Remove','','Remove selected ISO');
-
-      CreateAppText(conn,'gc_disk_name','Disk name');
-      CreateAppText(conn,'gc_iso_name','ISO name');
 
       CreateAppText(conn,'button_save','Save');
       CreateAppText(conn,'error_no_access','Access denied');
