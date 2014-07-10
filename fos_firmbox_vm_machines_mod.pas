@@ -790,7 +790,7 @@ begin
   CheckClassVisibility4MyDomain(ses);
 
   vmkey := input.Field('vmkey').AsString;
-  conn.GetCollection(CFRE_DB_VM_COLLECTION);
+  vmcc  := conn.GetCollection(CFRE_DB_VM_COLLECTION);
   if vmcc.GetIndexedObj(vmkey,obj) then begin
     result := TFRE_DB_HTML_DESC.create.Describe(FREDB_String2EscapedJSString('<pre style="font-size: 10px">'+obj.DumpToString+'</pre>'));
   end else begin
