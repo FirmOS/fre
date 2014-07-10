@@ -117,15 +117,6 @@ begin
       CreateAppText(conn,'datalink_delete_aggr','Delete Aggregation');
       CreateAppText(conn,'datalink_create_stub','Create Virtual Switch');
 
-      CreateAppText(conn,'vmnetwork_no_access','No Access to settings!');
-
-      CreateAppText(conn,'machines_no_info','- could not get info -');
-
-      CreateAppText(conn,'vm_details_config','Configuration');
-      CreateAppText(conn,'vm_details_console','Console');
-      CreateAppText(conn,'vm_details_perf','Performance');
-      CreateAppText(conn,'vm_details_note','Note');
-
       CreateAppText(conn,'button_save','Save');
       CreateAppText(conn,'error_no_access','Access denied');
 

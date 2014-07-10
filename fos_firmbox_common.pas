@@ -307,11 +307,11 @@ var conn     : IFRE_DB_Connection;
         snap.Field('parentid').AsObjectLink := obj.uid;
         if obj.SchemeClass=TFRE_DB_ZONE.ClassName then
           begin
-            snap.Field('objname').asString      := 'zones/'+obj.Field('mkey').asstring+'@AUTO-'+inttostr(i);
+            snap.Field('objname').asString      := 'zones/'+obj.Field('key').asstring+'@AUTO-'+inttostr(i);
           end
         else
           begin
-            snap.Field('objname').asString      := 'zones/'+obj.Field('mkey').asstring+'-disk0@AUTO-'+inttostr(i);
+            snap.Field('objname').asString      := 'zones/'+obj.Field('key').asstring+'-disk0@AUTO-'+inttostr(i);
           end;
         snap.Field('creation').AsDateTimeUTC:= GFRE_DT.Now_UTC-(86400*1000*(3-i));
         snap.Field('used_mb').AsUInt32      := trunc(3.33*(random(10)+1));
@@ -337,10 +337,10 @@ var conn     : IFRE_DB_Connection;
 
     root :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZONE);
     root.Field('objname').asstring    :='Global Root Zone';
-    root.Field('MKey').AsString       :='ROOT';
+    root.Field('key').AsString        :='ROOT';
     root.Field('MType').AsString      :='OS';
-    root.Field('MState').AsString     := 'running';
-    root.Field('MStateIcon').AsString := 'images_apps/hal/vm_running.png';
+    root.Field('State').AsString      := 'RUNNING';
+    root.Field('StateIcon').AsString  := 'images_apps/hal/vm_running.png';
     root.Field('domainid').asGUID     := conn.sys.DomainId(CFRE_DB_SYS_DOMAIN_NAME);
     root.Field('shell').AsString      := 'http://10.1.0.146:4200/global/';
     coll.Store(root);
@@ -669,7 +669,7 @@ begin
   try
     collection  := conn.getCollection(CFRE_DB_VM_COLLECTION);
     if not collection.IndexExists('def') then
-      collection.DefineIndexOnField('Mkey',fdbft_String,true,true);
+      collection.DefineIndexOnField('key',fdbft_String,true,true);
 
     vm_disks := conn.CreateCollection('VM_DISKS');
     if not vm_disks.IndexExists('def') then
