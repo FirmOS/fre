@@ -61,6 +61,7 @@ uses
   fos_captiveportal_app,
   fre_basecli_app,
   fre_certificate_app,
+  fos_firmbox_vmapp,
   sysutils,
   fos_citycom_base,
   {$IFDEF FREMYSQL}
@@ -86,6 +87,7 @@ type
     procedure   ImportCitycomAccounts                   (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
     {$ENDIF}
     procedure   GenerateAutomaticWFSteps                ;
+    procedure   GenerateTestDataForProCompetence        ;
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -558,6 +560,36 @@ begin
   //_AddStep('SENDMAIL','Send a status Mail ');
   //_AddStep('PROVSTORAGE','Provision Storage');
   //_AddStep('UPDATECRMCUST','Update CRM Customer');
+end;
+
+procedure TFRE_Testserver.GenerateTestDataForProCompetence;
+var vm : TFRE_DB_
+begin
+  coll:=conn.CreateCollection(CFRE_DB_VM_COLLECTION);
+  coll.DefineIndexOnField('key',fdbft_String,true,true);
+
+  //FIXXME - remove dummy data
+  vm:=TFRE_DB_VMACHINE.CreateForDB;
+  vm.Field('objname').AsString:='qemuwin1';
+  vm.key:='qemuwin1';
+  vm.vncHost:='172.24.1.1';
+  vm.vncPort:=5900;
+  vm.state:='RUNNING';
+  vm.mtype:='KVM';
+
+  CheckDbResult(coll.Store(vm));
+
+  vm:=TFRE_DB_VMACHINE.CreateForDB;
+  vm.Field('objname').AsString:='qemulin1';
+
+  vm.key:='qemulin1';
+  vm.state:='RUNNING';
+  vm.mtype:='KVM';
+  vm.vncHost:='172.24.1.1';
+  vm.vncPort:=5901;
+
+  CheckDbResult(coll.Store(vm));
+  //FIXXME - remove dummy data
 end;
 
 begin
