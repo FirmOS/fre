@@ -711,30 +711,6 @@ begin
      currentVersionId:='0.9';
      coll:=conn.CreateCollection(CFRE_DB_VM_COLLECTION);
      coll.DefineIndexOnField('key',fdbft_String,true,true);
-
-     //FIXXME - remove dummy data
-     vm:=TFRE_DB_VMACHINE.CreateForDB;
-     vm.Field('objname').AsString:='qemuwin1';
-     vm.key:='qemuwin1';
-     vm.vncHost:='172.24.1.1';
-     vm.vncPort:=5900;
-     vm.state:='RUNNING';
-     vm.mtype:='KVM';
-
-     CheckDbResult(coll.Store(vm));
-
-     vm:=TFRE_DB_VMACHINE.CreateForDB;
-     vm.Field('objname').AsString:='qemulin1';
-
-     vm.key:='qemulin1';
-     vm.state:='RUNNING';
-     vm.mtype:='KVM';
-     vm.vncHost:='172.24.1.1';
-     vm.vncPort:=5901;
-
-     CheckDbResult(coll.Store(vm));
-     //FIXXME - remove dummy data
-
      coll:=conn.CreateCollection(CFRE_DB_VM_SC_COLLECTION);
      coll.DefineIndexOnField('scid',fdbft_String,true,true);
      coll:=conn.CreateCollection(CFRE_DB_VM_KB_COLLECTION);
