@@ -29,11 +29,11 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-T /opt/local --test-log -H 10.220.251.10 -U root"/>
+        <CommandLineParams Value="-T /opt/local --test-log"/>
         <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <Units Count="6">
+    <Units Count="8">
       <Unit0>
         <Filename Value="fre_disksubfeeder.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -64,6 +64,16 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="fre_basesubfeed_server"/>
       </Unit5>
+      <Unit6>
+        <Filename Value="../../hal/fosillu_hal_dbo_common.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fosillu_hal_dbo_common"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="../../hal/fosillu_hal_dbo_zfs_pool.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fosillu_hal_dbo_zfs_pool"/>
+      </Unit7>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

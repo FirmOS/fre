@@ -41,6 +41,9 @@ begin
         Add('FRE_CORE');
         Add('FRE_DB');
         Add('FRE_HAL');
+        {$IFDEF SOLARIS}
+        Add('FRE_HAL_ILLU');
+        {$ENDIF}
         Add('FRE_APPS');
         Add('fcl-xml');
         Add('fcl-fpcunit');
@@ -51,7 +54,9 @@ begin
       InstallProgramSuffix := FOSBuild.FOS_Suffix;
       with targets do begin
         AddProgram('boxconsole.lpr');
+        {$IFDEF SOLARIS}
         AddProgram('fre_disksubfeeder.lpr');
+        {$ENDIF}
       end;
     end;
     P := AddPackage('FOS_FIRMBOX_TOOLS');

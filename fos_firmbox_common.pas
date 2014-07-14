@@ -18,7 +18,7 @@ uses
   fos_firmbox_applianceapp,
   fos_firmbox_vm_machines_mod,
   fre_hal_schemes,
-  fre_hal_update,
+  fre_diff_transport,
   FRE_ZFS,
   fre_scsi,
   fre_testcase,
@@ -68,13 +68,19 @@ var conn     : IFRE_DB_Connection;
     mcoll    : IFRE_DB_Collection;
     link_parent : TGUID;
     vm_parent   : TGUID;
-    mguid: TGuid;
-    dguid: TGuid;
-    zguid: TGuid;
-    zobj: TFRE_DB_ZONE;
-    sobj: TFRE_DB_SERVICE;
-    mobj: TFRE_DB_MACHINE;
-    dobj: TFRE_DB_SERVICE_DOMAIN;
+    mguid       : TGuid;
+    dguid       : TGuid;
+    zguid       : TGuid;
+    zobj        : TFRE_DB_ZONE;
+    sobj        : TFRE_DB_SERVICE;
+    mobj        : TFRE_DB_MACHINE;
+    dobj        : TFRE_DB_SERVICE_DOMAIN;
+    sobjvm      : TFRE_DB_VMACHINE;
+    sobjdns     : TFRE_DB_DNS;
+    domainId    : TGuid;
+    userObj     : IFRE_DB_USER;
+    groups      : TFRE_DB_GUIDArray;
+    groupObj    : IFRE_DB_GROUP;
 
   function AddDatalink(const clname:string; const name: string; const parentid:TGUID; const show_virtual:boolean; const show_global:boolean; const icon:string; const ip:string; const desc:string='';const vlan:integer=0): TGUID;
   var
@@ -301,11 +307,11 @@ var conn     : IFRE_DB_Connection;
         snap.Field('parentid').AsObjectLink := obj.uid;
         if obj.SchemeClass=TFRE_DB_ZONE.ClassName then
           begin
-            snap.Field('objname').asString      := 'zones/'+obj.Field('mkey').asstring+'@AUTO-'+inttostr(i);
+            snap.Field('objname').asString      := 'zones/'+obj.Field('key').asstring+'@AUTO-'+inttostr(i);
           end
         else
           begin
-            snap.Field('objname').asString      := 'zones/'+obj.Field('mkey').asstring+'-disk0@AUTO-'+inttostr(i);
+            snap.Field('objname').asString      := 'zones/'+obj.Field('key').asstring+'-disk0@AUTO-'+inttostr(i);
           end;
         snap.Field('creation').AsDateTimeUTC:= GFRE_DT.Now_UTC-(86400*1000*(3-i));
         snap.Field('used_mb').AsUInt32      := trunc(3.33*(random(10)+1));
@@ -331,10 +337,10 @@ var conn     : IFRE_DB_Connection;
 
     root :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZONE);
     root.Field('objname').asstring    :='Global Root Zone';
-    root.Field('MKey').AsString       :='ROOT';
+    root.Field('key').AsString        :='ROOT';
     root.Field('MType').AsString      :='OS';
-    root.Field('MState').AsString     := 'running';
-    root.Field('MStateIcon').AsString := 'images_apps/hal/vm_running.png';
+    root.Field('State').AsString      := 'RUNNING';
+    root.Field('StateIcon').AsString  := 'images_apps/hal/vm_running.png';
     root.Field('domainid').asGUID     := conn.sys.DomainId(CFRE_DB_SYS_DOMAIN_NAME);
     root.Field('shell').AsString      := 'http://10.1.0.146:4200/global/';
     coll.Store(root);
@@ -346,29 +352,34 @@ var conn     : IFRE_DB_Connection;
   procedure InitTestUser;
   var login     : TFRE_DB_String;
       res       : TFRE_DB_Errortype;
-      userdbo   : IFRE_DB_USER;
       passwd    : TFRE_DB_String;
+      domainId  : TGUID;
+      userObj   : IFRE_DB_USER;
+      groups    : TFRE_DB_GUIDArray;
+      group     : IFRE_DB_GROUP;
   begin
 
-      login  :='firmfeeder@'+CFRE_DB_SYS_DOMAIN_NAME;
+      login  :='firmfeeder';
       passwd :='x';
 
-      if conn.sys.UserExists(login) then
-        CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
-      CheckDbResult(conn.sys.AddUser(login,passwd,'Feeder','Feeder'),'cannot add user '+login);
+      domainId:=conn.sys.DomainID(CFRE_DB_SYS_DOMAIN_NAME);
 
-      CheckDbResult(conn.sys.ModifyUserGroups(login,TFRE_DB_StringArray.create('VMFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'APPLIANCEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME,'STORAGEFEEDER'+'@'+CFRE_DB_SYS_DOMAIN_NAME),true),'cannot set user groups '+login);
-      CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
+      if conn.sys.UserExists(login,domainId) then
+        CheckDbResult(conn.sys.DeleteUser(login,domainId),'cannot delete user '+login);
+      CheckDbResult(conn.sys.AddUser(login,domainId,passwd,'Feeder','Feeder',nil,'',true),'cannot add user '+login);
 
-      login  :='firmviewer@'+CFRE_DB_SYS_DOMAIN_NAME;
-      passwd :='x';
+      CheckDbResult(conn.sys.FetchUser(login,domainId,userObj));
 
-      if conn.sys.UserExists(login) then
-        CheckDbResult(conn.sys.DeleteUser(login),'cannot delete user '+login);
-      CheckDbResult(conn.sys.AddUser(login,passwd,'Firmviewer','Firmviewer'),'cannot add user '+login);
+      groups:=TFRE_DB_GUIDArray.create;
+      SetLength(groups,3);
+      CheckDbResult(conn.sys.FetchGroup('VMFEEDER',domainId,group));
+      groups[0]:=group.UID;
+      CheckDbResult(conn.sys.FetchGroup('APPLIANCEFEEDER',domainId,group));
+      groups[1]:=group.UID;
+      CheckDbResult(conn.sys.FetchGroup('STORAGEFEEDER',domainId,group));
+      groups[2]:=group.UID;
 
-      CheckDbResult(conn.sys.ModifyUserGroups(login,TFRE_DB_StringArray.Create('VMVIEWER'+'@'+CFRE_DB_SYS_DOMAIN_NAME),true),'cannot set user groups '+login);
-      CheckDbResult(conn.sys.fetchuser(login,userdbo),'could not fetch user');
+      CheckDbResult(conn.sys.ModifyUserGroupsById(userObj.UID,groups,true),'cannot set user groups '+login);
 
   end;
 
@@ -553,58 +564,77 @@ begin
 
   coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
   mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.Name:='Firmbox 1';
+  mobj.ObjectName:='firmbox';
+  mguid:=mobj.UID;
+  CheckDbResult(coll.Store(mobj));
+
+  coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
+  mobj:=TFRE_DB_MACHINE.CreateForDB;
+  mobj.ObjectName:='Firmbox 1';
   mguid:=mobj.UID;
   CheckDbResult(coll.Store(mobj));
 
   mobj:=TFRE_DB_MACHINE.CreateForDB;
-  mobj.Name:='Firmbox 2';
+  mobj.ObjectName:='Firmbox 2';
   CheckDbResult(coll.Store(mobj));
 
   coll:=conn.GetCollection(CFOS_DB_SERVICE_DOMAINS_COLLECTION);
 
   dobj:=TFRE_DB_SERVICE_DOMAIN.CreateForDB;
-  dobj.Name:='Domain1';
+  dobj.ObjectName:='Domain1';
   dobj.Field('serviceParent').AsObjectLink:=mguid;
   dguid:=dobj.UID;
   CheckDbResult(coll.Store(dobj));
 
   dobj:=TFRE_DB_SERVICE_DOMAIN.CreateForDB;
-  dobj.Name:='Domain2';
+  dobj.ObjectName:='Domain2';
   dobj.Field('serviceParent').AsObjectLink:=mguid;
   CheckDbResult(coll.Store(dobj));
 
   coll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
 
   zobj:=TFRE_DB_ZONE.CreateForDB;
-  zobj.Name:='Zone1';
+  zobj.ObjectName:='Zone1';
   zobj.Field('serviceParent').AsObjectLink:=dguid;
   zguid:=zobj.UID;
   CheckDbResult(coll.Store(zobj));
 
-  coll:=conn.GetCollection(CFOS_DB_MANAGED_SERVICES_COLLECTION);
-
-  sobj:=TFRE_DB_SERVICE.CreateForDB;
-  sobj.Name:='VM1';
-  sobj.Field('serviceParent').AsObjectLink:=zguid;
-  CheckDbResult(coll.Store(sobj));
-
-  sobj:=TFRE_DB_SERVICE.CreateForDB;
-  sobj.Name:='VM2';
-  sobj.Field('serviceParent').AsObjectLink:=zguid;
-  CheckDbResult(coll.Store(sobj));
-
-  sobj:=TFRE_DB_SERVICE.CreateForDB;
-  sobj.Name:='DNS';
-  sobj.Field('serviceParent').AsObjectLink:=zguid;
-  CheckDbResult(coll.Store(sobj));
-
   zobj:=TFRE_DB_ZONE.CreateForDB;
-  zobj.Name:='Zone2';
+  zobj.ObjectName:='Zone2';
   zobj.Field('serviceParent').AsObjectLink:=dguid;
   CheckDbResult(coll.Store(zobj));
 
- CONN.Finalize;
+  coll:=conn.GetCollection(CFOS_DB_MANAGED_SERVICES_COLLECTION);
+
+  sobjvm:=TFRE_DB_VMACHINE.CreateForDB;
+  sobjvm.ObjectName:='VM1';
+  sobjvm.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobjvm));
+
+  sobjvm:=TFRE_DB_VMACHINE.CreateForDB;
+  sobjvm.ObjectName:='VM2';
+  sobjvm.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobjvm));
+
+  sobjdns:=TFRE_DB_DNS.CreateForDB;
+  sobjdns.ObjectName:='DNS';
+  sobjdns.Field('serviceParent').AsObjectLink:=zguid;
+  CheckDbResult(coll.Store(sobjdns));
+
+  //add test user to groups
+  domainId:=conn.sys.DomainID('test');
+  CheckDbResult(conn.SYS.FetchUser('admin',domainId,userObj));
+  groups:=TFRE_DB_GUIDArray.create;
+  SetLength(groups,3);
+  conn.SYS.FetchGroup('ACADMINS',domainId,groupObj);
+  groups[0]:=groupObj.UID;
+  conn.SYS.FetchGroup('STORAGEADMINS',conn.GetSysDomainUID,groupObj);
+  groups[1]:=groupObj.UID;
+  conn.SYS.FetchGroup('SERVICESADMINS',domainId,groupObj);
+  groups[2]:=groupObj.UID;
+  CheckDbResult(conn.SYS.ModifyUserGroupsById(userObj.UID,groups,true));
+
+  CONN.Finalize;
 end;
 
 procedure FIRMBOX_MetaRegister;
@@ -613,7 +643,7 @@ begin
   FRE_DBBASE.Register_DB_Extensions;
   FRE_DBBUSINESS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
-  fre_hal_update.Register_DB_Extensions;
+  fre_diff_transport.Register_DB_Extensions;
   FRE_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
   fos_firmbox_applianceapp.Register_DB_Extensions;
@@ -639,7 +669,7 @@ begin
   try
     collection  := conn.getCollection(CFRE_DB_VM_COLLECTION);
     if not collection.IndexExists('def') then
-      collection.DefineIndexOnField('Mkey',fdbft_String,true,true);
+      collection.DefineIndexOnField('key',fdbft_String,true,true);
 
     vm_disks := conn.CreateCollection('VM_DISKS');
     if not vm_disks.IndexExists('def') then

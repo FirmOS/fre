@@ -46,7 +46,7 @@ interface
 
 uses
   Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basedbo_server,fre_system,
-  fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk,fre_base_parser,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
+  fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk_enclosure_pool_mangement,fre_base_parser,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
 
 const
   cIOSTAT                    = 'iostat -rxnsmde 1';
@@ -173,7 +173,7 @@ begin
       resdbo.Field('error').asstring        := error;
       resdbo.Field('data').AsObject         := pools;
       resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-//      writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
+     writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
       fsubfeeder.PushDataToClients(resdbo);
 
       if not Terminated then
@@ -308,7 +308,11 @@ begin
 
   lang:=GetEnvironmentVariable('LANG');
   if (lang<>'C') then
-    GFRE_DBI.LogError(dblc_APPLICATION,'Environment LANG for this feeder must be C, instead of %s ',[lang]);
+    begin
+      GFRE_DBI.LogError(dblc_APPLICATION,'Environment LANG for this feeder must be C, instead of %s ',[lang]);
+      writeln('Environment LANG for this feeder must be C, instead of ',lang);
+      abort;
+    end;
 
 try
     StartIostatParser;

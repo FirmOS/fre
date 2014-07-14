@@ -44,7 +44,7 @@ interface
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,
-  fre_hal_update;
+  fre_diff_transport;
 
 
 type
@@ -59,7 +59,6 @@ type
     FDISK_Feeding         : Boolean;
     FAPP_Feeding          : Boolean;
     FStorage_Feeding      : Boolean;
-    FDiskInfo_Send        : Boolean;
     FVM_FeedAppClass      : TFRE_DB_String;
     FVM_FeedAppUid        : TGuid;
     FSTORAGE_FeedAppClass : TFRE_DB_String;
@@ -71,6 +70,8 @@ type
     disk_hal              : TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT;
 
   private
+    procedure  CCB_RequestDiskEncPoolData  (const DATA : IFRE_DB_Object ; const status:TFRE_DB_COMMAND_STATUS ; const error_txt:string);
+
 
   public
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
@@ -90,8 +91,25 @@ implementation
 
 
 
+procedure TFRE_BOX_FEED_CLIENT.CCB_RequestDiskEncPoolData(const DATA: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const error_txt: string);
+begin
+  GFRE_DBI.LogNotice(dblc_FLEXCOM,'CCB_RequestDiskEncPoolData '+ inttostr(Ord(status)));
+  case status of
+    cdcs_OK: begin
+      disk_hal.ServerDiskEncPoolDataAnswer(data);
+      FStorage_Feeding   := True;
+    end;
+    cdcs_TIMEOUT: ;
+    cdcs_ERROR: begin
+       GFRE_BT.CriticalAbort('Request DiskEncPoolData Error - Server Returned Error: '+error_txt);
+    end;
+  end;
+end;
 
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
+var i           : integer;
+    machineUIDS : TFRE_DB_GUIDArray;
+    dummydata   : IFRE_DB_Object;
 begin
   inherited;
 
@@ -112,8 +130,12 @@ begin
   end;
 
   if Get_AppClassAndUid('TFRE_FIRMBOX_STORAGE_APP',FStorage_FeedAppClass,FSTORAGE_FeedAppUid) then begin
-    FStorage_Feeding   := True;
-    disk_hal.ClearStatusSnapshotAndUpdates;
+    disk_hal.ResetToUnInitialized;
+    machineUIDS := GetMyMachineUIDs;
+    for i:=0 to high(machineUIDS) do begin
+      GFRE_DBI.LogNotice(dblc_FLEXCOM,'SENDING REQUEST FOR MACHINE REQUEST_DISK_ENC_POOL_DATA '+FREDB_G2H(machineUIDS[i]));
+      SendServerCommand('TFRE_DB_MACHINE','REQUEST_DISK_ENC_POOL_DATA',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestDiskEncPoolData);
+    end;
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_STORAGE_APP APP NOT FOUND!');
   end;
@@ -154,7 +176,7 @@ begin
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
-  fre_hal_update.Register_DB_Extensions;
+  fre_diff_transport.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
 
   statscontroller := Get_Stats_Control       (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
@@ -231,8 +253,10 @@ begin
   //
   if FStorage_Feeding then
     begin
-      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot);
-  //    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
+      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME));
+//       SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),@CCB_RequestDiskEncPoolData);
+
+//    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
     end;
 end;
 

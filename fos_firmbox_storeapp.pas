@@ -23,7 +23,7 @@ type
     procedure       MySessionPromotion        (const session: TFRE_DB_UserSession); override;
   public
     class procedure RegisterSystemScheme      (const scheme:IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     class procedure InstallDBObjects4Domain   (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
   end;
 
@@ -42,7 +42,7 @@ end;
 procedure TFRE_FIRMBOX_STORE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('$description');
+  InitAppDesc('description');
 end;
 
 
@@ -85,13 +85,13 @@ begin
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION');
 end;
 
-class procedure TFRE_FIRMBOX_STORE_APP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+class procedure TFRE_FIRMBOX_STORE_APP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
 
   if (currentVersionId='') then
     begin
-      CreateAppText(conn,'$caption','Store','Store','Store');
+      CreateAppText(conn,'caption','Store','Store','Store');
       currentVersionId:='1.0';
     end;
   if (currentVersionId='1.0') then
