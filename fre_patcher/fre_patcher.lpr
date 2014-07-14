@@ -61,7 +61,9 @@ uses
   fos_captiveportal_app,
   fre_basecli_app,
   fre_certificate_app,
+  fre_hal_schemes,
   fos_firmbox_vmapp,
+  fos_firmbox_vm_machines_mod,
   sysutils,
   fos_citycom_base,
   {$IFDEF FREMYSQL}
@@ -563,8 +565,11 @@ begin
 end;
 
 procedure TFRE_Testserver.GenerateTestDataForProCompetence;
-var vm : TFRE_DB_
+var vm   : TFRE_DB_VMACHINE;
+    coll : IFRE_DB_COLLECTION;
+    conn : IFRE_DB_CONNECTION;
 begin
+  abort; { only code snippet (moved from bad location }
   coll:=conn.CreateCollection(CFRE_DB_VM_COLLECTION);
   coll.DefineIndexOnField('key',fdbft_String,true,true);
 
