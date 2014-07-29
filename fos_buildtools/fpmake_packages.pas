@@ -31,6 +31,7 @@ program fpmake_packages;
         AddUnit('fos_firmbox_storeapp.pas');
         AddUnit('fos_firmbox_vm_machines_mod.pas');
         AddUnit('fos_firmbox_vmapp.pas');
+        AddUnit('fos_firmbox_dns_mod.pas');
         AddUnit('fos_firmboxfeed_client.pas');
        end;
     end;
