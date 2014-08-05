@@ -508,7 +508,7 @@ begin
 
   scheme.SetParentSchemeByName('TFRE_DB_OBJECTEX');
   scheme.AddSchemeField('host',fdbft_String).SetupFieldDef(true);
-  scheme.AddSchemeField('value',fdbft_String);
+  scheme.AddSchemeField('value',fdbft_String).SetupFieldDef(true);
   scheme.AddSchemeField('ttl',fdbft_Int64);
 
   scheme.AddSchemeField('priority',fdbft_String);
@@ -529,6 +529,10 @@ begin
   group.AddInput('priority',GetTranslateableTextKey('scheme_priority'));
   group.AddInput('weight',GetTranslateableTextKey('scheme_weight'));
   group.AddInput('port',GetTranslateableTextKey('scheme_port'));
+
+  group:=scheme.AddInputGroup('main_default').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('value',GetTranslateableTextKey('scheme_value'));
+  group.AddInput('ttl',GetTranslateableTextKey('scheme_ttl'));
 end;
 
 class procedure TFOS_DB_DNS_RESOURCE_RECORD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -569,7 +573,8 @@ begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_OBJECTEX');
   scheme.AddSchemeField('name',fdbft_String).SetupFieldDef(true);
-  scheme.AddSchemeField('dns',fdbft_ObjLink).SetupFieldDef(true,true);
+  scheme.AddSchemeField('dns1',fdbft_ObjLink).SetupFieldDef(true);
+  scheme.AddSchemeField('dns2',fdbft_ObjLink);
   scheme.AddSchemeField('default',fdbft_ObjLink);
   scheme.AddSchemeField('records',fdbft_ObjLink).setMultiValues(true);
 
@@ -620,7 +625,6 @@ begin
 
     CreateModuleText(conn,'grid_network_domains_name','Name');
     CreateModuleText(conn,'grid_network_domains_default','Default');
-    CreateModuleText(conn,'grid_network_domains_default_type','Type');
     CreateModuleText(conn,'grid_records_host','Host');
     CreateModuleText(conn,'grid_records_type','Type');
     CreateModuleText(conn,'grid_records_value','Value');
@@ -644,9 +648,6 @@ begin
     CreateModuleText(conn,'network_domain_edit_dns1','DNS 1');
     CreateModuleText(conn,'network_domain_edit_dns2','DNS 2');
     CreateModuleText(conn,'network_domain_edit_default','Default');
-    CreateModuleText(conn,'network_domain_edit_default_chooser','Host');
-    CreateModuleText(conn,'network_domain_edit_default_postfix_val_A','(A)');
-    CreateModuleText(conn,'network_domain_edit_default_postfix_val_AAAA','(AAAA)');
 
     CreateModuleText(conn,'network_domain_create_error_exists_cap','Create Network Domain');
     CreateModuleText(conn,'network_domain_create_error_exists_msg','Network Domain already exists. Please choose a different network domain name.');
@@ -664,8 +665,10 @@ begin
     CreateModuleText(conn,'info_domain_details_select_one','Please select a network domain to get detailed information about it.');
 
     CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
+    CreateModuleText(conn,'error_host_name_at_caption','Error saving Resource Record');
+    CreateModuleText(conn,'error_host_name_at_msg','"@" is reserved and therefore not allowed as Hostname. Please choose another Hostname. If you wanted to set the domain default please edit the domain.');
   end;
-   
+
 end;
 
 class procedure TFOS_FIRMBOX_DNS_MOD.InstallUserDBObjects4Domain(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
@@ -724,11 +727,12 @@ end;
 
 procedure TFOS_FIRMBOX_DNS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
-  app         : TFRE_DB_APPLICATION;
-  conn        : IFRE_DB_CONNECTION;
-  transform   : IFRE_DB_SIMPLE_TRANSFORM;
-  domains_grid: IFRE_DB_DERIVED_COLLECTION;
-  records_grid: IFRE_DB_DERIVED_COLLECTION;
+  app          : TFRE_DB_APPLICATION;
+  conn         : IFRE_DB_CONNECTION;
+  transform    : IFRE_DB_SIMPLE_TRANSFORM;
+  domains_grid : IFRE_DB_DERIVED_COLLECTION;
+  records_grid : IFRE_DB_DERIVED_COLLECTION;
+  namesever_ch : IFRE_DB_DERIVED_COLLECTION;
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -737,9 +741,23 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
+      AddOneToOnescheme('host');
+      AddOneToOnescheme('type','type','',dt_string,false);
+    end;
+
+    namesever_ch:= session.NewDerivedCollection('NAMESERVER_CHOOSER');
+    with namesever_ch do begin
+      SetDeriveParent(conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('host'));
+      Filters.AddStringFieldFilter('TYPE_FILTER','type','NS',dbft_EXACT);
+    end;
+
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
       AddOneToOnescheme('name','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
-      AddMatchingReferencedField('default','host','default',FetchModuleTextShort(session,'grid_network_domains_default'));
-      AddMatchingReferencedField('default','type','default_type',FetchModuleTextShort(session,'grid_network_domains_default_type'));
+      AddMatchingReferencedField('default','value','default',FetchModuleTextShort(session,'grid_network_domains_default'));
     end;
     domains_grid := session.NewDerivedCollection('NETWORK_DOMAINS_GRID');
     with domains_grid do begin
@@ -805,12 +823,10 @@ var
   form            : TFRE_DB_FORM_PANEL_DESC;
   editable        : Boolean;
   nw_domain       : IFRE_DB_Object;
-  resource        : IFRE_DB_Object;
   defaultG        : TFRE_DB_INPUT_GROUP_DESC;
-  i               : Integer;
   rrecord         : IFRE_DB_Object;
-  defaultStore    : TFRE_DB_STORE_DESC;
   sf              : TFRE_DB_SERVER_FUNC_DESC;
+  store           : TFRE_DB_STORE_DESC;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_DB_DNS_RESOURCE_RECORD)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
@@ -827,39 +843,18 @@ begin
     form:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,editable);
     form.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'domain');
 
-    form.AddSchemeFormGroup(rr_scheme.GetInputGroup('main'),ses,false,false,'dns1',true).SetCaption(FetchModuleTextShort(ses,'network_domain_edit_dns1'));
-    form.AddSchemeFormGroup(rr_scheme.GetInputGroup('main'),ses,false,false,'dns2',false).SetCaption(FetchModuleTextShort(ses,'network_domain_edit_dns2'));
+    store:=ses.FetchDerivedCollection('NAMESERVER_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC;
+
+    form.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_edit_dns1'),'domain.dns1',store,dh_chooser_combo,true,false,true);
+    form.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_edit_dns2'),'domain.dns2',store);
 
     form.FillWithObjectValues(nw_domain,ses,'domain');
 
-    defaultStore:=TFRE_DB_STORE_DESC.create.Describe();
-    for i := 0 to nw_domain.Field('records').ValueCount - 1 do begin
-      CheckDbResult(conn.Fetch(nw_domain.Field('records').AsObjectLinkItem[i],rrecord));
-      if ((rrecord.Field('type').AsString='A') or (rrecord.Field('type').AsString='AAAA')) then begin
-        defaultStore.AddEntry.Describe(rrecord.Field('host').AsString + ' ' + FetchModuleTextShort(ses,'network_domain_edit_default_postfix_val_'+rrecord.Field('type').AsString),rrecord.UID_String);
-      end;
-    end;
-
-    defaultG:=form.AddGroup.Describe(FetchModuleTextShort(ses,'network_domain_edit_default'));
-    defaultG.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_edit_default_chooser'),'default_host',defaultStore);
+    form.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false).SetCaption(FetchModuleTextShort(ses,'network_domain_edit_default'));
 
     if nw_domain.FieldExists('default') then begin
-      form.SetElementValue('default_host',FREDB_G2H(nw_domain.Field('default').AsObjectLink));
-    end;
-    if nw_domain.FieldExists('dns') then begin
-      CheckDbResult(conn.Fetch(nw_domain.Field('dns').AsObjectLinkArray[0],resource));
-      form.FillWithObjectValues(resource,ses,'dns1');
-      form.SetElementDisabled('dns1.type');
-      if nw_domain.Field('dns').ValueCount>1 then begin
-        CheckDbResult(conn.Fetch(nw_domain.Field('dns').AsObjectLinkArray[1],resource));
-        form.FillWithObjectValues(resource,ses,'dns2');
-        form.SetElementDisabled('dns2.type');
-      end else begin
-        form.SetElementValueDisabled('dns2.type','NS');
-      end;
-    end else begin
-      form.SetElementValueDisabled('dns1.type','NS');
-      form.SetElementValueDisabled('dns2.type','NS');
+      CheckDbResult(conn.Fetch(nw_domain.Field('default').AsObjectLink,rrecord));
+      form.FillWithObjectValues(rrecord,ses,'default');
     end;
 
     sf:=CWSF(@WEB_UpdateNetworkDomain);
@@ -942,21 +937,32 @@ function TFOS_FIRMBOX_DNS_MOD.WEB_AddNetworkDomain(const input: IFRE_DB_Object; 
 var
   scheme,rr_scheme: IFRE_DB_SchemeObject;
   res             : TFRE_DB_FORM_DIALOG_DESC;
+  store           : TFRE_DB_STORE_DESC;
+  obj             : IFRE_DB_Object;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_STORE,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4MyDomain(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   GetSystemScheme(TFOS_DB_NETWORK_DOMAIN,scheme);
   GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,rr_scheme);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'network_domain_create_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'network_domain_create_diag_cap'),600,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'domain');
 
-  res.AddSchemeFormGroup(rr_scheme.GetInputGroup('main'),ses,false,false,'dns1',true).SetCaption(FetchModuleTextShort(ses,'network_domain_create_dns1'));
-  res.AddSchemeFormGroup(rr_scheme.GetInputGroup('main'),ses,false,false,'dns2',false).SetCaption(FetchModuleTextShort(ses,'network_domain_create_dns2'));
-  res.AddSchemeFormGroup(rr_scheme.GetInputGroup('main'),ses,false,false,'default',false).SetCaption(FetchModuleTextShort(ses,'network_domain_create_default'));
-  res.SetElementValueDisabled('dns1.type','NS');
-  res.SetElementValueDisabled('dns2.type','NS');
-  res.SetElementValueDisabled('default.type','A');
+  store:=ses.FetchDerivedCollection('NAMESERVER_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC;
+
+  res.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_create_dns1'),'domain.dns1',store,dh_chooser_combo,true,false,true);
+  res.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_create_dns2'),'domain.dns2',store);
+
+  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_NAMESERVER_MOD',obj) then begin
+    if obj.FieldExists('default_1') then begin
+      res.SetElementValue('domain.dns1',obj.Field('default_1').AsString);
+    end;
+    if obj.FieldExists('default_2') then begin
+      res.SetElementValue('domain.dns2',obj.Field('default_2').AsString);
+    end;
+  end;
+
+  res.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false).SetCaption(FetchModuleTextShort(ses,'network_domain_create_default'));
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CWSF(@WEB_CreateNetworkDomain),fdbbt_submit);
   Result:=res;
@@ -976,7 +982,7 @@ begin
 
   if not input.FieldPathExists('data.domain') then raise EFRE_DB_Exception.Create('Missing input data: network domain');
   if not input.FieldPathExists('data.domain.name') then raise EFRE_DB_Exception.Create('Missing required input data: network domain name');
-  if not input.FieldPathExists('data.dns1') then raise EFRE_DB_Exception.Create('Missing input data: dns1');
+  if not input.FieldPathExists('data.domain.dns1') then raise EFRE_DB_Exception.Create('Missing input data: dns1');
 
   if not GFRE_DBI.GetSystemScheme(TFOS_DB_NETWORK_DOMAIN,schemeObject) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_NETWORK_DOMAIN]);
@@ -995,24 +1001,12 @@ begin
   if not GFRE_DBI.GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,schemeObjectRR) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_DNS_RESOURCE_RECORD]);
 
-  resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
-  input.FieldPath('data.dns1').AsObject.Field('type').AsString:='NS';
-  schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.dns1').AsObject,resource,true,conn);
-  domain.Field('dns').AddObjectLink(resource.UID);
-  CheckDbResult(resourceColl.Store(resource));
-  if input.FieldPathExists('data.dns2') then begin
-    resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
-    input.FieldPath('data.dns2').AsObject.Field('type').AsString:='NS';
-    schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.dns2').AsObject,resource,true,conn);
-    domain.Field('dns').AddObjectLink(resource.UID);
-    CheckDbResult(resourceColl.Store(resource));
-  end;
-  if input.FieldPathExists('data.default') then begin
+  if input.FieldPathExists('data.default.value') and (input.FieldPath('data.default.value').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
     resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
     input.FieldPath('data.default').AsObject.Field('type').AsString:='A';
+    input.FieldPath('data.default').AsObject.Field('host').AsString:='@';
     schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.default').AsObject,resource,true,conn);
     domain.Field('default').AsObjectLink:=resource.UID;
-    domain.Field('records').AddObjectLink(resource.UID);
     CheckDbResult(resourceColl.Store(resource));
   end;
 
@@ -1028,6 +1022,7 @@ var
   resourceColl  : IFRE_DB_COLLECTION;
   nw_domain     : IFRE_DB_Object;
   resourceDBO   : IFRE_DB_Object;
+  defaultUID    : TGuid;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFOS_DB_NETWORK_DOMAIN) and
           conn.sys.CheckClassRight4MyDomain(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD) and
@@ -1045,37 +1040,32 @@ begin
 
   resourceColl:=conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
 
-  CheckDbResult(conn.Fetch(nw_domain.Field('dns').AsObjectLinkItem[0],resourceDBO));
-  if input.FieldPathExists('data.dns1') then begin
-    schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.dns1').AsObject,resourceDBO,false,conn);
-    CheckDbResult(conn.Update(resourceDBO));
-  end;
-  if nw_domain.Field('dns').ValueCount>1 then begin
-    CheckDbResult(conn.Fetch(nw_domain.Field('dns').AsObjectLinkItem[1],resourceDBO));
-    if input.FieldPathExists('data.dns2') then begin
-      schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.dns2').AsObject,resourceDBO,false,conn);
-      CheckDbResult(conn.Update(resourceDBO));
-    end;
-  end else begin
-    if input.FieldPathExists('data.dns2') then begin
-      resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
-      input.FieldPath('data.dns2').AsObject.Field('type').AsString:='NS';
-      schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.dns2').AsObject,resource,true,conn);
-      nw_domain.Field('dns').AddObjectLink(resource.UID);
-      CheckDbResult(resourceColl.Store(resource));
-    end;
-  end;
-  if input.FieldPathExists('data.default_host') then begin
-    if input.FieldPath('data.default_host').AsString=cFRE_DB_SYS_CLEAR_VAL_STR then begin
-      nw_domain.DeleteField('default');
-    end else begin
-      nw_domain.Field('default').AsObjectLink:=FREDB_String2Guid(input.FieldPath('data.default_host').AsString);
-    end;
-  end;
-
   if input.FieldPathExists('data.domain') then begin
     schemeObject.SetObjectFieldsWithScheme(input.FieldPath('data.domain').AsObject,nw_domain,false,conn);
   end;
+
+  if input.FieldPathExists('data.default') then begin
+    if input.FieldPathExists('data.default.value') and (input.FieldPath('data.default.value').AsString=cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+      defaultUID:=nw_domain.Field('default').AsObjectLink;
+      nw_domain.DeleteField('default');
+      CheckDbResult(conn.Update(nw_domain.CloneToNewObject()));
+      CheckDbResult(conn.Delete(defaultUID));
+    end else begin
+      if nw_domain.FieldExists('default') then begin
+        CheckDbResult(conn.FetchAs(nw_domain.Field('default').AsObjectLink,TFOS_DB_DNS_RESOURCE_RECORD,resource));
+        schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.default').AsObject,resource,false,conn);
+        CheckDbResult(conn.Update(resource));
+      end else begin
+        resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
+        input.FieldPath('data.default').AsObject.Field('type').AsString:='A';
+        input.FieldPath('data.default').AsObject.Field('host').AsString:='@';
+        schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.default').AsObject,resource,true,conn);
+        nw_domain.Field('default').AsObjectLink:=resource.UID;
+        CheckDbResult(resourceColl.Store(resource));
+      end;
+    end;
+  end;
+
   CheckDbResult(conn.Update(nw_domain));
 
   Result:=GFRE_DB_NIL_DESC;
@@ -1177,7 +1167,12 @@ begin
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_DNS_RESOURCE_RECORD]);
 
   if not (input.FieldExists('networkDomainId') or input.FieldExists('rrecordId')) then
-    raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'Error: Network Domain Id or Resource Record Id has to be passed to WEB_StoreResourceRecord.'));
+    raise EFRE_DB_Exception.Create('Error: Network Domain Id or Resource Record Id has to be passed to WEB_StoreResourceRecord.');
+
+  if input.FieldPathExists('data.host') and (input.FieldPath('data.host').AsString='@') then begin
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'error_host_name_at_caption'),FetchModuleTextShort(ses,'error_host_name_at_msg'),fdbmt_error);
+    exit;
+  end;
 
   if input.FieldExists('rrecordId') then begin
     CheckDbResult(conn.FetchAs(FREDB_String2Guid(input.Field('rrecordId').AsString),TFOS_DB_DNS_RESOURCE_RECORD,resource));
