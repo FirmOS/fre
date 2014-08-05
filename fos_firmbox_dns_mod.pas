@@ -758,12 +758,13 @@ begin
     with transform do begin
       AddOneToOnescheme('name','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddMatchingReferencedField('default','value','default',FetchModuleTextShort(session,'grid_network_domains_default'));
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('name'),'FTX_SEARCH','',false);
     end;
     domains_grid := session.NewDerivedCollection('NETWORK_DOMAINS_GRID');
     with domains_grid do begin
       SetDeriveParent(conn.GetDomainCollection(CFOS_DB_NETWORK_DOMAINS_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
       SetDefaultOrderField('name',true);
     end;
 
@@ -774,6 +775,7 @@ begin
       AddOneToOnescheme('value','value',FetchModuleTextShort(session,'grid_records_value'),dt_string);
       AddOneToOnescheme('ttl','ttl',FetchModuleTextShort(session,'grid_records_ttl'),dt_number);
       AddOneToOnescheme('type','type_native','',dt_string,false);
+      AddCollectorscheme('%s %s',TFRE_DB_NameTypeArray.Create('host','value'),'FTX_SEARCH','',false);
     end;
 
     records_grid := session.NewDerivedCollection('DNS_RECORDS_GRID');
@@ -781,7 +783,7 @@ begin
       SetDeriveParent(conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetUseDependencyAsRefLinkFilter(['RECORDS>TFOS_DB_DNS_RESOURCE_RECORD'],false,'uid');
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_ResourceRecordsMenu));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_ResourceRecordsMenu));
       SetDefaultOrderField('host',true);
       Filters.AddStringFieldFilter('TYPE_FILTER','type_native','NS',dbft_EXACT,false);
     end;
