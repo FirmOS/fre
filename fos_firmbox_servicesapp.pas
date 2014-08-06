@@ -597,9 +597,6 @@ begin
       CreateAppText(conn,'sitemap_main','Services','','Services');
       CreateAppText(conn,'sitemap_managed_services','Managed','','Managed');
 
-      //FIXXME - CHECK
-      //CreateAppText(conn,'error_no_access','Access denied'); //delete with patch
-      //CreateAppText(conn,'button_save','Save'); //delete with patch
     end;
   if (currentVersionId='1.0') then
     begin

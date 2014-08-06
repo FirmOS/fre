@@ -183,7 +183,6 @@ begin
   if currentVersionId='' then begin
     currentVersionId := '0.1';
 
-    //TFOS_FIRMBOX_NAMESERVER_MOD;
     CreateModuleText(conn,'nameserver_description','Nameserver','Nameserver','Nameserver');
 
     CreateModuleText(conn,'grid_records_host','Host');
@@ -396,7 +395,7 @@ begin
     isNew:=true;
   end;
 
-  schemeObject.SetObjectFieldsWithScheme(input.Field('data').AsObject,nameserverObj,true,conn);
+  schemeObject.SetObjectFieldsWithScheme(input.Field('data').AsObject,nameserverObj,isNew,conn);
 
   if isNew then begin
     CheckDbResult(resourceColl.Store(nameserverObj));
@@ -405,7 +404,6 @@ begin
   end;
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
-
 end;
 
 function TFOS_FIRMBOX_NAMESERVER_MOD.WEB_NameserverDelete(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -593,11 +591,6 @@ begin
 
     StoreTranslateableText(conn,'scheme_name','Name');
   end;
-  if (currentVersionId='1.0') then begin
-  //next update code
-  end;
-
-   
 end;
 
 { TFOS_FIRMBOX_DNS_MOD }
