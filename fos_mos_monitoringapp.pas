@@ -298,8 +298,6 @@ begin
     //TFOS_CITYCOM_MOS_STRUCTURAL_MOD;
     CreateAppText(conn,'structural_description','Structural','Structural','Structural');
 
-    //FIXXME - CHECK
-    //CreateAppText(conn,'error_no_access','Access denied'); //delete with patch
   end;
   if (currentVersionId='1.0') then begin
     //next update code
