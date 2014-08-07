@@ -22,6 +22,7 @@ program fpmake_packages;
        Dependencies.Add('fcl-process');
        Dependencies.Add('FRE_HAL');
        Dependencies.Add('FRE_APPS');
+       Dependencies.Add('FOS_FIRMBOX');
        with Targets do begin
         AddUnit('fos_mos_common.pas');
         AddUnit('fos_mos_monitoringapp.pas');
