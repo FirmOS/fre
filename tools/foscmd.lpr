@@ -102,11 +102,17 @@ type
         result       := process2.WaitForAsyncExecution;
       end else begin
         process   := TFRE_Process.Create(nil);
-        process.PreparePipedStreamAsync('zfs',TFRE_DB_StringArray.Create('recv','-u','-F',ds));
-        process.SetStreams(StdInstream,StdOutStream,stdoutstream);
+        process2  := TFRE_Process.Create(nil);
+        process.PreparePipedStreamAsync('mbuffer -e',nil);
+        process2.PreparePipedStreamAsync('zfs',TFRE_DB_StringArray.Create('recv','-u','-F',ds)) ;
+        process.SetStreams(StdInstream,process2.Input,stderrstream);
+        process2.SetStreams(nil,stdoutstream,stdoutstream);
         process.RegisterProgressCallback(@asyncwriter.ProgressCallback);
         process.StartAsync;
-        result      := process.WaitForAsyncExecution;
+        process2.StartAsync;
+        process.WaitForAsyncExecution;
+        process2.CloseINput;
+        result       := process2.WaitForAsyncExecution;
       end;
     finally
       if assigned(process) then process.Free;
@@ -162,7 +168,8 @@ type
         process3  := TFRE_Process.Create(nil);
         process.PreparePipedStreamAsync('zfs send '+zfsparams,nil);
         process2.PreparePipedStreamAsync('bzip2 -c',nil) ;
-        process3.PreparePipedStreamAsync('nc '+targethost+' '+targetport,nil) ;
+//        process3.PreparePipedStreamAsync('nc '+targethost+' '+targetport,nil) ;
+        process3.PreparePipedStreamAsync('mbuffer -e -O '+targethost+':'+targetport,nil) ;
         process.SetStreams(StdInstream,process2.Input,stderrstream);
         process2.SetStreams(nil,process3.Input,stderrstream);
         process3.SetStreams(nil,StdoutStream,stderrstream);
@@ -183,7 +190,8 @@ type
         process2  := TFRE_Process.Create(nil);
         process3  := nil;
         process.PreparePipedStreamAsync('zfs send '+zfsparams,nil);
-        process2.PreparePipedStreamAsync('nc '+targethost+' '+targetport,nil) ;
+//        process2.PreparePipedStreamAsync('nc '+targethost+' '+targetport,nil) ;
+        process2.PreparePipedStreamAsync('mbuffer -e -O '+targethost+':'+targetport,nil) ;
         process.SetStreams(StdInstream,process2.Input,stderrstream);
         process2.SetStreams(nil,StdoutStream,stderrstream);
         process.RegisterProgressCallback(@asyncwriter.ProgressCallback);
