@@ -726,6 +726,7 @@ var
   domains_grid : IFRE_DB_DERIVED_COLLECTION;
   records_grid : IFRE_DB_DERIVED_COLLECTION;
   namesever_ch : IFRE_DB_DERIVED_COLLECTION;
+  enum         : IFRE_DB_Enum;
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -764,7 +765,8 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('host','host',FetchModuleTextShort(session,'grid_records_host'),dt_string,true,true);
-      AddOneToOnescheme('type','type',FetchModuleTextShort(session,'grid_records_type'),dt_string);
+      GFRE_DBI.GetSystemEnum('dns_resource_record_type',enum);
+      AddOneToOnescheme('type','type',FetchModuleTextShort(session,'grid_records_type'),dt_string,true,true,true,1,'','','',enum.getCaptions(conn));
       AddOneToOnescheme('value','value',FetchModuleTextShort(session,'grid_records_value'),dt_string);
       AddOneToOnescheme('ttl','ttl',FetchModuleTextShort(session,'grid_records_ttl'),dt_number);
       AddOneToOnescheme('type','type_native','',dt_string,false);
