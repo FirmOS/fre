@@ -752,7 +752,7 @@ begin
     with transform do begin
       AddOneToOnescheme('name','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddMatchingReferencedField('default','value','default',FetchModuleTextShort(session,'grid_network_domains_default'));
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('name'),'FTX_SEARCH','',false);
+      AddFulltextFilterOnTransformed(['name']);
     end;
     domains_grid := session.NewDerivedCollection('NETWORK_DOMAINS_GRID');
     with domains_grid do begin
@@ -770,7 +770,7 @@ begin
       AddOneToOnescheme('value','value',FetchModuleTextShort(session,'grid_records_value'),dt_string);
       AddOneToOnescheme('ttl','ttl',FetchModuleTextShort(session,'grid_records_ttl'),dt_number);
       AddOneToOnescheme('type','type_native','',dt_string,false);
-      AddCollectorscheme('%s %s',TFRE_DB_NameTypeArray.Create('host','value'),'FTX_SEARCH','',false);
+      AddFulltextFilterOnTransformed(['host','value']);
     end;
 
     records_grid := session.NewDerivedCollection('DNS_RECORDS_GRID');
