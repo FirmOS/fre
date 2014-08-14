@@ -41,9 +41,7 @@ program fre_patcher;
 {$modeswitch nestedprocvars}
 {$LIBRARYPATH ../../lib}
 
-{$IFDEF DARWIN}
 {$DEFINE FREMYSQL}
-{$ENDIF}
 
 uses
 //  cmem,
