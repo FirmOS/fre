@@ -37,32 +37,26 @@
       <Unit0>
         <Filename Value="fre_testserver.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fre_testserver"/>
       </Unit0>
       <Unit1>
         <Filename Value="../fre_apps/fre_db_bbb_mod.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fre_db_bbb_mod"/>
       </Unit1>
       <Unit2>
         <Filename Value="../fre_apps/fre_db_bbbapp.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fre_db_bbbapp"/>
       </Unit2>
       <Unit3>
         <Filename Value="../fre_core/fre_binary_buffer.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fre_binary_buffer"/>
       </Unit3>
       <Unit4>
         <Filename Value="../fre_db/fre_db_persistance_common.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fre_db_persistance_common"/>
       </Unit4>
       <Unit5>
         <Filename Value="../fos_corebox/fos_dbcorebox_machine.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fos_dbcorebox_machine"/>
       </Unit5>
     </Units>
   </ProjectOptions>
@@ -94,11 +88,7 @@ if TargetOS = 'solaris' then
       <TargetCPU Value="x86_64"/>
     </CodeGeneration>
     <Other>
-      <CompilerMessages>
-        <MsgFileName Value=""/>
-      </CompilerMessages>
       <CustomOptions Value="-CfSSE3"/>
-      <CompilerPath Value="$(CompPath)"/>
     </Other>
   </CompilerOptions>
   <Debugging>
