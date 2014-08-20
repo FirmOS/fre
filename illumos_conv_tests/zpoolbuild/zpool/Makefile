@@ -27,7 +27,7 @@ OBJS= zpool_main.o zpool_vdev.o zpool_iter.o zpool_util.o
 SRCS= $(OBJS:%.o=%.c)
 POFILES=$(OBJS:%.o=%.po)
 POFILE= zpool.po
-CC=/opt/gcc-4.7.2/bin/gcc
+CC=/opt/local/gcc47/bin/gcc
 
 #include ../Makefile.cmd
 #include ../Makefile.ctf

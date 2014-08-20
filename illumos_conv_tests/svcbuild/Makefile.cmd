@@ -1,1 +1,1 @@
-CC=/opt/gcc-4.7.2/bin/gcc
+CC=/opt/local/gcc47/bin/gcc
