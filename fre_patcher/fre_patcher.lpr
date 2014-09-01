@@ -68,7 +68,8 @@ uses
   fre_mysql_ll,
   sqldb,
   {$ENDIF}
-  fre_dbbusiness
+  fre_dbbusiness,
+  fre_dbbase
   ;
 
 { mysql client on osx : brew install mysql-connector-c}
@@ -170,6 +171,7 @@ begin
     'importacc'    : ImportCitycomAccounts;
     {$ENDIF}
     'genauto'      : GenerateAutomaticWFSteps;
+    'procompetence': GenerateTestDataForProCompetence;
   end;
 end;
 
@@ -565,13 +567,23 @@ end;
 procedure TFRE_Testserver.GenerateTestDataForProCompetence;
 var vm   : TFRE_DB_VMACHINE;
     coll : IFRE_DB_COLLECTION;
-    conn : IFRE_DB_CONNECTION;
+    conn : TFRE_DB_CONNECTION;
 begin
-  abort; { only code snippet (moved from bad location }
-  coll:=conn.CreateCollection(CFRE_DB_VM_COLLECTION);
-  coll.DefineIndexOnField('key',fdbft_String,true,true);
+  FRE_DBBASE.Register_DB_Extensions;
+  fos_citycom_base.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
 
-  //FIXXME - remove dummy data
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+
+  if not conn.CollectionExists(CFRE_DB_VM_COLLECTION) then
+    begin
+     coll:=conn.CreateCollection(CFRE_DB_VM_COLLECTION);
+     coll.DefineIndexOnField('key',fdbft_String,true,true);
+    end
+  else
+    coll:=conn.GetCollection(CFRE_DB_VM_COLLECTION);
+
   vm:=TFRE_DB_VMACHINE.CreateForDB;
   vm.Field('objname').AsString:='qemuwin1';
   vm.key:='qemuwin1';
@@ -592,7 +604,9 @@ begin
   vm.vncPort:=5901;
 
   CheckDbResult(coll.Store(vm));
-  //FIXXME - remove dummy data
+
+  conn.Free;
+
 end;
 
 begin
