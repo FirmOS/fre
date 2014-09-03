@@ -69,7 +69,6 @@ var conn     : IFRE_DB_Connection;
     link_parent : TGUID;
     vm_parent   : TGUID;
     mguid       : TGuid;
-    dguid       : TGuid;
     zguid       : TGuid;
     zobj        : TFRE_DB_ZONE;
     sobj        : TFRE_DB_SERVICE;
@@ -578,33 +577,20 @@ begin
   mobj.ObjectName:='Firmbox 2';
   CheckDbResult(coll.Store(mobj));
 
-  coll:=conn.GetCollection(CFOS_DB_SERVICE_DOMAINS_COLLECTION);
-
-  dobj:=TFRE_DB_SERVICE_DOMAIN.CreateForDB;
-  dobj.ObjectName:='Domain1';
-  dobj.Field('serviceParent').AsObjectLink:=mguid;
-  dguid:=dobj.UID;
-  CheckDbResult(coll.Store(dobj));
-
-  dobj:=TFRE_DB_SERVICE_DOMAIN.CreateForDB;
-  dobj.ObjectName:='Domain2';
-  dobj.Field('serviceParent').AsObjectLink:=mguid;
-  CheckDbResult(coll.Store(dobj));
-
   coll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
 
   zobj:=TFRE_DB_ZONE.CreateForDB;
   zobj.ObjectName:='Zone1';
-  zobj.Field('serviceParent').AsObjectLink:=dguid;
+  zobj.Field('serviceParent').AsObjectLink:=mguid;
   zguid:=zobj.UID;
   CheckDbResult(coll.Store(zobj));
 
   zobj:=TFRE_DB_ZONE.CreateForDB;
   zobj.ObjectName:='Zone2';
-  zobj.Field('serviceParent').AsObjectLink:=dguid;
+  zobj.Field('serviceParent').AsObjectLink:=mguid;
   CheckDbResult(coll.Store(zobj));
 
-  coll:=conn.GetCollection(CFOS_DB_MANAGED_SERVICES_COLLECTION);
+  coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
 
   sobjvm:=TFRE_DB_VMACHINE.CreateForDB;
   sobjvm.ObjectName:='VM1';

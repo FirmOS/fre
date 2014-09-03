@@ -25,12 +25,6 @@ uses
   fre_zfs,fre_hal_schemes,
   fos_firmbox_vm_machines_mod;
 
-const
-
-  CFOS_DB_SERVICE_DOMAINS_COLLECTION   = 'services_domains';
-  CFOS_DB_ZONES_COLLECTION             = 'zones';
-  CFOS_DB_MANAGED_SERVICES_COLLECTION  = 'managed_services';
-
 type
 
   { TFOS_FIRMBOX_SERVICES_APP }
@@ -423,7 +417,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_nas_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSCF('TFRE_DB_NAS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSCF('TFRE_DB_NAS','newOperation','collection',CFOS_DB_SERVICES_COLLECTION),fdbbt_submit);
   Result:=res;
 end;
 
@@ -444,7 +438,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_dns_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.AddInput.Describe('','serviceParent',false,false,false,true,ses.GetSessionModuleData(ClassName).Field('selectedService').AsString);
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSCF('TFRE_DB_DNS','newOperation','collection',CFOS_DB_MANAGED_SERVICES_COLLECTION),fdbbt_submit);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSCF('TFRE_DB_DNS','newOperation','collection',CFOS_DB_SERVICES_COLLECTION),fdbbt_submit);
   Result:=res;
 end;
 
@@ -647,15 +641,10 @@ begin
 end;
 
 class procedure TFOS_FIRMBOX_SERVICES_APP.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
-var
-  coll     : IFRE_DB_COLLECTION;
 begin
+    CreateServicesCollections(conn);
     if currentVersionId='' then begin
       currentVersionId := '1.0';
-      coll := conn.CreateCollection(CFOS_DB_MANAGED_SERVICES_COLLECTION,false);
-      //coll.DefineIndexOnField('name',fdbft_String,true,true);
-      coll := conn.CreateCollection(CFOS_DB_SERVICE_DOMAINS_COLLECTION,false);
-      coll := conn.CreateCollection(CFOS_DB_ZONES_COLLECTION,false);
     end;
 end;
 
