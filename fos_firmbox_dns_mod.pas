@@ -862,9 +862,11 @@ begin
       form.FillWithObjectValues(rrecord,ses,'default');
     end;
 
-    sf:=CWSF(@WEB_UpdateNetworkDomain);
-    sf.AddParam.Describe('nwDomainId',nw_domain.UID_String);
-    form.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+    if editable then begin
+      sf:=CWSF(@WEB_UpdateNetworkDomain);
+      sf.AddParam.Describe('nwDomainId',nw_domain.UID_String);
+      form.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+    end;
     res:=form;
   end else begin
     res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_domain_details_select_one'));
