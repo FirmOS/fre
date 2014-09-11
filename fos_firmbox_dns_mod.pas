@@ -60,6 +60,7 @@ type
     function        WEB_ResourceRecordDelete            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ResourceRecordDeleteConfirmed   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ResourceRecordsMenu             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ResourceRecordsSC               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFOS_FIRMBOX_NAMESERVER_MOD }
@@ -807,7 +808,7 @@ begin
       SetDeriveParent(conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetUseDependencyAsRefLinkFilter(['TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN'],false,'uid');
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_ResourceRecordsMenu));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_ResourceRecordsMenu),nil,CWSF(@WEB_ResourceRecordsSC));
       SetDefaultOrderField('host',true);
       Filters.AddStringFieldFilter('TYPE_FILTER','type_native','NS',dbft_EXACT,false);
       Filters.AddStringFieldFilter('DEFAULT','host','@',dbft_EXACT,false);
@@ -1272,13 +1273,8 @@ end;
 function TFOS_FIRMBOX_DNS_MOD.WEB_ResourceRecordDeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   i       : NativeInt;
-  domain  : IFRE_DB_Object;
   rrecord : IFRE_DB_Object;
 begin
-  if not (conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-
-  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('nwDomainId').AsString),domain));
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[i]),rrecord));
@@ -1312,6 +1308,33 @@ begin
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_resource_record'),'',func);
   end;
   Result:=res;
+end;
+
+function TFOS_FIRMBOX_DNS_MOD.WEB_ResourceRecordsSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  mod_disabled: Boolean;
+  rrecord     : IFRE_DB_Object;
+  del_disabled: Boolean;
+begin
+  CheckClassVisibility4MyDomain(ses);
+
+  mod_disabled:=true;
+  del_disabled:=true;
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
+    if input.Field('selected').ValueCount=1 then begin
+      CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),rrecord));
+      if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_DNS_RESOURCE_RECORD,rrecord.DomainID) then begin
+        mod_disabled:=false;
+      end;
+      if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,rrecord.DomainID) then begin
+        del_disabled:=false;
+      end;
+    end;
+  end;
+
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('mod_record',mod_disabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('del_record',del_disabled));
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 end.
