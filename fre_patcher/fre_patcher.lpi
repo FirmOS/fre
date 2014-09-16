@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-e OE --patch=genauto"/>
+        <CommandLineParams Value="-e OE,ADC --patch=movedc"/>
         <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
@@ -90,7 +90,7 @@ if TargetOS = 'linux' then
       </SyntaxOptions>
     </Parsing>
     <CodeGeneration>
-      <TargetCPU Value="arm"/>
+      <TargetCPU Value="x86_64"/>
     </CodeGeneration>
   </CompilerOptions>
   <Debugging>

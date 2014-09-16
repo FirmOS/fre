@@ -62,6 +62,7 @@ uses
   fre_hal_schemes,
   fos_firmbox_vmapp,
   fos_firmbox_vm_machines_mod,
+  fos_citycom_adc_common,
   sysutils,
   fos_citycom_base,
   {$IFDEF FREMYSQL}
@@ -89,6 +90,7 @@ type
     {$ENDIF}
     procedure   GenerateAutomaticWFSteps                ;
     procedure   GenerateTestDataForProCompetence        ;
+    procedure   MoveDomainCollecions                    ;
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -133,7 +135,7 @@ begin
   if HasOption('patch') then
     begin
       Patch(GetOptionValue('patch'));
-      GFRE_DB_PS_LAYER.SyncSnapshot(true);
+      GFRE_DB_PS_LAYER.SyncSnapshot;
       result := true; { should terminate }
     end
   else
@@ -172,6 +174,7 @@ begin
     {$ENDIF}
     'genauto'      : GenerateAutomaticWFSteps;
     'procompetence': GenerateTestDataForProCompetence;
+    'movedc'       : MoveDomainCollecions;
   end;
 end;
 
@@ -550,7 +553,7 @@ begin
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
   coll := conn.SYSC.Collection('SysWorkflowScheme');
   try
-   writeln('DEF INDEX ',coll.DefineIndexOnField('error_idx',fdbft_String,true,true));
+   writeln('DEF INDEX ',coll.DefineIndexOnField('error_idx',fdbft_String,true,true).Code);
   except
   end;
   conn.Free;
@@ -608,6 +611,152 @@ begin
   conn.Free;
 
 end;
+
+procedure TFRE_Testserver.MoveDomainCollecions;
+var coll : IFRE_DB_COLLECTION;
+    conn : TFRE_DB_CONNECTION;
+
+    procedure IterateColls(const coll : TFRE_DB_COLLECTION);
+    var is_a_dc  : boolean;
+        dc_name  : TFRE_DB_NameType;
+         c_name  : TFRE_DB_NameType;
+        nt       : TFRE_DB_INDEX_DEF_ARRAY;
+        i        : NativeInt;
+        domid    : TFRE_DB_GUID;
+        new_coll : IFRE_DB_COLLECTION;
+        new_objs : IFRE_DB_ObjectArray;
+        dc_objs  :  IFRE_DB_ObjectArray;
+
+        procedure CheckObjects(const iob : IFRE_DB_Object);
+        begin
+          if iob.DomainID<>domid then
+            begin
+              writeln('>>> WARNING : OBJ ',iob.UID_String,' HAS A DIFFERENT DOMAINID ',FREDB_G2H(iob.DomainID),'  THEN THE DOMAINCOLLECTION ',FREDB_G2H(domid));
+            end
+          else
+            ; //writeln('  > OBJECT ',iob.UID_String,' OK');
+          //if dc_name='dns_records' then
+          //  begin
+          //    writeln('>>------------------OBJ DUMP ');
+          //    writeln(iob.DumpToString);
+          //    writeln('<<------------------OBJ DUMP ');
+          //  end;
+        end;
+
+        procedure CopyObjects(const iob : IFRE_DB_Object);
+        begin
+          if iob.DomainID<>domid then
+            begin
+              writeln('>>> WARNING : OBJ ',iob.UID_String,' HAS A DIFFERENT DOMAINID ',FREDB_G2H(iob.DomainID),'  THEN THE DOMAINCOLLECTION ',FREDB_G2H(domid));
+            end
+          else
+            ; //writeln('  > OBJECT ',iob.UID_String,' OK');
+        end;
+
+        procedure CopyMissing;
+        var i,j : NativeInt;
+            fnd : boolean;
+            desc:string;
+        begin
+          for i:=0 to high(dc_objs) do
+            begin
+              fnd := false;
+              for j := 0 to high(new_objs) do
+                if new_objs[j].UID=dc_objs[i].UID then
+                  begin
+                    fnd := true;
+                    break;
+                  end;
+              if not fnd then
+                begin
+                  //writeln('  |> Store object ',dc_objs[i].GetDescriptionID,' in ',new_coll.CollectionName());
+                  desc := dc_objs[i].GetDescriptionID+' in '+new_coll.CollectionName();
+                  try
+                    CheckDbResult(new_coll.Store(dc_objs[i]));
+                  except
+                    on e:Exception do
+                      begin
+                        writeln('  X|> Store object ',desc);
+                        writeln(e.Message);
+                      end;
+                  end;
+                end;
+            end;
+        end;
+
+    begin
+      is_a_dc := coll.IsADomainCollection;
+      //writeln('COLL ', coll.CollectionName,' ',is_a_dc);
+      if is_a_dc then
+        begin
+          dc_name := coll.DomainCollName();
+          nt      := coll.GetAllIndexDefinitions;
+          domid   := FREDB_H2G(copy(coll.CollectionName(),1,32));
+          writeln('DOMAIN COLL ', coll.CollectionName,' -> ',dc_name,' Indexes:',Length(nt),' ObjectCount : ',coll.ItemCount);
+          for i:=0 to high(nt) do
+            begin
+              //writeln('  INDEX : ',nt[i].IndexDescriptionShort);
+              //CheckDbResult(coll.DropIndex(nt[i].IndexName));
+            end;
+          coll.ForAllI(@CheckObjects);
+          if not conn.CollectionExists(dc_name) then
+            begin
+              writeln('Creating non - DC Collection : ',dc_name);
+              new_coll := conn.CreateCollection(dc_name);
+              for i:=0 to high(nt) do
+                begin
+                   writeln('Defining Index on ',dc_name,' ',nt[i].IndexDescriptionShort);
+                   CheckDbResult(new_coll.DefineIndexOnField(nt[i]));
+                end;
+            end
+          else
+            begin
+              new_coll := conn.GetCollection(dc_name);
+            end;
+          new_coll.GetAllObjs(new_objs);
+          GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1);
+          coll.GetAllObjs(dc_objs);
+          GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1);
+          CopyMissing;
+          GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1);
+          coll.ClearCollection;
+          GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1);
+          c_name := coll.CollectionName();
+          if conn.CollectionExists(c_name) then
+            begin
+              writeln('>> DELETE DOMAIN COLLECTION ',c_name);
+              CheckDbResult(conn.DeleteCollection(c_name));
+              writeln('<< DELETE DOMAIN COLLECTION ',c_name);
+            end;
+        end;
+    end;
+
+
+    procedure IterateCollsNoDc(const coll : TFRE_DB_COLLECTION);
+    var is_a_dc  : boolean;
+        nt       : TFRE_DB_INDEX_DEF_ARRAY;
+        i        : NativeInt;
+
+    begin
+      is_a_dc := coll.IsADomainCollection;
+      if is_a_dc then
+        begin
+        end
+      else
+        begin
+          nt      := coll.GetAllIndexDefinitions;
+          writeln('NORMAL COLL ', coll.CollectionName,' Indexes:',Length(nt),' ObjectCount : ',coll.ItemCount);
+        end;
+    end;
+
+begin
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  conn.ForAllColls(@IterateColls);
+  conn.ForAllColls(@IterateCollsNoDc);
+  conn.Free;
+end;
+
 
 begin
   cFRE_PS_LAYER_USE_EMBEDDED := true; { always patch local ? }
