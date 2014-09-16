@@ -315,7 +315,7 @@ begin
   if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
     records_grid.AddButton.Describe(CWSF(@WEB_AddNameserver),'',FetchModuleTextShort(ses,'tb_create_nameserver'),FetchModuleTextHint(ses,'tb_create_nameserver'));
   end;
-  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
     records_grid.AddButton.Describe(CWSF(@WEB_NameserverDelete),'',FetchModuleTextShort(ses,'tb_delete_nameserver'),FetchModuleTextHint(ses,'tb_delete_nameserver'),fdgbd_single);
   end;
   if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
