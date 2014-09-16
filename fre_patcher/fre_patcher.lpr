@@ -221,7 +221,7 @@ begin
    conn := GFRE_DB.NewConnection;
    GDBPS_SKIP_STARTUP_CHECKS := true; { skip inkonsitency checks, to enable consistency restoration  }
    CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
-   coll := conn.GetDomainCollection(CFOS_DB_PROD_MOD_VARIATION_PRICES_COLLECTION,'CITYCOM');
+   coll := conn.GetCollection(CFOS_DB_PROD_MOD_VARIATION_PRICES_COLLECTION);
    writeln('PATCHING BASE DB ',FDBName);
    writeln('----');
    conn.ForAllDatabaseObjectsDo(@ObjectPatch);
@@ -295,12 +295,12 @@ var conn     : IFRE_DB_CONNECTION;
 begin
    conn := GFRE_DB.NewConnection;
    CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
-   coll_p    := conn.GetDomainCollection(CFOS_DB_PRODUCTS_COLLECTION,domainname);
-   coll_pv   := conn.GetDomainCollection(CFOS_DB_PRODUCT_VARIATIONS_COLLECTION,domainname);
+   coll_p    := conn.GetCollection(CFOS_DB_PRODUCTS_COLLECTION);
+   coll_pv   := conn.GetCollection(CFOS_DB_PRODUCT_VARIATIONS_COLLECTION);
    writeln('PATCHING BASE DB ',FDBName);
-   coll_rel  := conn.GetDomainCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION,domainname);
+   coll_rel  := conn.GetCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION);
    coll_p.ForAll(@AddonsPatch);
-   coll_rel  := conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION,domainname);
+   coll_rel  := conn.GetCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION);
    coll_pv.ForAll(@AddonsPatch);
 end;
 
@@ -344,11 +344,11 @@ var
                 writeln(IntToStr(i) + ' ' + dbo.Field('name').AsString + ' ' + dbo.SchemeClass + ' ' + FREDB_G2H(dbo.UID));
 
                 if dbo.SchemeClass='TFOS_DB_CITYCOM_PRODUCT' then begin
-                  moduleColl:=conn.GetDomainCollection(CFOS_DB_PRODUCT_MODULE_RELATIONS_COLLECTION,'citycom');
-                  addonColl:=conn.GetDomainCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION,'citycom');
+                  moduleColl:=conn.GetCollection(CFOS_DB_PRODUCT_MODULE_RELATIONS_COLLECTION);
+                  addonColl:=conn.GetCollection(CFOS_DB_PRODUCT_ADDON_RELATIONS_COLLECTION);
                 end else begin
-                  moduleColl:=conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_MODULE_RELATIONS_COLLECTION,'citycom');
-                  addonColl:=conn.GetDomainCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION,'citycom');
+                  moduleColl:=conn.GetCollection(CFOS_DB_PRODUCTVARIATION_MODULE_RELATIONS_COLLECTION);
+                  addonColl:=conn.GetCollection(CFOS_DB_PRODUCTVARIATION_ADDON_RELATIONS_COLLECTION);
                 end;
 
                 if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE_RELATION') then begin
@@ -467,9 +467,9 @@ var
 begin
   conn := GFRE_DBI.NewConnection;
   CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
-  if not conn.DomainCollectionExists(CFOS_DB_CUSTOMERS_COLLECTION,domainname) then
-    conn.CreateDomainCollection(CFOS_DB_CUSTOMERS_COLLECTION,false,domainname);
-  coll := conn.GetDomainCollection(CFOS_DB_CUSTOMERS_COLLECTION,domainname);
+  if not conn.CollectionExists(CFOS_DB_CUSTOMERS_COLLECTION) then
+    conn.CreateCollection(CFOS_DB_CUSTOMERS_COLLECTION);
+  coll := conn.GetCollection(CFOS_DB_CUSTOMERS_COLLECTION);
 
   C:=TFOSMySqlConn.Create(Nil);
   try
@@ -616,6 +616,20 @@ procedure TFRE_Testserver.MoveDomainCollecions;
 var coll : IFRE_DB_COLLECTION;
     conn : TFRE_DB_CONNECTION;
 
+    function isDomainCollection(const collName: TFRE_DB_NameType): Boolean;
+    var domuid : TFRE_DB_GUID;
+    begin
+      if Length(collName)<=32 then { this solution is (c) by HellySoft }
+        exit(false);
+      try
+        domuid := FREDB_H2G(copy(collName,1,32));
+        exit(true);
+      except
+        exit(false);
+      end;
+    end;
+
+
     procedure IterateColls(const coll : TFRE_DB_COLLECTION);
     var is_a_dc  : boolean;
         dc_name  : TFRE_DB_NameType;
@@ -685,11 +699,13 @@ var coll : IFRE_DB_COLLECTION;
         end;
 
     begin
-      is_a_dc := coll.IsADomainCollection;
+      is_a_dc := IsDomainCollection(coll.CollectionName());
       //writeln('COLL ', coll.CollectionName,' ',is_a_dc);
       if is_a_dc then
         begin
-          dc_name := coll.DomainCollName();
+          dc_name := coll.CollectionName();
+          dc_name := Copy(dc_name,33,maxint); //get DomainCollName
+
           nt      := coll.GetAllIndexDefinitions;
           domid   := FREDB_H2G(copy(coll.CollectionName(),1,32));
           writeln('DOMAIN COLL ', coll.CollectionName,' -> ',dc_name,' Indexes:',Length(nt),' ObjectCount : ',coll.ItemCount);
@@ -738,7 +754,7 @@ var coll : IFRE_DB_COLLECTION;
         i        : NativeInt;
 
     begin
-      is_a_dc := coll.IsADomainCollection;
+      is_a_dc := IsDomainCollection(coll.CollectionName());
       if is_a_dc then
         begin
         end
