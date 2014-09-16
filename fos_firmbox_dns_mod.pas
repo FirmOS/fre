@@ -38,8 +38,7 @@ type
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
     class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallUserDBObjects4Domain         (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
-    class procedure InstallUserDBObjects4SysDomain      (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
     function        _AddModifyResourceRecord            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
@@ -279,7 +278,7 @@ begin
 
     records_grid := session.NewDerivedCollection('NAMESERVER_RECORDS_GRID');
     with records_grid do begin
-      SetDeriveParent(conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
+      SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetUseDependencyAsRefLinkFilter(['RECORDS>TFOS_DB_DNS_RESOURCE_RECORD'],false,'uid');
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_NameserverMenu));
@@ -392,7 +391,7 @@ begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('rrecordId').AsString),TFOS_DB_DNS_NAMESERVER_RECORD,nameserverObj));
     isNew:=false;
   end else begin
-    resourceColl:=conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
+    resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
     nameserverObj:=TFOS_DB_DNS_NAMESERVER_RECORD.CreateForDB;
     nameserverObj.Field('type').AsString:='NS';
     isNew:=true;
@@ -679,29 +678,23 @@ begin
   end;
 end;
 
-class procedure TFOS_FIRMBOX_DNS_MOD.InstallUserDBObjects4Domain(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFOS_FIRMBOX_DNS_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
 var
   coll: IFRE_DB_COLLECTION;
 begin
   if currentVersionId='' then begin
     currentVersionId := '0.1';
-    if not conn.DomainCollectionExists('network_domains') then begin
-      coll := conn.CreateDomainCollection('network_domains',false,'',FREDB_G2H(domainUID));
-      coll.DefineIndexOnField('name',fdbft_String,true,true);
-      coll := conn.CreateDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION,false,'',FREDB_G2H(domainUID));
+    if not conn.CollectionExists(CFOS_DB_DNS_RECORDS_COLLECTION) then begin
+      coll := conn.CreateCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
       coll.DefineIndexOnField('name',fdbft_String,true,true);
     end;
   end;
   if currentVersionId='0.1' then begin
     currentVersionId := '0.2';
-    conn.DeleteDomainCollection('network_domains');
+    if conn.CollectionExists('network_domains') then begin
+      conn.DeleteCollection('network_domains');
+    end;
   end;
-end;
-
-class procedure TFOS_FIRMBOX_DNS_MOD.InstallUserDBObjects4SysDomain(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
-begin
-  inherited InstallUserDBObjects4SysDomain(conn, currentVersionId, domainUID);
-  InstallUserDBObjects4Domain(conn,currentVersionId,domainUID);
 end;
 
 function TFOS_FIRMBOX_DNS_MOD._AddModifyResourceRecord(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean): IFRE_DB_Object;
@@ -770,7 +763,7 @@ begin
 
     namesever_ch:= session.NewDerivedCollection('NAMESERVER_CHOOSER');
     with namesever_ch do begin
-      SetDeriveParent(conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
+      SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('host'));
       Filters.AddStringFieldFilter('TYPE_FILTER','type','NS',dbft_EXACT);
@@ -805,7 +798,7 @@ begin
 
     records_grid := session.NewDerivedCollection('DNS_RECORDS_GRID');
     with records_grid do begin
-      SetDeriveParent(conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
+      SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetUseDependencyAsRefLinkFilter(['TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN'],false,'uid');
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_ResourceRecordsMenu),nil,CWSF(@WEB_ResourceRecordsSC));
@@ -822,7 +815,7 @@ begin
 
     dns_customers := session.NewDerivedCollection(CFOS_DB_DNS_CUSTOMERS_DCOLL);
     with dns_customers do begin
-      SetDeriveParent(conn.GetDomainCollection(CFOS_DB_CUSTOMERS_COLLECTION));
+      SetDeriveParent(conn.GetCollection(CFOS_DB_CUSTOMERS_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
       SetDefaultOrderField('objname',true);
@@ -1056,7 +1049,7 @@ begin
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_NETWORK_DOMAIN]);
 
   serviceColl:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
-  resourceColl:=conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
+  resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
 
   idx:='DNS_'+input.FieldPath('data.domain.name').AsString;
   if serviceColl.ExistsIndexed(idx) then begin
@@ -1114,7 +1107,7 @@ begin
   if not GFRE_DBI.GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,schemeObjectRR) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_DNS_RESOURCE_RECORD]);
 
-  resourceColl:=conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
+  resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
 
   if input.FieldPathExists('data.domain') then begin
     schemeObject.SetObjectFieldsWithScheme(input.FieldPath('data.domain').AsObject,nw_domain,false,conn);
@@ -1231,7 +1224,7 @@ begin
     if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,domain.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-    resourceColl:=conn.GetDomainCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
+    resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
     resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
     resource.SetDomainID(domain.DomainID);
     resource.Field('network_domain').AsObjectLink:=domain.UID;
