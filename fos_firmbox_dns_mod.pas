@@ -675,6 +675,7 @@ begin
     currentVersionId := '0.2';
 
     CreateModuleText(conn,'chooser_customer','Customer');
+    CreateModuleText(conn,'grid_network_domains_customer','Customer');
   end;
 end;
 
@@ -772,6 +773,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
+      AddMatchingReferencedField('CUSTOMER>TFOS_DB_CITYCOM_CUSTOMER','objname','objname',FetchModuleTextShort(session,'grid_network_domains_customer'),true,dt_string,true);
       AddOneToOnescheme('name','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddMatchingReferencedField('default','value','default',FetchModuleTextShort(session,'grid_network_domains_default'));
       AddFulltextFilterOnTransformed(['name']);
