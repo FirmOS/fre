@@ -74,7 +74,7 @@ type
     function        _AddModifyNameserver                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
-    procedure       CalculateGridFields                 (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object);
+    procedure       CalculateGridFields                 (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_NameserverMenu                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -273,7 +273,7 @@ begin
       AddOneToOnescheme('type','type','',dt_string,false);
       AddOneToOnescheme('icon','icon','',dt_string,false);
       AddOneToOnescheme('default','default','',dt_number,false);
-      SetFinalRightTransformFunction(@CalculateGridFields);
+      SetFinalRightTransformFunction(@CalculateGridFields,[]);
     end;
 
     records_grid := session.NewDerivedCollection('NAMESERVER_RECORDS_GRID');
@@ -288,7 +288,7 @@ begin
   end;
 end;
 
-procedure TFOS_FIRMBOX_NAMESERVER_MOD.CalculateGridFields(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object);
+procedure TFOS_FIRMBOX_NAMESERVER_MOD.CalculateGridFields(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object;const langres: array of TFRE_DB_String);
 begin
   if transformed_object.FieldExists('default') then begin
     if transformed_object.Field('default').AsInt16=1 then begin
