@@ -20,9 +20,9 @@ uses
   Classes, SysUtils,
   FOS_TOOL_INTERFACES,
   FRE_DB_INTERFACE,
-  fos_citycom_base,
   fre_hal_schemes,
-  FRE_DB_COMMON;
+  FRE_DB_COMMON,
+  fre_dbbusiness;
 
 const
 
