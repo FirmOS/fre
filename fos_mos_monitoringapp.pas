@@ -44,8 +44,8 @@ type
   public
     class procedure RegisterSystemScheme          (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects              (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallDBObjects4Domain       (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
-    class procedure InstallDBObjects4SysDomain    (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallDBObjects4Domain       (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
+    class procedure InstallDBObjects4SysDomain    (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
     class procedure InstallUserDBObjects          (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   published
     function        WEB_DISK_DATA_FEED            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -135,7 +135,7 @@ var
   mosObj: IFRE_DB_Object;
 begin
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
-    CheckDbResult(conn.Fetch(FREDB_String2Guid(input.Field('selected').AsStringArr[0]),mosObj));
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
     writeln('SWL: MOSOBJ',mosobj.DumpToString());
     if mosObj.MethodExists('MOSContent') then begin
       res:=mosObj.Invoke('MOSContent',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
@@ -214,7 +214,7 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
-    CheckDbResult(conn.Fetch(FREDB_String2Guid(input.Field('selected').AsStringArr[0]),mosObj));
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
     if mosObj.MethodExists('MOSMenu') then begin
       Result:=mosObj.Invoke('MOSMenu',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
     end else begin
@@ -305,7 +305,7 @@ begin
 
 end;
 
-class procedure TFOS_CITYCOM_MONITORING_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFOS_CITYCOM_MONITORING_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 
@@ -348,7 +348,7 @@ begin
     end;
 end;
 
-class procedure TFOS_CITYCOM_MONITORING_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFOS_CITYCOM_MONITORING_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 
@@ -404,11 +404,11 @@ function TFOS_CITYCOM_MONITORING_APP.WEB_MOS_DATA_FEED(const input: IFRE_DB_Obje
 var
   i             : NativeInt;
   moscollection : IFRE_DB_COLLECTION;
-  mos_parent_id : TGuid;
+  mos_parent_id : TFRE_DB_GUID;
 
   procedure _processUpdates(const updatestep:TFRE_DB_UPDATE_TRANSPORT);
   var update_type : TFRE_DB_ObjCompareEventType;
-     obj_id       : TGuid;
+     obj_id       : TFRE_DB_GUID;
      target_obj   : IFRE_DB_Object;
      res          : TFRE_DB_Errortype;
 

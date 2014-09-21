@@ -86,7 +86,7 @@ type
   public
     class procedure RegisterSystemScheme      (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallDBObjects4Domain   (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallDBObjects4Domain   (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
   end;
 
   TFRE_AlertHTMLJob = class (TFRE_DB_Testcase)
@@ -123,13 +123,13 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
       tmadress = (tmFOSLab,tmKSMServ,tmFOSServ,tmFOSMB,tmcc);
  var
       mon          : IFRE_DB_Object;
-      mon_id       : TGUID;
+      mon_id       : TFRE_DB_GUID;
       mon_key      : string;
       sg           : IFRE_DB_Object;
       service      : IFRE_DB_Object;
-      service_id   : TGUID;
+      service_id   : TFRE_DB_GUID;
       machine      : IFRE_DB_Object;
-      machine_id   : TGUID;
+      machine_id   : TFRE_DB_GUID;
       tester       : TFRE_DB_Tester;
       coll_mon     : IFRE_DB_COLLECTION;
       coll_sg      : IFRE_DB_COLLECTION;
@@ -164,7 +164,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         obj.Field('troubleshooting').asstring := tshoot;
       end;
 
-      procedure AddTestCaseStatus(const tc_id: TGUID;const periodic:TFRE_TestPeriodic);
+      procedure AddTestCaseStatus(const tc_id: TFRE_DB_GUID;const periodic:TFRE_TestPeriodic);
        var
          tcs      : IFRE_DB_Object;
        begin
@@ -178,7 +178,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
       procedure StoreAndAddToMachine(obj:IFRE_DB_Object);
       var
-        id       : TGUID;
+        id       : TFRE_DB_GUID;
         tc       : TFRE_DB_Testcase;
         periodic : TFRE_TestPeriodic;
       begin
@@ -1106,7 +1106,7 @@ begin
         GetDBConnection(input).Update(obj);
       end;
     end else begin
-      writeln('Could not fetch : '+GFRE_BT.GUID_2_HexString(upd_guids[i]));
+      writeln('Could not fetch : '+FREDB_G2H(upd_guids[i]));
     end;
   end;
   result := GFRE_DB_NIL_DESC;
@@ -1118,13 +1118,13 @@ var   sub     : TFRE_DB_SUBSECTIONS_DESC;
       dc      : IFRE_DB_DERIVED_COLLECTION;
 begin
   if input.FieldExists('SELECTED') then begin
-//    writeln(GFRE_BT.GUID_2_HexString(input.Field('SELECTED').AsGUID));
+//    writeln(FREDB_G2H(input.Field('SELECTED').AsGUID));
     sub := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
     sf := TFRE_DB_SERVER_FUNC_DESC.Create.Describe(Self,'TestcaseStatus_Report');
-    sf.AddParam.Describe('guid',GFRE_BT.GUID_2_HexString(input.Field('SELECTED').asguid));
+    sf.AddParam.Describe('guid',FREDB_G2H(input.Field('SELECTED').asguid));
     sub.AddSection.Describe(sf,'Details',1);
     sf := TFRE_DB_SERVER_FUNC_DESC.Create.Describe(Self,'TestcaseStatus_Troubleshooting');
-    sf.AddParam.Describe('guid',GFRE_BT.GUID_2_HexString(input.Field('SELECTED').asguid));
+    sf.AddParam.Describe('guid',FREDB_G2H(input.Field('SELECTED').asguid));
     sub.AddSection.Describe(sf,'Troubleshooting',2);
     result := sub;
   end;
@@ -1135,7 +1135,7 @@ var obj : IFRE_DB_Object;
     s   : string;
 begin
 //  writeln(input.DumpToString);
-  GetDBConnection(input).Fetch(GFRE_BT.HexString_2_GUID(input.Field('guid').AsString),obj);
+  GetDBConnection(input).Fetch(FREDB_H2G(input.Field('guid').AsString),obj);
   if assigned(obj) then begin
     s      := obj.Field('actual_result').AsObject.DumpToString;
     s      := FREDB_String2EscapedJSString('<pre style="font-size: 10px">'+s+'</pre>');
@@ -1150,7 +1150,7 @@ var obj : IFRE_DB_Object;
     s   : string;
 begin
 //  writeln('trouble');
-  GetDBConnection(input).Fetch(GFRE_BT.HexString_2_GUID(input.Field('guid').AsString),obj);
+  GetDBConnection(input).Fetch(FREDB_H2G(input.Field('guid').AsString),obj);
   if Assigned(obj) then begin
     GetDBConnection(input).Fetch(obj.Field('testcase').AsGUID,obj);
     if Assigned(obj) then begin
@@ -1231,7 +1231,7 @@ begin
     end;
 end;
 
-class procedure TFRE_DB_MONSYS.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFRE_DB_MONSYS.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 end;

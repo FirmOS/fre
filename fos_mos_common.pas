@@ -59,20 +59,20 @@ var
   mguid               : TFRE_DB_GUID;
   guid                : TFRE_DB_GUID;
   domuid_for_testdata : TFRE_DB_GUID;
-  variationId         : TGuid;
+  variationId         : TFRE_DB_GUID;
   vcoll               : IFRE_DB_COLLECTION;
   mcoll               : IFRE_DB_COLLECTION;
-  mosuid              : TGuid;
-  moslocuid           : TGuid;
-  mosmachinesueduid   : TGuid;
-  mosmachinenorduid   : TGuid;
+  mosuid              : TFRE_DB_GUID;
+  moslocuid           : TFRE_DB_GUID;
+  mosmachinesueduid   : TFRE_DB_GUID;
+  mosmachinenorduid   : TFRE_DB_GUID;
   pool                : TFRE_DB_ZFS_POOL;
   ds                  : TFRE_DB_ZFS_DATASTORAGE;
   mosObjRZ            : TFRE_DB_VIRTUALMOSOBJECT;
   mosObjRack          : TFRE_DB_VIRTUALMOSOBJECT;
   mosObjMachine       : TFRE_DB_MACHINE;
   mosObjLoc           : TFRE_DB_VIRTUALMOSOBJECT;
-  domainId            : TGuid;
+  domainId            : TFRE_DB_GUID;
   userObj             : IFRE_DB_USER;
   groups              : TFRE_DB_GUIDArray;
   groupObj            : IFRE_DB_GROUP;
@@ -82,7 +82,7 @@ var
   var login     : TFRE_DB_String;
       res       : TFRE_DB_Errortype;
       passwd    : TFRE_DB_String;
-      domainUID : TGuid;
+      domainUID : TFRE_DB_GUID;
       userObj   : IFRE_DB_USER;
       groupObj  : IFRE_DB_GROUP;
   begin
