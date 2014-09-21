@@ -69,8 +69,8 @@ type
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
     class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallUserDBObjects4Domain         (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
-    class procedure InstallUserDBObjects4SysDomain      (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallUserDBObjects4Domain         (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
+    class procedure InstallUserDBObjects4SysDomain      (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
     function        _AddModifyNameserver                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
@@ -210,14 +210,14 @@ begin
   end;
 end;
 
-class procedure TFOS_FIRMBOX_NAMESERVER_MOD.InstallUserDBObjects4Domain(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFOS_FIRMBOX_NAMESERVER_MOD.InstallUserDBObjects4Domain(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 begin
   if currentVersionId='' then begin
     currentVersionId := '0.1';
   end;
 end;
 
-class procedure TFOS_FIRMBOX_NAMESERVER_MOD.InstallUserDBObjects4SysDomain(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFOS_FIRMBOX_NAMESERVER_MOD.InstallUserDBObjects4SysDomain(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 begin
   inherited InstallUserDBObjects4SysDomain(conn, currentVersionId, domainUID);
   InstallUserDBObjects4Domain(conn,currentVersionId,domainUID);
@@ -448,7 +448,7 @@ end;
 function TFOS_FIRMBOX_NAMESERVER_MOD.WEB_SetAsDefault(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   nsObj    : TFOS_DB_DNS_NAMESERVER_RECORD;
-  nsObjUID : TGUID;
+  nsObjUID : TFRE_DB_GUID;
   obj      : IFRE_DB_Object;
   configObj: TFRE_DB_APPLICATION_CONFIG;
   isNew    : Boolean;
@@ -1090,7 +1090,7 @@ var
   resourceColl  : IFRE_DB_COLLECTION;
   nw_domain     : IFRE_DB_Object;
   resourceDBO   : IFRE_DB_Object;
-  defaultUID    : TGuid;
+  defaultUID    : TFRE_DB_GUID;
   domain_def    : TFRE_DB_GUIDArray;
   i             : Integer;
 begin
@@ -1159,7 +1159,7 @@ end;
 function TFOS_FIRMBOX_DNS_MOD.WEB_NetworkDomainDeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   i,j          : NativeInt;
-  nwDomainId   : TGuid;
+  nwDomainId   : TFRE_DB_GUID;
   domain       : IFRE_DB_Object;
   resources    : TFRE_DB_ObjLinkArray;
   refs         : TFRE_DB_GUIDArray;

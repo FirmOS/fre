@@ -48,7 +48,7 @@ type
   public
     class procedure RegisterSystemScheme          (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects              (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallDBObjects4SysDomain    (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallDBObjects4SysDomain    (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
   published
     function        WEB_RAW_DATA_FEED             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_RAW_DATA_FEED30           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -301,14 +301,14 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   so            : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
   menu          : TFRE_DB_MENU_DESC;
 
 begin
   if input.Field('SELECTED').ValueCount>0  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_SYSTEM_GRID');
-    if dc.Fetch(sel_guid,so) then begin
+    if dc.FetchInDerived(sel_guid,so) then begin
       GetSystemSchemeByName(so.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'system_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),GetSession(input));
@@ -344,13 +344,13 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   dl            : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
 
 begin
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
-    if dc.Fetch(sel_guid,dl) then begin
+    if dc.FetchInDerived(sel_guid,dl) then begin
       GetSystemSchemeByName(dl.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'datalink_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -372,7 +372,7 @@ var
   func      : TFRE_DB_SERVER_FUNC_DESC;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   dl            : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
   sclass        : TFRE_DB_NameType;
 begin
   Result:=GFRE_DB_NIL_DESC;
@@ -384,7 +384,7 @@ begin
       if input.Field('SELECTED').ValueCount=1  then begin
         sel_guid := input.Field('SELECTED').AsGUID;
         dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_DATALINK_GRID');
-        if dc.Fetch(sel_guid,dl) then begin
+        if dc.FetchInDerived(sel_guid,dl) then begin
           sclass := dl.SchemeClass;
           writeln(schemeclass);
           if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_DATALINK_VNIC) then
@@ -427,13 +427,13 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   fc            : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
 
 begin
   if input.Field('SELECTED').ValueCount>0  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := GetSession(input).FetchDerivedCollection('APPLIANCE_SETTINGS_MOD_FC_GRID');
-    if dc.Fetch(sel_guid,fc) then begin
+    if dc.FetchInDerived(sel_guid,fc) then begin
       GetSystemSchemeByName(fc.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'fc_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -601,8 +601,8 @@ begin
     ast.SetDeriveParent(disks);
     ast.SetDefaultOrderField('diskid',true);
     ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20);
-    SetLength(labels,ast.Count);
-    ast.ForAll(@_AddDisk);
+    SetLength(labels,ast.ItemCount);
+    ast.ForAllDerived(@_AddDisk);
     ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20); // Hack for labels, must be redone
 
     rbw   := session.NewDerivedCollection('APP_POOL_RBW');
@@ -1120,7 +1120,7 @@ begin
    
 end;
 
-class procedure TFRE_FIRMBOX_APPLIANCE_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFRE_FIRMBOX_APPLIANCE_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 begin
   inherited InstallDBObjects4SysDomain(conn, currentVersionId, domainUID);
 

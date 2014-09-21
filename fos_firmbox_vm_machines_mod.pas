@@ -339,7 +339,7 @@ begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_FIRMBOX_VM_DISK)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
+  conn.Fetch(FREDB_H2G(input.Field('SELECTED').AsStringItem[0]),obj);
   Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_DISK).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
 end;
 
@@ -367,7 +367,7 @@ begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFRE_FIRMBOX_VM_ISO)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('SELECTED').AsStringItem[0]),obj);
+  conn.Fetch(FREDB_H2G(input.Field('SELECTED').AsStringItem[0]),obj);
   Result:=(obj.Implementor_HC as TFRE_FIRMBOX_VM_ISO).Invoke_DBIMI_Method('deleteOperation',input,ses,app,conn);
 end;
 
@@ -450,7 +450,7 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   dl            : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
 
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_FIRMBOX_VM_NETWORK_MOD)) then
@@ -459,7 +459,7 @@ begin
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
-    if dc.Fetch(sel_guid,dl) then begin
+    if dc.FetchInDerived(sel_guid,dl) then begin
       GFRE_DBI.GetSystemSchemeByName(dl.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'datalink_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -481,7 +481,7 @@ var
   func      : TFRE_DB_SERVER_FUNC_DESC;
   dc        : IFRE_DB_DERIVED_COLLECTION;
   dl        : IFRE_DB_Object;
-  sel_guid  : TGUID;
+  sel_guid  : TFRE_DB_GUID;
   sclass    : TFRE_DB_NameType;
 begin
   if not (conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_DATALINK)) then
@@ -491,7 +491,7 @@ begin
   if input.Field('SELECTED').ValueCount=1  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := ses.FetchDerivedCollection('VM_NETWORK_MOD_DATALINK_GRID');
-    if dc.Fetch(sel_guid,dl) then begin
+    if dc.FetchInDerived(sel_guid,dl) then begin
       sclass := dl.SchemeClass;
       writeln(schemeclass);
       input.Field('add_vnic').AsString    := app.FetchAppTextShort(ses,'datalink_add_vnic');

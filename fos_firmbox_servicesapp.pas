@@ -39,7 +39,7 @@ type
   public
     class procedure RegisterSystemScheme          (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects              (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallDBObjects4Domain       (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallDBObjects4Domain       (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
     class procedure InstallUserDBObjects          (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   end;
 
@@ -50,8 +50,8 @@ type
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
     function        _getServiceContent                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
-    function        _getPoolCount                       (const conn: IFRE_DB_CONNECTION; const machineId: TGuid; var pool:TFRE_DB_ZFS_POOL; const store: TFRE_DB_STORE_DESC): Integer;
-    function        _hasPool                            (const conn: IFRE_DB_CONNECTION; const machineId: TGuid): Boolean;
+    function        _getPoolCount                       (const conn: IFRE_DB_CONNECTION; const machineId: TFRE_DB_GUID; var pool:TFRE_DB_ZFS_POOL; const store: TFRE_DB_STORE_DESC): Integer;
+    function        _hasPool                            (const conn: IFRE_DB_CONNECTION; const machineId: TFRE_DB_GUID): Boolean;
   public
     VM: TFRE_FIRMBOX_VM_MACHINES_MOD;
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
@@ -107,7 +107,7 @@ var
   serviceObj        : IFRE_DB_Object;
   addServiceDisabled: Boolean;
   addZoneDisabled   : Boolean;
-  machineId         : TGuid;
+  machineId         : TFRE_DB_GUID;
   hlt               : boolean;
   addDNSDisabled    : Boolean;
   addNASDisabled    : Boolean;
@@ -121,7 +121,7 @@ begin
   addZoneDisabled:=true;
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedService') then begin
     if ses.GetSessionModuleData(ClassName).Field('selectedService').ValueCount=1 then begin
-      CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
+      CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
       if serviceObj.IsA('TFRE_DB_SERVICE_DOMAIN') then begin
         machineId:=serviceObj.Field('serviceParent').AsObjectLink;
 
@@ -170,7 +170,7 @@ begin
   Result:=res;
 end;
 
-function TFOS_FIRMBOX_MANAGED_SERVICES_MOD._getPoolCount(const conn: IFRE_DB_CONNECTION; const machineId: TGuid; var pool:TFRE_DB_ZFS_POOL; const store: TFRE_DB_STORE_DESC): Integer;
+function TFOS_FIRMBOX_MANAGED_SERVICES_MOD._getPoolCount(const conn: IFRE_DB_CONNECTION; const machineId: TFRE_DB_GUID; var pool:TFRE_DB_ZFS_POOL; const store: TFRE_DB_STORE_DESC): Integer;
 var
   poolCount: NativeInt;
   coll     : IFRE_DB_COLLECTION;
@@ -195,7 +195,7 @@ begin
   Result:=poolCount;
 end;
 
-function TFOS_FIRMBOX_MANAGED_SERVICES_MOD._hasPool(const conn: IFRE_DB_CONNECTION; const machineId: TGuid): Boolean;
+function TFOS_FIRMBOX_MANAGED_SERVICES_MOD._hasPool(const conn: IFRE_DB_CONNECTION; const machineId: TFRE_DB_GUID): Boolean;
 var
   coll     : IFRE_DB_COLLECTION;
   hlt      : Boolean;
@@ -358,7 +358,7 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
+  CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
   Result:=TFRE_DB_HTML_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'unknown_sel_general_content'),'%service_name%',serviceObj.Field('objname').AsString,[rfReplaceAll]));
 end;
 
@@ -368,7 +368,7 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
+  CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),serviceObj));
   Result:=TFRE_DB_HTML_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'domain_sel_general_content'),'%domain_name%',serviceObj.Field('objname').AsString,[rfReplaceAll]));
 end;
 
@@ -381,7 +381,7 @@ begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_DB_ZONE)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
+  CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
 
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
   res:=TFRE_DB_FORM_PANEL_DESC.create.Describe(FetchModuleTextShort(ses,'zone_panel_cap'),true,conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_ZONE));
@@ -409,7 +409,7 @@ begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_NAS)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
+  CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
   if (zoneObj.Implementor_HC as TFRE_DB_ZONE).hasNAS(conn) then
     raise EFRE_DB_Exception.Create('The given Zone has already a NAS service');
 
@@ -430,7 +430,7 @@ begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
+  CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),zoneObj));
   if (zoneObj.Implementor_HC as TFRE_DB_ZONE).hasDNS(conn) then
     raise EFRE_DB_Exception.Create('The given Zone has already a DNS service');
 
@@ -450,7 +450,7 @@ var
   store     : TFRE_DB_STORE_DESC;
   group     : TFRE_DB_INPUT_GROUP_DESC;
   pool      : TFRE_DB_ZFS_POOL;
-  machineId : TGuid;
+  machineId : TFRE_DB_GUID;
   domainObj : IFRE_DB_Object;
   poolCount : Integer;
 
@@ -461,7 +461,7 @@ begin
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_zone_diag_cap'),600);
 
-  CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),domainObj));
+  CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsString),domainObj));
   machineId:=domainObj.Field('serviceParent').AsObjectLink;
 
   store:=TFRE_DB_STORE_DESC.create.Describe();
@@ -489,7 +489,7 @@ var
 begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
   if input.Field('selected').ValueCount=1 then begin
-    CheckDbResult(conn.Fetch(FREDB_String2Guid(input.Field('selected').AsString),serviceObj));
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),serviceObj));
     if serviceObj.IsA(TFRE_DB_ZONE,zone) then begin
       if (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE)) or
          (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DNS)) or
@@ -599,7 +599,7 @@ begin
    
 end;
 
-class procedure TFOS_FIRMBOX_SERVICES_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFOS_FIRMBOX_SERVICES_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 

@@ -31,8 +31,8 @@ type
   public
     class procedure RegisterSystemScheme        (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects            (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallDBObjects4Domain     (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
-    class procedure InstallDBObjects4SysDomain  (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
+    class procedure InstallDBObjects4Domain     (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
+    class procedure InstallDBObjects4SysDomain  (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
     class procedure InstallUserDBObjects        (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
 
   published
@@ -106,7 +106,7 @@ type
 
   TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
-    function        _GetFileServerID          (conn : IFRE_DB_CONNECTION): TGuid;
+    function        _GetFileServerID          (conn : IFRE_DB_CONNECTION): TFRE_DB_GUID;
     function        _getShareNames            (const shares: TFRE_DB_StringArray; const conn: IFRE_DB_CONNECTION): String;
   protected
     class procedure RegisterSystemScheme      (const scheme: IFRE_DB_SCHEMEOBJECT); override;
@@ -257,7 +257,7 @@ var
 begin
    result := '';
   for i := 0 to Length(vfss) - 1 do begin
-    conn.Fetch(GFRE_BT.HexString_2_GUID(vfss[i]),vfs);
+    conn.Fetch(FREDB_H2G(vfss[i]),vfs);
     if i>0 then begin
       result := result +', ';
     end;
@@ -272,7 +272,7 @@ var
 begin
    result := '';
   for i := 0 to Length(shares) - 1 do begin
-    conn.Fetch(GFRE_BT.HexString_2_GUID(shares[i]),share);
+    conn.Fetch(FREDB_H2G(shares[i]),share);
     if i>0 then begin
       result := result +', ';
     end;
@@ -282,24 +282,25 @@ end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD._getRolename(const share_id: TFRE_DB_NameType; const roletype: TFILESHARE_ROLETYPE): TFRE_DB_NameType;
 begin
-  case roletype of
-    rtRead  : result := FREDB_Get_Rightname_UID('FSREAD',GFRE_BT.HexString_2_GUID(share_id));
-    rtWrite : result := FREDB_Get_Rightname_UID('FSWRITE',GFRE_BT.HexString_2_GUID(share_id));
-   else
-     raise EFRE_DB_Exception.Create('Undefined Roletype for Fileshare');
-  end;
+  abort; // rethink
+  //case roletype of
+    //rtRead  : result := FREDB_Get_Rightname_UID('FSREAD',FREDB_H2G(share_id));
+    //rtWrite : result := FREDB_Get_Rightname_UID('FSWRITE',FREDB_H2G(share_id));
+  // else
+  //   raise EFRE_DB_Exception.Create('Undefined Roletype for Fileshare');
+  //end;
 end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD._setShareRoles(const input: IFRE_DB_Object; const change_read, change_write, read, write: boolean; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   dependend     : TFRE_DB_StringArray;
   share_s       : string;
-  share_id      : TGuid;
+  share_id      : TFRE_DB_GUID;
   share         : IFRE_DB_Object;
   rrole         : TFRE_DB_NameType;
   wrole         : TFRE_DB_NameType;
   group         : IFRE_DB_GROUP;
-  groupid       : TGuid;
+  groupid       : TFRE_DB_GUID;
   i             : NativeInt;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then
@@ -315,13 +316,13 @@ begin
     end;
     share_s   := dependend[0];
   end;
-  share_id := GFRE_BT.HexString_2_GUID(share_s);
+  share_id := FREDB_H2G(share_s);
 
   CheckDbResult(conn.Fetch(share_id,share),app.FetchAppTextShort(ses,'Share not found!'));
 
 
   for i := 0 to input.Field('selected').ValueCount-1 do begin
-    groupid := GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]);
+    groupid := FREDB_H2G(input.Field('selected').AsStringItem[i]);
     if (conn.sys.FetchGroupById(groupid,group)<>edb_OK) then raise EFRE_DB_Exception.Create(app.FetchAppTextShort(ses,'Group not found!'));
 
     rrole := _getRolename(share_s,rtRead);
@@ -368,17 +369,18 @@ end;
 
 procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.CalculateReadWriteAccess(const conn: IFRE_DB_CONNECTION; const dependency_input: IFRE_DB_Object; const input_object: IFRE_DB_Object; const transformed_object: IFRE_DB_Object);
 var sel_guid,rr,wr : string;
-    sel_guidg      : TGUID;
-    group_id       : TGUID;
+    sel_guidg      : TFRE_DB_GUID;
+    group_id       : TFRE_DB_GUID;
     true_icon      : string;
     false_icon     : string;
 begin
+  abort; // rethink
   sel_guid  := dependency_input.FieldPath('UIDS_REF.FILTERVALUES').AsString; //FIXXME - may not be set
-  sel_guidg := GFRE_BT.HexString_2_GUID(sel_guid);
+  sel_guidg := FREDB_H2G(sel_guid);
   group_id  := input_object.uid;
 
-  rr := FREDB_Get_Rightname_UID_STR('FSREAD',sel_guid);
-  wr := FREDB_Get_Rightname_UID_STR('FSWRITE',sel_guid);
+  //rr := FREDB_Get_Rightname_UID_STR('FSREAD',sel_guid);
+  //wr := FREDB_Get_Rightname_UID_STR('FSWRITE',sel_guid);
 
   true_icon  := FREDB_getThemedResource('images_apps/firmbox_storage/access_true.png');
   false_icon := FREDB_getThemedResource('images_apps/firmbox_storage/access_false.png');
@@ -625,13 +627,13 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   vfs           : IFRE_DB_Object;
-  sel_guid      : TGUID;
-  dom_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
+  dom_guid      : TFRE_DB_GUID;
 begin
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedVFS') and (ses.GetSessionModuleData(ClassName).Field('selectedVFS').ValueCount>0)  then begin
     sel_guid := ses.GetSessionModuleData(ClassName).Field('selectedVFS').AsGUID;
     dc       := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
-    if dc.Fetch(sel_guid,vfs) then begin
+    if dc.FetchInDerived(sel_guid,vfs) then begin
       GFRE_DBI.GetSystemSchemeByName(vfs.SchemeClass,scheme);
       dom_guid := vfs.Field('domainid').AsGUID;
 
@@ -690,7 +692,7 @@ begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       //FIXXME: Errorhandling
-      CheckDbResult(conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i])),'The object is referenced');
+      CheckDbResult(conn.Delete(FREDB_H2G(input.Field('selected').AsStringItem[i])),'The object is referenced');
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -754,7 +756,7 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   share         : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
 
 begin
   CheckClassVisibility4MyDomain(ses);
@@ -762,7 +764,7 @@ begin
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedVFSShare') and (ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').ValueCount>0)  then begin
     sel_guid := ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').AsGUID;
     dc       := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
-    if dc.Fetch(sel_guid,share) then begin
+    if dc.FetchInDerived(sel_guid,share) then begin
       GFRE_DBI.GetSystemSchemeByName(share.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'vfs_share_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -822,7 +824,7 @@ begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       //FIXXME: Errorhandling
-      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+      conn.Delete(FREDB_H2G(input.Field('selected').AsStringItem[i]));
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -901,9 +903,9 @@ end;
 
 { TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD }
 
-function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD._GetFileServerID(conn: IFRE_DB_CONNECTION): TGuid;
+function TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD._GetFileServerID(conn: IFRE_DB_CONNECTION): TFRE_DB_GUID;
 var coll  : IFRE_DB_COLLECTION;
-    id    : TGuid;
+    id    : TFRE_DB_GUID;
     hlt   : boolean;
 
   procedure _get(const obj:IFRE_DB_Object ; var halt : boolean);
@@ -931,7 +933,7 @@ var
 begin
    result := '';
   for i := 0 to Length(shares) - 1 do begin
-    conn.Fetch(GFRE_BT.HexString_2_GUID(shares[i]),share);
+    conn.Fetch(FREDB_H2G(shares[i]),share);
     if i>0 then begin
       result := result +', ';
     end;
@@ -963,7 +965,7 @@ var nfs_share_dc       : IFRE_DB_DERIVED_COLLECTION;
 
     app           : TFRE_DB_APPLICATION;
     conn          : IFRE_DB_CONNECTION;
-    fileserverid  : TGUID;
+    fileserverid  : TFRE_DB_GUID;
 
 begin
   inherited;
@@ -1215,13 +1217,13 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   nfs           : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
 
 begin
   if input.Field('SELECTED').ValueCount>0  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_NFS_GRID');
-    if dc.Fetch(sel_guid,nfs) then begin
+    if dc.FetchInDerived(sel_guid,nfs) then begin
       GetSystemSchemeByName(nfs.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'nfs_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -1283,7 +1285,7 @@ begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       //FIXXME: Errorhandling
-      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+      conn.Delete(FREDB_H2G(input.Field('selected').AsStringItem[i]));
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -1332,7 +1334,7 @@ begin
   sf:=CWSF(@WEB_NFSAccessDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
   cap:=app.FetchAppTextShort(ses,'nfs_access_delete_diag_cap');
-  CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[0]),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessDelete');
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringItem[0]),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessDelete');
 
   msg:=StringReplace(app.FetchAppTextShort(ses,'nfs_access_delete_diag_msg'),'%access_type%',obj.Field('accesstype').AsString,[rfReplaceAll]);
   msg:=StringReplace(msg,'%access_host%',obj.Field('subnet').AsString,[rfReplaceAll]);
@@ -1349,7 +1351,7 @@ begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       //FIXXME: Errorhandling
-      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+      conn.Delete(FREDB_H2G(input.Field('selected').AsStringItem[i]));
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -1373,7 +1375,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'nfsaccess_modify_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
 
-  CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsString),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessModify');
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_NFSAccessModify');
   res.FillWithObjectValues(obj,ses);
 
   serverfunc :=TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_NFS_FILESHARE.ClassName,'SaveOperation');
@@ -1451,13 +1453,13 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   nfs           : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
 
 begin
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := ses.FetchDerivedCollection('GLOBAL_FILESERVER_MOD_LUN_GRID');
-    if dc.Fetch(sel_guid,nfs) then begin
+    if dc.FetchInDerived(sel_guid,nfs) then begin
       GetSystemSchemeByName(nfs.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'lun_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -1504,7 +1506,7 @@ begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       //FIXXME: Errorhandling
-      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+      conn.Delete(FREDB_H2G(input.Field('selected').AsStringItem[i]));
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -1567,7 +1569,7 @@ begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       //FIXXME: Errorhandling
-      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+      conn.Delete(FREDB_H2G(input.Field('selected').AsStringItem[i]));
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -1591,7 +1593,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'lunview_modify_diag_cap'),600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
 
-  CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsString),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewModify');
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),obj),'TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD.WEB_LUNViewModify');
   res.FillWithObjectValues(obj,ses);
 
   serverfunc :=TFRE_DB_SERVER_FUNC_DESC.create.Describe(TFRE_DB_LUN_VIEW.ClassName,'SaveOperation');
@@ -1684,13 +1686,13 @@ var
   scheme        : IFRE_DB_SchemeObject;
   dc            : IFRE_DB_DERIVED_COLLECTION;
   snap          : IFRE_DB_Object;
-  sel_guid      : TGUID;
+  sel_guid      : TFRE_DB_GUID;
 
 begin
   if input.FieldExists('SELECTED') and (input.Field('SELECTED').ValueCount>0)  then begin
     sel_guid := input.Field('SELECTED').AsGUID;
     dc       := ses.FetchDerivedCollection('BACKUP_MOD_SNAPSHOT_GRID');
-    if dc.Fetch(sel_guid,snap) then begin
+    if dc.FetchInDerived(sel_guid,snap) then begin
       GetSystemSchemeByName(snap.SchemeClass,scheme);
       panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(app.FetchAppTextShort(ses,'backup_content_header'));
       panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -1735,7 +1737,7 @@ begin
   sf:=CWSF(@WEB_DeleteSnapshotConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
 
-  CheckDbResult(conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[0]),obj),'TFRE_FIRMBOX_BACKUP_MOD.WEB_DeleteSnapshot');
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringItem[0]),obj),'TFRE_FIRMBOX_BACKUP_MOD.WEB_DeleteSnapshot');
   CheckDbResult(conn.Fetch(obj.Field('parentId').AsGUID,parentObj),'TFRE_FIRMBOX_BACKUP_MOD.WEB_DeleteSnapshot');
 
   msg:=StringReplace(app.FetchAppTextShort(ses,'backup_snapshot_delete_diag_msg'),'%snapshot_str%',parentObj.Field('displayname').AsString + ' ('+obj.Field('creation').AsString+')',[rfReplaceAll]);
@@ -1752,7 +1754,7 @@ begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       //FIXXME: Errorhandling
-      conn.Delete(GFRE_BT.HexString_2_GUID(input.Field('selected').AsStringItem[i]));
+      conn.Delete(FREDB_H2G(input.Field('selected').AsStringItem[i]));
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -2145,7 +2147,7 @@ function TFRE_FIRMBOX_STORAGE_POOLS_MOD._getZFSObj(const conn: IFRE_DB_CONNECTIO
 var
   dbObj: IFRE_DB_Object;
 begin
-  conn.Fetch(GFRE_BT.HexString_2_GUID(id),dbObj);
+  conn.Fetch(FREDB_H2G(id),dbObj);
   Result:=dbObj.Implementor_HC as TFRE_DB_ZFS_OBJ;
 end;
 
@@ -2612,7 +2614,7 @@ begin
 
 //  GFRE_BT.SeperateString(input.Field('selected').AsString,',',sIdPath);
 
-//  pools.Fetch(GFRE_BT.HexString_2_GUID(sIdPath[0]),dbObj);
+//  pools.Fetch(FREDB_H2G(sIdPath[0]),dbObj);
 //  spool:=dbobj.Implementor_HC as TFRE_DB_ZFS_POOL;
 //  disk:=spool.getPoolItem(TFRE_DB_StringArray(sIdPath));
 
@@ -2677,7 +2679,7 @@ begin
       end;
       Result:=res;
     end else begin //single selection
-      conn.Fetch(GFRE_BT.HexString_2_GUID(input.Field('selected').AsString),dbObj);
+      conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbObj);
       if dbObj.Implementor_HC is TFRE_DB_ZFS_OBJ then begin
         zfsObj:=dbObj.Implementor_HC as TFRE_DB_ZFS_OBJ;
         pool:=zfsObj.getPool(conn);
@@ -2765,7 +2767,7 @@ var
   lastObj : IFRE_DB_Object;
   newPool : TFRE_DB_ZFS_POOL;
   dstore  : TFRE_DB_ZFS_DATASTORAGE;
-  muid    : TGUID;
+  muid    : TFRE_DB_GUID;
 
   procedure _checkPoolName(const obj:IFRE_DB_Object);
   begin
@@ -3357,7 +3359,7 @@ begin
   fnSwitchOnlineDisabled:=false;
 
   for i := 0 to Length(selected) - 1 do begin
-    conn.Fetch(GFRE_BT.HexString_2_GUID(selected[i]),dbObj);
+    conn.Fetch(FREDB_H2G(selected[i]),dbObj);
     if dbObj.Implementor_HC is TFRE_DB_ZFS_OBJ then begin
       zfsObj:=dbObj.Implementor_HC as TFRE_DB_ZFS_OBJ;
     end else begin
@@ -3447,7 +3449,7 @@ begin
       if Length(selected)>1 then begin
         _getMultiselectionActions(conn,selected,fnIdentifyOn,fnIdentifyOff,fnRemove,fnAssign,fnSwitchOffline,fnSwitchOnline,fnSwitchOfflineDisabled,fnSwitchOnlineDisabled);
       end else begin
-        conn.Fetch(GFRE_BT.HexString_2_GUID(selected[0]),dbObj);
+        conn.Fetch(FREDB_H2G(selected[0]),dbObj);
         if dbObj.Implementor_HC is TFRE_DB_ZFS_OBJ then begin
           zfsObj:=dbObj.Implementor_HC as TFRE_DB_ZFS_OBJ;
           writeln('SWL:ZFSDUMP',zfsObj.DumpToString);
@@ -3532,7 +3534,7 @@ begin
   res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedZfsObjs') and (ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').ValueCount=1) then begin
 
-    CheckDbResult(conn.Fetch(FREDB_String2Guid(ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr[0]),zfsObj));
+    CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedZfsObjs').AsStringArr[0]),zfsObj));
     if zfsObj.MethodExists('ZFSContent') then begin
       res.AddSection.Describe(CSFT('ZFSContent',zfsObj),FetchModuleTextShort(ses,'poolobj_content_tab'),2);
     end;
@@ -3854,7 +3856,7 @@ begin
   end;
 end;
 
-class procedure TFRE_FIRMBOX_STORAGE_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFRE_FIRMBOX_STORAGE_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 begin
   inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
 
@@ -3870,7 +3872,7 @@ begin
   end;
 end;
 
-class procedure TFRE_FIRMBOX_STORAGE_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
+class procedure TFRE_FIRMBOX_STORAGE_APP.InstallDBObjects4SysDomain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID);
 var
   group: IFRE_DB_GROUP;
 begin

@@ -61,33 +61,33 @@ var conn     : IFRE_DB_Connection;
     cob      : IFRE_DB_Object;
     group    : IFRE_DB_Object;
     share    : IFRE_DB_Object;
-    share_id : TGUID;
-    fs       : TGUID;
+    share_id : TFRE_DB_GUID;
+    fs       : TFRE_DB_GUID;
     fsname   : string;
     ncoll    : IFRE_DB_Collection;
     mcoll    : IFRE_DB_Collection;
-    link_parent : TGUID;
-    vm_parent   : TGUID;
-    mguid       : TGuid;
-    zguid       : TGuid;
+    link_parent : TFRE_DB_GUID;
+    vm_parent   : TFRE_DB_GUID;
+    mguid       : TFRE_DB_GUID;
+    zguid       : TFRE_DB_GUID;
     zobj        : TFRE_DB_ZONE;
     sobj        : TFRE_DB_SERVICE;
     mobj        : TFRE_DB_MACHINE;
     dobj        : TFRE_DB_SERVICE_DOMAIN;
     sobjvm      : TFRE_DB_VMACHINE;
     sobjdns     : TFRE_DB_DNS;
-    domainId    : TGuid;
+    domainId    : TFRE_DB_GUID;
     userObj     : IFRE_DB_USER;
     groups      : TFRE_DB_GUIDArray;
     groupObj    : IFRE_DB_GROUP;
 
-  function AddDatalink(const clname:string; const name: string; const parentid:TGUID; const show_virtual:boolean; const show_global:boolean; const icon:string; const ip:string; const desc:string='';const vlan:integer=0): TGUID;
+  function AddDatalink(const clname:string; const name: string; const parentid:TFRE_DB_GUID; const show_virtual:boolean; const show_global:boolean; const icon:string; const ip:string; const desc:string='';const vlan:integer=0): TFRE_DB_GUID;
   var
     datalink    : IFRE_DB_Object;
   begin
     datalink := GFRE_DBI.NewObjectSchemeByName(clname);
     datalink.Field('objname').asstring := name;
-    if parentid<>GUID_NULL then begin
+    if parentid<>CFRE_DB_NullGUID then begin
       datalink.Field('parentid').AsObjectLink := parentid;
     end;
     datalink.Field('showvirtual').AsBoolean   := show_virtual;
@@ -146,7 +146,7 @@ var conn     : IFRE_DB_Connection;
     for i:=1 to 10 do begin
       snap :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZFS_SNAPSHOT);
       snap.Field('parentid').AsObjectLink := share_id;
-      snap.Field('objname').asString      := 'zones/vfiler/'+GFRE_BT.GUID_2_HexString(fs)+'/'+GFRE_BT.GUID_2_HexString(share_id)+'@AUTO-'+inttostr(i);
+      snap.Field('objname').asString      := 'zones/vfiler/'+FREDB_G2H(fs)+'/'+FREDB_G2H(share_id)+'@AUTO-'+inttostr(i);
       snap.Field('creation').AsDateTimeUTC:= GFRE_DT.Now_UTC-(86400*1000*(10-i));
       snap.Field('used_mb').AsUInt32      := trunc(1.2*(random(10)+1));
       snap.Field('refer_mb').AsUInt32     := trunc(9.3*((random(3)+1)*i));
@@ -155,7 +155,7 @@ var conn     : IFRE_DB_Connection;
   end;
 
   procedure _AddNShare(const sharename:string; const qu :integer);
-  var share_id  : TGUID;
+  var share_id  : TFRE_DB_GUID;
       access    : IFRE_DB_Object;
       snap      : IFRE_DB_Object;
       i         : NativeInt;
@@ -194,7 +194,7 @@ var conn     : IFRE_DB_Connection;
     for i:=1 to 10 do begin
       snap :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZFS_SNAPSHOT);
       snap.Field('parentid').AsObjectLink := share_id;
-      snap.Field('objname').asString      := 'zones/nfs/'+GFRE_BT.GUID_2_HexString(share_id)+'@AUTO-'+inttostr(i);
+      snap.Field('objname').asString      := 'zones/nfs/'+FREDB_G2H(share_id)+'@AUTO-'+inttostr(i);
       snap.Field('creation').AsDateTimeUTC:= GFRE_DT.Now_UTC-(86400*1000*(10-i));
       snap.Field('used_mb').AsUInt32      := trunc(3.2*(random(10)+1));
       snap.Field('refer_mb').AsUInt32     := trunc(12.3*((random(3)+1)*i));
@@ -204,7 +204,7 @@ var conn     : IFRE_DB_Connection;
   end;
 
   procedure _AddLUN(const guid:string; const sz :integer);
-  var share_id  : TGUID;
+  var share_id  : TFRE_DB_GUID;
       view      : IFRE_DB_Object;
       snap      : IFRE_DB_Object;
       i         : NativeInt;
@@ -239,7 +239,7 @@ var conn     : IFRE_DB_Connection;
     for i:=1 to 10 do begin
       snap :=  GFRE_DBI.NewObjectScheme(TFRE_DB_ZFS_SNAPSHOT);
       snap.Field('parentid').AsObjectLink := share_id;
-      snap.Field('objname').asString      := 'zones/lun/'+GFRE_BT.GUID_2_HexString(share_id)+'@AUTO-'+inttostr(i);
+      snap.Field('objname').asString      := 'zones/lun/'+FREDB_G2H(share_id)+'@AUTO-'+inttostr(i);
       snap.Field('creation').AsDateTimeUTC:= GFRE_DT.Now_UTC-(86400*1000*(10-i));
       snap.Field('used_mb').AsUInt32      := trunc(4.12*(random(10)+1));
       snap.Field('refer_mb').AsUInt32     := sz;
@@ -352,7 +352,7 @@ var conn     : IFRE_DB_Connection;
   var login     : TFRE_DB_String;
       res       : TFRE_DB_Errortype;
       passwd    : TFRE_DB_String;
-      domainId  : TGUID;
+      domainId  : TFRE_DB_GUID;
       userObj   : IFRE_DB_USER;
       groups    : TFRE_DB_GUIDArray;
       group     : IFRE_DB_GROUP;
@@ -447,17 +447,17 @@ begin
  ncoll := Conn.GetCollection('datalink');
 
 
- link_parent:=AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',GUID_NULL,true,true,'phys','10.1.0.232/24','admin');
+ link_parent:=AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',CFRE_DB_NullGUID,true,true,'phys','10.1.0.232/24','admin');
  AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnic1',link_parent,false,true,'vnic','192.198.0.1/24','inactive');
  AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnic2',link_parent,false,true,'vnic','172.17.0.1/24','inactive');
  vm_parent :=link_parent;
- link_parent:=AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb1',GUID_NULL,true,true,'phys','','inactive');
- link_parent:=AddDatalink(TFRE_DB_DATALINK_AGGR.ClassName,'aggr0',GUID_NULL,true,true,'aggr','192.168.1.1/24','inactive');
+ link_parent:=AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb1',CFRE_DB_NullGUID,true,true,'phys','','inactive');
+ link_parent:=AddDatalink(TFRE_DB_DATALINK_AGGR.ClassName,'aggr0',CFRE_DB_NullGUID,true,true,'aggr','192.168.1.1/24','inactive');
  AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce0',link_parent,false,true,'phys','inactive');
  AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce1',link_parent,false,true,'phys','inactive');
 // AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnic3',link_parent,true,false,'vnic');
 // AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnic4',link_parent,true,false,'vnic');
- link_parent:=AddDatalink(TFRE_DB_DATALINK_STUB.ClassName,'stub0',GUID_NULL,true,false,'stub','','Virtual Switch');
+ link_parent:=AddDatalink(TFRE_DB_DATALINK_STUB.ClassName,'stub0',CFRE_DB_NullGUID,true,false,'stub','','Virtual Switch');
  AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'net1',link_parent,true,false,'vnic','','Virtual FW inactive',1001);
  AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'net1',link_parent,true,false,'vnic','','Virtual FW inactive',1001);
 
