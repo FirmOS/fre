@@ -415,7 +415,7 @@ begin
     fs_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
     with fs_dc do begin
       SetDeriveParent(conn.GetCollection('service'));
-      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_VIRTUAL_FILESERVER.ClassName));
+      Filters.AddSchemeObjectFilter('SCH',[TFRE_DB_VIRTUAL_FILESERVER.ClassName]);
       SetDeriveTransformation(fs_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSMenu),nil,CWSF(@WEB_VFSSC));
     end;
@@ -985,8 +985,8 @@ begin
     with nfs_share_dc do begin
       SetDeriveParent(conn.GetCollection('fileshare'));
       fileserverId:= _GetFileserverID(conn);
-      AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT);
-      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_NFS_FILESHARE.ClassName));
+      Filters.AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT);
+      filters.AddSchemeObjectFilter('SCH',[TFRE_DB_NFS_FILESHARE.ClassName]);
       SetDeriveTransformation(nfs_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NFSMenu),nil,CWSF(@WEB_NFSContent));
     end;
@@ -1016,8 +1016,8 @@ begin
     with lun_dc do begin
       SetDeriveParent(conn.GetCollection('fileshare'));
       fileserverId:= _GetFileserverID(conn);
-      AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT);
-      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_LUN.ClassName));
+      Filters.AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT);
+      Filters.AddSchemeObjectFilter('SCH',[TFRE_DB_LUN.ClassName]);
       SetDeriveTransformation(lun_tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_LUNMenu),nil,CWSF(@WEB_LUNContent));
     end;

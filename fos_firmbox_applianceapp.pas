@@ -193,7 +193,7 @@ begin
       SetDeriveParent(conn.GetCollection('datalink'));
       SetDeriveTransformation(datalink_tr_Grid);
 //      AddBooleanFieldFilter('zoned','zoned',false);
-      AddBooleanFieldFilter('showglobal','showglobal',true);
+      Filters.AddBooleanFieldFilter('showglobal','showglobal',true);
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
       SetParentToChildLinkField ('<PARENTID');
     end;
