@@ -46,7 +46,7 @@ implementation
 procedure TFRE_FIRMBOX_VM_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('description');
+  InitApp('description');
   AddApplicationModule(TFRE_FIRMBOX_VM_NETWORK_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VM_MACHINES_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_VM_RESOURCES_MOD.create);

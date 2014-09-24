@@ -534,7 +534,7 @@ var
   vm_machines: TFRE_FIRMBOX_VM_MACHINES_MOD;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('description');
+  InitApp('description');
   services:=TFOS_FIRMBOX_MANAGED_SERVICES_MOD.create;
   vm_machines:=TFRE_FIRMBOX_VM_MACHINES_MOD.create;
   services.VM:=vm_machines;

@@ -1007,7 +1007,7 @@ end;
 procedure TFRE_FIRMBOX_APPLIANCE_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('description');
+  InitApp('description');
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD.create);
   AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD.create);
   //AddApplicationModule(TFRE_FIRMBOX_APPLIANCE_ANALYTICS_MOD.create);
