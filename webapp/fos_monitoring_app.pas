@@ -1168,7 +1168,7 @@ end;
 
 procedure TFRE_DB_MONSYS.SetupApplicationStructure;
 begin
-  InitAppDesc('description');
+  InitApp('description');
   AddApplicationModule(TFRE_DB_MONSYS_MOD.create);
 end;
 

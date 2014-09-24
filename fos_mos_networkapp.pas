@@ -59,7 +59,7 @@ end;
 procedure TFOS_CITYCOM_NETWORK_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('description');
+  InitApp('description');
   AddApplicationModule(TFOS_FIRMBOX_DNS_MOD.create);
 end;
 

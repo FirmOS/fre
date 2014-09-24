@@ -235,7 +235,7 @@ end;
 procedure TFOS_CITYCOM_MONITORING_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
-  InitAppDesc('description');
+  InitApp('description');
   AddApplicationModule(TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.create);
   AddApplicationModule(TFOS_CITYCOM_MOS_STRUCTURAL_MOD.create);
 end;
