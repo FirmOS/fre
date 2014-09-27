@@ -91,6 +91,7 @@ type
     procedure   GenerateAutomaticWFSteps                ;
     procedure   GenerateTestDataForProCompetence        ;
     procedure   MoveDomainCollecions                    ;
+    procedure   GenerateDeviceData                      ;
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -175,6 +176,7 @@ begin
     'genauto'      : GenerateAutomaticWFSteps;
     'procompetence': GenerateTestDataForProCompetence;
     'movedc'       : MoveDomainCollecions;
+    'devicedata'   : GenerateDeviceData;
   end;
 end;
 
@@ -240,7 +242,7 @@ var conn     : IFRE_DB_CONNECTION;
       addons : fre_db_interface.TFRE_DB_ObjLinkArray;
       rel_obj: TFOS_DB_CITYCOM_PRODUCT_ADDON_RELATION;
       i      : Integer;
-      r_guid : TGuid;
+      r_guid : TFRE_DB_GUID;
     begin
       addons:=obj.Field('addons').AsObjectLinkArray;
       obj.DeleteField('addons');
@@ -773,6 +775,193 @@ begin
   conn.Free;
 end;
 
+procedure TFRE_Testserver.GenerateDeviceData;
+var cpe  : TFRE_DB_CRYPTOCPE;
+    coll : IFRE_DB_COLLECTION;
+    conn : TFRE_DB_CONNECTION;
+    cfg  : IFRE_DB_Object;
+    network :TFRE_DB_CPE_NETWORK_SERVICE;
+    vpn     :TFRE_DB_CPE_OPENVPN_SERVICE;
+    dhcp    :TFRE_DB_CPE_DHCP_SERVICE;
+    vf      :TFRE_DB_CPE_VIRTUAL_FILESERVER;
+    dl      :TFRE_DB_DATALINK_PHYS;
+    tnl     :TFRE_DB_DATALINK_IPTUN;
+    ip4     :TFRE_DB_IPV4_ADDRESS;
+    ip6     :TFRE_DB_IPV6_ADDRESS;
+    halo    :IFRE_DB_Object;
+    caobj   :IFRE_DB_Object;
+    crtobj  :IFRE_DB_Object;
+    crt     :IFRE_DB_Object;
+    dhcpsub :TFRE_DB_DHCP_Subnet;
+    dhcpfix :TFRE_DB_DHCP_Fixed;
+
+begin
+  FRE_DBBASE.Register_DB_Extensions;
+  fos_citycom_base.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+
+  if not conn.CollectionExists(CFRE_DB_ASSET_COLLECTION) then
+    begin
+     coll:=conn.CreateCollection(CFRE_DB_ASSET_COLLECTION);
+     coll.DefineIndexOnField('provisioningmac',fdbft_String,true,false,'mac',true,false);
+    end
+  else
+    coll:=conn.GetCollection(CFRE_DB_ASSET_COLLECTION);
+
+  cpe:=TFRE_DB_CRYPTOCPE.CreateForDB;
+  cpe.ObjectName:='ccpe2 FirmOS';
+  cpe.provisioningmac:='00:03:2d:1d:2d:7d';
+  cfg:=GFRE_DBI.NewObject;
+  cpe.Field('config').AsObject:=cfg;
+  network := TFRE_DB_CPE_NETWORK_SERVICE.CreateForDB;
+  cfg.Field('network').AsObject:=network;
+  dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
+  dl.ObjectName:='eth0';
+  network.Field(dl.ObjectName).AsObject:=dl;
+  ip4:= TFRE_DB_IPV4_ADDRESS.CreateForDB;
+  ip4.Field('ip_net').AsString:='10.55.0.65/27';
+  dl.Field(ip4.UID.AsHexString).AsObject:=ip4;
+
+  dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
+  dl.ObjectName:='eth1';
+  network.Field(dl.ObjectName).AsObject:=dl;
+  ip4:= TFRE_DB_IPV4_ADDRESS.CreateForDB;
+  ip4.Field('ip_net').AsString:='192.168.1.100/24';
+  dl.Field(ip4.UID.AsHexString).AsObject:=ip4;
+
+  dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
+  dl.ObjectName:='eth2';
+  network.Field(dl.ObjectName).AsObject:=dl;
+  ip6:= TFRE_DB_IPV6_ADDRESS.CreateForDB;
+  ip6.Field('slaac').AsBoolean:=true;
+  dl.Field(ip6.UID.AsHexString).AsObject:=ip6;
+
+  dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
+  dl.ObjectName:='eth3';
+  network.Field(dl.ObjectName).AsObject:=dl;
+  ip4:= TFRE_DB_IPV4_ADDRESS.CreateForDB;
+  ip4.Field('dhcp').AsBoolean:=true;
+  dl.Field(ip4.UID.AsHexString).AsObject:=ip4;
+
+  tnl := TFRE_DB_DATALINK_IPTUN.CreateForDB;
+  tnl.ObjectName:='tunnel6';
+  tnl.Field('mode').AsString:='ip6ip6';
+  tnl.Field('remote_ip_net_ipv6').AsString:='fdd7:f47b:4605:0705:0001:0000:0001:1';
+  tnl.Field('local_ip_net_ipv6').AsString:='fdd7:f47b:4605:0705:0001:0000:0002:1';
+  tnl.Field('device').AsString:='eth3';
+  ip6:= TFRE_DB_IPV6_ADDRESS.CreateForDB;
+  ip6.Field('slaac').AsBoolean:=false;
+  ip6.Field('ip_net').AsString:='fdd7:f47b:4605:0705:0002:0000:0002:1/80';
+  tnl.Field(ip6.UID.AsHexString).AsObject:=ip6;
+  network.Field(tnl.ObjectName).AsObject:=tnl;
+
+  tnl := TFRE_DB_DATALINK_IPTUN.CreateForDB;
+  tnl.ObjectName:='tunnel4';
+  tnl.Field('mode').AsString:='sit';
+  tnl.Field('remote_ip_net_ipv4').AsString:='10.1.0.88';
+  tnl.Field('local_ip_net_ipv4').AsString:='10.1.0.169';
+  tnl.Field('device').AsString:='eth2';
+  ip6:= TFRE_DB_IPV6_ADDRESS.CreateForDB;
+  ip6.Field('slaac').AsBoolean:=false;
+  ip6.Field('ip_net').AsString:='fdd7:f47b:4605:0705:0002:0000:0002:1/80';
+  tnl.Field(ip6.UID.AsHexString).AsObject:=ip6;
+  network.Field(tnl.ObjectName).AsObject:=tnl;
+
+  halo   := GFRE_DBI.CreateFromFile('/fre/hal/ca_backup_voip.cfg');
+  writeln(halo.DumpToString());
+  caobj  := halo.Field('ca').AsObject;
+//  writeln(caobj.Field('VPNVOIP').AsObject.Field('crt_stream').AsStream);
+  crtobj := halo.Field('crt').AsObject;
+  vpn     := TFRE_DB_CPE_OPENVPN_SERVICE.CreateForDB;
+  vpn.ObjectName:='voip';
+  vpn.Field('server').AsBoolean:=false;
+  vpn.Field('device').AsString:='tun0';
+  vpn.Field('protocol').AsString:='tcp';
+  vpn.Field('remote').AddString('109.73.158.186 1194');
+  vpn.Field('remote').AddString('fdd7:f47b:4605:705::1 1194');
+  vpn.Field('ca').asstream.LoadFromStream(caobj.Field('VPNVOIP').AsObject.Field('crt_stream').AsStream);
+  crtobj.FetchObjWithStringFieldValue('objname','ccpe2',crt,TFRE_DB_CERTIFICATE.ClassName);
+  vpn.Field('crt').asstream.LoadFromStream(crt.Field('crt_stream').AsStream);
+  vpn.Field('key').asstream.LoadFromStream(crt.Field('key_stream').AsStream);
+  cfg.Field(vpn.UID.AsHexString).AsObject:=vpn;
+//  writeln(vpn.Field('crt').AsStream.AsRawByteString);
+//  writeln(vpn.Field('key').AsStream.AsRawByteString);
+
+  halo   := GFRE_DBI.CreateFromFile('/fre/hal/ca_backup_kmub.cfg');
+//  writeln(halo.DumpToString());
+  caobj  := halo.Field('ca').AsObject;
+  crtobj := halo.Field('crt').AsObject;
+  vpn     := TFRE_DB_CPE_OPENVPN_SERVICE.CreateForDB;
+  vpn.ObjectName:='kmu';
+  vpn.Field('server').AsBoolean:=false;
+  vpn.Field('device').AsString:='tap0';
+  vpn.Field('protocol').AsString:='tcp';
+  vpn.Field('remote').AddString('109.73.158.186 1196');
+  vpn.Field('remote').AddString('fdd7:f47b:4605:705::1 1196');
+  vpn.Field('ca').asstream.LoadFromStream(caobj.Field('VPNKMUB').AsObject.Field('crt_stream').AsStream);
+  crtobj.FetchObjWithStringFieldValue('objname','ccpe1',crt,TFRE_DB_CERTIFICATE.ClassName);
+  vpn.Field('crt').asstream.LoadFromStream(crt.Field('crt_stream').AsStream);
+  vpn.Field('key').asstream.LoadFromStream(crt.Field('key_stream').AsStream);
+  cfg.Field(vpn.UID.AsHexString).AsObject:=vpn;
+
+
+
+  dhcp     := TFRE_DB_CPE_DHCP_SERVICE.CreateForDB;
+  dhcpsub  := TFRE_DB_DHCP_Subnet.CreateForDB;
+  dhcpsub.Field('subnet').AsString:='10.55.0.64/27';
+  dhcpsub.Field('range_start').AsString:='10.55.0.40';
+  dhcpsub.Field('range_end').AsString:='10.55.0.62';
+  dhcpsub.Field('router').AsString:='10.55.0.65';
+  dhcpsub.Field('dns').AsString:='8.8.8.8';
+  dhcpsub.Field('option_tftp66').asstring:='192.168.82.3';
+
+  dhcpfix  := TFRE_DB_DHCP_Fixed.CreateForDB;
+  dhcpfix.ObjectName:='yealinka';
+  dhcpfix.Field('ip').AsString      := '10.55.0.34';
+  dhcpfix.Field('mac').AsString     := '00:15:65:32:9e:12';
+  dhcpsub.Field(dhcpfix.UID.AsHexString).AsObject:=dhcpfix;
+  dhcpfix  := TFRE_DB_DHCP_Fixed.CreateForDB;
+  dhcpfix.ObjectName:='yealinkb';
+  dhcpfix.Field('ip').AsString      := '10.55.0.35';
+  dhcpfix.Field('mac').AsString     := '00:15:65:20:d2:af';
+  dhcpsub.Field(dhcpfix.UID.AsHexString).AsObject:=dhcpfix;
+  dhcpfix  := TFRE_DB_DHCP_Fixed.CreateForDB;
+  dhcpfix.ObjectName:='yealinkc';
+  dhcpfix.Field('ip').AsString      := '10.55.0.36';
+  dhcpfix.Field('mac').AsString     := '00:15:65:20:d4:91';
+  dhcpsub.Field(dhcpfix.UID.AsHexString).AsObject:=dhcpfix;
+  dhcpfix  := TFRE_DB_DHCP_Fixed.CreateForDB;
+  dhcpfix.ObjectName:='ataa';
+  dhcpfix.Field('ip').AsString      := '10.55.0.37';
+  dhcpfix.Field('mac').AsString     := 'ac:f2:c5:34:ac:6c';
+  dhcpsub.Field(dhcpfix.UID.AsHexString).AsObject:=dhcpfix;
+  dhcp.Field(dhcpsub.UID.AsHexString).AsObject:=dhcpsub;
+  cfg.Field('dhcp').AsObject:=dhcp;
+
+  vf       := TFRE_DB_CPE_VIRTUAL_FILESERVER.CreateForDB;
+  cfg.Field('fileserver').AsObject:=vf;
+  writeln('SWL:'+cpe.DumpToString());
+
+  cpe.SaveToFile('/fre/hal/cpe.cfg');
+  CheckDbResult(coll.Store(cpe));
+
+
+
+  cpe:=TFRE_DB_CRYPTOCPE.CreateForDB;
+  cpe.ObjectName:='ccpe1 WienEnergie';
+  cpe.provisioningmac:='00:03:2d:28:07:6b';
+  CheckDbResult(coll.Store(cpe));
+
+  cpe:=TFRE_DB_CRYPTOCPE.CreateForDB;
+  cpe.ObjectName:='ccpe3 Citycom';
+  cpe.provisioningmac:='00:03:2d:1d:2d:79';
+  CheckDbResult(coll.Store(cpe));
+
+  conn.Free;
+end;
 
 begin
   cFRE_PS_LAYER_USE_EMBEDDED := true; { always patch local ? }
