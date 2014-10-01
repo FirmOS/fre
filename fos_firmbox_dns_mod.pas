@@ -1233,7 +1233,7 @@ begin
     isNew:=true;
   end;
 
-  schemeObject.SetObjectFieldsWithScheme(input.Field('data').AsObject,resource,true,conn);
+  schemeObject.SetObjectFieldsWithScheme(input.Field('data').AsObject,resource,isNew,conn);
 
   if isNew then begin
     CheckDbResult(resourceColl.Store(resource));
