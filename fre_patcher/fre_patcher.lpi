@@ -75,14 +75,14 @@
 if TargetOS = 'solaris' then
    if TargetCPU='i386' then
      CustomOptions := '-k-rpath=$ORIGIN/../lib/lib32rel/solaris';
-   if TargetCPU='i86_64' then
+   if TargetCPU='x86_64' then
      CustomOptions := '-k-rpath=$ORIGIN/../lib/lib64rel/solaris';
 if TargetOS = 'linux' then
    if TargetCPU='arm' then
      CustomOptions := '-k-rpath=$ORIGIN/../lib/libarmhf32rel/linux';
    if TargetCPU='i386' then
      CustomOptions := '-k-rpath=$ORIGIN/../lib/lib32rel/linux';
-   if TargetCPU='i86_64' then
+   if TargetCPU='x86_64' then
      CustomOptions := '-k-rpath=$ORIGIN/../lib/lib64rel/linux';"/>
     <Parsing>
       <SyntaxOptions>

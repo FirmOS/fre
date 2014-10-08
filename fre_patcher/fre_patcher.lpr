@@ -818,6 +818,7 @@ begin
   cpe.Field('config').AsObject:=cfg;
   network := TFRE_DB_CPE_NETWORK_SERVICE.CreateForDB;
   cfg.Field('network').AsObject:=network;
+
   dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
   dl.ObjectName:='eth0';
   network.Field(dl.ObjectName).AsObject:=dl;
@@ -870,7 +871,8 @@ begin
   tnl.Field(ip6.UID.AsHexString).AsObject:=ip6;
   network.Field(tnl.ObjectName).AsObject:=tnl;
 
-  halo   := GFRE_DBI.CreateFromFile('/fre/hal/ca_backup_voip.cfg');
+
+  halo   := GFRE_DBI.CreateFromFile('/opt/local/fre/hal/ca_backup_voip.cfg');
   writeln(halo.DumpToString());
   caobj  := halo.Field('ca').AsObject;
 //  writeln(caobj.Field('VPNVOIP').AsObject.Field('crt_stream').AsStream);
@@ -890,7 +892,7 @@ begin
 //  writeln(vpn.Field('crt').AsStream.AsRawByteString);
 //  writeln(vpn.Field('key').AsStream.AsRawByteString);
 
-  halo   := GFRE_DBI.CreateFromFile('/fre/hal/ca_backup_kmub.cfg');
+  halo   := GFRE_DBI.CreateFromFile('/opt/local/fre/hal/ca_backup_kmub.cfg');
 //  writeln(halo.DumpToString());
   caobj  := halo.Field('ca').AsObject;
   crtobj := halo.Field('crt').AsObject;
@@ -943,9 +945,10 @@ begin
 
   vf       := TFRE_DB_CPE_VIRTUAL_FILESERVER.CreateForDB;
   cfg.Field('fileserver').AsObject:=vf;
-  writeln('SWL:'+cpe.DumpToString());
+  writeln('SWL:'+cfg.DumpToString());
 
-  cpe.SaveToFile('/fre/hal/cpe.cfg');
+  cfg.SaveToFile('/opt/local/fre/hal/cpe.cfg');
+
   CheckDbResult(coll.Store(cpe));
 
 
