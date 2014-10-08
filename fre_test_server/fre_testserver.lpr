@@ -145,7 +145,8 @@ end;
 
 
 begin
-  cFRE_LOGIN_OVERRIDE:='vCompany Login';
+  cFRE_LOGIN_OVERRIDE:='Login';
+  cFRE_TITLE_OVERRIDE:='<span style="top=25%; font-size: 120px;" >Codename Alamo</span>';
   Application:=TFRE_Testserver.Create(nil);
   Application.Title:='FirmOS Testserver';
   Application.DefaultExtensions := 'TEST';

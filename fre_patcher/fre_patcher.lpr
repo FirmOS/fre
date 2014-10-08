@@ -92,6 +92,8 @@ type
     procedure   GenerateTestDataForProCompetence        ;
     procedure   MoveDomainCollecions                    ;
     procedure   GenerateDeviceData                      ;
+    procedure   AddAFeederUser                          (const feederusername:string ; const feederpass:string ; const feederclass :string);
+    procedure   AddAuser                                (const userstringencoding : string);
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -109,7 +111,8 @@ procedure TFRE_Testserver.AddCommandLineOptions;
 begin
   inherited;
   AddHelpOutLine('Extended:');
-  AddCheckOption('*','patch:'     ,'                | --patch <val>                     : manual patch');
+  AddCheckOption('*','patch:'     ,'                | --patch=<val>                     : manual patch');
+  AddCheckOption('*','adduser:'     ,'              | --adduser=username,password,class : quick add a user (feederuser) ');
 end;
 
 function TFRE_Testserver.PreStartupTerminatingCommands: boolean;
@@ -136,6 +139,13 @@ begin
   if HasOption('patch') then
     begin
       Patch(GetOptionValue('patch'));
+      GFRE_DB_PS_LAYER.SyncSnapshot;
+      result := true; { should terminate }
+    end
+  else
+  if HasOption('adduser') then
+    begin
+      AddAUser(GetOptionValue('adduser'));
       GFRE_DB_PS_LAYER.SyncSnapshot;
       result := true; { should terminate }
     end
@@ -964,6 +974,30 @@ begin
   CheckDbResult(coll.Store(cpe));
 
   conn.Free;
+end;
+
+procedure TFRE_Testserver.AddAFeederUser(const feederusername: string; const feederpass: string; const feederclass: string);
+var conn : IFRE_DB_CONNECTION;
+begin
+  conn := GFRE_DB.NewConnection;
+  try
+    CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+    CheckDbResult(conn.sys.AddUser(feederusername,conn.GetSysDomainUID,feederpass,'','',nil,'',true,'','',feederclass));
+  finally
+    conn.Finalize;
+  end;
+end;
+
+procedure TFRE_Testserver.AddAuser(const userstringencoding: string);
+var param : TFRE_DB_StringArray;
+begin
+  FREDB_SeperateString(userstringencoding,',',param);
+  if Length(param)<>3 then
+    begin
+      writeln('syntax error, must have 3 parameters');
+      exit;
+    end;
+  AddAFeederUser(param[0],param[1],param[2]);
 end;
 
 begin

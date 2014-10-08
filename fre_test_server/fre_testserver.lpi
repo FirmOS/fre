@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="./fre_testserver --ple -e OE,ADC -x -y -t -i"/>
+        <CommandLineParams Value="-e OE,ADC --nozip --testlog -s firmos --jsdebug --ple"/>
         <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>

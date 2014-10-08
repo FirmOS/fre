@@ -29,7 +29,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-e OE,ADC --patch=movedc"/>
+        <CommandLineParams Value="--ple --adduser=mfeeder,mighty,MIGHTYFEEDER"/>
         <LaunchingApplication PathPlusParams="/opt/local/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
