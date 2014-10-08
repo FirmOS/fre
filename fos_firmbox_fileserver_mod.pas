@@ -184,6 +184,9 @@ begin
     CreateModuleText(conn,'vfs_create_error_exists_cap','Error: Add VFS Service');
     CreateModuleText(conn,'vfs_create_error_exists_msg','The Fileserver Service already exists!');
 
+    CreateModuleText(conn,'vfs_share_create_error_exists_cap','Error: Add Share');
+    CreateModuleText(conn,'vfs_share_create_error_exists_msg','The Share already exists!');
+
     CreateModuleText(conn,'vfs_share','Share');
     CreateModuleText(conn,'vfs_share_refer','Refer');
     CreateModuleText(conn,'vfs_share_used','Used');
@@ -224,10 +227,17 @@ begin
 end;
 
 class procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+var
+  coll: IFRE_DB_COLLECTION;
 begin
   inherited InstallUserDBObjects(conn, currentVersionId);
   if not conn.CollectionExists(CFRE_DB_FILESHARE_COLLECTION) then begin
-    conn.CreateCollection(CFRE_DB_FILESHARE_COLLECTION);
+    coll:=conn.CreateCollection(CFRE_DB_FILESHARE_COLLECTION);
+  end else begin
+    coll:=conn.GetCollection(CFRE_DB_FILESHARE_COLLECTION);
+  end;
+  if not coll.IndexExists('def') then begin
+    coll.DefineIndexOnField('objname',fdbft_String,true,true,'def',false);
   end;
 end;
 
@@ -686,6 +696,7 @@ var
   isNew        : Boolean;
   shareColl    : IFRE_DB_COLLECTION;
   service      : IFRE_DB_Object;
+  idx          : String;
 begin
   if not GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESHARE,schemeObject) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_VIRTUAL_FILESHARE]);
@@ -702,8 +713,14 @@ begin
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     shareColl:=conn.GetCollection(CFRE_DB_FILESHARE_COLLECTION);
+    idx:='FS_'+ input.FieldPath('data.name').AsString + '@' + service.UID_String;
+    if shareColl.ExistsIndexed(idx) then begin
+      Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vfs_share_create_error_exists_cap'),FetchModuleTextShort(ses,'vfs_share_create_error_exists_msg'),fdbmt_error);
+      exit;
+    end;
     shareObj:=TFRE_DB_VIRTUAL_FILESHARE.CreateForDB;
     shareObj.SetDomainID(service.DomainID);
+    shareObj.Field('objname').AsString:=idx;
     isNew:=true;
   end;
 
