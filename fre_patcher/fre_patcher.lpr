@@ -489,10 +489,12 @@ begin
 
   C:=TFOSMySqlConn.Create(Nil);
   try
-    C.UserName:='root';
+//    C.UserName:='root';
+     C.UserName:='firmos';
     C.Password:='kmuRZ2013$';
     //c.HostName:='crm';
-    c.HostName:='10.1.0.124';
+//    c.HostName:='10.1.0.124';
+    c.HostName:='crm.citycom-austria.com';
     C.DatabaseName:='crm_citycom';
     T:=TSQLTransaction.Create(C);
     T.Database:=C;
