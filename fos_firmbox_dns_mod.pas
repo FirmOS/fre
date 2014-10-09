@@ -1061,7 +1061,7 @@ begin
 
   domain:=TFOS_DB_NETWORK_DOMAIN.CreateForDB;
   schemeObject.SetObjectFieldsWithScheme(input.FieldPath('data.domain').AsObject,domain,true,conn);
-  domain.Field('objname').AsString:=idx;
+  domain.Field('uniquephysicalid').AsString:=idx;
   domain.SetDomainID(customer.Field('servicedomain').AsObjectLink);
 
   if not GFRE_DBI.GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,schemeObjectRR) then

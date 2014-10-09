@@ -523,7 +523,7 @@ begin
 
     vfsService:=TFRE_DB_VIRTUAL_FILESERVER.CreateForDB;
     vfsService.SetDomainID(customer.Field('servicedomain').AsObjectLink);
-    vfsService.Field('objname').AsString:=idx;
+    vfsService.Field('uniquephysicalid').AsString:=idx;
     isNew:=true;
   end;
 

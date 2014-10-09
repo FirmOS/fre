@@ -60,11 +60,11 @@ type
     FAPP_Feeding          : Boolean;
     FStorage_Feeding      : Boolean;
     FVM_FeedAppClass      : TFRE_DB_String;
-    FVM_FeedAppUid        : TGuid;
+    FVM_FeedAppUid        : TFRE_DB_Guid;
     FSTORAGE_FeedAppClass : TFRE_DB_String;
-    FSTORAGE_FeedAppUid   : TGuid;
+    FSTORAGE_FeedAppUid   : TFRE_DB_Guid;
     FAPPL_FeedAppClass    : TFRE_DB_String;
-    FAPPL_FeedAppUid      : TGuid;
+    FAPPL_FeedAppUid      : TFRE_DB_Guid;
     vmc                   : IFOS_VM_HOST_CONTROL; // Todo Move MVStats to Statscontroller
     statscontroller       : IFOS_STATS_CONTROL;
     disk_hal              : TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT;
