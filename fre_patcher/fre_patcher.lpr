@@ -39,6 +39,7 @@ program fre_patcher;
 
 {$mode objfpc}{$H+}
 {$modeswitch nestedprocvars}
+{$codepage utf-8}
 {$LIBRARYPATH ../../lib}
 
 {$DEFINE FREMYSQL}
@@ -81,13 +82,24 @@ type
   { TFRE_Testserver }
   TFRE_Testserver = class(TFRE_CLISRV_APP)
   private
+    const realcust:string = '0081000359,0081000752,0081000516,0081000196,81000146,0081000661,0081000737,0081000752,0081000339,0081000695,0081000609,0081000681,0081000723,81000064,SC-PRO,SC-DEMO';
+          realdom :string = 'ANKUENDER,BINDER,CITYCOM,CORTI,GRAZETTA,RUBIKON,ZOESCHER,BINDER,DMS,DIAGONALE,EGRAZ,HILFSWERK,PEAN,JOANNEUM,PRO-COMPETENCE,DEMO';
+    var
+    realdoma   :TFRE_DB_StringArray;
+    realdomida :TFRE_DB_GUIDArray;
+    realcusta  :TFRE_DB_StringArray;
+    procedure  GenerateSearchDomains      (const generate:boolean);
+    function   CheckFindDebitorNumber     (const debnr : string ; out domainname : TFRE_DB_String ; out domainuid:TFRE_DB_GUID):boolean;
+    function   CheckFindDomainID          (const domainname : TFRE_DB_String):TFRE_DB_GUID;
+
+
     procedure   PatchCity1;
-    procedure   PatchCityAddons                         (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
-    procedure   PatchCityObjs                           (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
+    procedure   PatchCityAddons                         (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='x');
+    procedure   PatchCityObjs                           (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='x');
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
     {$IFDEF FREMYSQL}
-    procedure   ImportCitycomAccounts                   (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
+    procedure   ImportCitycomAccounts                   (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='x');
     {$ENDIF}
     procedure   GenerateAutomaticWFSteps                ;
     procedure   GenerateTestDataForProCompetence        ;
@@ -212,6 +224,71 @@ begin
    conn.Finalize;
 end;
 
+procedure TFRE_Testserver.GenerateSearchDomains(const generate: boolean);
+var conn         : IFRE_DB_CONNECTION;
+    i            : NativeInt;
+begin
+  FREDB_SeperateString(realcust,',',realcusta);
+  FREDB_SeperateString(realdom,',',realdoma);
+  if Length(realcusta)<>Length(realdoma) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'doms must be customers COUNT');
+  begin
+    conn := GFRE_DBI.NewConnection;
+    CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+    SetLength(realdomida,Length(realdoma));
+    for i:=0 to high(realdoma) do
+      begin
+        if not conn.SYS.DomainExists(realdoma[i]) then
+          begin
+            if generate then
+              begin
+                 writeln('>> ADDING DOMAIN ',realdoma[i]);
+                 CheckDbResult(conn.AddDomain(realdoma[i],'',''));
+                 writeln('>> ADDING DOMAIN ',realdoma[i],' DONE');
+              end
+            else
+              begin
+                writeln('NOT ALL DOMAINS IN DB -> abort');
+                raise EFRE_DB_Exception.Create(edb_ERROR,'FAILED');
+              end;
+          end;
+        realdomida[i] := conn.SYS.DomainID(realdoma[i]);
+      end;
+    conn.Finalize;
+  end;
+end;
+
+function TFRE_Testserver.CheckFindDebitorNumber(const debnr: string; out domainname: TFRE_DB_String; out domainuid: TFRE_DB_GUID): boolean;
+var i:NativeInt;
+begin
+  result := false;
+  if debnr='' then
+    exit;
+  for i:=0 to high(realcusta) do
+    begin
+      if realcusta[i]=debnr then
+        begin { found SAP debitnum}
+          domainname := realdoma[i];
+          domainuid  := realdomida[i];
+          exit(true);
+        end;
+    end;
+end;
+
+function TFRE_Testserver.CheckFindDomainID(const domainname: TFRE_DB_String): TFRE_DB_GUID;
+var i:NativeInt;
+begin
+  for i:=0 to high(realdoma) do
+    begin
+      if realdoma[i]=domainname then
+        begin
+          result  := realdomida[i];
+          exit;
+        end;
+    end;
+  raise EFRE_DB_Exception.Create(edb_ERROR,'non existent domain '+domainname);
+end;
+
 procedure TFRE_Testserver.PatchCity1;
 var conn : IFRE_DB_CONNECTION;
     cnt  : NativeInt;
@@ -320,7 +397,7 @@ begin
    coll_pv.ForAll(@AddonsPatch);
 end;
 
-procedure TFRE_Testserver.PatchCityObjs(domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='pepe');
+procedure TFRE_Testserver.PatchCityObjs(domainname:string='citycom' ; domainuser:string='ckoch@citycom'; domainpass:string='x');
 var
   conn: IFRE_DB_CONNECTION;
 
@@ -480,12 +557,27 @@ var
   begin
     cc_cust.FieldPathCreate(importnames[i]).AsString:=q.FieldByName(importfields[i]).AsString
   end;
+
+  var suid       :TFRE_DB_GUID;
+      refs       :TFRE_DB_ObjectReferences;
+      ccdebnr    :string;
+
+  var my_domname : TFRE_DB_String;
+      my_domuid  : TFRE_DB_GUID;
 begin
+  GenerateSearchDomains(true);
   conn := GFRE_DBI.NewConnection;
   CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
   if not conn.CollectionExists(CFOS_DB_CUSTOMERS_COLLECTION) then
     conn.CreateCollection(CFOS_DB_CUSTOMERS_COLLECTION);
   coll := conn.GetCollection(CFOS_DB_CUSTOMERS_COLLECTION);
+
+  //suid.SetFromHexString('cddcf489d6ceffcf9290e9a4fe0b0e2d');
+  //refs := conn.GetReferencesDetailed(suid,false);
+
+  writeln('Deleting Customers');
+  coll.ClearCollection;
+  writeln('Deleting Customers Done');
 
   C:=TFOSMySqlConn.Create(Nil);
   try
@@ -498,7 +590,9 @@ begin
     C.DatabaseName:='crm_citycom';
     T:=TSQLTransaction.Create(C);
     T.Database:=C;
+    writeln('TRY CONNECT DB');
     C.Connected:=True;
+    writeln('CONNECTED DB');
     Q:=TSQLQuery.Create(C);
     Q.Database:=C;
     Q.Transaction:=T;
@@ -507,7 +601,9 @@ begin
     q.sql.Text := 'SET NAMES `utf8`';
     q.ExecSQL;
     Q.SQL.Text:='SELECT accounts.*,accounts_cstm.* FROM `accounts_cstm` RIGHT OUTER JOIN `accounts` ON (`accounts_cstm`.`id_c` = `accounts`.`id`)';
+    writeln('OPEN QRY');
     Q.Open;
+    writeln('OPEN QRY DONE');
 
     AddField('id','cc_crm_id',fdbft_String);
     AddField('name','objname',fdbft_String);
@@ -524,23 +620,61 @@ begin
         cc_cust := TFOS_DB_CITYCOM_CUSTOMER.CreateForDB;
         for i:=0 to high(importfields) do
           begin
-            write(q.FieldByName(importfields[i]).AsString,' ');
+            //write(q.FieldByName(importfields[i]).AsString,' ');
             Import;
           end;
         //WriteLn;
         //writeln(cc_cust.DumpToString);
         cname := cc_cust.Field('cc_crm_id').AsString+' - '+cc_cust.ObjectName;
-        if cc_cust.Field('cc_debitorennummer_c').AsString<>'' then begin
+        ccdebnr :=trim(cc_cust.Field('cc_debitorennummer_c').AsString);
+
+        if CheckFindDebitorNumber(ccdebnr,my_domname,my_domuid) then begin
           cnt:=cnt+1;
+          cc_cust.Field('servicedomain').AsObjectLink := my_domuid;
           res := coll.Store(cc_cust);
-          writeln(cname,' : ',CFRE_DB_Errortype[res]);
+          writeln('>> ',ccdebnr,' - ',cname,' : ',my_domname,' ->',my_domuid.AsHexString,'   DB STORE -> ',CFRE_DB_Errortype[res]);
         end;
+        //writeln(cname,' : ',CFRE_DB_Errortype[res]);
         Q.Next
       end;
     Q.Close;
   finally
     C.Free;
   end;
+
+  cname:='';
+
+  ccdebnr:='SC-DEMO';
+  if CheckFindDebitorNumber(ccdebnr,my_domname,my_domuid) then
+    begin
+      cc_cust := TFOS_DB_CITYCOM_CUSTOMER.CreateForDB;
+      cc_cust.ObjectName:='Demo Customer';
+      cc_cust.FieldPathCreate('mainaddress.street').AsString:='Musterstraße 1';
+      cc_cust.FieldPathCreate('mainaddress.city').AsString:='Musterstadt';
+      cc_cust.FieldPathCreate('mainaddress.zip').AsString:='1234';
+      cc_cust.FieldPathCreate('mainaddress.country').AsString:='Österreich';
+      cc_cust.FieldPathCreate('http.url').AsString:='demo.styriacloud.net';
+      cc_cust.Field('servicedomain').AsObjectLink := my_domuid;
+      cc_cust.Field('cc_debitorennummer_c').AsString:=ccdebnr;
+      res := coll.Store(cc_cust);
+      writeln('>> ',ccdebnr,' - ',cname,' : ',my_domname,' ->',my_domuid.AsHexString,'   DB STORE -> ',CFRE_DB_Errortype[res]);
+    end;
+
+  ccdebnr:='SC-PRO';
+  if CheckFindDebitorNumber(ccdebnr,my_domname,my_domuid) then
+    begin
+      cc_cust := TFOS_DB_CITYCOM_CUSTOMER.CreateForDB;
+      cc_cust.ObjectName:='Pro Competence';
+      cc_cust.FieldPathCreate('mainaddress.street').AsString:='Musterstraße 2';
+      cc_cust.FieldPathCreate('mainaddress.city').AsString:='Musterstadt';
+      cc_cust.FieldPathCreate('mainaddress.zip').AsString:='1234';
+      cc_cust.FieldPathCreate('mainaddress.country').AsString:='Österreich';
+      cc_cust.FieldPathCreate('http.url').AsString:='www.pro-competence.at';
+      cc_cust.Field('servicedomain').AsObjectLink := my_domuid;
+      cc_cust.Field('cc_debitorennummer_c').AsString:=ccdebnr;
+      res := coll.Store(cc_cust);
+      writeln('>> ',ccdebnr,' - ',cname,' : ',my_domname,' ->',my_domuid.AsHexString,'   DB STORE -> ',CFRE_DB_Errortype[res]);
+    end;
 
 end;
 {$ENDIF}
@@ -1017,13 +1151,14 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     dc_id          : TFRE_DB_GUID;
     host_id        : TFRE_DB_GUID;
     template_id    : TFRE_DB_GUID;
+    gz_template_id : TFRE_DB_GUID;
     zcoll          : IFRE_DB_COLLECTION;
     pcoll          : IFRE_DB_COLLECTION;
     pool_id        : TFRE_DB_GUID;
     dscoll         : IFRE_DB_COLLECTION;
     ds_id          : TFRE_DB_GUID;
     zone_id        : TFRE_DB_GUID;
-    lcoll          : IFRE_DB_COLLECTION;
+    svc_coll       : IFRE_DB_COLLECTION;
     link_id        : TFRE_DB_GUID;
     ipcoll         : IFRE_DB_COLLECTION;
     oce0_id        : TFRE_DB_GUID;
@@ -1115,6 +1250,8 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     begin
       datalink := GFRE_DBI.NewObjectSchemeByName(clname);
       datalink.Field('objname').asstring := name;
+      datalink.Field('uniquephysicalid').asstring := datalink.UID_String;
+
       if datalinkparentid<>CFRE_DB_NullGUID then
         begin
           datalink.Field('parentid').AsObjectLink := datalinkparentid;
@@ -1147,7 +1284,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       datalink.SetDomainID(g_domain_id);
       result := datalink.UID;
 //      writeln('DATALINK:',datalink.DumpToString());
-      CheckDbResult(lCOLL.Store(datalink),'Add Datalink');
+      CheckDbResult(svc_coll.Store(datalink),'Add Datalink');
       writeln('Created Datalink:',name);
     end;
 
@@ -1216,6 +1353,8 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     end;
 
 begin
+  GenerateSearchDomains(false);
+
   FRE_DBBASE.Register_DB_Extensions;
   fos_citycom_base.Register_DB_Extensions;
   fre_zfs.Register_DB_Extensions;
@@ -1266,7 +1405,7 @@ begin
   else
     dscoll:=conn.GetCollection(  CFRE_DB_ZFS_DATASET_COLLECTION);
 
-  if not conn.CollectionExists(CFOS_DB_ZONES_COLLECTION) then
+  if not conn.CollectionExists(CFOS_DB_ZONES_COLLECTION) then { zones per domain }
     begin
      zcoll:=conn.CreateCollection(CFOS_DB_ZONES_COLLECTION);
 //     dscoll.DefineIndexOnField('objname',fdbft_String,true);
@@ -1274,23 +1413,17 @@ begin
   else
     zcoll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
 
-  if not conn.CollectionExists(CFRE_DB_DATALINK_COLLECTION) then
-    begin
-     lcoll:=conn.CreateCollection(CFRE_DB_DATALINK_COLLECTION);
-//     dscoll.DefineIndexOnField('objname',fdbft_String,true);
-    end
-  else
-    lcoll:=conn.GetCollection(CFRE_DB_DATALINK_COLLECTION);
+  svc_coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);  { services per domain }
 
-  if not conn.CollectionExists(CFRE_DB_IP_COLLECTION) then
+  if not conn.CollectionExists(CFRE_DB_IP_COLLECTION) then    { ip per domain }
     begin
      ipcoll:=conn.CreateCollection(CFRE_DB_IP_COLLECTION);
 //     dscoll.DefineIndexOnField('objname',fdbft_String,true);
     end
   else
     ipcoll:=conn.GetCollection(CFRE_DB_IP_COLLECTION);
-
-  if not conn.CollectionExists(CFRE_DB_ROUTING_COLLECTION) then
+                                                                { ROUTING SERVICE anlegen }
+  if not conn.CollectionExists(CFRE_DB_ROUTING_COLLECTION) then { routing per domain }
     begin
      rcoll:=conn.CreateCollection(CFRE_DB_ROUTING_COLLECTION);
 //     dscoll.DefineIndexOnField('objname',fdbft_String,true);
@@ -1300,18 +1433,35 @@ begin
 
 
   tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
+  tmpl.ObjectName:='GLOBAL';
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_GLOBAL_FILESERVER.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_AGGR.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPMP.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_STUB.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
+  gz_template_id := tmpl.UID;
+  CheckDBResult(tcoll.Store(tmpl));
+
+
+  tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
+  tmpl.ObjectName:='FBZ_093';
   tmpl.Field('serviceclasses').AddString(TFRE_DB_VMACHINE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_SSH_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_VIRTUAL_FILESERVER.Classname);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DNS.Classname);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DHCP.Classname);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_NETWORK_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_VPN.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_IMAP_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_MTA_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_POSTGRES_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_MYSQL_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_HTTP_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_VOIP_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
   template_id := tmpl.UID;
   CheckDBResult(tcoll.Store(tmpl));
 
@@ -1319,7 +1469,7 @@ begin
 
   dc_id    := CreateDC('RZ Nord');
   host_id  := CreateHost('ANord01',dc_id);
-  zone_id  := CreateZone('global',host_id,host_id,CFRE_DB_NullGUID);
+  zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,false,true,9000,0,CFRE_DB_NullGUID);
   AddIPV4('10.54.250.102/25',ipmp_nfs);
   ipmp_drs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'drs0',zone_id,CFRE_DB_NullGUID,false,true,9000,0,CFRE_DB_NullGUID);
@@ -1350,7 +1500,8 @@ begin
   pool_id  := CreatePool('anord01disk',host_id);
   ds_id    := CreateDataset('anord01disk/anord01ds',pool_id);
 
-  g_domain_id:=conn.GetSysDomainUID;   //CITYCOM
+
+  g_domain_id := CheckFindDomainID('CITYCOM');
   zone_id  := CreateZone('boot1',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,true,false,0,1699,CFRE_DB_NullGUID,'Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::20/64',link_id);
@@ -1358,19 +1509,16 @@ begin
   AddIPV4('109.73.158.185/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
-  g_domain_id:=conn.GetSysDomainUID;   //CITYCOM
   zone_id  := CreateZone('dbnord',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,ixgbe_id,true,false,0,0,CFRE_DB_NullGUID,'Mgmt LAN');
   AddIPV4('10.54.3.230/24',link_id);
   AddRoutingIPV4('default','10.54.3.252',zone_id,'Default Route');
 
-  g_domain_id:=conn.GetSysDomainUID;   //CITYCOM
   zone_id  := CreateZone('guitest',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,true,false,0,1598,CFRE_DB_NullGUID,'Internet');
   AddIPV4('109.73.158.188/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
-  g_domain_id:=conn.GetSysDomainUID;   //CITYCOM
   zone_id  := CreateZone('ns1',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,true,false,0,1699,CFRE_DB_NullGUID,'Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::11/64',link_id);
@@ -1378,12 +1526,12 @@ begin
   AddIPV4('109.73.158.187/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
-  g_domain_id:=conn.GetSysDomainUID;   //GRAZETTA
+  g_domain_id := CheckFindDomainID('GRAZETTA');
   zone_id  := CreateZone('grazetta',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,true,false,0,363,CFRE_DB_NullGUID,'Lan');
   AddIPV4('192.168.50.5/24',link_id);
 
-  g_domain_id:=conn.GetSysDomainUID;   //PRO-COMPETENCE
+  g_domain_id := CheckFindDomainID('PRO-COMPETENCE');
   zone_id  := CreateZone('kmurz_a',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,true,false,0,1699,CFRE_DB_NullGUID,'Crypto CPE');
   AddIPV6('',link_id);
@@ -1399,12 +1547,12 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,oce0_id,true,false,0,2000,CFRE_DB_NullGUID,'Global NFS');
   AddIPV4('172.22.1.1/16',link_id);
 
-  g_domain_id:=conn.GetSysDomainUID;   //ZOESCHER
+  g_domain_id := CheckFindDomainID('ZOESCHER');
   zone_id  := CreateZone('zoescher',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,true,false,0,1745,CFRE_DB_NullGUID,'Lan');
   AddIPV4('192.168.0.144/24',link_id);
 
-  g_domain_id:=conn.GetSysDomainUID;   //DEMO
+  g_domain_id := CheckFindDomainID('DEMO');
   zone_id  := CreateZone('demo',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,true,false,0,1699,CFRE_DB_NullGUID,'Crypto CPE');
   AddIPV6('',link_id);
@@ -1423,28 +1571,28 @@ begin
   g_domain_id:=conn.GetSysDomainUID;
   ds_id    := CreateDataset('anord01disk/nas01ds',pool_id);
 
-  g_domain_id:=conn.GetSysDomainUID;   //CITYCOM
+  g_domain_id := CheckFindDomainID('CITYCOM');
   zone_id  := CreateZone('rsync0',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicrsync0',zone_id,oce0_id,true,false,0,1598,CFRE_DB_NullGUID,'Internet');
   AddIPV4('109.73.158.190/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
-  g_domain_id:=conn.GetSysDomainUID;   //CORTI
+
+  g_domain_id := CheckFindDomainID('CORTI');
   zone_id  := CreateZone('corti',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,true,false,0,1758,CFRE_DB_NullGUID,'Lan');
   AddIPV4('192.168.0.18/24',link_id);
 
   g_domain_id:=conn.GetSysDomainUID;
   host_id  := CreateHost('SNord01',dc_id);
-  zone_id  := CreateZone('global',host_id,host_id,CFRE_DB_NullGUID);
+  zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,false,true,1500,0,CFRE_DB_NullGUID);
   AddIPV4('',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,false,true,1500,0,CFRE_DB_NullGUID);
   AddIPV4('',link_id);
 
-
   host_id  := CreateHost('FSNord01',dc_id);
   pool_id  := CreatePool('nordp',host_id);
-  zone_id  := CreateZone('global',host_id,host_id,CFRE_DB_NullGUID);
+  zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,false,true,9000,0,CFRE_DB_NullGUID);
   AddIPV4('10.54.250.100/25',ipmp_nfs);
   AddIPV4('10.54.250.200/25',ipmp_nfs);
@@ -1482,7 +1630,7 @@ begin
   dc_id := CreateDC('RZ Sued');
   host_id  := CreateHost('ASued01',dc_id);
   ds_id    := CreateDataset('asued01disk/asued01ds',pool_id);
-  zone_id  := CreateZone('global',host_id,host_id,CFRE_DB_NullGUID);
+  zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,false,true,9000,0,CFRE_DB_NullGUID);
   AddIPV4('10.54.250.112/25',ipmp_nfs);
   ipmp_drs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'drs0',zone_id,CFRE_DB_NullGUID,false,true,9000,0,CFRE_DB_NullGUID);
@@ -1509,22 +1657,20 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,false,true,1500,0,CFRE_DB_NullGUID);
   AddIPV4('',link_id);
 
-
-  g_domain_id:=conn.GetSysDomainUID;   //CITYCOM
+  g_domain_id := CheckFindDomainID('CITYCOM');
   zone_id  := CreateZone('ns2',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,true,false,0,1699,CFRE_DB_NullGUID,'Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::12/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,true,false,0,1598,CFRE_DB_NullGUID,'Internet');
   AddIPV4('109.73.158.189/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
-  g_domain_id:=conn.GetSysDomainUID;   //CITYCOM
   zone_id  := CreateZone('test',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,true,false,0,1758,CFRE_DB_NullGUID);
   ds_id    := CreateDataset('asued01disk/nas02ds',pool_id);
 
   g_domain_id:=conn.GetSysDomainUID;
   host_id  := CreateHost('SSued01',dc_id);
-  zone_id  := CreateZone('global',host_id,host_id,CFRE_DB_NullGUID);
+  zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,false,true,1500,0,CFRE_DB_NullGUID);
   AddIPV4('',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,false,true,1500,0,CFRE_DB_NullGUID);
@@ -1532,7 +1678,7 @@ begin
 
 
   host_id  := CreateHost('FSSued01',dc_id);
-  zone_id  := CreateZone('global',host_id,host_id,CFRE_DB_NullGUID);
+  zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   pool_id  := CreatePool('suedp',host_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,false,true,9000,0,CFRE_DB_NullGUID);
   AddIPV4('10.54.250.110/25',ipmp_nfs);
@@ -1570,7 +1716,7 @@ begin
   host_id  := CreateHost('DRS',dc_id);
   pool_id  := CreatePool('drsdisk',host_id);
   pool_id  := CreatePool('rpool',host_id);
-  zone_id  := CreateZone('global',host_id,host_id,CFRE_DB_NullGUID);
+  zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_drs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'drs0',zone_id,CFRE_DB_NullGUID,false,true,9000,0,CFRE_DB_NullGUID);
   AddIPV4('10.54.240.198/24',ipmp_drs);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce0',zone_id,CFRE_DB_NullGUID,false,true,9000,0,CFRE_DB_NullGUID);
@@ -1593,7 +1739,7 @@ begin
 
   dc_id := CreateDC('RZ Test');
   host_id  := CreateHost('Fosdev',dc_id);
-  zone_id  := CreateZone('global',host_id,host_id,CFRE_DB_NullGUID);
+  zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   pool_id  := CreatePool('syspool',host_id);
   ds_id    := CreateDataset('syspool',pool_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g0',zone_id,CFRE_DB_NullGUID,false,true,1500,0,CFRE_DB_NullGUID);
@@ -1607,7 +1753,7 @@ begin
   AddIPV4('172.22.0.99/24',link_id);
   e1_id    := link_id;
 
-  g_domain_id:=conn.GetSysDomainUID;   //DEMO
+  g_domain_id := CheckFindDomainID('DEMO');
   zone_id  := CreateZone('demo',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,e1_id,true,false,0,1699,CFRE_DB_NullGUID,'Crypto CPE');
   AddIPV6('',link_id);
