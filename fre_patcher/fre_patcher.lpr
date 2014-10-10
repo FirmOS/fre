@@ -1250,7 +1250,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     begin
       datalink := GFRE_DBI.NewObjectSchemeByName(clname);
       datalink.Field('objname').asstring := name;
-      datalink.Field('uniquephysicalid').asstring := datalink.UID_String;
+      datalink.Field('uniquephysicalid').asstring := datalink.UID_String;  //FIXXME
 
       if datalinkparentid<>CFRE_DB_NullGUID then
         begin
