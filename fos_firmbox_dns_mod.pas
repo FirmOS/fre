@@ -676,6 +676,7 @@ begin
 
     CreateModuleText(conn,'chooser_customer','Customer');
     CreateModuleText(conn,'grid_network_domains_customer','Customer');
+    CreateModuleText(conn,'grid_customer_default_value','No Customer assigned');
   end;
 end;
 
@@ -773,7 +774,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddMatchingReferencedField('CUSTOMER>TFOS_DB_CITYCOM_CUSTOMER','objname','objname',FetchModuleTextShort(session,'grid_network_domains_customer'),true,dt_string,true);
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
       AddOneToOnescheme('name','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddMatchingReferencedField('default','value','default',FetchModuleTextShort(session,'grid_network_domains_default'));
       AddFulltextFilterOnTransformed(['name']);
@@ -1034,17 +1035,28 @@ var
   resourceColl  : IFRE_DB_COLLECTION;
   idx           : String;
   customer      : IFRE_DB_Object;
+  sdomain       : TFRE_DB_GUID;
 begin
   if not input.FieldPathExists('data.domain') then raise EFRE_DB_Exception.Create('Missing input data: network domain');
-  if not input.FieldPathExists('data.domain.customer') then raise EFRE_DB_Exception.Create('Missing input data: customer');
   if not input.FieldPathExists('data.domain.name') then raise EFRE_DB_Exception.Create('Missing required input data: network domain name');
   if not input.FieldPathExists('data.domain.dns1') then raise EFRE_DB_Exception.Create('Missing input data: dns1');
 
-  CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('data.domain.customer').AsString),customer));
-  if not customer.FieldExists('servicedomain') then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'The given customer has no service domain set!');
+  if input.FieldPathExists('data.domain.customer') then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('data.domain.customer').AsString),customer));
+    if not customer.FieldExists('servicedomain') then
+      raise EFRE_DB_Exception.Create(edb_ERROR,'The given customer has no service domain set!');
 
-  if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_NETWORK_DOMAIN,customer.Field('servicedomain').AsObjectLink) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,customer.Field('servicedomain').AsObjectLink)) then
+    input.FieldPath('data.domain').AsObject.DeleteField('customer');
+    sdomain:=customer.Field('servicedomain').AsObjectLink;
+  end else begin
+    if input.FieldPathExists('data.domain.domainId') then begin
+      sdomain:=FREDB_H2G(input.FieldPath('data.domain.domainId').AsString);
+    end else begin
+      raise EFRE_DB_Exception.Create(edb_ERROR,'No domain Id given for new DNS Service');
+    end;
+  end;
+
+  if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_NETWORK_DOMAIN,sdomain) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,sdomain)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   if not GFRE_DBI.GetSystemScheme(TFOS_DB_NETWORK_DOMAIN,schemeObject) then
@@ -1062,7 +1074,7 @@ begin
   domain:=TFOS_DB_NETWORK_DOMAIN.CreateForDB;
   schemeObject.SetObjectFieldsWithScheme(input.FieldPath('data.domain').AsObject,domain,true,conn);
   domain.Field('uniquephysicalid').AsString:=idx;
-  domain.SetDomainID(customer.Field('servicedomain').AsObjectLink);
+  domain.SetDomainID(sdomain);
 
   if not GFRE_DBI.GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,schemeObjectRR) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_DNS_RESOURCE_RECORD]);
