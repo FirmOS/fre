@@ -1,0 +1,139 @@
+unit fos_firmbox_net_routing_mod;
+
+{$mode objfpc}{$H+}
+{$modeswitch nestedprocvars}
+
+interface
+
+uses
+  Classes, SysUtils, FRE_SYSTEM,
+  FOS_TOOL_INTERFACES,
+  FRE_DB_INTERFACE,
+  FRE_DB_COMMON,
+  fre_hal_schemes,fre_dbbusiness;
+
+type
+
+{ TFRE_FIRMBOX_NET_ROUTING_MOD }
+
+  TFRE_FIRMBOX_NET_ROUTING_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  protected
+    class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects           (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects       (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
+    procedure       SetupAppModuleStructure    ; override;
+  public
+    procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
+  published
+    function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_SliderChanged          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+  end;
+
+procedure Register_DB_Extensions;
+
+implementation
+
+procedure Register_DB_Extensions;
+begin
+  fre_hal_schemes.Register_DB_Extensions;
+
+  GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_NET_ROUTING_MOD);
+
+  GFRE_DBI.Initialize_Extension_Objects;
+end;
+
+{ TFRE_FIRMBOX_NET_ROUTING_MOD }
+
+class procedure TFRE_FIRMBOX_NET_ROUTING_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  inherited RegisterSystemScheme(scheme);
+  scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
+end;
+
+procedure TFRE_FIRMBOX_NET_ROUTING_MOD.SetupAppModuleStructure;
+begin
+  inherited SetupAppModuleStructure;
+  InitModuleDesc('net_routing_description')
+end;
+
+class procedure TFRE_FIRMBOX_NET_ROUTING_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='0.1';
+  if currentVersionId='' then begin
+    currentVersionId := '0.1';
+
+    CreateModuleText(conn,'net_routing_description','Networks/Routing','Networks/Routing','Networks/Routing');
+
+    CreateModuleText(conn,'grid_interfaces_cap','Interfaces');
+    CreateModuleText(conn,'grid_interface','Interface');
+    CreateModuleText(conn,'grid_customer','Customer');
+    CreateModuleText(conn,'grid_customer_default_value','Global - Not Assigned');
+
+    CreateModuleText(conn,'bandwidth_group','Internet Bandwidth [MBit]');
+  end;
+end;
+
+class procedure TFRE_FIRMBOX_NET_ROUTING_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+begin
+  inherited InstallUserDBObjects(conn, currentVersionId);
+end;
+
+procedure TFRE_FIRMBOX_NET_ROUTING_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
+var
+  app      : TFRE_DB_APPLICATION;
+  conn     : IFRE_DB_CONNECTION;
+  transform: IFRE_DB_SIMPLE_TRANSFORM;
+  if_grid  : IFRE_DB_DERIVED_COLLECTION;
+begin
+  inherited MySessionInitializeModule(session);
+  if session.IsInteractiveSession then begin
+    app  := GetEmbeddingApp;
+    conn := session.GetDBConnection;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_interface'));
+      //AddFulltextFilterOnTransformed(['objname','number']);
+    end;
+
+    if_grid := session.NewDerivedCollection('INTERFACES_GRID');
+    with if_grid do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[],FetchModuleTextShort(session,'grid_interfaces_cap'));
+      Filters.AddSchemeObjectFilter('service',TFRE_DB_DATALINK.getAllDataLinkClasses);
+      Orders.AddOrderDef('customer',true,false);
+      //Orders.AddOrderDef('objname',true,false);
+    end;
+  end;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res       : TFRE_DB_LAYOUT_DESC;
+  slider    : TFRE_DB_FORM_PANEL_DESC;
+  group     : TFRE_DB_INPUT_GROUP_DESC;
+  if_grid   : TFRE_DB_CONTENT_DESC;
+begin
+  CheckClassVisibility4MyDomain(ses);
+
+  slider:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,true,CWSF(@WEB_SliderChanged),500);
+  slider.contentId:='slider_form';
+  group:=slider.AddGroup.Describe(FetchModuleTextShort(ses,'bandwidth_group'));
+  group.AddNumber.DescribeSlider('','slider',20,50,true,'20',0,31);
+
+  if_grid:=ses.FetchDerivedCollection('INTERFACES_GRID').GetDisplayDescription;
+  res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetAutoSizedLayout(nil,if_grid,nil,slider);
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_SliderChanged(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('SLIDER CHANGED',input.Field('slider').AsString,fdbmt_info);
+end;
+
+
+end.
+
