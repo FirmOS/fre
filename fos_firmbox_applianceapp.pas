@@ -1151,7 +1151,7 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_APPLIANCE_SETTINGS_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_APPLIANCE_STATUS_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_APPLIANCE_APP);
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 end.

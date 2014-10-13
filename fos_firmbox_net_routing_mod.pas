@@ -36,10 +36,7 @@ implementation
 procedure Register_DB_Extensions;
 begin
   fre_hal_schemes.Register_DB_Extensions;
-
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_NET_ROUTING_MOD);
-
-  GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFRE_FIRMBOX_NET_ROUTING_MOD }

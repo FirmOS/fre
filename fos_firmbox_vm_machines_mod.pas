@@ -125,7 +125,7 @@ begin
 
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_DISK);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_ISO);
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFRE_FIRMBOX_VM_ISO }

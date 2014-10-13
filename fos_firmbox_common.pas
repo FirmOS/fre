@@ -638,7 +638,7 @@ begin
   fos_firmbox_storageapp.Register_DB_Extensions;
   fos_firmbox_servicesapp.Register_DB_Extensions;
   fos_firmbox_vmapp.Register_DB_Extensions;
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 procedure FIRMBOX_MetaInitializeDatabase(const dbname: string; const user, pass: string);

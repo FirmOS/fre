@@ -69,7 +69,7 @@ begin
 
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD);
 
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD }

@@ -123,7 +123,7 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFOS_FIRMBOX_DNS_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFOS_FIRMBOX_NAMESERVER_MOD);
 
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFOS_DB_DNS_NAMESERVER_RECORD }

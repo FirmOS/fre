@@ -182,7 +182,7 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_POOLS_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORAGE_APP);
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFRE_FIRMBOX_BACKUP_SCHEDULER_MOD }

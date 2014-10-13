@@ -169,7 +169,7 @@ procedure Register_DB_Extensions;
 begin
   fos_firmbox_vm_machines_mod.Register_DB_Extensions;
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_APP);
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 end.

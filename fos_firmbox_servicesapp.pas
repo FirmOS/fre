@@ -83,7 +83,7 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_MACHINES_MOD);
 
   GFRE_DBI.RegisterObjectClassEx(TFOS_FIRMBOX_SERVICES_APP);
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFOS_FIRMBOX_MANAGED_SERVICES_MOD }
