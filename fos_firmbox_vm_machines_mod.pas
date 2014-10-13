@@ -576,6 +576,7 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     with tr_Grid do begin
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'gc_vm_customer'),true,dt_string,true,true,4,'',FetchModuleTextShort(session,'gc_vm_customer_default_value'),nil,false,'domainid');
       AddOneToOnescheme('Objname','',FetchModuleTextShort(session,'gc_vm_name'),dt_string,true,false,false,4);
       AddOneToOnescheme('MType','',FetchModuleTextShort(session,'gc_vm_type'));
       AddOneToOnescheme('StateIcon','',FetchModuleTextShort(session,'gc_vm_state'),dt_icon);
@@ -643,7 +644,7 @@ end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-   newVersionId:='0.9';
+   newVersionId:='0.9.1';
    if currentVersionId='' then begin
      currentVersionId:='0.9';
 
@@ -698,7 +699,12 @@ begin
      CreateModuleText(conn,'vm_details_perf','Performance');
      CreateModuleText(conn,'vm_details_note','Note');
    end;
+   if currentVersionId='0.9' then begin
+     currentVersionId:='0.9.1';
 
+     CreateModuleText(conn,'gc_vm_customer','Customer');
+     CreateModuleText(conn,'gc_vm_customer_default_value','No Customer assigned');
+   end;
 end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
