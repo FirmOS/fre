@@ -1293,7 +1293,7 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_MONSYS);
   GFRE_DBI.RegisterObjectClassEx(TFRE_AlertHTMLJob);
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_SCP_JOB);
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 procedure DummyDoJobs;

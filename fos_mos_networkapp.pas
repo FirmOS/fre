@@ -51,7 +51,7 @@ begin
   fos_firmbox_dns_mod.Register_DB_Extensions;
 
   GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_NETWORK_APP);
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFOS_CITYCOM_NETWORK_APP }

@@ -90,7 +90,7 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_MOS_STRUCTURAL_MOD);
 
   GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_MONITORING_APP);
-  GFRE_DBI.Initialize_Extension_Objects;
+  //GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFOS_CITYCOM_MOS_STRUCTURAL_MOD }
