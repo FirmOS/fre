@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
     <Version Value="9"/>
@@ -29,29 +29,25 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <CommandLineParams Value="-U root -H 10.220.251.10 -u feeder@system -p a1234"/>
+        <CommandLineParams Value="-U root -H 10.220.251.10 -u mfeeder@system -p mighty --machine=ABC --mac=00:11:22:33:44:5F"/>
       </local>
     </RunParams>
     <Units Count="4">
       <Unit0>
         <Filename Value="fre_testdatafeed.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fre_testdatafeed"/>
       </Unit0>
       <Unit1>
         <Filename Value="../fre_server/fre_base_client.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fre_base_client"/>
       </Unit1>
       <Unit2>
         <Filename Value="../fre_server/fre_feed_client.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fre_feed_client"/>
       </Unit2>
       <Unit3>
         <Filename Value="../fre_core/fos_stats_control_interface.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fos_stats_control_interface"/>
       </Unit3>
     </Units>
   </ProjectOptions>
@@ -76,12 +72,6 @@ if TargetOS = 'solaris' then
     <CodeGeneration>
       <TargetCPU Value="x86_64"/>
     </CodeGeneration>
-    <Other>
-      <CompilerMessages>
-        <MsgFileName Value=""/>
-      </CompilerMessages>
-      <CompilerPath Value="$(CompPath)"/>
-    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

@@ -1123,6 +1123,7 @@ begin
   conn := GFRE_DB.NewConnection;
   try
     CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+    GFRE_DB.Initialize_Extension_ObjectsBuild;
     CheckDbResult(conn.sys.AddUser(feederusername,conn.GetSysDomainUID,feederpass,'','',nil,'',true,'','',feederclass));
   finally
     conn.Finalize;
