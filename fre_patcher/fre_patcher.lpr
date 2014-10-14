@@ -1266,11 +1266,14 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       ip               := TFRE_DB_IPV4_HOSTNET.CreateForDB;
       if ip_mask<>'' then
         begin
+          ip.ObjectName:=ip_mask;
           ip.SetIPCIDR(ip_mask);
           ip.Field('dhcp').asboolean:=false;
         end
-      else
+      else begin
+        ip.ObjectName:='DHCP';
         ip.Field('dhcp').asboolean:=true;
+      end;
 
       ip.Field('parentid').AsObjectLink:=parent_id;
       ip.Field('serviceParent').AsObjectLink:=parent_id;
@@ -1288,11 +1291,14 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       ip               := TFRE_DB_IPV6_HOSTNET.CreateForDB;
       if ip_mask<>'' then
         begin
+          ip.ObjectName:=ip_mask;
           ip.SetIPCIDR(ip_mask);
           ip.Field('slaac').asboolean:=false;
         end
-      else
+      else begin
+        ip.ObjectName:='SLAAC';
         ip.Field('slaac').asboolean:=true;
+      end;
 
       ip.Field('parentid').AsObjectLink:=parent_id;
       ip.Field('serviceParent').AsObjectLink:=parent_id;
@@ -1310,6 +1316,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       r               := TFRE_DB_IPV4_NETROUTE.CreateForDB;
       r.SetIPCIDR(ip_mask);
       r.SetGatewayIP(gw);
+      r.ObjectName:=ip_mask;
       r.Field('zoneid').AsObjectLink:=zone_id;
       r.Field('serviceParent').AsObjectLink:=zone_id;
       if description<>''  then
@@ -1350,6 +1357,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
    var vm:TFRE_DB_VMACHINE;
    begin
      vm:=TFRE_DB_VMACHINE.CreateForDB;
+     vm.SetDomainID(g_domain_id);
      vm.ObjectName:=name;
      vm.key:=name;
      vm.vncHost:=mgmt_ip;
@@ -1370,11 +1378,11 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      idx:='FS_'+ sharename + '@' + fileserver_id.AsHexString;
      shareObj:=TFRE_DB_VIRTUAL_FILESHARE.CreateForDB;
      shareObj.SetDomainID(g_domain_id);
-     shareObj.Field('objname').AsString:=idx;
+     shareObj.Field('uniquephysicalid').AsString:=idx;
      shareObj.Field('dataset').asstring:=ds;
      shareObj.Field('poolid').AsObjectLink:=pool_id;
      shareObj.Field('fileserver').AsObjectLink:=fileserver_id;
-     shareobj.Field('name').AsString:=sharename;
+     shareobj.ObjectName:=sharename;
      shareobj.Field('quota_mb').AsUInt32:=quota;
      shareobj.Field('referenced_mb').AsUInt32:=quota;
      writeln('VFS:',shareobj.DumpToString());
@@ -1387,7 +1395,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
    begin
      vf:=TFRE_DB_VIRTUAL_FILESERVER.CreateForDB;
      vf.SetDomainID(g_domain_id);
-     vf.Field('name').AsString:=name;
+     vf.ObjectName:=name;
      idx:='VFS_'+zone_id.AsHexString;
      vf.Field('uniquephysicalid').AsString:=idx;
      vf.Field('serviceParent').AsObjectLink:=zone_id;
@@ -1403,7 +1411,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
    begin
      cf:=TFRE_DB_CRYPTO_FILESERVER.CreateForDB;
      cf.SetDomainID(g_domain_id);
-     cf.Field('name').AsString:=name;
+     cf.ObjectName:=name;
      idx:='CFS_'+zone_id.AsHexString;
      cf.Field('uniquephysicalid').AsString:=idx;
      cf.Field('serviceParent').AsObjectLink:=zone_id;
