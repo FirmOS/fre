@@ -229,16 +229,20 @@ end;
 
 class procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
 var
-  coll: IFRE_DB_COLLECTION;
+  coll   : IFRE_DB_COLLECTION;
+  idx_def: TFRE_DB_INDEX_DEF;
 begin
   inherited InstallUserDBObjects(conn, currentVersionId);
   if not conn.CollectionExists(CFRE_DB_FILESHARE_COLLECTION) then begin
     coll:=conn.CreateCollection(CFRE_DB_FILESHARE_COLLECTION);
+    coll.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false);
   end else begin
     coll:=conn.GetCollection(CFRE_DB_FILESHARE_COLLECTION);
-  end;
-  if not coll.IndexExists('def') then begin
-    coll.DefineIndexOnField('objname',fdbft_String,true,true,'def',false);
+    idx_def:= coll.GetIndexDefinition('def');
+    if lowercase(idx_def.FieldName)='objname' then begin
+      coll.DropIndex('def');
+      CheckDbResult(coll.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false));
+    end;
   end;
 end;
 
@@ -281,9 +285,9 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_vfs_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
-      AddOneToOnescheme('name','',FetchModuleTextShort(session,'grid_vfs_name'));
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_vfs_name'));
       AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description','',true,false,false,dt_description);
-      AddFulltextFilterOnTransformed(['customer','name']);
+      AddFulltextFilterOnTransformed(['customer','objname']);
     end;
     fs_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_FS_GRID');
     with fs_dc do begin
@@ -295,12 +299,12 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('name','',FetchModuleTextShort(session,'vfs_share'));
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'vfs_share'));
       AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', '',true,false,false,dt_description);
       AddOneToOnescheme('used_mb','used',FetchModuleTextShort(session,'vfs_share_used'));
       AddOneToOnescheme('refer_mb','refer',FetchModuleTextShort(session,'vfs_share_refer'));
       AddOneToOnescheme('quota_mb','quota',FetchModuleTextShort(session,'vfs_share_quota'));
-      AddFulltextFilterOnTransformed(['name']);
+      AddFulltextFilterOnTransformed(['objname']);
     end;
     share_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
     with share_dc do begin
@@ -639,7 +643,7 @@ begin
 
   sf:=CWSF(@WEB_VFSDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'vfs_delete_diag_cap'),StringReplace(FetchModuleTextShort(ses,'vfs_delete_diag_msg'),'%vfs_str%',fileserver.Field('name').AsString,[rfReplaceAll]),fdbmt_confirm,sf);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'vfs_delete_diag_cap'),StringReplace(FetchModuleTextShort(ses,'vfs_delete_diag_msg'),'%vfs_str%',fileserver.Field('objname').AsString,[rfReplaceAll]),fdbmt_confirm,sf);
 end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSDeleteConfirmed(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -714,14 +718,14 @@ begin
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     shareColl:=conn.GetCollection(CFRE_DB_FILESHARE_COLLECTION);
-    idx:='FS_'+ input.FieldPath('data.name').AsString + '@' + service.UID_String;
+    idx:='FS_'+ input.FieldPath('data.objname').AsString + '@' + service.UID_String;
     if shareColl.ExistsIndexed(idx) then begin
       Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vfs_share_create_error_exists_cap'),FetchModuleTextShort(ses,'vfs_share_create_error_exists_msg'),fdbmt_error);
       exit;
     end;
     shareObj:=TFRE_DB_VIRTUAL_FILESHARE.CreateForDB;
     shareObj.SetDomainID(service.DomainID);
-    shareObj.Field('objname').AsString:=idx;
+    shareObj.Field('uniquephysicalid').AsString:=idx;
     isNew:=true;
   end;
 
@@ -832,7 +836,7 @@ begin
 
   sf:=CWSF(@WEB_VFSShareDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'vfs_share_delete_diag_cap'),StringReplace(FetchModuleTextShort(ses,'vfs_share_delete_diag_msg'),'%share_str%',share.Field('name').AsString,[rfReplaceAll]),fdbmt_confirm,sf);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'vfs_share_delete_diag_cap'),StringReplace(FetchModuleTextShort(ses,'vfs_share_delete_diag_msg'),'%share_str%',share.Field('objname').AsString,[rfReplaceAll]),fdbmt_confirm,sf);
 end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareDeleteConfirmed(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;

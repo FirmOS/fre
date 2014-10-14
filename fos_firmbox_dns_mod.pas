@@ -393,6 +393,8 @@ begin
   end else begin
     resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
     nameserverObj:=TFOS_DB_DNS_NAMESERVER_RECORD.CreateForDB;
+    nameserverObj.Field('uniquephysicalid').AsString:=input.FieldPath('data.host').AsString;
+    nameserverObj.ObjectName:=input.FieldPath('data.host').AsString;
     nameserverObj.Field('type').AsString:='NS';
     isNew:=true;
   end;
@@ -575,14 +577,13 @@ begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_SERVICE');
   scheme.AddSchemeField('customer',fdbft_ObjLink).SetupFieldDef(true);
-  scheme.AddSchemeField('name',fdbft_String).SetupFieldDef(true);
   scheme.AddSchemeField('dns1',fdbft_ObjLink).SetupFieldDef(true);
   scheme.AddSchemeField('dns2',fdbft_ObjLink);
   scheme.AddSchemeField('default',fdbft_ObjLink);
 
   group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('customer',GetTranslateableTextKey('scheme_customer'),false,false,CFOS_DB_DNS_CUSTOMERS_DCOLL,true);
-  group.AddInput('name',GetTranslateableTextKey('scheme_name'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_name'));
 end;
 
 class procedure TFOS_DB_NETWORK_DOMAIN.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -682,13 +683,13 @@ end;
 
 class procedure TFOS_FIRMBOX_DNS_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
 var
-  coll: IFRE_DB_COLLECTION;
+  coll   : IFRE_DB_COLLECTION;
+  idx_def: TFRE_DB_INDEX_DEF;
 begin
   if currentVersionId='' then begin
     currentVersionId := '0.1';
     if not conn.CollectionExists(CFOS_DB_DNS_RECORDS_COLLECTION) then begin
       coll := conn.CreateCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
-      coll.DefineIndexOnField('name',fdbft_String,true,true);
     end;
   end;
   if currentVersionId='0.1' then begin
@@ -697,6 +698,14 @@ begin
       conn.DeleteCollection('network_domains');
     end;
   end;
+
+  coll:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
+  idx_def:= coll.GetIndexDefinition('def');
+  if lowercase(idx_def.FieldName)='name' then begin
+    coll.DropIndex('def');
+    CheckDbResult(coll.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false));
+  end;
+
 end;
 
 function TFOS_FIRMBOX_DNS_MOD._AddModifyResourceRecord(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean): IFRE_DB_Object;
@@ -775,16 +784,16 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
-      AddOneToOnescheme('name','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
+      AddOneToOnescheme('objname','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddMatchingReferencedField('default','value','default',FetchModuleTextShort(session,'grid_network_domains_default'));
-      AddFulltextFilterOnTransformed(['name']);
+      AddFulltextFilterOnTransformed(['objname']);
     end;
     domains_grid := session.NewDerivedCollection('NETWORK_DOMAINS_GRID');
     with domains_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
-      SetDefaultOrderField('name',true);
+      SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('service',['TFOS_DB_NETWORK_DOMAIN']);
     end;
 
@@ -1038,7 +1047,7 @@ var
   sdomain       : TFRE_DB_GUID;
 begin
   if not input.FieldPathExists('data.domain') then raise EFRE_DB_Exception.Create('Missing input data: network domain');
-  if not input.FieldPathExists('data.domain.name') then raise EFRE_DB_Exception.Create('Missing required input data: network domain name');
+  if not input.FieldPathExists('data.domain.objname') then raise EFRE_DB_Exception.Create('Missing required input data: network domain name');
   if not input.FieldPathExists('data.domain.dns1') then raise EFRE_DB_Exception.Create('Missing input data: dns1');
 
   if input.FieldPathExists('data.domain.customer') then begin
@@ -1065,7 +1074,7 @@ begin
   serviceColl:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
 
-  idx:='DNS_'+input.FieldPath('data.domain.name').AsString;
+  idx:='DNS_'+input.FieldPath('data.domain.objname').AsString;
   if serviceColl.ExistsIndexed(idx) then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'network_domain_create_error_exists_cap'),FetchModuleTextShort(ses,'network_domain_create_error_exists_msg'),fdbmt_error);
     exit;
@@ -1164,7 +1173,7 @@ begin
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
   cap:=FetchModuleTextShort(ses,'network_domain_delete_diag_cap');
 
-  msg:=StringReplace(FetchModuleTextShort(ses,'network_domain_delete_diag_msg'),'%nw_domain_str%',domain.Field('name').AsString,[rfReplaceAll]);
+  msg:=StringReplace(FetchModuleTextShort(ses,'network_domain_delete_diag_msg'),'%nw_domain_str%',domain.Field('objname').AsString,[rfReplaceAll]);
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
@@ -1242,6 +1251,7 @@ begin
     resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
     resource.SetDomainID(domain.DomainID);
     resource.Field('network_domain').AsObjectLink:=domain.UID;
+    resource.Field('uniquephysicalid').AsString:=input.FieldPath('data.host').AsString + '@' + domain.UID_String;
     isNew:=true;
   end;
 
