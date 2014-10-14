@@ -45,7 +45,7 @@ interface
 
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
-  fre_system,fre_dbbase,fre_hal_schemes,fre_process,
+  fre_system,fre_dbbase,fre_dbbusiness, fre_hal_schemes,fre_process,fre_db_core,
   fre_diff_transport;
 
 
@@ -62,6 +62,7 @@ type
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  MySessionDisconnected   (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  QueryUserPass           (out user, pass: string); override;
+    procedure  MyRegisterClasses       ; override;
     procedure  MyInitialize            ; override;
     procedure  MyFinalize              ; override;
     procedure  MyConnectionTimer       ; override;
@@ -77,22 +78,38 @@ implementation
 
 procedure TFRE_CPE_FEED_CLIENT.ConfigureCPE;
 
- procedure _ServiceIterator(const service:IFRE_DB_Object);
+ procedure _NetworkIterator(const service:IFRE_DB_Object);
  var network              :TFRE_DB_CPE_NETWORK_SERVICE;
-     openvpn              :TFRE_DB_CPE_OPENVPN_SERVICE;
  begin
    if service.IsA(TFRE_DB_CPE_NETWORK_SERVICE,network) then
    begin
      network.ConfigureHAL;
    end;
+  end;
+
+ procedure _VPNIterator(const service:IFRE_DB_Object);
+ var openvpn              :TFRE_DB_CPE_OPENVPN_SERVICE;
+ begin
    if service.IsA(TFRE_DB_CPE_OPENVPN_SERVICE,openvpn) then
    begin
      openvpn.ConfigureHAL;
    end;
   end;
 
+ procedure _DHCPIterator(const service:IFRE_DB_Object);
+ var dhcp                 :TFRE_DB_CPE_DHCP_SERVICE;
+ begin
+   if service.IsA(TFRE_DB_CPE_DHCP_SERVICE,dhcp) then
+   begin
+     dhcp.ConfigureHAL;
+   end;
+  end;
+
+
 begin
-  hal_cfg.ForAllObjects(@_ServiceIterator);
+  hal_cfg.ForAllObjects(@_NetworkIterator);
+  hal_cfg.ForAllObjects(@_VPNIterator);
+  hal_cfg.ForAllObjects(@_DHCPIterator);
 end;
 
 procedure TFRE_CPE_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
@@ -111,16 +128,20 @@ begin
   pass := cFRE_Feed_Pass;
 end;
 
+procedure TFRE_CPE_FEED_CLIENT.MyRegisterClasses;
+begin
+  fre_dbbase.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  fre_diff_transport.Register_DB_Extensions;
+end;
+
 procedure TFRE_CPE_FEED_CLIENT.MyInitialize;
 begin
 
-  fre_dbbase.Register_DB_Extensions;
-  fre_hal_schemes.Register_DB_Extensions;
-  fre_diff_transport.Register_DB_Extensions;
-
   hal_cfg:=GFRE_DBI.CreateFromFile(cFRE_HAL_CFG_DIR+DirectorySeparator+'cpe.cfg');
 
-  writeln('SWL:',hal_cfg.DumpToString());
+  //writeln('SWL:',hal_cfg.DumpToString());
   ConfigureCPE;
 end;
 
