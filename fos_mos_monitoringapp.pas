@@ -21,6 +21,7 @@ uses
   FOS_TOOL_INTERFACES,
   FRE_DB_INTERFACE,
   FRE_DB_COMMON,
+  fos_mos_monitoring_mod,
   fre_hal_disk_enclosure_pool_mangement,
   fre_zfs,
   fre_scsi,
@@ -52,182 +53,16 @@ type
     function        WEB_MOS_DATA_FEED             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
-  { TFOS_CITYCOM_MOS_HIERARCHICAL_MOD }
-
-  TFOS_CITYCOM_MOS_HIERARCHICAL_MOD = class (TFRE_DB_APPLICATION_MODULE)
-  private
-    function        _getMOSObjContent                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-  protected
-    class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    procedure       SetupAppModuleStructure             ; override;
-    class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  public
-    procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
-  published
-    function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_GridMenu                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_GridSC                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-  end;
-
-  { TFOS_CITYCOM_MOS_STRUCTURAL_MOD }
-
-  TFOS_CITYCOM_MOS_STRUCTURAL_MOD = class (TFRE_DB_APPLICATION_MODULE)
-  protected
-    class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    procedure       SetupAppModuleStructure             ; override;
-    class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  published
-    function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-  end;
-
 procedure Register_DB_Extensions;
 
 implementation
 
 procedure Register_DB_Extensions;
 begin
-  GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_MOS_HIERARCHICAL_MOD);
-  GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_MOS_STRUCTURAL_MOD);
+  fos_mos_monitoring_mod.Register_DB_Extensions;
 
   GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_MONITORING_APP);
   //GFRE_DBI.Initialize_Extension_Objects;
-end;
-
-{ TFOS_CITYCOM_MOS_STRUCTURAL_MOD }
-
-class procedure TFOS_CITYCOM_MOS_STRUCTURAL_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-begin
-  inherited RegisterSystemScheme(scheme);
-  scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
-end;
-
-procedure TFOS_CITYCOM_MOS_STRUCTURAL_MOD.SetupAppModuleStructure;
-begin
-  inherited SetupAppModuleStructure;
-  InitModuleDesc('structural_description')
-end;
-
-class procedure TFOS_CITYCOM_MOS_STRUCTURAL_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
-begin
-  newVersionId:='1.0';
-  if currentVersionId='' then begin
-    currentVersionId := '1.0';
-  end;
-
-end;
-
-function TFOS_CITYCOM_MOS_STRUCTURAL_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-begin
-  try
-    Result:=TFRE_DB_SVG_DESC.create.Describe(GFRE_BT.StringFromFile('structure.svg'),'monitoring_structure');
-  except
-    on E:Exception do begin
-      Result:=TFRE_DB_HTML_DESC.create.Describe('Error on reading the monitoring structure file. Please place a valid structure.svg file into the binary directoy.');
-    end;
-  end;
-end;
-
-{ TFOS_CITYCOM_MOS_HIERARCHICAL_MOD }
-
-function TFOS_CITYCOM_MOS_HIERARCHICAL_MOD._getMOSObjContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  res   : TFRE_DB_CONTENT_DESC;
-  mosObj: IFRE_DB_Object;
-begin
-  if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
-    writeln('SWL: MOSOBJ',mosobj.DumpToString());
-    if mosObj.MethodExists('MOSContent') then begin
-      res:=mosObj.Invoke('MOSContent',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
-    end else begin
-      res:=TFRE_DB_HTML_DESC.create.Describe(app.FetchAppTextShort(ses,'info_content_no_details'));
-    end;
-  end else begin
-    res:=TFRE_DB_HTML_DESC.create.Describe(app.FetchAppTextShort(ses,'info_content_select_one'));
-  end;
-  res.contentId:='MOS_OBJ_CONTENT';
-  Result:=res;
-end;
-
-class procedure TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-begin
-  inherited RegisterSystemScheme(scheme);
-  scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
-end;
-
-procedure TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.SetupAppModuleStructure;
-begin
-  inherited SetupAppModuleStructure;
-  InitModuleDesc('hierarchical_description')
-end;
-
-class procedure TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
-begin
-  newVersionId:='1.0';
-  if currentVersionId='' then begin
-    currentVersionId := '1.0';
-  end;
-
-end;
-
-procedure TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
-var
-  app       : TFRE_DB_APPLICATION;
-  conn      : IFRE_DB_CONNECTION;
-  transform : IFRE_DB_SIMPLE_TRANSFORM;
-  dc: IFRE_DB_DERIVED_COLLECTION;
-begin
-  inherited MySessionInitializeModule(session);
-  app  := GetEmbeddingApp;
-  conn := session.GetDBConnection;
-  if session.IsInteractiveSession then begin
-    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    with transform do begin
-      AddOneToOnescheme('caption_mos','',app.FetchAppTextShort(session,'grid_name'));
-      AddOneToOnescheme('status_icon_mos','',app.FetchAppTextShort(session,'grid_status'),dt_icon);
-    end;
-    dc := session.NewDerivedCollection('MONITORING_GRID');
-    with dc do begin
-      SetDeriveParent(conn.GetCollection(CFRE_DB_MOS_COLLECTION));
-      SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
-      SetParentToChildLinkField ('<MOSPARENTIDS');
-    end;
-  end;
-end;
-
-function TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  dc     : IFRE_DB_DERIVED_COLLECTION;
-  grid   : TFRE_DB_VIEW_LIST_DESC;
-begin
-  CheckClassVisibility4MyDomain(ses);
-
-  dc:=ses.FetchDerivedCollection('MONITORING_GRID');
-  grid:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  Result:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,grid,_getMOSObjContent(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC,nil,nil,true,-1,1,1);
-end;
-
-function TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.WEB_GridMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  mosObj: IFRE_DB_Object;
-begin
-  CheckClassVisibility4MyDomain(ses);
-  if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
-    if mosObj.MethodExists('MOSMenu') then begin
-      Result:=mosObj.Invoke('MOSMenu',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
-    end else begin
-      Result:=GFRE_DB_NIL_DESC;
-    end;
-  end;
-end;
-
-function TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.WEB_GridSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-begin
-  CheckClassVisibility4MyDomain(ses);
-
-  Result:=_getMOSObjContent(input,ses,app,conn);
 end;
 
 { TFOS_CITYCOM_MONITORING_APP }
@@ -236,8 +71,8 @@ procedure TFOS_CITYCOM_MONITORING_APP.SetupApplicationStructure;
 begin
   inherited SetupApplicationStructure;
   InitApp('description');
-  AddApplicationModule(TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.create);
-  AddApplicationModule(TFOS_CITYCOM_MOS_STRUCTURAL_MOD.create);
+  AddApplicationModule(TFOS_CITYCOM_MOS_PHYSICAL_MOD.create);
+  AddApplicationModule(TFOS_CITYCOM_MOS_LOGICAL_MOD.create);
 end;
 
 procedure TFOS_CITYCOM_MONITORING_APP._UpdateSitemap(const session: TFRE_DB_UserSession);
@@ -248,8 +83,8 @@ begin
   conn:=session.GetDBConnection;
   SiteMapData  := GFRE_DBI.NewObject;
   FREDB_SiteMap_AddRadialEntry(SiteMapData,'MOS',FetchAppTextShort(session,'sitemap_main'),'images_apps/citycom_monitoring/main_white.svg','',0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_CITYCOM_MONITORING_APP));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'MOS/Hierarchical',FetchAppTextShort(session,'sitemap_hierarchical'),'images_apps/citycom_monitoring/hierarchical_white.svg',TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_CITYCOM_MOS_HIERARCHICAL_MOD));
-  FREDB_SiteMap_AddRadialEntry(SiteMapData,'MOS/Structural',FetchAppTextShort(session,'sitemap_structural'),'images_apps/citycom_monitoring/structural_white.svg',TFOS_CITYCOM_MOS_STRUCTURAL_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_CITYCOM_MOS_STRUCTURAL_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'MOS/Physical',FetchAppTextShort(session,'sitemap_physical'),'images_apps/citycom_monitoring/physical_white.svg',TFOS_CITYCOM_MOS_PHYSICAL_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_CITYCOM_MOS_PHYSICAL_MOD));
+  FREDB_SiteMap_AddRadialEntry(SiteMapData,'MOS/Logical',FetchAppTextShort(session,'sitemap_logical'),'images_apps/citycom_monitoring/logical_white.svg',TFOS_CITYCOM_MOS_LOGICAL_MOD.Classname,0,conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFOS_CITYCOM_MOS_LOGICAL_MOD));
   FREDB_SiteMap_RadialAutoposition(SiteMapData);
   session.GetSessionAppData(Classname).Field('SITEMAP').AsObject := SiteMapData;
 end;
@@ -284,8 +119,8 @@ begin
     currentVersionId := '1.0';
     CreateAppText(conn,'caption','Monitoring','Monitoring','Monitoring');
     CreateAppText(conn,'sitemap_main','Main','','Main');
-    CreateAppText(conn,'sitemap_hierarchical','Hierarchical','','Hierarchical');
-    CreateAppText(conn,'sitemap_structural','Structural','','Structural');
+    CreateAppText(conn,'sitemap_logical','Logical','','Logical');
+    CreateAppText(conn,'sitemap_physical','Physical','','Physical');
 
     //TFOS_CITYCOM_MOS_HIERARCHICAL_MOD;
     CreateAppText(conn,'hierarchical_description','Hierarchical','Hierarchical','Hierarchical');
@@ -316,8 +151,8 @@ begin
 
       CheckDbResult(conn.AddRolesToGroup('MOSADMINS',domainUID,TFRE_DB_StringArray.Create(
         TFOS_CITYCOM_MONITORING_APP.GetClassRoleNameFetch,
-        TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.GetClassRoleNameFetch,
-        TFOS_CITYCOM_MOS_STRUCTURAL_MOD.GetClassRoleNameFetch
+        TFOS_CITYCOM_MOS_PHYSICAL_MOD.GetClassRoleNameFetch,
+        TFOS_CITYCOM_MOS_LOGICAL_MOD.GetClassRoleNameFetch
       )),'could not add roles for group Admins');
 
       CheckDbResult(conn.AddRolesToGroup('MOSADMINS',domainUID, TFRE_DB_VIRTUALMOSOBJECT.GetClassStdRoles),'could not add roles TFRE_DB_VIRTUALSERVICE for group Admins');
@@ -329,8 +164,8 @@ begin
 
       CheckDbResult(conn.AddRolesToGroup('MOSMANAGERS',domainUID,TFRE_DB_StringArray.Create(
         TFOS_CITYCOM_MONITORING_APP.GetClassRoleNameFetch,
-        TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.GetClassRoleNameFetch,
-        TFOS_CITYCOM_MOS_STRUCTURAL_MOD.GetClassRoleNameFetch
+        TFOS_CITYCOM_MOS_PHYSICAL_MOD.GetClassRoleNameFetch,
+        TFOS_CITYCOM_MOS_LOGICAL_MOD.GetClassRoleNameFetch
       )),'could not add roles for group Managers');
 
       CheckDbResult(conn.AddRolesToGroup('MOSMANAGERS',domainUID, TFRE_DB_VIRTUALMOSOBJECT.GetClassStdRoles(true,true,false,true)),'could not add roles TFRE_DB_VIRTUALSERVICE for group Managers');
@@ -340,8 +175,8 @@ begin
 
       CheckDbResult(conn.AddRolesToGroup('MOSVIEWERS',domainUID,TFRE_DB_StringArray.Create(
         TFOS_CITYCOM_MONITORING_APP.GetClassRoleNameFetch,
-        TFOS_CITYCOM_MOS_HIERARCHICAL_MOD.GetClassRoleNameFetch,
-        TFOS_CITYCOM_MOS_STRUCTURAL_MOD.GetClassRoleNameFetch
+        TFOS_CITYCOM_MOS_PHYSICAL_MOD.GetClassRoleNameFetch,
+        TFOS_CITYCOM_MOS_LOGICAL_MOD.GetClassRoleNameFetch
       )),'could not add roles for group Viewers');
 
       CheckDbResult(conn.AddRolesToGroup('MOSVIEWERS',domainUID, TFRE_DB_VIRTUALMOSOBJECT.GetClassStdRoles(false,false,false,true)),'could not add roles TFRE_DB_VIRTUALSERVICE for group Viewers');
