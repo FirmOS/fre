@@ -43,7 +43,7 @@ interface
 
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
-  fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,
+  fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
   fre_diff_transport;
 
 
@@ -78,6 +78,7 @@ type
     procedure  MySessionDisconnected   (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  QueryUserPass           (out user, pass: string); override;
     procedure  MyInitialize            ; override;
+    procedure  MyRegisterClasses       ; override;
     procedure  MyFinalize              ; override;
     procedure  MyConnectionTimer       ; override;
     procedure  GenerateFeedDataTimer   (const TIM : IFRE_APSC_TIMER ; const flag1,flag2 : boolean); // Timout & CMD Arrived & Answer Arrived
@@ -173,12 +174,6 @@ begin
   //vmc             := Get_VM_Host_Control     (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   //vmc.VM_EnableVMMonitor                     (true);
 
-  fre_dbbase.Register_DB_Extensions;
-  fre_ZFS.Register_DB_Extensions;
-  fre_hal_schemes.Register_DB_Extensions;
-  fre_diff_transport.Register_DB_Extensions;
-  fre_scsi.Register_DB_Extensions;
-
   statscontroller := Get_Stats_Control       (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   statscontroller.StartCPUParser(true);
   statscontroller.StartRAMParser(true);
@@ -194,6 +189,16 @@ begin
   else
     AddSubFeederEventViaTCP(cFRE_SUBFEEDER_IP,'44101','disksub');
 
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.MyRegisterClasses;
+begin
+  fre_dbbase.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
+  fre_ZFS.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  fre_diff_transport.Register_DB_Extensions;
+  fre_scsi.Register_DB_Extensions;
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;
@@ -279,7 +284,10 @@ end;
 
 procedure TFRE_BOX_FEED_CLIENT.SubfeederEvent(const id: string; const dbo: IFRE_DB_Object);
 begin
-  disk_hal.ReceivedDBO(dbo);
+  writeln('SUBFEEDER EVENT ID : ',id);
+  writeln(dbo.DumpToString());
+  writeln('----');
+  //disk_hal.ReceivedDBO(dbo);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_REQUESTDISKDATA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);

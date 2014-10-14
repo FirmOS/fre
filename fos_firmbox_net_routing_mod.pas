@@ -61,7 +61,7 @@ begin
   if currentVersionId='' then begin
     currentVersionId := '0.1';
 
-    CreateModuleText(conn,'net_routing_description','Networks/Routing','Networks/Routing','Networks/Routing');
+    CreateModuleText(conn,'net_routing_description','Networks','Networks','Networks');
 
     CreateModuleText(conn,'grid_interfaces_cap','Interfaces');
     CreateModuleText(conn,'grid_interface','Interface');
@@ -158,7 +158,7 @@ begin
     form.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
     form.FillWithObjectValues(ifObj,ses);
 
-    if (ifObj.Field('objname').AsString='inet0') then begin
+    if (ifObj.Field('type').AsString='internet') then begin
       slider:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,true,CWSF(@WEB_SliderChanged),500);
       slider.contentId:='slider_form';
       group:=slider.AddGroup.Describe(FetchModuleTextShort(ses,'bandwidth_group'));

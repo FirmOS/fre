@@ -46,11 +46,17 @@ interface
 
 uses
   Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basedbo_server,fre_system,fre_db_core,
-  fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk_enclosure_pool_mangement,fre_base_parser,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
+  fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk_enclosure_pool_mangement,fre_base_parser
+  {$IFDEF SOLARIS}
+  ,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
+  {$ELSE}
+  ;
+  {$ENDIF}
 
 const
   cIOSTAT                    = 'iostat -rxnsmde 1';
   cKSTATLINK                 = 'kstat -j link 1';
+  //cKSTATLINK                 = 'iostat 1';
   cKSTATLINK_REMOTE          = 'kstat -C link 1';
   cIOSTATFILEHACKMIST_REMOTE = 'sh -c /zones/firmos/myiostat_e.sh';
   cZPOOLSTATUS               = 'zpool status 1';
@@ -218,7 +224,7 @@ var pools    : IFRE_DB_Object;
     resdbo   : IFRE_DB_Object;
     poollist : IFRE_DB_Object;
 
-
+    {$IFDEF SOLARIS}
     procedure _PoolIterator(const obj: IFRE_DB_Object);
     var pool : IFRE_DB_Object;
     begin
@@ -228,10 +234,12 @@ var pools    : IFRE_DB_Object;
           pools.Field(obj.Field('name').asstring).AsObject:=pool;
         end;
     end;
+    {$ENDIF}
 
 begin
   repeat
     try
+      {$IFDEF SOLARIS}
       pools  := GFRE_DBI.NewObject;
       res    := fosillu_zfs_GetActivePoolsDBO(error,poollist);
  //     writeln('SWL:POOLLIST',poollist.DumpToString());
@@ -239,7 +247,7 @@ begin
         begin
           poollist.ForAllObjects(@_PoolIterator);
         end;
-
+      {$ENDIF}
       resdbo := GFRE_DBI.NewObject;
       resdbo.Field('subfeed').asstring      := 'ZPOOLSTATUS';
       resdbo.Field('resultcode').AsInt32    := res;
@@ -378,7 +386,9 @@ begin
   fre_scsi.Register_DB_Extensions;
   GFRE_DB.Initialize_Extension_ObjectsBuild;
 
+  {$IFDEF SOLARIS}
   InitIllumosLibraryHandles;
+  {$ENDIF}
 
   FDBO_Srv_Cfg.SpecialFile := cFRE_UX_SOCKS_DIR+'disksub';
   FDBO_Srv_Cfg.Id          := 'DiskSub';
@@ -413,10 +423,14 @@ begin
   if Assigned(FDiskIoStatMon) then
     FDiskIoStatMon.Free;
 
+  if Assigned(FLinkStatMon) then
+    FLinkStatMon.Free;
+
   _TerminateThreads;
   _WaitForAndFreeThreads;
-
+  {$IFDEF SOLARIS}
   FinishIllumosLibraryHandles;
+  {$ENDIF}
   inherited Destroy;
 end;
 
