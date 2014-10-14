@@ -174,6 +174,7 @@ begin
     CreateModuleText(conn,'cm_delete_vfs','Delete');
     CreateModuleText(conn,'grid_vfs_name','Fileserver');
     CreateModuleText(conn,'grid_vfs_customer','Customer');
+    CreateModuleText(conn,'grid_customer_default_value','No Customer assigned');
     CreateModuleText(conn,'storage_virtual_filer_shares','Shares');
     CreateModuleText(conn,'storage_virtual_filer_content','Virtual NAS Properties');
     CreateModuleText(conn,'vfs_content_header','Details about the selected virtual NAS.');
@@ -279,7 +280,7 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddMatchingReferencedField('CUSTOMER>TFOS_DB_CITYCOM_CUSTOMER','objname','customer',FetchModuleTextShort(session,'grid_vfs_customer'),true,dt_string,true);
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_vfs_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
       AddOneToOnescheme('name','',FetchModuleTextShort(session,'grid_vfs_name'));
       AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description','',true,false,false,dt_description);
       AddFulltextFilterOnTransformed(['customer','name']);

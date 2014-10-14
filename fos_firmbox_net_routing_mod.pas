@@ -26,6 +26,8 @@ type
     procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
   published
     function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_IFSC                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentIF              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_SliderChanged          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
@@ -67,6 +69,7 @@ begin
     CreateModuleText(conn,'grid_customer_default_value','Global - Not Assigned');
 
     CreateModuleText(conn,'bandwidth_group','Internet Bandwidth [MBit]');
+    CreateModuleText(conn,'info_if_details_select_one','Please select an Interface object to get detailed information about it.');
   end;
 end;
 
@@ -98,7 +101,7 @@ begin
     with if_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],FetchModuleTextShort(session,'grid_interfaces_cap'));
+      SetDisplayType(cdt_Listview,[],FetchModuleTextShort(session,'grid_interfaces_cap'),nil,'',nil,nil,CWSF(@WEB_IFSC));
       Filters.AddSchemeObjectFilter('service',TFRE_DB_DATALINK.getAllDataLinkClasses);
       Orders.AddOrderDef('customer',true,false);
       //Orders.AddOrderDef('objname',true,false);
@@ -109,20 +112,67 @@ end;
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   res       : TFRE_DB_LAYOUT_DESC;
-  slider    : TFRE_DB_FORM_PANEL_DESC;
-  group     : TFRE_DB_INPUT_GROUP_DESC;
   if_grid   : TFRE_DB_CONTENT_DESC;
+  content   : TFRE_DB_CONTENT_DESC;
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  slider:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,true,CWSF(@WEB_SliderChanged),500);
-  slider.contentId:='slider_form';
-  group:=slider.AddGroup.Describe(FetchModuleTextShort(ses,'bandwidth_group'));
-  group.AddNumber.DescribeSlider('','slider',20,50,true,'20',0,31);
+  ses.GetSessionModuleData(ClassName).DeleteField('selectedIF');
 
   if_grid:=ses.FetchDerivedCollection('INTERFACES_GRID').GetDisplayDescription;
-  res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetAutoSizedLayout(nil,if_grid,nil,slider);
+  res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(if_grid,WEB_ContentIF(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC,nil,nil,nil,true,1,2);
+  Result:=res;
+end;
 
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_IFSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  CheckClassVisibility4MyDomain(ses);
+
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
+    ses.GetSessionModuleData(ClassName).Field('selectedIF').AsStringArr:=input.Field('selected').AsStringArr;
+  end else begin
+    ses.GetSessionModuleData(ClassName).DeleteField('selectedIF');
+  end;
+
+  Result:=WEB_ContentIF(input,ses,app,conn);
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_ContentIF(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res   : TFRE_DB_CONTENT_DESC;
+  ifObj : IFRE_DB_Object;
+  form  : TFRE_DB_FORM_PANEL_DESC;
+  scheme: IFRE_DB_SchemeObject;
+  slider: TFRE_DB_FORM_PANEL_DESC;
+  group : TFRE_DB_INPUT_GROUP_DESC;
+begin
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedIF') and (ses.GetSessionModuleData(ClassName).Field('selectedIF').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedIF').AsStringItem[0]),ifObj));
+
+    //editable:=conn.sys.CheckClassRight4DomainId(sr_UPDATE,ifObj.Implementor_HC.ClassType,ifObj.DomainID);
+
+    if not GFRE_DBI.GetSystemScheme(ifObj.Implementor_HC.ClassType,scheme) then
+      raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[ifObj.Implementor_HC.ClassType]);
+
+    form:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,false);
+    form.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+    form.FillWithObjectValues(ifObj,ses);
+
+    if (ifObj.Field('objname').AsString='inet0') then begin
+      slider:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,true,CWSF(@WEB_SliderChanged),500);
+      slider.contentId:='slider_form';
+      group:=slider.AddGroup.Describe(FetchModuleTextShort(ses,'bandwidth_group'));
+      group.AddNumber.DescribeSlider('','slider',20,50,true,'20',0,31);
+
+      res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetAutoSizedLayout(nil,form,nil,slider);
+    end else begin
+      res:=form;
+    end;
+  end else begin
+    res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_if_details_select_one'));
+  end;
+
+  res.contentId:='IF_DETAILS';
   Result:=res;
 end;
 
@@ -130,7 +180,6 @@ function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_SliderChanged(const input: IFRE_DB_Obj
 begin
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe('SLIDER CHANGED',input.Field('slider').AsString,fdbmt_info);
 end;
-
 
 end.
 

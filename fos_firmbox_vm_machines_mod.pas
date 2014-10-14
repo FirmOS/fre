@@ -16,7 +16,7 @@ uses
 
 const
 
-  CFRE_DB_VM_COLLECTION            = 'VIRTUAL_MACHINES';
+  //CFRE_DB_VM_COLLECTION            = 'VIRTUAL_MACHINES';
   CFRE_DB_VM_SC_COLLECTION         = 'VM_SOUND_CARDS';
   CFRE_DB_VM_KB_COLLECTION         = 'VM_KEYBOARDS';
 
@@ -549,7 +549,6 @@ end;
 procedure TFRE_FIRMBOX_VM_MACHINES_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
   vmc        : IFRE_DB_DERIVED_COLLECTION;
-  vmcp       : IFRE_DB_COLLECTION;
   tr_Grid    : IFRE_DB_SIMPLE_TRANSFORM;
   vmo        : IFRE_DB_Object;
   vm         : IFRE_DB_Object;
@@ -585,12 +584,12 @@ begin
       AddOneToOnescheme('PERFRSS','',FetchModuleTextShort(session,'gc_vm_paged_mem'),dt_number,true,false,false,2);
       AddOneToOnescheme('PERFVSZ','',FetchModuleTextShort(session,'gc_vm_virtual_mem'),dt_number,true,false,false,2);
     end;
-    vmcp := conn.GetCollection(CFRE_DB_VM_COLLECTION);
     vmc  := session.NewDerivedCollection('VMC');
     with VMC do begin
       SetDeriveTransformation(tr_Grid);
       SetDisplayType(cdt_Listview,[cdgf_ColumnResizeable],'',nil,'',nil,nil,CWSF(@WEB_VMSC));
-      SetDeriveParent(vmcp);
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      Filters.AddSchemeObjectFilter('service',['TFRE_DB_VMACHINE']);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -715,24 +714,20 @@ begin
   inherited InstallUserDBObjects(conn, currentVersionId);
    if currentVersionId='' then begin
      currentVersionId:='0.9';
-     coll:=conn.CreateCollection(CFRE_DB_VM_COLLECTION);
-     coll.DefineIndexOnField('key',fdbft_String,true,true);
      coll:=conn.CreateCollection(CFRE_DB_VM_SC_COLLECTION);
      coll.DefineIndexOnField('scid',fdbft_String,true,true);
      coll:=conn.CreateCollection(CFRE_DB_VM_KB_COLLECTION);
      coll.DefineIndexOnField('keyboardid',fdbft_String,true,true);
    end;
+   if conn.CollectionExists('VIRTUAL_MACHINE') then begin
+     conn.DeleteCollection('VIRTUAL_MACHINE');
+   end;
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VM_Feed_Update(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-var// vmc     : IFOS_VM_HOST_CONTROL;
-    vmo     : IFRE_DB_Object;
-    vm      : IFRE_DB_Object;
-    vmcc    : IFRE_DB_COLLECTION;
 begin
   GFRE_DBI.LogInfo(dblc_APPLICATION,'START FEED UPDATE');
-  conn.GetCollection(CFRE_DB_VM_COLLECTION);
-  VM_UpdateCollection(conn,vmcc,input.CloneToNewObject(),TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
+  VM_UpdateCollection(conn,conn.GetCollection(CFOS_DB_SERVICES_COLLECTION),input.CloneToNewObject(),TFRE_DB_VMACHINE.ClassName,TFRE_DB_ZONE.ClassName);
   GFRE_DBI.LogInfo(dblc_APPLICATION,'START FEED UPDATE DONE');
   result := GFRE_DB_NIL_DESC;
 end;
@@ -772,7 +767,7 @@ begin
   CheckClassVisibility4MyDomain(ses);
 
   vmkey := input.Field('vmkey').AsString;
-  vmcc  := conn.GetCollection(CFRE_DB_VM_COLLECTION);
+  vmcc  := conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   if vmcc.GetIndexedObj(vmkey,obj) then begin
     result := TFRE_DB_HTML_DESC.create.Describe(FREDB_String2EscapedJSString('<pre style="font-size: 10px">'+obj.DumpToString+'</pre>'));
   end else begin
@@ -792,8 +787,8 @@ var
   i                  : Integer;
 begin
   CheckClassVisibility4MyDomain(ses);
-  vmkey  := input.Field('vmkey').AsString;
-  VMCC := conn.GetCollection(CFRE_DB_VM_COLLECTION);
+  vmkey  := input.Field('uniquephysicalid').AsString;
+  VMCC := conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   if vmcc.GetIndexedObj(vmkey,obj) then begin
     vmObj:=obj.Implementor_HC as TFRE_DB_VMACHINE;
     if UpperCase(vmObj.state)='RUNNING' then begin
@@ -876,11 +871,11 @@ begin
   if input.FieldExists('selectedVM') and (input.Field('selectedVM').ValueCount>0)  then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selectedVM').AsString),TFRE_DB_VMACHINE,vmo));
     vm_sub := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
-    sf := CWSF(@WEB_VM_ShowInfo); sf.AddParam.Describe('VMKEY',vmo.key);
+    sf := CWSF(@WEB_VM_ShowInfo); sf.AddParam.Describe('uniquephysicalid',vmo.Field('uniquephysicalid').AsString);
     vm_sub.AddSection.Describe(sf,FetchModuleTextShort(ses,'vm_details_config'),2);
     if vmo.vncHost<>'' then
       begin
-        sf := CWSF(@WEB_VM_ShowVNC); sf.AddParam.Describe('VMKEY',vmo.key);
+        sf := CWSF(@WEB_VM_ShowVNC); sf.AddParam.Describe('uniquephysicalid',vmo.Field('uniquephysicalid').AsString);
         vm_sub.AddSection.Describe(sf,FetchModuleTextShort(ses,'vm_details_console'),1);
       end;
     vm_sub.AddSection.Describe(CWSF(@WEB_VM_ShowPerf),FetchModuleTextShort(ses,'vm_details_perf'),3);
@@ -1023,7 +1018,7 @@ begin
   if input.FieldExists('SELECTED') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_VMACHINE,vmo));
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-    vmc.VM_Start(vmo.key);
+    vmc.VM_Start(vmo.Field('uniquephysicalid').AsString);
     vmc.Finalize;
   end;
   result := GFRE_DB_NIL_DESC;
@@ -1042,7 +1037,7 @@ begin
   if input.FieldExists('SELECTED') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_VMACHINE,vmo));
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-    vmc.VM_Halt(vmo.key);
+    vmc.VM_Halt(vmo.Field('uniquephysicalid').AsString);
     vmc.Finalize;
   end;
   result := GFRE_DB_NIL_DESC;
@@ -1059,7 +1054,7 @@ begin
   if input.FieldExists('SELECTED') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_VMACHINE,vmo));
     vmc := Get_VM_Host_Control(cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-    vmc.VM_Halt(vmo.key,true);
+    vmc.VM_Halt(vmo.Field('uniquephysicalid').AsString,true);
     vmc.Finalize;
   end;
   result := GFRE_DB_NIL_DESC;

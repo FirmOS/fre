@@ -653,10 +653,6 @@ begin
   CONN := GFRE_DBI.NewConnection;
   CONN.Connect(dbname,'admin@'+CFRE_DB_SYS_DOMAIN_NAME,'admin');
   try
-    collection  := conn.getCollection(CFRE_DB_VM_COLLECTION);
-    if not collection.IndexExists('def') then
-      collection.DefineIndexOnField('key',fdbft_String,true,true);
-
     vm_disks := conn.CreateCollection('VM_DISKS');
     if not vm_disks.IndexExists('def') then
       vm_disks.DefineIndexOnField('diskid',fdbft_String,true,true);
