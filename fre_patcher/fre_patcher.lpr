@@ -904,9 +904,10 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       crt     :IFRE_DB_Object;
       dhcpsub :TFRE_DB_DHCP_Subnet;
       dhcpfix :TFRE_DB_DHCP_Fixed;
-      s       : string;
-      b_ip    : integer;
-      i       : integer;
+      s       :string;
+      b_ip    :integer;
+      i       :integer;
+      r       :TFRE_DB_IPV6_NETROUTE;
     begin
       cpe:=TFRE_DB_CRYPTOCPE.CreateForDB;
       cpe.ObjectName:=description;
@@ -924,22 +925,22 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       b_ip := (voip_subnetznr-1)*32;
       s:= '10.55.0.'+inttostr(b_ip+1)+'/27';
 
-      ip4.Field('ip_net').AsString:=s;
+      ip4.SetIPCIDR(s);
       dl.Field(ip4.UID.AsHexString).AsObject:=ip4;
 
       dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
       dl.ObjectName:='eth1';
       network.Field(dl.ObjectName).AsObject:=dl;
       ip4:= TFRE_DB_IPV4_HOSTNET.CreateForDB;
-      ip4.Field('ip_net').AsString:=lan;
+      ip4.SetIPCIDR(lan);
       dl.Field(ip4.UID.AsHexString).AsObject:=ip4;
 
       dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
       dl.ObjectName:='eth2';
       network.Field(dl.ObjectName).AsObject:=dl;
       ip6:= TFRE_DB_IPV6_HOSTNET.CreateForDB;
-      ip6.Field('ip_net').asstring := 'fdd7:f47b:4605:0705:0002:0000:0000:'+inttostr(zone_nr)+'/64';
-      ip6.Field('slaac').AsBoolean:=true;
+      ip6.SetIPCIDR('fdd7:f47b:4605:0705:0002:0000:0000:'+inttostr(zone_nr)+'/64');
+      ip6.Field('slaac').AsBoolean:=false;
       dl.Field(ip6.UID.AsHexString).AsObject:=ip6;
 
       dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
@@ -958,10 +959,15 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       tnl.Field('device').AsString:='eth3';
       ip6:= TFRE_DB_IPV6_HOSTNET.CreateForDB;
       ip6.Field('slaac').AsBoolean:=false;
-      ip6.Field('ip_net').AsString:='fdd7:f47b:4605:02c4:0002:0000:0000:'+inttostr(zone_nr);
+      ip6.SetIPCIDR('fdd7:f47b:4605:02c4:0002:0000:0000:'+inttostr(zone_nr));
 
       tnl.Field(ip6.UID.AsHexString).AsObject:=ip6;
       network.Field(tnl.ObjectName).AsObject:=tnl;
+
+      r := TFRE_DB_IPV6_NETROUTE.CreateForDB;
+      r.SetIPCIDR('fdd7:f47b:4605:1b0d::/64');
+      r.SetGatewayIP('fdd7:f47b:4605:02c4:0001:0000:0000:'+inttostr(zone_nr));
+      network.Field(r.UID_String).AsObject:=r;
 
       //tnl := TFRE_DB_DATALINK_IPTUN.CreateForDB;
       //tnl.ObjectName:='tunnel4';
@@ -1052,6 +1058,7 @@ begin
 
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
 
   if not conn.CollectionExists(CFRE_DB_ASSET_COLLECTION) then
     begin
@@ -1060,6 +1067,8 @@ begin
     end
   else
     coll:=conn.GetCollection(CFRE_DB_ASSET_COLLECTION);
+
+  coll.ClearCollection;
 
   // WienEnergie
 
