@@ -45,16 +45,20 @@ unit fre_disksubfeed_client;
 interface
 
 uses
-  Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basedbo_server,fre_system,
+  Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basedbo_server,fre_system,fre_db_core,
   fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk_enclosure_pool_mangement,fre_base_parser,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
 
 const
   cIOSTAT                    = 'iostat -rxnsmde 1';
+  cKSTATLINK                 = 'kstat -j link 1';
+  cKSTATLINK_REMOTE          = 'kstat -C link 1';
   cIOSTATFILEHACKMIST_REMOTE = 'sh -c /zones/firmos/myiostat_e.sh';
   cZPOOLSTATUS               = 'zpool status 1';
   cGET_ZPOOL_IOSTAT          = 'zpool iostat -v 1';
   cReadSGLogIntervalSec      = 120;
   cZpoolQueryIntervalMSec    = 1000;
+
+  DoubleLineEnd              = LineEnding+LineEnding;
 
 type
 
@@ -101,12 +105,25 @@ type
     constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
   end;
 
+  { TFRE_LINKSTAT_PARSER }
+
+  TFRE_LINKSTAT_PARSER=class(TFOS_PARSER_PROC)
+  private
+    fsubfeeder        : TFRE_DISKSUB_FEED_SERVER;
+    currentstring     : string;
+  protected
+    procedure   MyOutStreamCallBack          (const stream:TStream); override;
+  public
+    constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
+  end;
+
   { TFRE_DISKSUB_FEED_SERVER }
 
   TFRE_DISKSUB_FEED_SERVER=class(TFRE_DBO_SERVER)
   private
     FDataTimer                               : IFRE_APSC_TIMER;
     FDiskIoStatMon                           : TFRE_IOSTAT_PARSER;
+    FLinkStatMon                             : TFRE_LINKSTAT_PARSER;
     Fdiskenclosurethread                     : TDiskAndEnclosureThread;
     FMpathAdmThread                          : TMPathAdmThread;
     FZpoolThread                             : TZpoolThread;
@@ -116,6 +133,7 @@ type
 
     procedure  StartDiskAndEnclosureThread   ;
     procedure  StartIostatParser             ;
+    procedure  StartLinkstatParser           ;
     procedure  StartMpathAdmThread           ;
     procedure  StartZPoolThread              ;
 
@@ -129,6 +147,61 @@ type
 
 
 implementation
+
+{ TFRE_LINKSTAT_PARSER }
+
+procedure TFRE_LINKSTAT_PARSER.MyOutStreamCallBack(const stream: TStream);
+var st           : TStringStream;
+    str          : string;
+    epos,newpos  : NativeInt;
+
+    procedure ParseOneBlock;
+    var new_feedobj   : IFRE_DB_Object;
+        lcount        : NativeInt;
+        zonename      : string;
+    begin
+      //writeln('>>>> PARSEBLOCK ',Length(currentstring));
+      new_feedobj := GFRE_DB.JSONObject2Object(currentstring,false);
+      new_feedobj.Field('subfeed').asstring      := 'LINKSTAT';
+      new_feedobj.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+      fsubfeeder.PushDataToClients(new_feedobj);
+      //writeln(new_feedobj.DumpToString);
+    end;
+
+begin
+  stream.Position:=0;
+  SetLength(str,stream.Size);
+  stream.Read(str[1],stream.Size);
+  currentstring := currentstring+str;
+  repeat
+    epos := pos(DoubleLineEnd,currentstring);
+    if epos>0 then
+      begin
+        str           := currentstring;
+        currentstring := Copy(str,1,epos-1);
+        str           := Copy(str,epos+2,MaxInt);
+        ParseOneBlock;
+        currentstring := str;
+        epos          := pos(DoubleLineEnd,currentstring);
+      end
+    else
+     begin
+       break;
+     end;
+  until false;
+  stream.Size:=0;
+end;
+
+constructor TFRE_LINKSTAT_PARSER.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
+var cmd:string;
+begin
+  if cFRE_REMOTE_HOST='' then
+    cmd := cKSTATLINK
+  else
+    cmd := cKSTATLINK_REMOTE;
+  inherited Create(cFRE_REMOTE_USER,SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'),cFRE_REMOTE_HOST,cmd);
+  fsubfeeder := subfeeder;
+end;
 
 { TZpoolThread }
 
@@ -173,7 +246,7 @@ begin
       resdbo.Field('error').asstring        := error;
       resdbo.Field('data').AsObject         := pools;
       resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-     writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
+     //writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
       fsubfeeder.PushDataToClients(resdbo);
 
       if not Terminated then
@@ -278,6 +351,12 @@ begin
   FDiskIoStatMon.Enable;
 end;
 
+procedure TFRE_DISKSUB_FEED_SERVER.StartLinkstatParser;
+begin
+  FLinkStatMon := TFRE_LINKSTAT_PARSER.Create(self);
+  FLinkStatMon.Enable;
+end;
+
 procedure TFRE_DISKSUB_FEED_SERVER.StartMpathAdmThread;
 begin
   FMpathAdmThread:=TMPathAdmThread.Create(self);
@@ -297,6 +376,7 @@ begin
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
 
   InitIllumosLibraryHandles;
 
@@ -306,19 +386,20 @@ begin
   FDBO_Srv_Cfg.IP          := '0.0.0.0';
   inherited Setup;
 
-  lang:=GetEnvironmentVariable('LANG');
-  if (lang<>'C') then
-    begin
-      GFRE_DBI.LogError(dblc_APPLICATION,'Environment LANG for this feeder must be C, instead of %s ',[lang]);
-      writeln('Environment LANG for this feeder must be C, instead of ',lang);
-      abort;
-    end;
+  //lang:=GetEnvironmentVariable('LANG');
+  //if (lang<>'C') then
+  //  begin
+  //    GFRE_DBI.LogError(dblc_APPLICATION,'Environment LANG for this feeder must be C, instead of %s ',[lang]);
+  //    writeln('Environment LANG for this feeder must be C, instead of ',lang);
+  //    abort;
+  //  end;
 
 try
     StartIostatParser;
     StartDiskAndEnclosureThread;
     StartZpoolThread;
     StartMpathAdmThread;
+    StartLinkstatParser;
   except on e:Exception do begin
     GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
   end; end;

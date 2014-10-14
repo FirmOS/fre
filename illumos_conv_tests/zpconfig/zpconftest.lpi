@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
     <Version Value="9"/>
@@ -36,12 +36,10 @@
       <Unit0>
         <Filename Value="zpconftest.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="zpconftest"/>
       </Unit0>
       <Unit1>
         <Filename Value="fos_illumos_defs.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fos_illumos_defs"/>
       </Unit1>
     </Units>
   </ProjectOptions>
@@ -68,12 +66,6 @@ if TargetOS = 'solaris' then
     <CodeGeneration>
       <TargetCPU Value="i386"/>
     </CodeGeneration>
-    <Other>
-      <CompilerMessages>
-        <MsgFileName Value=""/>
-      </CompilerMessages>
-      <CompilerPath Value="$(CompPath)"/>
-    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

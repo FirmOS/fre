@@ -3,7 +3,7 @@ program zpconftest;
 {$mode objfpc}{$H+}
 
 uses
-  cthreads,nvpair,libzfs,zfs,Classes, fos_illumos_defs,ctypes,sysutils,strutils;
+  cthreads,fosillu_nvpair,fosillu_libzfs,fosillu_zfs,Classes, fos_illumos_defs,ctypes,sysutils,strutils;
 
 var
   zph : Plibzfs_handle_t;
@@ -12,6 +12,12 @@ var
   function FOSNVGET_U64(const elem:Pnvpair_t ; var val:UInt64):boolean;
   begin
     result := nvpair_value_uint64(elem,@val)=0;
+  end;
+
+  function FOSNVGET_BOOLEAN(const elem:Pnvpair_t; var val: boolean):boolean;
+  begin
+    result := true;
+    val    := true; { there is no function, the existence of the value implies true }
   end;
 
   function FOSNVGET_U64ARR(const elem:Pnvpair_t ; var val:PPuint64_t ; var cnt : Uint64_t):boolean;
@@ -129,6 +135,7 @@ var
       count     : uint_t=0;
       u64val    : UInt64=0;
       strval    : string='';
+      boolval   : boolean=false;
       i         : integer;
       name      : string;
   begin
@@ -166,6 +173,11 @@ var
               else
                 writeln(StringOfChar(' ',indent),name,' <array of uint64_t>')
             end;
+        DATA_TYPE_BOOLEAN:
+            begin
+              if FOSNVGET_BOOLEAN(elem,boolval) then
+                writeln(StringOfChar(' ',indent),FOSNVPAIR_NAME(elem),'=',BoolToStr(boolval,'1','0'));
+            end;
         else
           begin
             writeln('unhandled config type ',nvpair_type(elem),' for name=',FOSNVPAIR_NAME(elem));
@@ -179,7 +191,7 @@ var
       zs : Pnvlist_t;
   begin
     writeln(pooln);
-    zp := zpool_open(zph, Pcchar(@pooln[1]));
+    zp := zpool_open(zph, Pchar(@pooln[1]));
     if not assigned(zp) then
       begin
         writeln('cannot open zpool ',pooln);
@@ -196,7 +208,7 @@ begin
   zph := nil;
   zph := libzfs_init();
   if paramstr(1)='' then
-    dump_config('rpool')
+    dump_config('syspool')
   else
     dump_config(paramstr(1));
   libzfs_fini(zph);
