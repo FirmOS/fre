@@ -45,7 +45,7 @@ interface
 
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
-  fre_system,fre_dbbase,fre_dbbusiness, fre_hal_schemes,fre_process,fre_db_core,
+  fre_system,fre_dbbase,fre_dbbusiness, fre_zfs, fre_hal_schemes,fre_process,fre_db_core,
   fre_diff_transport;
 
 
@@ -105,11 +105,20 @@ procedure TFRE_CPE_FEED_CLIENT.ConfigureCPE;
    end;
   end;
 
+ procedure _FileserverIterator(const service:IFRE_DB_Object);
+ var cf                   :TFRE_DB_CPE_VIRTUAL_FILESERVER;
+ begin
+   if service.IsA(TFRE_DB_CPE_VIRTUAL_FILESERVER,cf) then
+   begin
+     cf.ConfigureHAL;
+   end;
+  end;
 
 begin
   hal_cfg.ForAllObjects(@_NetworkIterator);
   hal_cfg.ForAllObjects(@_VPNIterator);
   hal_cfg.ForAllObjects(@_DHCPIterator);
+  hal_cfg.ForAllObjects(@_FileserverIterator);
 end;
 
 procedure TFRE_CPE_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
@@ -132,6 +141,7 @@ procedure TFRE_CPE_FEED_CLIENT.MyRegisterClasses;
 begin
   fre_dbbase.Register_DB_Extensions;
   fre_dbbusiness.Register_DB_Extensions;
+  fre_zfs.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
   fre_diff_transport.Register_DB_Extensions;
 end;
