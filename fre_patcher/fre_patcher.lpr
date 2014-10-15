@@ -1049,6 +1049,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       vf.Field('ecryptfs_fnek_sig').asstring := ecryptfs_fnek_sig;
       vf.Field('ecryptfs_sig').asstring := ecryptfs_sig;
       vf.Field('ecryptfs_key').asstring := ecryptfs_key;
+      vf.Field('cryptofile').asstring   := 'cryptofile';
       cfg.Field('fileserver').AsObject:=vf;
 
 
