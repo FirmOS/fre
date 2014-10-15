@@ -41,7 +41,7 @@ program fre_disksubfeeder;
 {$LIBRARYPATH ../../lib}
 
 uses
-  //cmem,
+  cmem,
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
@@ -71,7 +71,7 @@ var
 
 procedure TFRE_DISKSUB_FEED.TestMethod;
 begin
-  writeln('PUNCHING AN UNFREED STRINGLIST INTO THE MEM FOR HEAPTRACE CHECK');
+  writeln('PUNCHING AN UNFREED STRINGLIST INTO bTHE MEM FOR HEAPTRACE CHECK');
   TStringList.Create;
 end;
 

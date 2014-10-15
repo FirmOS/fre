@@ -68,6 +68,7 @@
       <Unit7>
         <Filename Value="../../hal/fosillu_hal_dbo_zfs_pool.pp"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="fosillu_hal_dbo_zfs_pool"/>
       </Unit7>
     </Units>
   </ProjectOptions>

@@ -62,7 +62,12 @@ const
   cZPOOLSTATUS               = 'zpool status 1';
   cGET_ZPOOL_IOSTAT          = 'zpool iostat -v 1';
   cReadSGLogIntervalSec      = 120;
-  cZpoolQueryIntervalMSec    = 1000;
+
+  cZpoolQueryIntervalMSec     = 1000;
+  cEnclosureQueryIntervalMSec = 10000;
+  cMpathQueryIntervalMSec     = 10000;
+  cZDSIntervalMSec            = 5000;
+  cZSNAPIntervalMSec          = 5000;
 
   DoubleLineEnd              = LineEnding+LineEnding;
 
@@ -70,34 +75,58 @@ type
 
   TFRE_DISKSUB_FEED_SERVER        = class;
 
-  { TMPathAdmThread }
+  { TFRE_SINGLE_CMD_THREAD }
 
-  TMPathAdmThread=class(TThread)
+  TFRE_SINGLE_CMD_THREAD=class(TTHREAD)
   private
     fsubfeeder        : TFRE_DISKSUB_FEED_SERVER;
+    fsleep_period     : NativeInt;
+    ftimed_event      : IFOS_TE;
+    fid               : string;
+  protected
+    procedure   Execute  ; override;
   public
-    constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
-    procedure   Execute                      ; override;
+    procedure   Terminate;
+    procedure   MyInit   ; virtual;
+    procedure   MyFinit  ; virtual;
+    procedure   MyLoop   ; virtual;
+    constructor Create   (const subfeeder:TFRE_DISKSUB_FEED_SERVER ; const id : string ; const sleep_period:nativeint);
+    destructor  Destroy; override;
+  end;
+
+  { TMPathAdmThread }
+
+  TMPathAdmThread=class(TFRE_SINGLE_CMD_THREAD)
+  public
+    procedure   MyLoop   ; override;
   end;
 
   { TZpoolThread }
 
-  TZpoolThread=class(TThread)
-  private
-    fsubfeeder        : TFRE_DISKSUB_FEED_SERVER;
+  TZpoolThread=class(TFRE_SINGLE_CMD_THREAD)
   public
-    constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
-    procedure   Execute                      ; override;
+    procedure   MyLoop ; override;
+  end;
+
+  { TZDSThread }
+
+  TZDSThread=class(TFRE_SINGLE_CMD_THREAD)
+  public
+    procedure   MyLoop ; override;
+  end;
+
+  { TZSNAPThread }
+
+  TZSNAPThread=class(TFRE_SINGLE_CMD_THREAD)
+  public
+    procedure   MyLoop ; override;
   end;
 
   { TDiskAndEnclosureThread }
 
-  TDiskAndEnclosureThread=class(TThread)
-  private
-    fsubfeeder        : TFRE_DISKSUB_FEED_SERVER;
+  TDiskAndEnclosureThread=class(TFRE_SINGLE_CMD_THREAD)
   public
-    constructor Create                       (const subfeeder:TFRE_DISKSUB_FEED_SERVER);
-    procedure   Execute                      ; override;
+    procedure   MyLoop ; override;
   end;
 
   { TFRE_IOSTAT_PARSER }
@@ -133,6 +162,8 @@ type
     Fdiskenclosurethread                     : TDiskAndEnclosureThread;
     FMpathAdmThread                          : TMPathAdmThread;
     FZpoolThread                             : TZpoolThread;
+    FZSnapThread                             : TZSNAPThread;
+    FZDSThread                               : TZDSThread;
 
     procedure  _TerminateThreads             ;
     procedure  _WaitForAndFreeThreads        ;
@@ -142,6 +173,8 @@ type
     procedure  StartLinkstatParser           ;
     procedure  StartMpathAdmThread           ;
     procedure  StartZPoolThread              ;
+    procedure  StartZDSThread                ;
+    procedure  StartZSNAPThread              ;
 
   protected
     procedure  Setup           ; override;
@@ -153,6 +186,148 @@ type
 
 
 implementation
+
+{ TZSNAPThread }
+
+procedure TZSNAPThread.MyLoop;
+var resdbo     : IFRE_DB_Object;
+    z          : TFRE_DB_ZFS;
+begin
+  //writeln('ZSNAP LOOP');
+  z := TFRE_DB_ZFS.Create;
+  z.GetSnapshots('',false,false);
+  resdbo := GFRE_DBI.NewObject;
+  resdbo.Field('subfeed').asstring      := 'ZSNAP';
+  resdbo.Field('resultcode').AsInt32    := 0;
+  resdbo.Field('error').asstring        := '';
+  resdbo.Field('data').AsObject         := z;
+  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+  //writeln('SWL: ZSNAP STATUS:',resdbo.DumpToString());
+  fsubfeeder.PushDataToClients(resdbo);
+  GFRE_DB.LogDebug(dblc_APPLICATION,'ZFS SNAPSHOT STAT RUNNING');
+end;
+
+{ TZDSThread }
+
+procedure TZDSThread.MyLoop;
+var resdbo     : IFRE_DB_Object;
+    z          : TFRE_DB_ZFS;
+begin
+  //writeln('ZDS LOOP');
+  z := TFRE_DB_ZFS.Create;
+  z.EmbedDatasets;
+  resdbo := GFRE_DBI.NewObject;
+  resdbo.Field('subfeed').asstring      := 'ZDS';
+  resdbo.Field('resultcode').AsInt32    := 0;
+  resdbo.Field('error').asstring        := '';
+  resdbo.Field('data').AsObject         := z;
+  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+  //writeln('SWL: ZDS STATUS:',resdbo.DumpToString());
+  fsubfeeder.PushDataToClients(resdbo);
+  GFRE_DB.LogDebug(dblc_APPLICATION,'ZFS DS STAT RUNNING');
+end;
+
+{ TDiskAndEnclosureThread }
+
+procedure TDiskAndEnclosureThread.MyLoop;
+var so    : TFRE_DB_SCSI;
+    obj   : IFRE_DB_Object;
+    error : string;
+    res   : integer;
+    resdbo: IFRE_DB_Object;
+    next_log : TFRE_DB_DateTime64;
+    read_log : boolean;
+begin
+  //writeln('ENC LOOP');
+  next_log := GFRE_DT.Now_UTC;
+  so     := TFRE_DB_SCSI.create;
+  try
+    so.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
+    if next_log<GFRE_DT.Now_UTC then
+      begin
+        read_log := true;
+        next_log := GFRE_DT.Now_UTC+(cReadSGLogIntervalSec*1000);
+      end
+    else
+      read_log := false;
+
+    res    := so.GetSG3DiskAndEnclosureInformation(fsubfeeder.IOStat_GetData,error,obj,read_log);
+    resdbo := GFRE_DBI.NewObject;
+    resdbo.Field('subfeed').asstring      := 'DISKENCLOSURE';
+    resdbo.Field('resultcode').AsInt32    := res;
+    resdbo.Field('error').asstring        := error;
+    resdbo.Field('data').AsObject         := obj;
+    resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+
+    fsubfeeder.PushDataToClients(resdbo);
+    GFRE_DB.LogDebug(dblc_APPLICATION,'ENCLOSURESTAT RUNNING');
+  finally
+    so.Free;
+  end;
+end;
+
+{ TFRE_SINGLE_CMD_THREAD }
+
+procedure TFRE_SINGLE_CMD_THREAD.Execute;
+begin
+  MyInit;
+  try
+    try
+      repeat
+        if Terminated then
+          exit;
+        MyLoop;
+        ftimed_event.WaitFor(fsleep_period);
+      until Terminated;
+    finally
+      try
+        MyFinit;
+      except
+        on e:exception do
+          GFRE_DB.LogEmergency(dblc_EXCEPTION,'subfeeder thread [%s] finit failed due to [%s]',[fid,e.Message]);
+      end;
+    end;
+  except
+    on e:exception do
+      GFRE_DB.LogEmergency(dblc_EXCEPTION,'subfeeder thread [%s] terminated due to [%s]',[fid,e.Message]);
+  end;
+end;
+
+procedure TFRE_SINGLE_CMD_THREAD.Terminate;
+begin
+  inherited Terminate;
+  ftimed_event.SetEvent;
+end;
+
+procedure TFRE_SINGLE_CMD_THREAD.MyInit;
+begin
+  //writeln('MY INIT ',ClassName);
+end;
+
+procedure TFRE_SINGLE_CMD_THREAD.MyFinit;
+begin
+  //writeln('MY FINIT ',ClassName);
+end;
+
+procedure TFRE_SINGLE_CMD_THREAD.MyLoop;
+begin
+
+end;
+
+constructor TFRE_SINGLE_CMD_THREAD.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER; const id: string; const sleep_period: nativeint);
+begin
+  fsubfeeder    := subfeeder;
+  fsleep_period := sleep_period;
+  fid           := id;
+  GFRE_TF.Get_TimedEvent(ftimed_event);
+  Inherited Create(false);
+end;
+
+destructor TFRE_SINGLE_CMD_THREAD.Destroy;
+begin
+  ftimed_event.Finalize;
+  inherited Destroy;
+end;
 
 { TFRE_LINKSTAT_PARSER }
 
@@ -171,6 +346,7 @@ var st           : TStringStream;
       new_feedobj.Field('subfeed').asstring      := 'LINKSTAT';
       new_feedobj.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
       fsubfeeder.PushDataToClients(new_feedobj);
+      GFRE_DB.LogDebug(dblc_APPLICATION,'LINKSTAT RUNNING');
       //writeln(new_feedobj.DumpToString);
     end;
 
@@ -209,15 +385,7 @@ begin
   fsubfeeder := subfeeder;
 end;
 
-{ TZpoolThread }
-
-constructor TZpoolThread.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
-begin
-  inherited Create(false);
-  fsubfeeder := subfeeder;
-end;
-
-procedure TZpoolThread.Execute;
+procedure TZpoolThread.MyLoop;
 var pools    : IFRE_DB_Object;
     error    : string;
     res      : integer;
@@ -237,73 +405,54 @@ var pools    : IFRE_DB_Object;
     {$ENDIF}
 
 begin
-  repeat
-    try
-      {$IFDEF SOLARIS}
-      pools  := GFRE_DBI.NewObject;
-      res    := fosillu_zfs_GetActivePoolsDBO(error,poollist);
- //     writeln('SWL:POOLLIST',poollist.DumpToString());
-      if res=0 then
-        begin
-          poollist.ForAllObjects(@_PoolIterator);
-        end;
-      {$ENDIF}
-      resdbo := GFRE_DBI.NewObject;
-      resdbo.Field('subfeed').asstring      := 'ZPOOLSTATUS';
-      resdbo.Field('resultcode').AsInt32    := res;
-      resdbo.Field('error').asstring        := error;
-      resdbo.Field('data').AsObject         := pools;
-      resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-     //writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
-      fsubfeeder.PushDataToClients(resdbo);
-
-      if not Terminated then
-         sleep(cZpoolQueryIntervalMSec);
-    except on E:Exception do begin
-      GFRE_DBI.LogError(dblc_APPLICATION,'ZPoolThread Exception %s',[e.Message]);
-      raise;
-    end; end;
-  until Terminated;
+   //writeln('ZPOOL LOOP');
+  {$IFDEF SOLARIS}
+  pools  := GFRE_DBI.NewObject;
+  res    := fosillu_zfs_GetActivePoolsDBO(error,poollist);
+  try
+  //     writeln('SWL:POOLLIST',poollist.DumpToString());
+    if res=0 then
+        poollist.ForAllObjects(@_PoolIterator);
+  finally
+    poollist.Finalize;
+  end;
+  {$ENDIF}
+  resdbo := GFRE_DBI.NewObject;
+  resdbo.Field('subfeed').asstring      := 'ZPOOLSTATUS';
+  resdbo.Field('resultcode').AsInt32    := res;
+  resdbo.Field('error').asstring        := error;
+  resdbo.Field('data').AsObject         := pools;
+  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+//writeln('SWL: ZPOOLSTATUS:',resdbo.DumpToString());
+  fsubfeeder.PushDataToClients(resdbo);
+  GFRE_DB.LogDebug(dblc_APPLICATION,'ZFS POOL STAT RUNNING');
 end;
 
 { TMPathAdmThread }
 
-constructor TMPathAdmThread.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
-begin
-  inherited Create(false);
-  fsubfeeder := subfeeder;
-end;
-
-procedure TMPathAdmThread.Execute;
+procedure TMPathAdmThread.MyLoop;
 var so    : TFRE_DB_SCSI;
     obj   : IFRE_DB_Object;
     error : string;
     res   : integer;
     resdbo: IFRE_DB_Object;
 begin
-  repeat
-    so     := TFRE_DB_SCSI.create;
-    try
-      so.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-      try
-        res    := so.GetMpathAdmLUInformation(error,obj);
-        resdbo := GFRE_DBI.NewObject;
-        resdbo.Field('subfeed').asstring      := 'MPATH';
-        resdbo.Field('resultcode').AsInt32    := res;
-        resdbo.Field('error').asstring        := error;
-        resdbo.Field('data').AsObject         := obj;
-        resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-        fsubfeeder.PushDataToClients(resdbo);
-        if not Terminated then
-          sleep(10000);
-      except on E:Exception do begin
-        GFRE_DBI.LogError(dblc_APPLICATION,'MPathAdmThreadException %s',[e.Message]);
-        raise;
-      end; end;
-    finally
-      so.Free;
-    end;
-  until Terminated;
+  //writeln('MPA LOOP');
+  so     := TFRE_DB_SCSI.create;
+  try
+    so.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
+    res    := so.GetMpathAdmLUInformation(error,obj);
+    resdbo := GFRE_DBI.NewObject;
+    resdbo.Field('subfeed').asstring      := 'MPATH';
+    resdbo.Field('resultcode').AsInt32    := res;
+    resdbo.Field('error').asstring        := error;
+    resdbo.Field('data').AsObject         := obj;
+    resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
+    fsubfeeder.PushDataToClients(resdbo);
+    GFRE_DB.LogDebug(dblc_APPLICATION,'MPATH STAT RUNNING');
+  finally
+    so.Free;
+  end;
 end;
 
 
@@ -312,17 +461,15 @@ end;
 procedure TFRE_DISKSUB_FEED_SERVER._TerminateThreads;
 begin
   if Assigned(Fdiskenclosurethread) then
-    begin
       Fdiskenclosurethread.Terminate;
-    end;
   if Assigned(FMpathAdmThread) then
-    begin
       FMpathAdmThread.Terminate;
-    end;
   if Assigned(FZpoolThread) then
-    begin
       FZpoolThread.Terminate;
-    end;
+  if Assigned(FZSnapThread) then
+      FZSnapThread.Terminate;
+  if Assigned(FZDSThread) then
+      FZDSThread.Terminate;
 end;
 
 procedure TFRE_DISKSUB_FEED_SERVER._WaitForAndFreeThreads;
@@ -345,12 +492,24 @@ begin
       FZpoolThread.Free;
       FZpoolThread:=nil;
     end;
+  if Assigned(FZSnapThread) then
+    begin
+      FZSnapThread.WaitFor;
+      FZSnapThread.Free;
+      FZSnapThread:=nil;
+    end;
+  if Assigned(FZDSThread) then
+    begin
+      FZDSThread.WaitFor;
+      FZDSThread.Free;
+      FZDSThread:=nil;
+    end;
 end;
 
 
 procedure TFRE_DISKSUB_FEED_SERVER.StartDiskAndEnclosureThread;
 begin
-  Fdiskenclosurethread:=TDiskAndEnclosureThread.Create(self);
+  Fdiskenclosurethread:=TDiskAndEnclosureThread.Create(self,'enclosure',cEnclosureQueryIntervalMSec);
 end;
 
 procedure TFRE_DISKSUB_FEED_SERVER.StartIostatParser;
@@ -367,24 +526,45 @@ end;
 
 procedure TFRE_DISKSUB_FEED_SERVER.StartMpathAdmThread;
 begin
-  FMpathAdmThread:=TMPathAdmThread.Create(self);
+  FMpathAdmThread:=TMPathAdmThread.Create(self,'mpath',cMpathQueryIntervalMSec);
 end;
 
 procedure TFRE_DISKSUB_FEED_SERVER.StartZPoolThread;
 begin
-  FZpoolThread:=TZpoolThread.Create(self);
+  FZpoolThread:=TZpoolThread.Create(self,'zpool',cZpoolQueryIntervalMSec);
+end;
+
+procedure TFRE_DISKSUB_FEED_SERVER.StartZDSThread;
+begin
+  FZDSThread:=TZDSThread.Create(self,'zds',cZDSIntervalMSec);
+end;
+
+procedure TFRE_DISKSUB_FEED_SERVER.StartZSNAPThread;
+begin
+  FZSnapThread:=TZSNAPThread.Create(self,'zsnaps',cZSNAPIntervalMSec);
 end;
 
 
 
 procedure TFRE_DISKSUB_FEED_SERVER.Setup;
 var lang:string;
+    z   : TFRE_DB_ZFS;
 begin
 
   fre_dbbase.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
   GFRE_DB.Initialize_Extension_ObjectsBuild;
+
+  //z := TFRE_DB_ZFS.Create;
+  //z.GetSnapshots('',false,false);
+  //writeln(z.DumpToString());
+  //writeln('---');
+
+  //z.EmbedDatasets;
+
+  //writeln(z.DumpToString);
+  //halt;
 
   {$IFDEF SOLARIS}
   InitIllumosLibraryHandles;
@@ -404,21 +584,22 @@ begin
   //    abort;
   //  end;
 
-try
+  try
     StartIostatParser;
     StartDiskAndEnclosureThread;
     StartZpoolThread;
     StartMpathAdmThread;
     StartLinkstatParser;
+    StartZDSThread;
+    StartZSNAPThread;
   except on e:Exception do begin
     GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
   end; end;
-
 end;
 
 destructor TFRE_DISKSUB_FEED_SERVER.Destroy;
 begin
-  GFRE_DBI.LogInfo(dblc_APPLICATION,'DESTROYING SUBFEEDER');
+  GFRE_DBI.LogDebug(dblc_APPLICATION,'DESTROYING SUBFEEDER');
 
   if Assigned(FDiskIoStatMon) then
     FDiskIoStatMon.Free;
@@ -451,58 +632,6 @@ begin
     GFRE_BT.CriticalAbort('IOStatMon not assigned in IOStat_Getdata');
 end;
 
-
-{ TDiskAndEnclosureThread }
-
-constructor TDiskAndEnclosureThread.Create(const subfeeder: TFRE_DISKSUB_FEED_SERVER);
-begin
-  inherited Create(false);
-  fsubfeeder := subfeeder;
-end;
-
-procedure TDiskAndEnclosureThread.Execute;
-var so    : TFRE_DB_SCSI;
-    obj   : IFRE_DB_Object;
-    error : string;
-    res   : integer;
-    resdbo: IFRE_DB_Object;
-    next_log : TFRE_DB_DateTime64;
-    read_log : boolean;
-begin
-  next_log := GFRE_DT.Now_UTC;
-  repeat
-    so     := TFRE_DB_SCSI.create;
-    try
-      so.SetRemoteSSH(cFRE_REMOTE_USER, cFRE_REMOTE_HOST, SetDirSeparators(cFRE_SERVER_DEFAULT_DIR+'/ssl/user/id_rsa'));
-      try
-        if next_log<GFRE_DT.Now_UTC then
-          begin
-            read_log := true;
-            next_log := GFRE_DT.Now_UTC+(cReadSGLogIntervalSec*1000);
-          end
-        else
-          read_log := false;
-
-        res    := so.GetSG3DiskAndEnclosureInformation(fsubfeeder.IOStat_GetData,error,obj,read_log);
-        resdbo := GFRE_DBI.NewObject;
-        resdbo.Field('subfeed').asstring      := 'DISKENCLOSURE';
-        resdbo.Field('resultcode').AsInt32    := res;
-        resdbo.Field('error').asstring        := error;
-        resdbo.Field('data').AsObject         := obj;
-        resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-
-        fsubfeeder.PushDataToClients(resdbo);
-        if not Terminated then
-          sleep(10000);
-      except on E:Exception do begin
-        GFRE_DBI.LogError(dblc_APPLICATION,'DiskAndEnclosureThreadException %s',[e.Message]);
-        raise;
-      end; end;
-    finally
-      so.Free;
-    end;
-  until Terminated;
-end;
 
 { TFRE_IOSTAT_PARSER }
 
@@ -581,6 +710,7 @@ begin
   resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
   resdbo.Field('data').AsObject         := Get_Data_Object;
 //  writeln('SWL:IOSTAT',resdbo.DumpToString());
+  GFRE_DB.LogDebug(dblc_APPLICATION,'IOSTAT RUNNING');
   fsubfeeder.PushDataToClients(resdbo);
 end;
 
