@@ -1045,6 +1045,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       cfg.Field('dhcp').AsObject:=dhcp;
 
       vf       := TFRE_DB_CPE_VIRTUAL_FILESERVER.CreateForDB;
+      vf.ObjectName:='knoxdata';
       vf.Field('nfsshare').asstring := nfsshare;
       vf.Field('ecryptfs_fnek_sig').asstring := ecryptfs_fnek_sig;
       vf.Field('ecryptfs_sig').asstring := ecryptfs_sig;
@@ -1056,7 +1057,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       shareObj:=TFRE_DB_VIRTUAL_FILESHARE.CreateForDB;
       shareObj.Field('dataset').asstring:='anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler/securefiles';
       shareobj.ObjectName:='SecureFiles';
-      vf.Field(shareobj.UID_String).AddObject(shareobj);
+      vf.Field(shareobj.UID_String).asObject:=shareobj;
 
       writeln('SWL:'+cfg.DumpToString());
       cfg.SaveToFile('/opt/local/fre/hal/'+mac+'_cpe.cfg');
@@ -1087,11 +1088,11 @@ begin
 
 //  CreateProvisioning('00:03:2d:28:07:6b','Wien Energie',);
   // Demo CC
-  CreateProvisioning('00:03:2d:1d:2d:79','Demo Citycom','192.168.3.1/24',2,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe2',
+  CreateProvisioning('00:03:2d:1d:2d:79','Demo Citycom','192.168.3.2/24',2,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe2',
                      TFRE_DB_StringArray.Create('00:15:65:32:9e:12','00:15:65:20:d2:af','00:15:65:20:d4:91','ac:f2:c5:34:ac:6c'),
                      '[fdd7:f47b:4605:1b0d:0:0:0:1]:/anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler','b3cf9cb7d3270dcd','b3cf9cb7d3270dcd','enctest123');
   // Test FirmOS
-  CreateProvisioning('00:03:2d:1d:2d:7d','Test FirmOS','192.168.3.1/24',3,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe3',
+  CreateProvisioning('00:03:2d:1d:2d:7d','Test FirmOS','192.168.3.2/24',3,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe3',
                       TFRE_DB_StringArray.Create('00:15:65:38:39:68','10:15:65:37:5e:3f'),
                       '[fdd7:f47b:4605:1b0d:0:0:0:1]:/syspool/domains/demo/demo/zonedata/secfiler','b3cf9cb7d3270dcd','b3cf9cb7d3270dcd','enctest123');
 
