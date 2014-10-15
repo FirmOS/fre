@@ -172,9 +172,6 @@ var
 begin
   if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
     ses.GetSessionModuleData(ClassName).Field('selectedObj').AsStringArr:=input.Field('selected').AsStringArr;
-
-    CheckDbResult(conn.Fetch(input.Field('selected').AsGUID,dbo));
-    WriteLn(dbo.DumpToString());
   end else begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedObj');
   end;
