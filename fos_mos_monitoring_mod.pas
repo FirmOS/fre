@@ -57,6 +57,7 @@ type
     class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
+    procedure       CalculateIcon                       (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentGrid                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -119,8 +120,11 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'));
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
       AddOneToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));
+      AddOneToOnescheme('icon','','',dt_string,false);
+      AddOneToOnescheme('schemeclass','sc','',dt_string,false);
+      SetFinalRightTransformFunction(@CalculateIcon,[]);
     end;
     dc := session.NewDerivedCollection('MONITORING_PHYSICAL_GRID');
     with dc do begin
@@ -130,6 +134,11 @@ begin
       SetParentToChildLinkField ('<SERVICEPARENT');
     end;
   end;
+end;
+
+procedure TFOS_CITYCOM_MOS_PHYSICAL_MOD.CalculateIcon(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
+begin
+  transformed_object.Field('icon').AsString:=FREDB_getThemedResource('images_apps/classicons/'+LowerCase(transformed_object.Field('sc').AsString)+'.svg');
 end;
 
 function TFOS_CITYCOM_MOS_PHYSICAL_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
