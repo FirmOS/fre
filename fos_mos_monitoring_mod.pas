@@ -97,6 +97,12 @@ begin
     currentVersionId := '1.0';
 
     CreateModuleText(conn,'physical_description','Physical','Physical','Physical');
+
+    CreateModuleText(conn,'section_grid_cap','Detail');
+    CreateModuleText(conn,'section_graph_cap','Graph');
+    CreateModuleText(conn,'error_monitoring_struct_file','Error on reading the monitoring structure file. Please place a valid structure.svg file into the binary directoy.');
+    CreateModuleText(conn,'grid_name','Name');
+    CreateModuleText(conn,'grid_status','Status');
   end;
 end;
 
@@ -113,9 +119,8 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      //AddMultiToOnescheme(TFRE_DB_NameTypeArray.create('objname','name'),'name',app.FetchAppTextShort(session,'grid_name'));
-      AddOneToOnescheme('objname','',app.FetchAppTextShort(session,'grid_name'));
-      AddOneToOnescheme('status_icon_mos','',app.FetchAppTextShort(session,'grid_status'),dt_icon);
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'));
+      AddOneToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));
     end;
     dc := session.NewDerivedCollection('MONITORING_PHYSICAL_GRID');
     with dc do begin
@@ -136,8 +141,8 @@ begin
   ses.GetSessionModuleData(ClassName).DeleteField('selectedObj');
 
   res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
-  res.AddSection.Describe(CWSF(@WEB_ContentGrid),'GRID',1);
-  res.AddSection.Describe(CWSF(@WEB_ContentGraph),'GRAPH',2);
+  res.AddSection.Describe(CWSF(@WEB_ContentGrid),FetchModuleTextShort(ses,'section_grid_cap'),1);
+  res.AddSection.Describe(CWSF(@WEB_ContentGraph),FetchModuleTextShort(ses,'section_graph_cap'),2);
   Result:=res;
 end;
 
@@ -156,7 +161,7 @@ begin
     Result:=TFRE_DB_SVG_DESC.create.Describe(GFRE_BT.StringFromFile('structure.svg'),'monitoring_structure');
   except
     on E:Exception do begin
-      Result:=TFRE_DB_HTML_DESC.create.Describe('Error on reading the monitoring structure file. Please place a valid structure.svg file into the binary directoy.');
+      Result:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'error_monitoring_struct_file'));
     end;
   end;
 end;
@@ -190,10 +195,10 @@ begin
     if mosObj.MethodExists('MOSContent') then begin
       res:=mosObj.Invoke('MOSContent',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
     end else begin
-      res:=TFRE_DB_HTML_DESC.create.Describe(app.FetchAppTextShort(ses,'info_content_no_details'));
+      res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_no_details'));
     end;
   end else begin
-    res:=TFRE_DB_HTML_DESC.create.Describe(app.FetchAppTextShort(ses,'info_content_select_one'));
+    res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_select_one'));
   end;
   res.contentId:='MOS_OBJ_CONTENT';
   Result:=res;
@@ -218,6 +223,12 @@ begin
     currentVersionId := '1.0';
 
     CreateModuleText(conn,'logical_description','Logical','Logical','Logical');
+
+    CreateModuleText(conn,'grid_name','Name');
+    CreateModuleText(conn,'grid_status','Status');
+
+    CreateModuleText(conn,'info_content_select_one','Please select one object to get detailed information about it.');
+    CreateModuleText(conn,'info_content_no_details','There are no details available for the selected object.');
   end;
 end;
 
@@ -234,8 +245,8 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('caption_mos','',app.FetchAppTextShort(session,'grid_name'));
-      AddOneToOnescheme('status_icon_mos','',app.FetchAppTextShort(session,'grid_status'),dt_icon);
+      AddOneToOnescheme('caption_mos','',FetchModuleTextShort(session,'grid_name'));
+      AddOneToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));
     end;
     dc := session.NewDerivedCollection('MONITORING_GRID');
     with dc do begin

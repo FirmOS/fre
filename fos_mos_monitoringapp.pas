@@ -121,18 +121,6 @@ begin
     CreateAppText(conn,'sitemap_main','Main','','Main');
     CreateAppText(conn,'sitemap_logical','Logical','','Logical');
     CreateAppText(conn,'sitemap_physical','Physical','','Physical');
-
-    //TFOS_CITYCOM_MOS_HIERARCHICAL_MOD;
-    CreateAppText(conn,'hierarchical_description','Hierarchical','Hierarchical','Hierarchical');
-    CreateAppText(conn,'info_content_select_one','Please select one object to get detailed information about it.');
-    CreateAppText(conn,'info_content_no_details','There are no details available for the selected object.');
-
-    CreateAppText(conn,'grid_name','Name');
-    CreateAppText(conn,'grid_status','Status');
-
-    //TFOS_CITYCOM_MOS_STRUCTURAL_MOD;
-    CreateAppText(conn,'structural_description','Structural','Structural','Structural');
-
   end;
   if (currentVersionId='1.0') then begin
     //next update code
