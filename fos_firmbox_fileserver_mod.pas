@@ -639,6 +639,7 @@ begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedVFSShare');
   end;
 
+  ses.SendServerClientRequest(TFRE_DB_REFRESH_STORE_DESC.create.Describe('VFSShareBrowser'));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('delete_share',del_disabled));
   if ses.isUpdatableContentVisible('VIRTUAL_SHARE_CONTENT') then begin
     Result:=WEB_VFSShareContent(input,ses,app,conn);
@@ -691,7 +692,8 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  store:=TFRE_DB_STORE_DESC.create.Describe('mypath',CWSF(@WEB_VFSShareBrowserGetEntries));
+  store:=TFRE_DB_STORE_DESC.create.Describe('mypath',CWSF(@WEB_VFSShareBrowserGetEntries),nil,nil,nil,'VFSShareBrowser');
+
   layout:=TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
   layout.AddDataElement.Describe('name',FetchModuleTextShort(ses,'fs_browser_name'),dt_string,true,false,3,true,false,false,'icon','icon_open');
   layout.AddDataElement.Describe('sizeHR',FetchModuleTextShort(ses,'fs_browser_size'));
@@ -704,9 +706,10 @@ end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareBrowserGetEntries(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  inp: IFRE_DB_Object;
-  lvl: TFRE_DB_String;
-  opd: IFRE_DB_Object;
+  inp     : IFRE_DB_Object;
+  lvl     : TFRE_DB_String;
+  opd     : IFRE_DB_Object;
+  shareObj: IFRE_DB_Object;
 
   procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
   var
@@ -740,22 +743,30 @@ var
   end;
 
 begin
-  inp := GFRE_DBI.NewObject;
-  lvl := input.Field('parentid').AsString;
-  if lvl='' then lvl:='/';
-  inp.Field('level').AsString:= lvl;
+  CheckClassVisibility4MyDomain(ses);
 
-  opd := GFRE_DBI.NewObject;
-  opd.Field('UIP').AsGUIDArr := self.GetUIDPathUA;
-  opd.Field('LVL').AsString  := lvl;
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedVFSShare') and (ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').ValueCount=1)  then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').AsString),shareObj));
 
-  if ses.InvokeRemoteRequest('SAMPLEFEEDER','BROWSEPATH',inp,@GotAnswer,opd)=edb_OK then begin
-    Result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
-    exit;
+    inp := GFRE_DBI.NewObject;
+    lvl := input.Field('parentid').AsString;
+    if lvl='' then lvl:='/';
+    inp.Field('level').AsString:= lvl;
+
+    opd := GFRE_DBI.NewObject;
+    opd.Field('UIP').AsGUIDArr := self.GetUIDPathUA;
+    opd.Field('LVL').AsString  := lvl;
+
+    if ses.InvokeRemoteRequest('SAMPLEFEEDER','BROWSEPATH',inp,@GotAnswer,opd)=edb_OK then begin
+      Result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+      exit;
+    end else begin
+      Result := TFRE_DB_STORE_DATA_DESC.create.Describe(0);
+      inp.Finalize;
+      opd.Finalize;
+    end;
   end else begin
     Result := TFRE_DB_STORE_DATA_DESC.create.Describe(0);
-    inp.Finalize;
-    opd.Finalize;
   end;
 end;
 
