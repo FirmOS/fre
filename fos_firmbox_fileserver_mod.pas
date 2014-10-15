@@ -19,9 +19,6 @@ type
   TFILESHARE_ROLETYPE = (rtRead,rtWrite);
 
   TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
-  private
-    function        _getRolename               (const share_id: TFRE_DB_NameType; const roletype: TFILESHARE_ROLETYPE): TFRE_DB_NameType;
-    function        _setShareRoles             (const input:IFRE_DB_Object; const change_read,change_write,read,write:boolean; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION) : IFRE_DB_Object;
   protected
     class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure    ; override;
@@ -32,7 +29,6 @@ type
     procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
   published
     function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentShareGroups     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentVFShares        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddVFS                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreVFS               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -48,14 +44,7 @@ type
     function        WEB_VFSShareSC             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSShareDelete         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_VFSShareDeleteConfirmed(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-
-    function        WEB_VFSShareGroupMenu      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareGroupSetRead   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareGroupSetWrite  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareGroupClearRead (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareGroupClearWrite(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareGroupInDrop    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareGroupOutDrop   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareBrowser        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 procedure Register_DB_Extensions;
@@ -73,81 +62,6 @@ begin
 end;
 
 { TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD }
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD._getRolename(const share_id: TFRE_DB_NameType; const roletype: TFILESHARE_ROLETYPE): TFRE_DB_NameType;
-begin
-  abort; // rethink
-  //case roletype of
-    //rtRead  : result := FREDB_Get_Rightname_UID('FSREAD',FREDB_H2G(share_id));
-    //rtWrite : result := FREDB_Get_Rightname_UID('FSWRITE',FREDB_H2G(share_id));
-  // else
-  //   raise EFRE_DB_Exception.Create('Undefined Roletype for Fileshare');
-  //end;
-end;
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD._setShareRoles(const input: IFRE_DB_Object; const change_read, change_write, read, write: boolean; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  dependend     : TFRE_DB_StringArray;
-  share_s       : string;
-  share_id      : TFRE_DB_GUID;
-  share         : IFRE_DB_Object;
-  rrole         : TFRE_DB_NameType;
-  wrole         : TFRE_DB_NameType;
-  group         : IFRE_DB_GROUP;
-  groupid       : TFRE_DB_GUID;
-  i             : NativeInt;
-begin
-  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-
-  if input.FieldExists('share_id') then begin
-    share_s  := input.Field('share_id').asstring;
-  end else begin
-    dependend  := GetDependencyFiltervalues(input,'uids_ref');
-    if length(dependend)=0 then begin
-      Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'share_group_in_diag_cap'),FetchModuleTextShort(ses,'share_group_in_no_share_msg'),fdbmt_warning,nil);
-      exit;
-    end;
-    share_s   := dependend[0];
-  end;
-  share_id := FREDB_H2G(share_s);
-
-  CheckDbResult(conn.Fetch(share_id,share),FetchModuleTextShort(ses,'Share not found!'));
-
-
-  for i := 0 to input.Field('selected').ValueCount-1 do begin
-    groupid := FREDB_H2G(input.Field('selected').AsStringItem[i]);
-    if (conn.sys.FetchGroupById(groupid,group)<>edb_OK) then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'Group not found!'));
-
-    rrole := _getRolename(share_s,rtRead);
-    if conn.sys.RoleExists(rrole,group.DomainID)=false then raise EFRE_DB_Exception.Create('No Read Role for Fileshare !');
-
-    wrole := _getRolename(share_s,rtWrite);
-    if conn.sys.RoleExists(wrole,group.DomainID)=false then raise EFRE_DB_Exception.Create('No Write Role for Fileshare !');
-
-    if change_read then begin
-      if read then begin
-         abort;
-//        conn.sys.AddRolesToGroup(group.ObjectName+'@'+group.GetDomain(conn),GFRE_DBI.ConstructStringArray([rrole+'@'+group.GetDomain(conn)]));
-      end else begin
-        abort;
-//        conn.RemoveGroupRoles(group.ObjectName+'@'+group.GetDomain(conn),GFRE_DBI.ConstructStringArray([rrole+'@'+group.GetDomain(conn)]),true);
-      end;
-    end;
-    if change_write then begin
-      if write then begin
-        abort;
-//        conn.AddGroupRoles(group.ObjectName+'@'+group.GetDomain(conn),GFRE_DBI.ConstructStringArray([wrole+'@'+group.GetDomain(conn)]));
-      end else begin
-        abort;
-//        conn.RemoveGroupRoles(group.ObjectName+'@'+group.GetDomain(conn),GFRE_DBI.ConstructStringArray([wrole+'@'+group.GetDomain(conn)]),true);
-      end;
-    end;
-  end;
-
-//  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('DROP','Adding share roles to '+ input.Field('selected').AsStringDump,fdbmt_info);
-  Result:=GFRE_DB_NIL_DESC;
-end;
 
 class procedure TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
@@ -196,32 +110,17 @@ begin
     CreateModuleText(conn,'tb_delete_vfs_share','Delete');
     CreateModuleText(conn,'cm_delete_vfs_share','Delete');
     CreateModuleText(conn,'storage_virtual_filer_share_properties','Share Properties');
-    CreateModuleText(conn,'storage_virtual_filer_share_groups','Groups');
-    CreateModuleText(conn,'storage_virtual_filer_share_user','User');
+    CreateModuleText(conn,'storage_virtual_filer_share_browser','Browser');
     CreateModuleText(conn,'vfs_share_content_header','Details about the selected share.');
     CreateModuleText(conn,'vfs_share_add_diag_cap','New Fileshare');
     CreateModuleText(conn,'vfs_share_add_no_fs_msg','Please select a virtual NAS first before adding a share.');
     CreateModuleText(conn,'vfs_share_delete_diag_cap','Confirm: Delete share');
     CreateModuleText(conn,'vfs_share_delete_diag_msg','The share %share_str% will be deleted permanently! Please confirm to continue.');
-    CreateModuleText(conn,'share_group_in_diag_cap','Adding Access to Group');
-    CreateModuleText(conn,'share_group_in_no_share_msg','Please select a share first before adding group access.');
 
-    CreateModuleText(conn,'share_group_in','Groups with access to the fileshare.');
-    CreateModuleText(conn,'share_group_out','Groups without access to the fileshare.');
-    CreateModuleText(conn,'share_group_read','Read Access');
-    CreateModuleText(conn,'share_group_write','Write Access');
-    CreateModuleText(conn,'share_group_group','Group');
-    CreateModuleText(conn,'share_group_desc','Description');
-
-    CreateModuleText(conn,'tb_share_group_setread_on','Set Read Access');
-    CreateModuleText(conn,'tb_share_group_setread_off','Clear Read Access');
-    CreateModuleText(conn,'tb_share_group_setwrite_on','Set Write Access');
-    CreateModuleText(conn,'tb_share_group_setwrite_off','Clear Write Access');
-
-    CreateModuleText(conn,'cm_share_group_setread_on','Set Read Access');
-    CreateModuleText(conn,'cm_share_group_setread_off','Clear Read Access');
-    CreateModuleText(conn,'cm_share_group_setwrite_on','Set Write Access');
-    CreateModuleText(conn,'cm_share_group_setwrite_off','Clear Write Access');
+    CreateModuleText(conn,'fs_browser_name','Name');
+    CreateModuleText(conn,'fs_browser_size','Size');
+    CreateModuleText(conn,'fs_browser_type','Type');
+    CreateModuleText(conn,'fs_browser_date','Date');
 
     CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
   end;
@@ -270,12 +169,13 @@ var
   fs_dc           : IFRE_DB_DERIVED_COLLECTION;
   transform       : IFRE_DB_SIMPLE_TRANSFORM;
   share_dc        : IFRE_DB_DERIVED_COLLECTION;
-  groupin_dc      : IFRE_DB_DERIVED_COLLECTION;
-  groupout_dc     : IFRE_DB_DERIVED_COLLECTION;
   vfs_customers   : IFRE_DB_DERIVED_COLLECTION;
 
   app             : TFRE_DB_APPLICATION;
   conn            : IFRE_DB_CONNECTION;
+  coll            : IFRE_DB_COLLECTION;
+  filedir         : TFRE_DB_FS_ENTRY;
+  sb_dc           : IFRE_DB_DERIVED_COLLECTION;
 
 begin
   inherited;
@@ -311,38 +211,9 @@ begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FILESHARE_COLLECTION));
       Filters.AddSchemeObjectFilter('service',['TFRE_DB_VIRTUAL_FILESHARE']);
       SetUseDependencyAsRefLinkFilter(['TFRE_DB_VIRTUAL_FILESHARE<FILESERVER'],false,'uid');
-      // SetReferentialLinkMode(['TFRE_DB_VIRTUAL_FILESHARE<FILESERVER']); CHANGE TO REFLINKFILTER MODE
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSShareMenu),nil,CWSF(@WEB_VFSShareSC));
     end;
-
-    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    with transform do begin
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', FetchModuleTextShort(session,'share_group_desc'));
-      AddOneToOnescheme('read','',FetchModuleTextShort(session,'share_group_read'),dt_Icon);
-      AddOneToOnescheme('write','',FetchModuleTextShort(session,'share_group_write'),dt_Icon);
-//      AddOneToOnescheme('objname','group',FetchModuleTextShort(session,'share_group_group'));
-      //SetCustomTransformFunction(@CalculateReadWriteAccess);
-    end;
-    groupin_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
-    with groupin_dc do begin
-      SetDeriveParent(session.GetDBConnection.AdmGetGroupCollection);
-      SetUseDependencyAsRefLinkFilter(['TFRE_DB_VIRTUAL_FILESHARE<GROUPID'],false,'uid');
-      SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Multiselect],FetchModuleTextShort(session,'share_group_in'),nil,'',CWSF(@WEB_VFSShareGroupMenu),nil,nil,nil,CWSF(@WEB_VFSShareGroupInDrop));
-    end;
-
-    //GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,groupout_tr_Grid);
-    //with groupout_tr_Grid do begin
-    //  AddOneToOnescheme('objname','group',FetchModuleTextShort(session,'share_group_group'));
-    //  AddCollectorscheme('%s',GFRE_DBI.ConstructStringArray(['desc.txt']) ,'description', false, FetchModuleTextShort(session,'share_group_desc'));
-    //end;
-    //groupout_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_OUT_GRID');
-    //with groupout_dc do begin
-    //  SetDeriveParent(session.GetDBConnection.AdmGetGroupCollection);
-    //  SetDeriveTransformation(groupout_tr_Grid);
-    //  SetDisplayType(cdt_Listview,[],FetchModuleTextShort(session,'share_group_out'),nil,'',nil,nil,nil,nil,CSF(@WEB_VFSShareGroupOutDrop));
-    //end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
@@ -357,6 +228,38 @@ begin
       SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
       SetDefaultOrderField('objname',true);
       Filters.AddStdClassRightFilter('rights','servicedomain','','','TFRE_DB_VIRTUAL_FILESHARE',[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
+    end;
+
+    if not conn.CollectionExists('CSBROWSER:'+session.GetLoginUserAsCollKey) then begin
+      coll := conn.CreateCollection('CSBROWSER:'+session.GetLoginUserAsCollKey,true);
+    end else begin
+      coll := conn.GetCollection('CSBROWSER:'+session.GetLoginUserAsCollKey);
+    end;
+    if coll.ItemCount=0 then begin
+      filedir := TFRE_DB_FS_ENTRY.CreateForDB;
+      filedir.SetProperties('Virtual Root',false,0,0,0);
+      CheckDbResult(coll.Store(filedir),'Error creating root entry');
+    end;
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('name','',FetchModuleTextShort(session,'fs_browser_name'),dt_string,true,false,false,3,'icon','icon_open');
+      AddOneToOnescheme('sizeHR','',FetchModuleTextShort(session,'fs_browser_size'),dt_string);
+      AddOneToOnescheme('typeHR','',FetchModuleTextShort(session,'fs_browser_type'),dt_string);
+      AddOneToOnescheme('date','',FetchModuleTextShort(session,'fs_browser_date'),dt_date);
+      AddOneToOnescheme('icon','','',dt_string,false);
+      AddOneToOnescheme('icon_open','','',dt_string,false);
+      AddOneToOnescheme('mypath','','',dt_string,false);
+      AddOneToOnescheme('children','','',dt_string,false);
+      AddOneToOnescheme('objectclass','','',dt_string,false);
+      AddOneToOnescheme('UIP','uidpath','',dt_string,false);
+      AddConstString('_childrenfunc_','ChildrenData',false);
+      AddConstString('_funcclassname_','TFRE_DB_FS_ENTRY',false);
+    end;
+    sb_dc := session.NewDerivedCollection('SHAREBROWSER');
+    with sb_dc do begin
+      SetDeriveParent(conn.GetCollection('CSBROWSER:'+session.GetLoginUserAsCollKey),'mypath');
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_Children,cdgf_ColumnDragable,cdgf_ColumnResizeable],'',TFRE_DB_StringArray.create('name'),'icon');
     end;
   end;
 end;
@@ -393,50 +296,9 @@ begin
   Result:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_fs,sub_sec_fs,nil,nil,nil,true,1,3);
 end;
 
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_ContentShareGroups(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-var
-  dc_group_in   : IFRE_DB_DERIVED_COLLECTION;
-  grid          : TFRE_DB_VIEW_LIST_DESC;
-  //grid_group_in : TFRE_DB_VIEW_LIST_DESC;
-  //dc_group_out  : IFRE_DB_DERIVED_COLLECTION;
-  //grid_group_out: TFRE_DB_VIEW_LIST_DESC;
-  //share_group   : TFRE_DB_LAYOUT_DESC;
-begin
-  CheckClassVisibility4MyDomain(ses);
-
-  dc_group_in   := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
-  grid          := dc_group_in.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-
-  //share_id = ses.GetSessionModuleData(ClassName).Field('selectedVFSShare')
-
-  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then begin
-    grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupSetRead),'',FetchModuleTextShort(ses,'tb_share_group_setread_on'),FetchModuleTextHint(ses,'tb_share_group_setread_on'),fdgbd_single);
-    grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupSetWrite),'',FetchModuleTextShort(ses,'tb_share_group_setwrite_on'),FetchModuleTextHint(ses,'tb_share_group_setwrite_on'),fdgbd_single);
-    grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupClearRead),'',FetchModuleTextShort(ses,'tb_share_group_setread_off'),FetchModuleTextHint(ses,'tb_share_group_setread_off'),fdgbd_single);
-    grid.AddButton.Describe(CWSF(@WEB_VFSShareGroupClearWrite),'',FetchModuleTextShort(ses,'tb_share_group_setwrite_off'),FetchModuleTextHint(ses,'tb_share_group_setwrite_off'),fdgbd_single);
-  end;
-  Result:=grid;
-
-
-  //dc_group_out  := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_OUT_GRID');
-  //grid_group_out:= dc_group_out.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  //
-//  if conn.CheckAppRight('edit_vfs_share',app.ObjectName) then begin
-//    grid_group_out.SetDropGrid(grid_group_in,nil,TFRE_DB_StringArray.create('TFRE_DB_GROUP'));
-////  grid_group_in.SetDragObjClasses(TFRE_DB_StringArray.create('TFRE_DB_GROUP'));
-//    grid_group_in.SetDropGrid(grid_group_out,nil,TFRE_DB_StringArray.create('TFRE_DB_GROUP'));
-////  grid_group_out.SetDragObjClasses(TFRE_DB_StringArray.create('TFRE_DB_GROUP'));
-//  end;
-
-  //share_group   := //TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(nil,grid_group_out,nil,grid_group_in,nil,true,-1,1,-1,1);
-  //Result        := share_group;
-end;
-
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_ContentVFShares(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
   sub_sec_share : TFRE_DB_SUBSECTIONS_DESC;
-  dc_group_in   : IFRE_DB_DERIVED_COLLECTION;
-  dc_group_out  : IFRE_DB_DERIVED_COLLECTION;
   dc_share      : IFRE_DB_DERIVED_COLLECTION;
   grid_share    : TFRE_DB_VIEW_LIST_DESC;
   vfs           : IFRE_DB_Object;
@@ -465,12 +327,7 @@ begin
 
   sub_sec_share := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
   sub_sec_share.AddSection.Describe(CWSF(@WEB_VFSShareContent),FetchModuleTextShort(ses,'storage_virtual_filer_share_properties'),1,'shareproperties');
-  sub_sec_share.AddSection.Describe(CWSF(@WEB_ContentShareGroups),FetchModuleTextShort(ses,'storage_virtual_filer_share_groups'),1,'sharegroups');
-
-  dc_group_in   := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_IN_GRID');
-  //dc_group_out  := ses.FetchDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GROUP_OUT_GRID');
-  grid_share.AddFilterEvent(dc_group_in.getDescriptionStoreId,'uid');
-  //grid_share.AddFilterEvent(dc_group_out.getDescriptionStoreId,'uid');
+  sub_sec_share.AddSection.Describe(CWSF(@WEB_VFSShareBrowser),FetchModuleTextShort(ses,'storage_virtual_filer_share_browser'),2,'sharebrowser');
 
   Result:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(grid_share,sub_sec_share,nil,nil,nil,true,2,3);
 end;
@@ -858,73 +715,12 @@ begin
   end;
 end;
 
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareGroupMenu(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareBrowser(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res       : TFRE_DB_MENU_DESC;
-  func      : TFRE_DB_SERVER_FUNC_DESC;
-  share_id  : TFRE_DB_NameType;
-  dependend : TFRE_DB_StringArray;
+  dc: IFRE_DB_DERIVED_COLLECTION;
 begin
-  dependend  := GetDependencyFiltervalues(input,'uids_ref');
-  if length(dependend)=0 then begin
-     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'share_group_in_diag_cap'),FetchModuleTextShort(ses,'share_group_in_no_share_msg'),fdbmt_warning,nil);
-     exit;
-  end;
-  share_id   := dependend[0];
-
-  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_VIRTUAL_FILESHARE) then begin
-    res:=TFRE_DB_MENU_DESC.create.Describe;
-    func:=CWSF(@WEB_VFSShareGroupSetRead);
-    func.AddParam.Describe('share_id',share_id);
-    func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_share_group_setread_on'),'',func);
-    func:=CWSF(@WEB_VFSShareGroupSetWrite);
-    func.AddParam.Describe('share_id',share_id);
-    func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_share_group_setwrite_on'),'',func);
-    func:=CWSF(@WEB_VFSShareGroupClearRead);
-    func.AddParam.Describe('share_id',share_id);
-    func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_share_group_setread_off'),'',func);
-    func:=CWSF(@WEB_VFSShareGroupClearWrite);
-    func.AddParam.Describe('share_id',share_id);
-    func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_share_group_setwrite_off'),'',func);
-    Result:=res;
-  end else begin
-    Result:=GFRE_DB_NIL_DESC;
-  end;
-end;
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareGroupSetRead(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  result :=_setShareRoles(input,true,false,true,false,ses,app,conn);
-end;
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareGroupSetWrite(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  result :=_setShareRoles(input,false,true,false,true,ses,app,conn);
-end;
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareGroupClearRead(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  result :=_setShareRoles(input,true,false,false,false,ses,app,conn);
-end;
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareGroupClearWrite(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  result :=_setShareRoles(input,false,true,false,false,ses,app,conn);
-end;
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareGroupInDrop(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  result := _setShareRoles(input,true,true,true,true,ses,app,conn);
-end;
-
-function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareGroupOutDrop(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-begin
-  result := _setShareRoles(input,true,true,false,false,ses,app,conn);
+  dc := ses.FetchDerivedCollection('SHAREBROWSER');
+  Result:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 end;
 
 end.
