@@ -887,7 +887,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
     conn : TFRE_DB_CONNECTION;
 
 
-    procedure CreateProvisioning(const mac, description, lan : string; const voip_subnetznr, zone_nr:integer; const kmuca_file, voipca_file, voip_crt:string; const tel_mac_array:TFRE_DB_StringArray);
+    procedure CreateProvisioning(const mac, description, lan : string; const voip_subnetznr, zone_nr:integer; const kmuca_file, voipca_file, voip_crt:string; const tel_mac_array:TFRE_DB_StringArray; const nfsshare:string; const ecryptfs_fnek_sig,ecryptfs_sig,ecryptfs_key: string);
     var
       cfg  : IFRE_DB_Object;
       network :TFRE_DB_CPE_NETWORK_SERVICE;
@@ -908,6 +908,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       b_ip    :integer;
       i       :integer;
       r       :TFRE_DB_IPV6_NETROUTE;
+      shareobj: TFRE_DB_VIRTUAL_FILESHARE;
     begin
       cpe:=TFRE_DB_CRYPTOCPE.CreateForDB;
       cpe.ObjectName:=description;
@@ -916,6 +917,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       cpe.Field('config').AsObject:=cfg;
       network := TFRE_DB_CPE_NETWORK_SERVICE.CreateForDB;
       cfg.Field('network').AsObject:=network;
+      network.Field('ipv4_forward').asboolean:=true;
 
       dl:= TFRE_DB_DATALINK_PHYS.CreateForDB;
       dl.ObjectName:='eth0';
@@ -959,7 +961,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       tnl.Field('device').AsString:='eth3';
       ip6:= TFRE_DB_IPV6_HOSTNET.CreateForDB;
       ip6.Field('slaac').AsBoolean:=false;
-      ip6.SetIPCIDR('fdd7:f47b:4605:02c4:0002:0000:0000:'+inttostr(zone_nr));
+      ip6.SetIPCIDR('fdd7:f47b:4605:02c4:0002:0000:0000:'+inttostr(zone_nr)+'/64');
 
       tnl.Field(ip6.UID.AsHexString).AsObject:=ip6;
       network.Field(tnl.ObjectName).AsObject:=tnl;
@@ -1027,7 +1029,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       dhcpsub.Field('range_start').AsString:='10.55.0.'+inttostr(b_ip+10);
       dhcpsub.Field('range_end').AsString:='10.55.0.'+inttostr(b_ip+31);
       dhcpsub.Field('router').AsString:='10.55.0.'+inttostr(b_ip+1);
-      dhcpsub.Field('dns').AsString:='8.8.8.8';
+      dhcpsub.Field('dns').AsString:='172.23.1.1';
       dhcpsub.Field('option_tftp66').asstring:='192.168.82.3';
 
       for i:=0 to high(tel_mac_array) do
@@ -1043,7 +1045,17 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       cfg.Field('dhcp').AsObject:=dhcp;
 
       vf       := TFRE_DB_CPE_VIRTUAL_FILESERVER.CreateForDB;
+      vf.Field('nfsshare').asstring := nfsshare;
+      vf.Field('ecryptfs_fnek_sig').asstring := ecryptfs_fnek_sig;
+      vf.Field('ecryptfs_sig').asstring := ecryptfs_sig;
+      vf.Field('ecryptfs_key').asstring := ecryptfs_key;
       cfg.Field('fileserver').AsObject:=vf;
+
+
+      shareObj:=TFRE_DB_VIRTUAL_FILESHARE.CreateForDB;
+      shareObj.Field('dataset').asstring:='anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler/securefiles';
+      shareobj.ObjectName:='SecureFiles';
+      vf.Field(shareobj.UID_String).AddObject(shareobj);
 
       writeln('SWL:'+cfg.DumpToString());
       cfg.SaveToFile('/opt/local/fre/hal/'+mac+'_cpe.cfg');
@@ -1074,11 +1086,13 @@ begin
 
 //  CreateProvisioning('00:03:2d:28:07:6b','Wien Energie',);
   // Demo CC
-  CreateProvisioning('00:03:2d:1d:2d:79','Demo Citycom','192.168.3.1',2,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe2',
-                     TFRE_DB_StringArray.Create('00:15:65:32:9e:12','00:15:65:20:d2:af','00:15:65:20:d4:91','ac:f2:c5:34:ac:6c'));
+  CreateProvisioning('00:03:2d:1d:2d:79','Demo Citycom','192.168.3.1/24',2,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe2',
+                     TFRE_DB_StringArray.Create('00:15:65:32:9e:12','00:15:65:20:d2:af','00:15:65:20:d4:91','ac:f2:c5:34:ac:6c'),
+                     '[fdd7:f47b:4605:1b0d:0:0:0:1]:/anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler','b3cf9cb7d3270dcd','b3cf9cb7d3270dcd','enctest123');
   // Test FirmOS
-  CreateProvisioning('00:03:2d:1d:2d:7d','Test FirmOS','192.168.3.1',3,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe3',
-                      TFRE_DB_StringArray.Create('00:15:65:38:39:68'));
+  CreateProvisioning('00:03:2d:1d:2d:7d','Test FirmOS','192.168.3.1/24',3,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe3',
+                      TFRE_DB_StringArray.Create('00:15:65:38:39:68','10:15:65:37:5e:3f'),
+                      '[fdd7:f47b:4605:1b0d:0:0:0:1]:/syspool/domains/demo/demo/zonedata/secfiler','b3cf9cb7d3270dcd','b3cf9cb7d3270dcd','enctest123');
 
 
   conn.Free;
