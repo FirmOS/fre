@@ -20,31 +20,34 @@ type
 
   TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD = class (TFRE_DB_APPLICATION_MODULE)
   protected
-    class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    procedure       SetupAppModuleStructure    ; override;
-    class procedure InstallDBObjects           (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallUserDBObjects       (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
+    class procedure RegisterSystemScheme          (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    procedure       SetupAppModuleStructure       ; override;
+    class procedure InstallDBObjects              (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects          (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   public
-    procedure       CalculateReadWriteAccess   (const conn : IFRE_DB_CONNECTION ; const dependency_input : IFRE_DB_Object; const input_object : IFRE_DB_Object ; const transformed_object : IFRE_DB_Object);
-    procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
+    procedure       CalculateReadWriteAccess      (const conn : IFRE_DB_CONNECTION ; const dependency_input : IFRE_DB_Object; const input_object : IFRE_DB_Object ; const transformed_object : IFRE_DB_Object);
+    procedure       MySessionInitializeModule     (const session : TFRE_DB_UserSession);override;
   published
-    function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentVFShares        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_AddVFS                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_StoreVFS               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSMenu                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSContent             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSDelete              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSDeleteConfirmed     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_AddVFSShare            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_StoreVFSShare          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareMenu           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareContent        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareSC             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareDelete         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareDeleteConfirmed(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_VFSShareBrowser        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentVFShares           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddVFS                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreVFS                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSMenu                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSContent                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSSC                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSDelete                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSDeleteConfirmed        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddVFSShare               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreVFSShare             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareMenu              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareContent           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareSC                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareDelete            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareDeleteConfirmed   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareBrowser           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareBrowserGetEntries (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareBrowserEntryMenu  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_VFSShareBrowserCreateZIP  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 procedure Register_DB_Extensions;
@@ -173,9 +176,6 @@ var
 
   app             : TFRE_DB_APPLICATION;
   conn            : IFRE_DB_CONNECTION;
-  coll            : IFRE_DB_COLLECTION;
-  filedir         : TFRE_DB_FS_ENTRY;
-  sb_dc           : IFRE_DB_DERIVED_COLLECTION;
 
 begin
   inherited;
@@ -228,38 +228,6 @@ begin
       SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
       SetDefaultOrderField('objname',true);
       Filters.AddStdClassRightFilter('rights','servicedomain','','','TFRE_DB_VIRTUAL_FILESHARE',[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
-    end;
-
-    if not conn.CollectionExists('CSBROWSER:'+session.GetLoginUserAsCollKey) then begin
-      coll := conn.CreateCollection('CSBROWSER:'+session.GetLoginUserAsCollKey,true);
-    end else begin
-      coll := conn.GetCollection('CSBROWSER:'+session.GetLoginUserAsCollKey);
-    end;
-    if coll.ItemCount=0 then begin
-      filedir := TFRE_DB_FS_ENTRY.CreateForDB;
-      filedir.SetProperties('Virtual Root',false,0,0,0);
-      CheckDbResult(coll.Store(filedir),'Error creating root entry');
-    end;
-    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    with transform do begin
-      AddOneToOnescheme('name','',FetchModuleTextShort(session,'fs_browser_name'),dt_string,true,false,false,3,'icon','icon_open');
-      AddOneToOnescheme('sizeHR','',FetchModuleTextShort(session,'fs_browser_size'),dt_string);
-      AddOneToOnescheme('typeHR','',FetchModuleTextShort(session,'fs_browser_type'),dt_string);
-      AddOneToOnescheme('date','',FetchModuleTextShort(session,'fs_browser_date'),dt_date);
-      AddOneToOnescheme('icon','','',dt_string,false);
-      AddOneToOnescheme('icon_open','','',dt_string,false);
-      AddOneToOnescheme('mypath','','',dt_string,false);
-      AddOneToOnescheme('children','','',dt_string,false);
-      AddOneToOnescheme('objectclass','','',dt_string,false);
-      AddOneToOnescheme('UIP','uidpath','',dt_string,false);
-      AddConstString('_childrenfunc_','ChildrenData',false);
-      AddConstString('_funcclassname_','TFRE_DB_FS_ENTRY',false);
-    end;
-    sb_dc := session.NewDerivedCollection('SHAREBROWSER');
-    with sb_dc do begin
-      SetDeriveParent(conn.GetCollection('CSBROWSER:'+session.GetLoginUserAsCollKey),'mypath');
-      SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_Children,cdgf_ColumnDragable,cdgf_ColumnResizeable],'',TFRE_DB_StringArray.create('name'),'icon');
     end;
   end;
 end;
@@ -717,10 +685,121 @@ end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareBrowser(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  dc: IFRE_DB_DERIVED_COLLECTION;
+  store : TFRE_DB_STORE_DESC;
+  layout: TFRE_DB_VIEW_LIST_LAYOUT_DESC;
+  res   : TFRE_DB_VIEW_LIST_DESC;
 begin
-  dc := ses.FetchDerivedCollection('SHAREBROWSER');
-  Result:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+  CheckClassVisibility4MyDomain(ses);
+
+  store:=TFRE_DB_STORE_DESC.create.Describe('mypath',CWSF(@WEB_VFSShareBrowserGetEntries));
+  layout:=TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
+  layout.AddDataElement.Describe('name',FetchModuleTextShort(ses,'fs_browser_name'),dt_string,true,false,3,true,false,false,'icon','icon_open');
+  layout.AddDataElement.Describe('sizeHR',FetchModuleTextShort(ses,'fs_browser_size'));
+  layout.AddDataElement.Describe('typeHR',FetchModuleTextShort(ses,'fs_browser_type'));
+  layout.AddDataElement.Describe('date',FetchModuleTextShort(ses,'fs_browser_date'),dt_date);
+
+  res:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store,layout,CWSF(@WEB_VFSShareBrowserEntryMenu),'',[cdgf_ShowSearchbox,cdgf_Children]);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareBrowserGetEntries(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  inp: IFRE_DB_Object;
+  lvl: TFRE_DB_String;
+  opd: IFRE_DB_Object;
+
+  procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
+  var
+    res     : TFRE_DB_STORE_DATA_DESC;
+    i       : NativeInt;
+    cnt     : NativeInt;
+    newnew  : IFRE_DB_Object;
+
+     procedure addEntry(const fld : IFRE_DB_Field);
+     var mypath : string;
+         entry  : IFRE_DB_Object;
+     begin
+       if fld.FieldType=fdbft_Object then
+         begin
+           inc(cnt);
+           entry := fld.CheckOutObject;
+           entry.Field('uidpath').AsStringArr := opaquedata.Field('UIP').AsStringArr;
+           mypath                             := opaquedata.Field('LVL').AsString+ entry.Field('name').AsString +'/';
+           entry.Field('mypath').AsString     := mypath;
+           res.addEntry(entry);
+         end;
+     end;
+
+  begin
+    res:=TFRE_DB_STORE_DATA_DESC.create.Describe(0);
+    cnt := 0;
+    new_input.ForAllFields(@addEntry);
+    res.Describe(cnt);
+    ses.SendServerClientAnswer(res,ocid);
+    opaquedata.Finalize;
+  end;
+
+begin
+  inp := GFRE_DBI.NewObject;
+  lvl := input.Field('parentid').AsString;
+  if lvl='' then lvl:='/';
+  inp.Field('level').AsString:= lvl;
+
+  opd := GFRE_DBI.NewObject;
+  opd.Field('UIP').AsGUIDArr := self.GetUIDPathUA;
+  opd.Field('LVL').AsString  := lvl;
+
+  if ses.InvokeRemoteRequest('SAMPLEFEEDER','BROWSEPATH',inp,@GotAnswer,opd)=edb_OK then begin
+    Result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+    exit;
+  end else begin
+    Result := TFRE_DB_STORE_DATA_DESC.create.Describe(0);
+    inp.Finalize;
+    opd.Finalize;
+  end;
+end;
+
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareBrowserEntryMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  sel: TFRE_DB_String;
+  opd: IFRE_DB_Object;
+  inp: IFRE_DB_Object;
+
+  procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
+  var
+    res: TFRE_DB_MENU_DESC;
+    fd : TFRE_DB_FS_ENTRY;
+  begin
+    res:=TFRE_DB_MENU_DESC.create.Describe;
+    if new_input.FieldExists('info') then begin
+      fd:=new_input.Field('info').AsObject.Implementor_HC as TFRE_DB_FS_ENTRY;
+      if fd.GetIsFile then begin
+        res.AddEntry.DescribeDownload('Download','','/download'+opaquedata.Field('fileid').AsString);
+      end else begin
+        res.AddEntry.Describe('Create ZIP','',TFRE_DB_SERVER_FUNC_DESC.create.Describe('TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD',opaquedata.Field('uidPath').AsStringArr,'VFSShareBrowserCreateZIP'));
+      end;
+    end else begin
+      ses.SendServerClientRequest(TFRE_DB_MESSAGE_DESC.create.Describe('Error','File/Directory not found!',fdbmt_error));
+    end;
+    ses.SendServerClientAnswer(res,ocid);
+  end;
+
+begin
+  opd := GFRE_DBI.NewObject;
+  inp := GFRE_DBI.NewObject;
+  inp.Field('fileid').AsString:=copy(input.Field('selected').AsString,1,Length(input.Field('selected').AsString)-1);
+  opd.Field('fileid').AsString:=inp.Field('fileid').AsString;
+  opd.Field('uidPath').AsStringArr:=GetUIDPath;
+  if ses.InvokeRemoteRequest('SAMPLEFEEDER','GETFILEDIRINFO',inp,@GotAnswer,opd)=edb_OK then begin
+    result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+  end else begin
+    result := GFRE_DB_NIL_DESC;
+  end;
+end;
+
+function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareBrowserCreateZIP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 end.
