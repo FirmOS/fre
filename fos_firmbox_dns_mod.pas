@@ -690,6 +690,7 @@ begin
     currentVersionId := '0.1';
     if not conn.CollectionExists(CFOS_DB_DNS_RECORDS_COLLECTION) then begin
       coll := conn.CreateCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
+      CheckDbResult(coll.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false));
     end;
   end;
   if currentVersionId='0.1' then begin
@@ -700,6 +701,7 @@ begin
   end;
 
   coll:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
+
   idx_def:= coll.GetIndexDefinition('def');
   if lowercase(idx_def.FieldName)='name' then begin
     coll.DropIndex('def');
