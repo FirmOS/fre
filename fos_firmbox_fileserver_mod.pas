@@ -706,10 +706,11 @@ end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareBrowserGetEntries(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  inp     : IFRE_DB_Object;
-  lvl     : TFRE_DB_String;
-  opd     : IFRE_DB_Object;
-  shareObj: IFRE_DB_Object;
+  inp      : IFRE_DB_Object;
+  lvl      : TFRE_DB_String;
+  opd      : IFRE_DB_Object;
+  shareObj : IFRE_DB_Object;
+  parentObj: IFRE_DB_Object;
 
   procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
   var
@@ -747,6 +748,16 @@ begin
 
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedVFSShare') and (ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').ValueCount=1)  then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').AsString),shareObj));
+    CheckDbResult(conn.Fetch(shareObj.Field('fileserver').AsObjectLink,parentObj));
+    while (parentObj.FieldExists('serviceParent') and not parentObj.IsA('TFRE_DB_MACHINE')) do begin
+      CheckDbResult(conn.Fetch(parentObj.Field('serviceParent').AsGUID,parentObj));
+    end;
+
+    if not parentObj.IsA('TFRE_DB_MACHINE') then
+      raise EFRE_DB_Exception.Create('No Machine found for share');
+
+    //Machine: parentObj.Field('objname').AsString
+    //Path: shareObj.Field('dataset').AsString
 
     inp := GFRE_DBI.NewObject;
     lvl := input.Field('parentid').AsString;
