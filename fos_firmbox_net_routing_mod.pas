@@ -162,7 +162,7 @@ begin
       slider:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,true,CWSF(@WEB_SliderChanged),500);
       slider.contentId:='slider_form';
       group:=slider.AddGroup.Describe(FetchModuleTextShort(ses,'bandwidth_group'));
-      group.AddNumber.DescribeSlider('','slider',20,50,true,'20',0,31);
+      group.AddNumber.DescribeSlider('','slider',20,100,true,'20',0,9);
 
       res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetAutoSizedLayout(nil,form,nil,slider);
     end else begin
