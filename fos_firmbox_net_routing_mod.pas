@@ -162,7 +162,7 @@ begin
       slider:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,true,CWSF(@WEB_SliderChanged),500);
       slider.contentId:='slider_form';
       group:=slider.AddGroup.Describe(FetchModuleTextShort(ses,'bandwidth_group'));
-      group.AddNumber.DescribeSlider('','slider',20,100,true,'20',0,9);
+      group.AddNumber.DescribeSlider('','slider',10,100,true,'20',0,10);
 
       res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetAutoSizedLayout(nil,form,nil,slider);
     end else begin
@@ -178,7 +178,7 @@ end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_SliderChanged(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe('SLIDER CHANGED',input.Field('slider').AsString,fdbmt_info);
+  Result:=GFRE_DB_NIL_DESC;  // CHANGE INTERNET BANDWIDTH
 end;
 
 end.
