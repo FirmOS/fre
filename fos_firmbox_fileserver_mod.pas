@@ -696,8 +696,8 @@ begin
 
   layout:=TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
   layout.AddDataElement.Describe('name',FetchModuleTextShort(ses,'fs_browser_name'),dt_string,true,false,3,true,false,false,'icon','icon_open');
-  layout.AddDataElement.Describe('sizeHR',FetchModuleTextShort(ses,'fs_browser_size'));
-  layout.AddDataElement.Describe('typeHR',FetchModuleTextShort(ses,'fs_browser_type'));
+  layout.AddDataElement.Describe('sizehr',FetchModuleTextShort(ses,'fs_browser_size'));
+  layout.AddDataElement.Describe('typehr',FetchModuleTextShort(ses,'fs_browser_type'));
   layout.AddDataElement.Describe('date',FetchModuleTextShort(ses,'fs_browser_date'),dt_date);
 
   res:=TFRE_DB_VIEW_LIST_DESC.create.Describe(store,layout,CWSF(@WEB_VFSShareBrowserEntryMenu),'',[cdgf_ShowSearchbox,cdgf_Children]);
