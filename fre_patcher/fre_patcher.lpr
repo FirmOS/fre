@@ -1167,12 +1167,13 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       writeln('Created Datacenter:',name);
     end;
 
-    function       CreateHost(const name:string; const dc_id:TFRE_DB_GUID):TFRE_DB_GUID;
+    function       CreateHost(const name:string; const dc_id:TFRE_DB_GUID; const mac: TFRE_DB_String):TFRE_DB_GUID;
     var
       host             : TFRE_DB_MACHINE;
     begin
       host             := TFRE_DB_MACHINE.CreateForDB;
       host.ObjectName  := name;
+      host.Field('provisioningmac').AsString:=mac;
       host.Field('datacenterid').AddObjectLink(dc_id);
       host.Field('mosparentIds').AddObjectLink(dc_id);
       host.Field('serviceParent').AsObjectLink:=dc_id;
@@ -1460,13 +1461,7 @@ begin
   else
     dccoll:=conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION);
 
-  if not conn.CollectionExists(CFRE_DB_HOST_COLLECTION) then
-    begin
-     hcoll:=conn.CreateCollection(CFRE_DB_HOST_COLLECTION);
-     hcoll.DefineIndexOnField('objname',fdbft_String,true);
-    end
-  else
-    hcoll:=conn.GetCollection(CFRE_DB_HOST_COLLECTION);
+  hcoll:=conn.GetCollection(cFRE_DB_MACHINE_COLLECTION);
 
   if not conn.CollectionExists(CFRE_DB_TEMPLATE_COLLECTION) then
     begin
@@ -1539,8 +1534,20 @@ begin
   dscoll.ClearCollection;
   pcoll.ClearCollection;
   tcoll.ClearCollection;
+  if conn.CollectionExists('hosts') then
+    begin
+      hcoll:=conn.GetCollection('hosts');
+      hcoll.ClearCollection;
+    end;
+  hcoll:=conn.GetCollection(cFRE_DB_MACHINE_COLLECTION);
   hcoll.ClearCollection;
   dccoll.ClearCollection;
+
+  if hcoll.IndexExists('pmac') then
+    begin
+      CheckDbResult(hcoll.DropIndex('pmac'));
+      CheckDbResult(hcoll.DefineIndexOnField('provisioningmac',fdbft_String,true,true,'pmac',false));
+    end;
 
   tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
   tmpl.ObjectName:='GLOBAL';
@@ -1578,7 +1585,7 @@ begin
   g_domain_id:=conn.GetSysDomainUID;
 
   dc_id    := CreateDC('RZ Nord');
-  host_id  := CreateHost('ANord01',dc_id);
+  host_id  := CreateHost('ANord01',dc_id,'00:25:90:82:bf:ae');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'anord01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.102/25',ipmp_nfs);
@@ -1703,14 +1710,14 @@ begin
   AddIPV4('192.168.0.18/24',link_id);
 
   g_domain_id:=conn.GetSysDomainUID;
-  host_id  := CreateHost('SNord01',dc_id);
+  host_id  := CreateHost('SNord01',dc_id,'00:25:90:82:c0:0c');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:c0:0c','mgmt');
   AddIPV4('',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:c0:0d','mgmt');
   AddIPV4('',link_id);
 
-  host_id  := CreateHost('FSNord01',dc_id);
+  host_id  := CreateHost('FSNord01',dc_id,'00:25:90:8a:c7:c0');
   pool_id  := CreatePool('nordp',host_id);
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'fsnord01_ipmp_nfs','mgmt');
@@ -1748,7 +1755,7 @@ begin
 
 
   dc_id := CreateDC('RZ Sued');
-  host_id  := CreateHost('ASued01',dc_id);
+  host_id  := CreateHost('ASued01',dc_id,'00:25:90:8a:cb:e2');
   ds_id    := CreateDataset('asued01disk/asued01ds',pool_id);
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'asued01_ipmp_nfs','mgmt');
@@ -1774,7 +1781,7 @@ begin
   AddIPV4('10.54.240.119/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:8a:cb:e2','mgmt');
   AddIPV4('',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'0:25:90:8a:cb:e2','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:8a:cb:e3','mgmt');
   AddIPV4('',link_id);
 
   g_domain_id := CheckFindDomainID('CITYCOM');
@@ -1789,7 +1796,7 @@ begin
   ds_id    := CreateDataset('asued01disk/nas02ds',pool_id);
 
   g_domain_id:=conn.GetSysDomainUID;
-  host_id  := CreateHost('SSued01',dc_id);
+  host_id  := CreateHost('SSued01',dc_id,'00:25:90:82:c0:04');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:c0:04','mgmt');
   AddIPV4('',link_id);
@@ -1797,7 +1804,7 @@ begin
   AddIPV4('',link_id);
 
 
-  host_id  := CreateHost('FSSued01',dc_id);
+  host_id  := CreateHost('FSSued01',dc_id,'00:25:90:8a:c7:d8');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   pool_id  := CreatePool('suedp',host_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'fssued01_ipmp_nfs','mgmt');
@@ -1833,7 +1840,7 @@ begin
 
 
   dc_id := CreateDC('RZ DRS');
-  host_id  := CreateHost('DRS',dc_id);
+  host_id  := CreateHost('DRS',dc_id,'00:25:90:8a:c3:2e');
   pool_id  := CreatePool('drsdisk',host_id);
   pool_id  := CreatePool('rpool',host_id);
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
@@ -1858,7 +1865,7 @@ begin
   AddRoutingIPV4('default','10.54.3.252',zone_id,'Default Route');
 
   dc_id := CreateDC('RZ Test');
-  host_id  := CreateHost('Fosdev',dc_id);
+  host_id  := CreateHost('Fosdev',dc_id,'00:0c:29:71:65:fd');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   pool_id  := CreatePool('syspool',host_id);
   ds_id    := CreateDataset('syspool',pool_id);
@@ -1899,7 +1906,6 @@ begin
 
   conn.Free;
 end;
-
 
 begin
   cFRE_PS_LAYER_USE_EMBEDDED := true; { always patch local ? }

@@ -96,9 +96,6 @@ if TargetOS = 'linux' then
     <CodeGeneration>
       <TargetCPU Value="x86_64"/>
     </CodeGeneration>
-    <Other>
-      <CompilerPath Value="$(CompPath)"/>
-    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

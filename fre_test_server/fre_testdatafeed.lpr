@@ -44,7 +44,7 @@ program fre_testdatafeed;
 // ./fre_testdatafeed -U root -H 10.1.0.116 -u feeder@system -p a1234
 
 // -u mfeeder@system -p mighty
-// lazarus+debugger: => ./fre_testdatafeed -U root -H 10.220.251.10 -D
+// lazarus+debugger: => ./fre_testdatafeed -U root -H 10.220.251.10
 
 uses
   cmem,
