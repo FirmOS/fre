@@ -174,12 +174,12 @@ begin
   //vmc             := Get_VM_Host_Control     (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
   //vmc.VM_EnableVMMonitor                     (true);
 
-  statscontroller := Get_Stats_Control       (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
-  statscontroller.StartCPUParser(true);
-  statscontroller.StartRAMParser(true);
-  statscontroller.StartNetworkParser(true);
-  statscontroller.StartCacheParser(true);
-  statscontroller.StartZFSParser(true);
+  //statscontroller := Get_Stats_Control       (cFRE_REMOTE_USER,cFRE_REMOTE_HOST);
+  //statscontroller.StartCPUParser(true);
+  //statscontroller.StartRAMParser(true);
+  //statscontroller.StartNetworkParser(true);
+  //statscontroller.StartCacheParser(true);
+  //statscontroller.StartZFSParser(true);
 
 
   disk_hal   := TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT.Create;
