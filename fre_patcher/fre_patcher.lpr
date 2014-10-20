@@ -1461,17 +1461,19 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       end;
   end;
 
-  function CreateVoIP(const number:TFRE_DB_String; const std,eline:Int32):TFRE_DB_GUID;
+  function CreateVoIP(const int_pre,nat_pre,number:Int64; const std,eline:Int32):TFRE_DB_GUID;
    var voip : TFOS_DB_CITYCOM_VOIP_SERVICE;
        idx  : string;
    begin
      voip:=TFOS_DB_CITYCOM_VOIP_SERVICE.CreateForDB;
      Result:=voip.UID;
      voip.SetDomainID(g_domain_id);
-     voip.ObjectName:=number;
-     idx:='VOIP_'+number;
+     voip.Field('international_prefix').AsString:=IntToStr(int_pre);
+     voip.Field('national_prefix').AsString:=IntToStr(nat_pre);
+     voip.Field('number').AsString:=IntToStr(number);
+     voip.ObjectName:='+'+ voip.Field('international_prefix').AsString + voip.Field('national_prefix').AsString + voip.Field('number').AsString;
+     idx:='VOIP_'+voip.Field('international_prefix').AsString + voip.Field('national_prefix').AsString + voip.Field('number').AsString;
      voip.Field('uniquephysicalid').AsString:=idx;
-     voip.Field('number').AsString:=number;
      voip.Field('standard_extension').AsInt32:=std;
      voip.Field('standard_extension_night').AsInt32:=std;
      voip.Field('exchange_line').AsInt32:=eline;
@@ -1994,7 +1996,7 @@ begin
   vf_id:=CreateCFiler(zone_id,'Test Crypto Fileserver');
   CreateShare(vf_id,pool_id,'syspool/domains/mydomain/newzone0/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
 
-  voip_id:=CreateVoIP('+43316269574',10,0);
+  voip_id:=CreateVoIP(43,316,269574,10,0);
 
   tel_id_22:=CreateVoIPHW(12,'Yealink T22','TEL',10);
   tel_id_46:=CreateVoIPHW(23,'Yealink T46G','TEL',10);
