@@ -1183,13 +1183,15 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       writeln('Created Host:',name);
     end;
 
-    function       CreatePool(const name:string; const host_id:TFRE_DB_GUID):TFRE_DB_GUID;
+    function       CreatePool(const name:string; const host_id:TFRE_DB_GUID;const zfs_guid:string=''):TFRE_DB_GUID;
     var
       pool             : TFRE_DB_ZFS_POOL;
     begin
       pool             := TFRE_DB_ZFS_POOL.CreateForDB;
       pool.ObjectName  := name;
       pool.MachineID   := host_id;
+      if zfs_guid<>'' then
+        pool.setZFSGuid(zfs_guid);
       pool.Field('mosparentIds').AddObjectLink(host_id);
       pool.Field('serviceParent').AsObjectLink:=host_id;
       pool.SetDomainID(g_domain_id);
@@ -1438,6 +1440,18 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      CheckDbResult(svc_coll.Store(cf));
    end;
 
+  procedure ClearCollectionifExists(const collname:string;const removelinks:boolean=false);
+  begin
+    if conn.CollectionExists(collname) then
+      begin
+        if removelinks then
+          begin
+            writeln('removeobj link '+collname);
+            RemoveObjLinks(conn.GetCollection(collname));
+          end;
+        conn.GetCollection(collname).ClearCollection;
+      end;
+  end;
 
 begin
   GenerateSearchDomains(false);
@@ -1522,14 +1536,21 @@ begin
     sharecoll.DefineIndexOnField('objname',fdbft_String,true,true,'def',false);
   end;
 
+  ClearCollectionifExists(CFRE_DB_SG_LOGS_COLLECTION);
+  ClearCollectionifExists(CFRE_DB_DEVICE_IOSTAT_COLLECTION);
+  ClearCollectionifExists(CFRE_DB_DEVICE_COLLECTION);
+  ClearCollectionifExists(CFRE_DB_DRIVESLOT_COLLECTION);
+  ClearCollectionifExists(CFRE_DB_SAS_EXPANDER_COLLECTION);
+  ClearCollectionifExists(CFRE_DB_ENCLOSURE_COLLECTION);
+  ClearCollectionifExists(CFRE_DB_ZFS_IOSTAT_COLLECTION);
+  ClearCollectionifExists(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
+  ClearCollectionifExists(CFRE_DB_ZFS_VDEV_COLLECTION,true);
+
   sharecoll.ClearCollection;
   rcoll.ClearCollection;
   ipcoll.ClearCollection;
 
-  RemoveObjLinks(svc_coll);
-  writeln('clear svcs');
-  svc_coll.ClearCollection;
-  writeln('cleared svc');
+  ClearCollectionifExists(CFOS_DB_SERVICES_COLLECTION,true);
   zcoll.ClearCollection;
   dscoll.ClearCollection;
   pcoll.ClearCollection;
@@ -1614,7 +1635,7 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:bf:af','generic');
   AddIPV4('',link_id);
 
-  pool_id  := CreatePool('anord01disk',host_id);
+  pool_id  := CreatePool('anord01disk',host_id,'11052910530200204125');
   ds_id    := CreateDataset('anord01disk/anord01ds',pool_id);
 
 
