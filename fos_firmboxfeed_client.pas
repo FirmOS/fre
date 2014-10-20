@@ -44,7 +44,7 @@ interface
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
-  fre_diff_transport;
+  fre_diff_transport,fre_process;
 
 
 type
@@ -92,6 +92,7 @@ type
     procedure  REM_INSERTVOIPENTRY     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
     procedure  REM_STARTVM             (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
     procedure  REM_STOPVM              (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
+    procedure  REM_REQUESTDISKDATA     (const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
   end;
 
 
@@ -267,7 +268,7 @@ begin
     begin
       //disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME);
 //      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),vmo);
-       SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),@CCB_RequestDiskEncPoolData);
+       //SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),@CCB_RequestDiskEncPoolData);
 //    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
     end;
 end;
@@ -325,7 +326,9 @@ var reply_data : IFRE_DB_Object;
 
 begin
   level      := input.Field('level').AsString;
-//  level :=  StringReplace(level,'/anord01disk/anord01ds/domains/demo/demo/zonedata/vfiler/development','/',[]);
+  { $IFDEV DARWIN }
+  level :=  StringReplace(level,'/anord01disk/anord01ds/domains/demo/demo/zonedata/vfiler/development','/',[]);
+  { $ENDIF}
   writeln('::: BROWSE - LEVEL ',level);
   reply_data := ListDirLevel(level);
   input.Finalize;
@@ -333,38 +336,82 @@ begin
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_UPDATEBANDWIDTH(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var replyData : IFRE_DB_Object;
 begin
-
+  writeln('CALLED REM_UPDATEBANDWIDTH');
+  writeln(input.DumpToString());
+  input.Finalize;
+  replyData := GFRE_DBI.NewObject;
+  AnswerSyncCommand(command_id,replyData);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_UPDATEDSQUOTA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
-begin
+var replyData  : IFRE_DB_Object;
+    cmd        : string;
+    errcode    : Integer;
 
+begin
+  writeln('CALLED REM_UPDATEDSQUOTA');
+  //writeln(input.DumpToString());
+
+  cmd := 'zfs set quota='+input.FieldPath('SHARE.QUOTA_MB').AsString+'m '+input.FieldPath('SHARE.DATASET').AsString;
+  //writeln(cmd);
+  errcode := FRE_ProcessCMD(cmd);
+  writeln('resultcode ',errcode);
+  input.Finalize;
+  replyData := GFRE_DBI.NewObject;
+  replyData.Field('resultcode').AsInt32 := errcode;
+  AnswerSyncCommand(command_id,replyData);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_UPDATEVOIPENTRY(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var replyData : IFRE_DB_Object;
 begin
-
+  writeln('CALLED REM_UPDATEVOIPENTRY');
+  writeln(input.DumpToString());
+  input.Finalize;
+  replyData := GFRE_DBI.NewObject;
+  AnswerSyncCommand(command_id,replyData);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_DELETEVOIPENTRY(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var replyData : IFRE_DB_Object;
 begin
-
+  writeln('CALLED REM_DELETEVOIPENTRY');
+  writeln(input.DumpToString());
+  input.Finalize;
+  replyData := GFRE_DBI.NewObject;
+  AnswerSyncCommand(command_id,replyData);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_INSERTVOIPENTRY(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var replyData : IFRE_DB_Object;
 begin
-
+  writeln('CALLED REM_INSERTVOIPENTRY');
+  writeln(input.DumpToString());
+  input.Finalize;
+  replyData := GFRE_DBI.NewObject;
+  AnswerSyncCommand(command_id,replyData);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_STARTVM(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var replyData : IFRE_DB_Object;
 begin
-
+  writeln('CALLED REM_STARTVM');
+  writeln(input.DumpToString());
+  input.Finalize;
+  replyData := GFRE_DBI.NewObject;
+  AnswerSyncCommand(command_id,replyData);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_STOPVM(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var replyData : IFRE_DB_Object;
 begin
-
+  writeln('CALLED REM_STOPVM');
+  writeln(input.DumpToString());
+  input.Finalize;
+  replyData := GFRE_DBI.NewObject;
+  AnswerSyncCommand(command_id,replyData);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_REQUESTDISKDATA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);

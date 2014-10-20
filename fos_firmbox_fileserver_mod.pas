@@ -527,6 +527,53 @@ var
   shareColl    : IFRE_DB_COLLECTION;
   service      : IFRE_DB_Object;
   idx          : String;
+
+  procedure SetupQuotaAndUpdate(const shareObj : TFRE_DB_VIRTUAL_FILESHARE);
+  var machineid : TFRE_DB_GUID;
+     inp,opd    : IFRE_DB_Object;
+
+     procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
+     var
+       res     : TFRE_DB_MESSAGE_DESC;
+       i       : NativeInt;
+       cnt     : NativeInt;
+       newnew  : IFRE_DB_Object;
+
+     begin
+       case status of
+         cdcs_OK:
+           begin
+             res:=TFRE_DB_MESSAGE_DESC.create.Describe('QUOTA','SETUP OK',fdbmt_info);
+           end;
+         cdcs_TIMEOUT:
+           begin
+             Res := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','COMMUNICATION TIMEOUT SET QUOTA',fdbmt_error); { FIXXME }
+           end;
+         cdcs_ERROR:
+           begin
+             Res := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','COULD NOT SET QUOTA ['+new_input.Field('ERROR').AsString+']',fdbmt_error); { FIXXME }
+           end;
+       end;
+       ses.SendServerClientAnswer(res,ocid);
+       cnt := 0;
+     end;
+
+  begin
+    machineid := TFRE_DB_SERVICE.GetMachineUIDForService(conn,shareObj.Field('fileserver').AsObjectLink);
+    inp := GFRE_DBI.NewObject;
+    inp.Field('SHARE').AsObject := shareObj.CloneToNewObject();
+    if ses.InvokeRemoteRequestMachine(machineid,'TFRE_BOX_FEED_CLIENT','UPDATEDSQUOTA',inp,@GotAnswer,shareObj)=edb_OK then { send the share object as opaque data }
+      begin
+        Result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+        exit;
+      end
+    else
+      begin
+        Result := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','COULD NOT SET QUOTA',fdbmt_error); { FIXXME }
+        inp.Finalize;
+      end
+  end;
+
 begin
   if not GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESHARE,schemeObject) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_VIRTUAL_FILESHARE]);
@@ -559,8 +606,11 @@ begin
   if isNew then begin
     shareObj.Field('fileserver').AsObjectLink:=service.UID;
     CheckDbResult(shareColl.Store(shareObj));
+    { TODO:  Create the Dataset/Share ... / Enter Quota Code here}
   end else begin
-    CheckDbResult(conn.Update(shareObj));
+    CheckDbResult(conn.Update(shareObj.CloneToNewObject()));
+    SetupQuotaAndUpdate(shareObj); { if the update went ok, then setup quota }
+    exit;
   end;
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
@@ -610,7 +660,7 @@ begin
     if editable then begin
       sf:=CWSF(@WEB_StoreVFSShare);
       sf.AddParam.Describe('shareId',share.UID_String);
-      panel.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),TFRE_DB_SERVER_FUNC_DESC.create.Describe(share,'saveOperation'),fdbbt_submit);
+      panel.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
     end;
     panel.contentId:='VIRTUAL_SHARE_CONTENT';
     Result:=panel;
@@ -712,6 +762,8 @@ var
   shareObj  : IFRE_DB_Object;
   parentObj : IFRE_DB_Object;
   machineid : TFRE_DB_GUID;
+  shareuid  : TFRE_DB_GUID;
+  ds_name   : TFRE_DB_String;
 
   procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
   var
@@ -749,26 +801,19 @@ begin
 
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedVFSShare') and (ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').ValueCount=1)  then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedVFSShare').AsString),shareObj));
-    CheckDbResult(conn.Fetch(shareObj.Field('fileserver').AsObjectLink,parentObj));
-
-    while (parentObj.FieldExists('serviceParent') and not parentObj.IsA('TFRE_DB_MACHINE')) do begin  { FIXXME: Finalize Fetched objects!}
-      CheckDbResult(conn.Fetch(parentObj.Field('serviceParent').AsGUID,parentObj));
+    try
+      shareuid := shareObj.Field('fileserver').AsObjectLink;
+      ds_name  := shareObj.Field('dataset').AsString;
+    finally
+      shareObj.Finalize;
     end;
 
-    if not parentObj.IsA('TFRE_DB_MACHINE') then
-      raise EFRE_DB_Exception.Create('No Machine found for share');
-
-    machineid := parentObj.UID;
-
-    //Machine: parentObj.Field('objname').AsString
-    //Path: shareObj.Field('dataset').AsString
-    //writeln('>>> MACHINE : ',parentObj.Field('objname').AsString,' ',parentObj.UID.AsHexString);
-    //writeln(parentObj.DumpToString);
-    //writeln('>>> PATH    : ',shareObj.Field('dataset').AsString);
+    machineid := TFRE_DB_SERVICE.GetMachineUIDForService(conn,shareuid);
 
     inp := GFRE_DBI.NewObject;
     lvl := input.Field('parentid').AsString;
-    if lvl='' then lvl:='/'+shareObj.Field('dataset').AsString;
+    if lvl='' then
+      lvl:='/'+ds_name+'/';
     inp.Field('level').AsString:= lvl;
 
     opd := GFRE_DBI.NewObject;
@@ -787,6 +832,7 @@ begin
     Result := TFRE_DB_STORE_DATA_DESC.create.Describe(0);
   end;
 end;
+
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareBrowserEntryMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
