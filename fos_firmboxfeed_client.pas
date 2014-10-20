@@ -38,13 +38,15 @@ unit fos_firmboxfeed_client;
 }
 
 {$mode objfpc}{$H+}
+{$codepage UTF8}
+
 
 interface
 
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
-  fre_diff_transport,fre_process;
+  fre_diff_transport,fre_process,fre_mysql_ll,sqldb;
 
 
 type
@@ -68,10 +70,12 @@ type
     vmc                   : IFOS_VM_HOST_CONTROL; // Todo Move MVStats to Statscontroller
     statscontroller       : IFOS_STATS_CONTROL;
     disk_hal              : TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT;
+    mysqlconnection       : TSQLConnection;
+    mysqltransaction      : TSQLTransaction;
 
   private
     procedure  CCB_RequestDiskEncPoolData  (const DATA : IFRE_DB_Object ; const status:TFRE_DB_COMMAND_STATUS ; const error_txt:string);
-
+    function   _VoipEntryCmd           (const cmd     : string; const input : IFRE_DB_Object) : IFRE_DB_Object;
 
   public
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
@@ -112,6 +116,166 @@ begin
     cdcs_ERROR: begin
        GFRE_BT.CriticalAbort('Request DiskEncPoolData Error - Server Returned Error: '+error_txt);
     end;
+  end;
+end;
+
+function TFRE_BOX_FEED_CLIENT._VoipEntryCmd(const cmd: string; const input: IFRE_DB_Object): IFRE_DB_Object;
+var
+    q         : TSQLQuery;
+    extension : IFRE_DB_Object;
+    serviceObj: IFRE_DB_Object;
+    telephone : IFRE_DB_Object;
+
+    function getKNDR(const extension,serviceObj: IFRE_DB_Object):TFRE_DB_String;
+    begin
+      Result:='0'+serviceObj.Field('national_prefix').AsString + serviceObj.Field('number').AsString;
+    end;
+
+    function getUSER(const extension,serviceObj: IFRE_DB_Object):TFRE_DB_String;
+    begin
+      Result:=getKNDR(extension,serviceObj) + extension.Field('number').AsString;
+    end;
+
+    function _refreshdb(const q:TSQLQuery;const kndr:string):integer;
+    var p           : TFRE_Process;
+        outstring   : string;
+        errorstring : string;
+    begin
+      q.sql.text:='INSERT INTO `transfer` (`asterisk`, `kunde`, `cmd`, `param`, stamp) VALUES '+
+                  '(19, :kdnr, ''UPDATE-DIALPLAN'', :kdnr, now()),'+
+                  '(19, :kdnr, ''UPDATE-EXTENSIONS'', :kdnr, now()),'+
+                  '(19, :kdnr, ''UPDATE-PHONES'', :kdnr, now()),'+
+                  '(19, :kdnr, ''EXTENSIONS-RELOAD'',:kdnr, now()),'+
+                  '(19, :kdnr, ''SIP-RELOAD'', :kdnr, now()),'+
+                  '(1001,:kdnr, ''UPDATE-DHCP'', :kdnr, now()),'+
+                  '(1001,:kdnr, ''DHCP-RELOAD'', :kdnr, now());';
+      q.ParamByName('kdnr').AsString  := kndr;
+      q.ExecSQL;
+      p := TFRE_Process.Create(nil);
+      try
+        result :=p.ExecutePiped('nc',TFRE_DB_StringArray.Create('192.168.82.3','29000'),'UPDATE',outstring,errorstring);
+      finally
+        p.free;
+      end;
+      p := TFRE_Process.Create(nil);
+      try
+        result :=p.ExecutePiped('nc',TFRE_DB_StringArray.Create('192.168.82.2','29000'),'UPDATE',outstring,errorstring);
+      finally
+        p.free;
+      end;
+    end;
+
+begin
+  result := GFRE_DBI.NewObject;
+  extension := input.Field('extension').AsObject;
+  serviceObj:= input.Field('serviceObj').AsObject;
+  if (cmd='UPDATEVOIPENTRY') or (cmd='INSERTVOIPENTRY') then
+    telephone := input.Field('telephone').asObject;
+
+    //procedure _DumpData(const extNumber:TFRE_DB_String; const extension,serviceObj,telephone: IFRE_DB_Object);
+    //
+    //
+    //begin
+    //  writeln('KNDR: ' + getKNDR(extension,serviceObj));
+    //  writeln('USER: ' + getUSER(extension,serviceObj));
+    //  if extNumber<>'' then begin
+    //    writeln('USER OLD:' + getKNDR(extension,serviceObj) + extNumber);
+    //  end else begin
+    //    writeln('USER OLD: new Extension');
+    //  end;
+    //  writeln('PWD: ' + extension.Field('password').AsString);
+    //  writeln('TEL: ' + telephone.Field('sqlId').AsString);
+    //  if extension.Field('provisioning').AsBoolean then begin
+    //    writeln('AUTOPROV_PROFIL: 1');
+    //  end else begin
+    //    writeln('AUTOPROV_PROFIL: 0');
+    //  end;
+    //  writeln('NSTREIN: ' + extension.Field('number').AsString);
+    //  writeln('NSTRAUS: ' + extension.Field('number').AsString);
+    //  writeln('CLIDNAME: ' + extension.Field('objname').AsString);
+    //  writeln('DEFAULTIP: ' + extension.Field('ip').AsString);
+    //  writeln('MAC: ' + extension.Field('mac').AsString);
+    //  if extension.Field('recording').AsBoolean then begin
+    //    writeln('DARFAUZEICHNEN: J');
+    //  end else begin
+    //    writeln('DARFAUZEICHNEN: N');
+    //  end;
+    //end;
+
+  Q:=TSQLQuery.Create(mysqlconnection);
+  try
+    try
+      Q.Database:=mysqlconnection;
+      Q.Transaction:=mysqltransaction;
+      if (cmd='UPDATEVOIPENTRY') or (cmd='INSERTVOIPENTRY') then
+        begin
+          if (cmd='UPDATEVOIPENTRY') then
+            begin
+              q.SQL.text :='update nebenstellen set kdnr=:kdnr,user=:user,pwd=:pwd,geraet=:geraet,autoprov_profil=:autoprov_profil,nstrein=:nstrein, nstraus=:nstraus, zurclid=:zurclid, amtsruf=:amtsruf,ausland=:ausland,'+
+                           'sperrklassen=:sperrklassen, clidname=:clidname,rufgruppe=:rufgruppe,laeutzeit=:laeutzeit,`laeutzeit-nacht`=:laeutzeitnacht,`laeutzeit-intern`=:laeutzeitintern,name=:name,defaultip=:defaultip,mac=:mac,'+
+                           'darfaufzeichnen=:darfaufzeichnen,vmpin=:vmpin,`vm-standardtext`=:vmstandardtext, email=:email where user=:old_user';
+              q.Prepare;
+              q.ParamByName('old_user').AsString:= getKNDR(extension,serviceObj) + input.Field('extnumber').asstring;
+            end
+          else
+            begin
+              q.SQL.text :='INSERT INTO `nebenstellen` (`kdnr`, `user`, `pwd`, `geraet`, `autoprov_profil`, `nstrein`, `nstraus`, `zurclid`, `amtsruf`, `ausland`, `sperrklassen`, `clidname`, `rufgruppe`, `laeutzeit`, `laeutzeit-nacht`,'+
+                           '`laeutzeit-intern`, `name`, `defaultip`, `mac`, `darfaufzeichnen`, `vmpin`, `vm-standardtext`, `email`) VALUES ('+
+                           ':kdnr, :user, :pwd, :geraet, :autoprov_profil, :nstrein, :nstraus, :zurclid, :amtsruf, :ausland, :sperrklassen, :clidname, :rufgruppe, :laeutzeit, :laeutzeitnacht,'+
+                           ':laeutzeitintern, :name, :defaultip, :mac, :darfaufzeichnen, :vmpin, :vmstandardtext, :email);';
+              q.Prepare;
+            end;
+          q.ParamByName('kdnr').AsString  := getKNDR(extension,serviceObj);
+          q.ParamByName('user').AsString  := getUser(extension,serviceObj);
+          q.ParamByName('pwd').AsString    := extension.Field('password').AsString;
+          q.ParamByName('geraet').AsString    := telephone.Field('slqID').AsString;
+          q.ParamByName('autoprov_profil').AsString := '1';
+          q.ParamByName('geraet').AsString    := telephone.Field('slqID').AsString;
+          q.ParamByName('nstrein').AsString   := extension.Field('number').AsString;
+          q.ParamByName('nstraus').AsString   := extension.Field('number').AsString;
+          q.ParamByName('zurclid').AsString   := '1';
+          q.ParamByName('amtsruf').AsString   := '1';
+          q.ParamByName('ausland').AsString   := '1';
+          q.ParamByName('sperrklassen').AsString   := '';
+          q.ParamByName('clidname').AsString   := extension.Field('objname').AsString;
+          q.ParamByName('rufgruppe').AsString   := '1';
+          q.ParamByName('laeutzeit').AsString   := '30';
+          q.ParamByName('laeutzeitnacht').AsString   := '15';
+          q.ParamByName('laeutzeitintern').AsString   := '30';
+          q.ParamByName('name').AsString   := '';
+          q.ParamByName('defaultip').AsString   := extension.Field('ip').AsString;
+          q.ParamByName('mac').AsString   := extension.Field('mac').AsString;
+          if extension.Field('recording').AsBoolean then begin
+            q.ParamByName('darfaufzeichnen').AsString   := 'J';
+          end else begin
+            q.ParamByName('darfaufzeichnen').AsString   := 'N';
+          end;
+          q.ParamByName('vmpin').AsString   := '1234';
+          q.ParamByName('vmstandardtext').AsString   := 'J';
+          q.ParamByName('email').AsString   := 'dummy@spamdump.com';
+          q.ExecSQL;
+          writeln('QRY DONE');
+          result.Field('resultcode').AsInt32 :=_refreshdb(q,getKNDR(extension,serviceObj));
+          writeln('TRANSFER QRY DONE');
+        end;
+      if (cmd='DELETEVOIPENTRY')  then
+        begin
+          q.SQL.text :='DELETE FROM `nebenstellen`  where `kdnr`=:kdnr and `user`=:user;';
+          q.Prepare;
+          q.ParamByName('kdnr').AsString  := getKNDR(extension,serviceObj);
+          q.ParamByName('user').AsString  := getUser(extension,serviceObj);
+          q.ExecSQL;
+          writeln('DELETE QRY DONE');
+          result.Field('resultcode').AsInt32 :=_refreshdb(q,getKNDR(extension,serviceObj));
+          writeln('TRANSFER QRY DONE');
+        end;
+    except on e:Exception do
+      begin
+        result.Field('EXCEPTION').asstring:=E.Message;
+      end;
+    end;
+  finally
+    q.free;
   end;
 end;
 
@@ -176,6 +340,7 @@ begin
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyInitialize;
+var q : TSQLQuery;
 begin
 //  FEED_Timer      := GFRE_S.AddPeriodicTimer (1000,@GenerateFeedDataTimer);
 //  FEED_Timer30    := GFRE_S.AddPeriodicTimer (30000,@GenerateFeedDataTimer30);
@@ -196,6 +361,29 @@ begin
     AddSubFeederEventViaUX('disksub')
   else
     AddSubFeederEventViaTCP(cFRE_SUBFEEDER_IP,'44101','disksub');
+
+  mysqlconnection:=TFOSMySqlConn.Create(nil);
+  mysqlconnection.UserName:='firmos';
+  mysqlconnection.Password:='kmuRZ2013$';
+  mysqlconnection.DatabaseName:='asterisk';
+  mysqlconnection.HostName:='192.168.82.3';
+  mysqltransaction:=TSQLTransaction.Create(mysqlconnection);
+  mysqltransaction.Database:=mysqlconnection;
+  writeln('TRY CONNECT DB');
+  mysqlconnection.Connected:=True;
+  writeln('CONNECTED DB');
+  Q:=TSQLQuery.Create(mysqlconnection);
+  try
+    Q.Database:=mysqlconnection;
+    Q.Transaction:=mysqltransaction;
+    q.sql.Text := 'SET CHARACTER SET `utf8`';
+    q.ExecSQL;
+    q.sql.Text := 'SET NAMES `utf8`';
+    q.ExecSQL;
+    writeln('OPEN QRY DONE');
+  finally
+    q.free;
+  end;
 
 end;
 
@@ -369,8 +557,10 @@ var replyData : IFRE_DB_Object;
 begin
   writeln('CALLED REM_UPDATEVOIPENTRY');
   writeln(input.DumpToString());
+
+  replyData := _VoipEntryCmd('UPDATEVOIPENTRY',input);
+
   input.Finalize;
-  replyData := GFRE_DBI.NewObject;
   AnswerSyncCommand(command_id,replyData);
 end;
 
@@ -379,8 +569,10 @@ var replyData : IFRE_DB_Object;
 begin
   writeln('CALLED REM_DELETEVOIPENTRY');
   writeln(input.DumpToString());
+
+  replyData := _VoipEntryCmd('DELETEVOIPENTRY',input);
+
   input.Finalize;
-  replyData := GFRE_DBI.NewObject;
   AnswerSyncCommand(command_id,replyData);
 end;
 
@@ -389,8 +581,10 @@ var replyData : IFRE_DB_Object;
 begin
   writeln('CALLED REM_INSERTVOIPENTRY');
   writeln(input.DumpToString());
+
+  replyData := _VoipEntryCmd('INSERTVOIPENTRY',input);
+
   input.Finalize;
-  replyData := GFRE_DBI.NewObject;
   AnswerSyncCommand(command_id,replyData);
 end;
 
