@@ -258,9 +258,9 @@ begin
   //
   if FStorage_Feeding then
     begin
-      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME));
-//       SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),@CCB_RequestDiskEncPoolData);
-
+      //disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME);
+//      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),vmo);
+       SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),@CCB_RequestDiskEncPoolData);
 //    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
     end;
 end;
@@ -284,10 +284,10 @@ end;
 
 procedure TFRE_BOX_FEED_CLIENT.SubfeederEvent(const id: string; const dbo: IFRE_DB_Object);
 begin
-  writeln('SUBFEEDER EVENT ID : ',id);
-  writeln(dbo.DumpToString());
-  writeln('----');
-  //disk_hal.ReceivedDBO(dbo);
+//  writeln('SUBFEEDER EVENT ID : ',id);
+//  writeln(dbo.DumpToString());
+  writeln('-----------------------------------------------------------------------------------------------------');
+  disk_hal.ReceivedDBO(dbo);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_REQUESTDISKDATA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
