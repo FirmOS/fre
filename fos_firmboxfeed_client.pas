@@ -84,6 +84,7 @@ type
     procedure  GenerateFeedDataTimer   (const TIM : IFRE_APSC_TIMER ; const flag1,flag2 : boolean); // Timout & CMD Arrived & Answer Arrived
     procedure  SubfeederEvent          (const id:string; const dbo:IFRE_DB_Object);override;
   published
+    procedure  REM_BROWSEPATH          (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
     procedure  REM_REQUESTDISKDATA     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
   end;
 
@@ -288,6 +289,41 @@ begin
 //  writeln(dbo.DumpToString());
   writeln('-----------------------------------------------------------------------------------------------------');
   disk_hal.ReceivedDBO(dbo);
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_BROWSEPATH(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var reply_data : IFRE_DB_Object;
+    level      : string;
+
+    function ListDirLevel(const basepath: string): IFRE_DB_Object;
+    var Info  : TSearchRec;
+        entry : TFRE_DB_FS_ENTRY;
+        count : NativeInt;
+    begin
+      result := GFRE_DBI.NewObject;
+      count  := 0;
+      If FindFirst (basepath+'*',faAnyFile and faDirectory,Info)=0 then
+        Repeat
+          With Info do
+            begin
+              if (name='.') or (name='..') then
+                Continue;
+              entry := TFRE_DB_FS_ENTRY.CreateForDB;
+              entry.SetProperties(name,(Attr and faDirectory) <> faDirectory,Size,mode,Time);
+              result.Field(inttostr(count)).AsObject := entry;
+              inc(count);
+            end;
+        Until FindNext(info)<>0;
+      FindClose(Info);
+    end;
+
+begin
+  level      := input.Field('level').AsString;
+  //level :=  StringReplace(level,'/anord01disk/anord01ds/domains/demo/demo/zonedata/vfiler/development','/',[]);
+  writeln('::: BROWSE - LEVEL ',level);
+  reply_data := ListDirLevel(level);
+  input.Finalize;
+  AnswerSyncCommand(command_id,reply_data);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_REQUESTDISKDATA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
