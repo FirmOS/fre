@@ -85,7 +85,13 @@ type
     procedure  SubfeederEvent          (const id:string; const dbo:IFRE_DB_Object);override;
   published
     procedure  REM_BROWSEPATH          (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
-    procedure  REM_REQUESTDISKDATA     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
+    procedure  REM_UPDATEBANDWIDTH     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
+    procedure  REM_UPDATEDSQUOTA       (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
+    procedure  REM_UPDATEVOIPENTRY     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
+    procedure  REM_DELETEVOIPENTRY     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
+    procedure  REM_INSERTVOIPENTRY     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
+    procedure  REM_STARTVM             (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
+    procedure  REM_STOPVM              (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
   end;
 
 
@@ -319,11 +325,46 @@ var reply_data : IFRE_DB_Object;
 
 begin
   level      := input.Field('level').AsString;
-  //level :=  StringReplace(level,'/anord01disk/anord01ds/domains/demo/demo/zonedata/vfiler/development','/',[]);
+//  level :=  StringReplace(level,'/anord01disk/anord01ds/domains/demo/demo/zonedata/vfiler/development','/',[]);
   writeln('::: BROWSE - LEVEL ',level);
   reply_data := ListDirLevel(level);
   input.Finalize;
   AnswerSyncCommand(command_id,reply_data);
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_UPDATEBANDWIDTH(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+begin
+
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_UPDATEDSQUOTA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+begin
+
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_UPDATEVOIPENTRY(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+begin
+
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_DELETEVOIPENTRY(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+begin
+
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_INSERTVOIPENTRY(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+begin
+
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_STARTVM(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+begin
+
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.REM_STOPVM(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+begin
+
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_REQUESTDISKDATA(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
