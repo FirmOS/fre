@@ -64,6 +64,7 @@ uses
   fre_zfs,
   fos_firmbox_vmapp,
   fos_firmbox_vm_machines_mod,
+  fos_citycom_voip_mod,
   fos_citycom_adc_common,
   sysutils,
   fos_citycom_base,
@@ -1153,7 +1154,14 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     g_domain_id    : TFRE_DB_GUID;
     rcoll          : IFRE_DB_COLLECTION;
     sharecoll      : IFRE_DB_COLLECTION;
+    extColl        : IFRE_DB_COLLECTION;
+    hwColl         : IFRE_DB_COLLECTION;
     vf_id          : TFRE_DB_GUID;
+    voip_id        : TFRE_DB_GUID;
+    tel_id_22      : TFRE_DB_GUID;
+    tel_id_46      : TFRE_DB_GUID;
+    tel_id_48      : TFRE_DB_GUID;
+    g_c_domain_id  : TFRE_DB_GUID;
 
     function       CreateDC(const name:string):TFRE_DB_GUID;
     var
@@ -1453,6 +1461,64 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       end;
   end;
 
+  function CreateVoIP(const number:TFRE_DB_String; const std,eline:Int32):TFRE_DB_GUID;
+   var voip : TFOS_DB_CITYCOM_VOIP_SERVICE;
+       idx  : string;
+   begin
+     voip:=TFOS_DB_CITYCOM_VOIP_SERVICE.CreateForDB;
+     Result:=voip.UID;
+     voip.SetDomainID(g_domain_id);
+     voip.ObjectName:=number;
+     idx:='VOIP_'+number;
+     voip.Field('uniquephysicalid').AsString:=idx;
+     voip.Field('number').AsString:=number;
+     voip.Field('standard_extension').AsInt32:=std;
+     voip.Field('standard_extension_night').AsInt32:=std;
+     voip.Field('exchange_line').AsInt32:=eline;
+
+     writeln('VoIP:',voip.DumpToString());
+     CheckDbResult(svc_coll.Store(voip));
+   end;
+
+   function CreateVoIPHW(const sqlId: Int64; const name,hwtype: TFRE_DB_String; const keys: Int32):TFRE_DB_GUID;
+   var
+     hwObj  : TFOS_DB_CITYCOM_VOIP_HARDWARE;
+     hwColl : IFRE_DB_COLLECTION;
+   begin
+     hwColl:=conn.GetCollection(CFOS_DB_VOIP_HARDWARE_COLLECTION);
+     hwObj:=TFOS_DB_CITYCOM_VOIP_HARDWARE.CreateForDB;
+     Result:=hwObj.UID;
+     hwObj.SetDomainID(g_c_domain_id);
+     hwObj.ObjectName:=name;
+     hwObj.Field('sqlId').AsInt64:=sqlId;
+     hwObj.Field('type').AsString:=hwtype;
+     hwObj.Field('keys').AsInt32:=keys;
+
+     CheckDbResult(hwColl.Store(hwObj));
+   end;
+
+   procedure CreateExtension(const voip_id,tel_id:TFRE_DB_GUID; const name: TFRE_DB_String; const ext: Int32; const ip,mac,pass: TFRE_DB_String);
+   var
+     extObj  : TFOS_DB_CITYCOM_VOIP_EXTENSION;
+     extColl : IFRE_DB_COLLECTION;
+   begin
+     extColl:=conn.GetCollection(CFOS_DB_VOIP_EXTENSIONS_COLLECTION);
+     extObj:=TFOS_DB_CITYCOM_VOIP_EXTENSION.CreateForDB;
+     extObj.SetDomainID(g_domain_id);
+     extObj.ObjectName:=name;
+     extObj.Field('voip_service').AsObjectLink:=voip_id;
+     extObj.Field('type').AsString:='T';
+     extObj.Field('number').AsInt32:=ext;
+     extObj.Field('provisioning').AsBoolean:=true;
+     extObj.Field('recording').AsBoolean:=false;
+     extObj.Field('telephone').AsObjectLink:=tel_id;
+     extObj.Field('ip').AsString:=ip;
+     extObj.Field('mac').AsString:=mac;
+     extObj.Field('password').AsString:=pass;
+
+     CheckDbResult(extColl.Store(extObj));
+   end;
+
 begin
   GenerateSearchDomains(false);
 
@@ -1545,8 +1611,12 @@ begin
   ClearCollectionifExists(CFRE_DB_ZFS_IOSTAT_COLLECTION);
   ClearCollectionifExists(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
   ClearCollectionifExists(CFRE_DB_ZFS_VDEV_COLLECTION,true);
+  extColl:=conn.GetCollection(CFOS_DB_VOIP_EXTENSIONS_COLLECTION);
+  hwColl:=conn.GetCollection(CFOS_DB_VOIP_HARDWARE_COLLECTION);
 
   sharecoll.ClearCollection;
+  extColl.ClearCollection;
+  hwColl.ClearCollection;
   rcoll.ClearCollection;
   ipcoll.ClearCollection;
 
@@ -1596,7 +1666,7 @@ begin
   tmpl.Field('serviceclasses').AddString(TFRE_DB_POSTGRES_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_MYSQL_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_HTTP_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_VOIP_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFOS_DB_CITYCOM_VOIP_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
@@ -1640,6 +1710,7 @@ begin
 
 
   g_domain_id := CheckFindDomainID('CITYCOM');
+  g_c_domain_id := g_domain_id;
   zone_id  := CreateZone('boot1',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:50:4c:9c','cpe','Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::20/64',link_id);
@@ -1923,7 +1994,16 @@ begin
   vf_id:=CreateCFiler(zone_id,'Test Crypto Fileserver');
   CreateShare(vf_id,pool_id,'syspool/domains/mydomain/newzone0/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
 
+  voip_id:=CreateVoIP('+43316269574',10,0);
 
+  tel_id_22:=CreateVoIPHW(12,'Yealink T22','TEL',10);
+  tel_id_46:=CreateVoIPHW(23,'Yealink T46G','TEL',10);
+  tel_id_48:=CreateVoIPHW(25,'Yealink T48G','TEL',10);
+
+  CreateExtension(voip_id,tel_id_46,'Zentrale',10,'192.168.82.60','00:15:65:4e:a9:1f','d1dPdN!');
+  CreateExtension(voip_id,tel_id_48,'DW-20',20,'192.168.82.61','00:15:65:67:b5:3b','d1dPd2N!');
+  CreateExtension(voip_id,tel_id_22,'DW-30',30,'192.168.82.59','00:15:65:20:d4:91','12345');
+  CreateExtension(voip_id,tel_id_22,'DW-40',40,'10.55.0.66','00:15:65:38:39:68','12345');
 
   conn.Free;
 end;
