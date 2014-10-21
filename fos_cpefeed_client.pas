@@ -69,6 +69,7 @@ type
     procedure  GenerateFeedDataTimer   (const TIM : IFRE_APSC_TIMER ; const flag1,flag2 : boolean); // Timout & CMD Arrived & Answer Arrived
     procedure  SubfeederEvent          (const id:string; const dbo:IFRE_DB_Object);override;
   published
+    procedure  REM_UPDATEDHCP          (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
   end;
 
 
@@ -172,6 +173,25 @@ end;
 
 procedure TFRE_CPE_FEED_CLIENT.SubfeederEvent(const id: string; const dbo: IFRE_DB_Object);
 begin
+end;
+
+procedure TFRE_CPE_FEED_CLIENT.REM_UPDATEDHCP(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+var replyData : IFRE_DB_Object;
+    dhcp      : TFRE_DB_CPE_DHCP_SERVICE;
+begin
+  writeln('CALLED REM_UPDATEDHCP');
+  writeln(input.DumpToString());
+  replyData := GFRE_DBI.NewObject;
+  if input.Field('dhcp').AsObject.IsA(TFRE_DB_CPE_DHCP_SERVICE,dhcp) then
+    begin
+      dhcp.ConfigureHAL;
+      if dhcp.FieldExists('errors') then
+        replydata.Field('errors').asstring:=dhcp.Field('errors').AsObject.DumpToString();
+    end
+  else
+    replyData.Field('result').asstring:='NO DHCP SERVICE';
+  input.Finalize;
+  AnswerSyncCommand(command_id,replyData);
 end;
 
 
