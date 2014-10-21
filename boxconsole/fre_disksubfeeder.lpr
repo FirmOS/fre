@@ -81,7 +81,7 @@ begin
 end;
 
 begin
-  cAPSC_JACK_TIMEOUT:=60000;
+  cAPSC_JACK_TIMEOUT:=5*60000;
   Application:=TFRE_DISKSUB_FEED.Create(nil,TFRE_DISKSUB_FEED_SERVER.Create);
   Application.Run;
   Application.Free;

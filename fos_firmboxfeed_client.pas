@@ -479,11 +479,17 @@ begin
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.SubfeederEvent(const id: string; const dbo: IFRE_DB_Object);
+var live,liveall : IFRE_DB_Object;
 begin
 //  writeln('SUBFEEDER EVENT ID : ',id);
 //  writeln(dbo.DumpToString());
   writeln('-----------------------------------------------------------------------------------------------------');
   disk_hal.ReceivedDBO(dbo);
+  live    := GFRE_DBI.NewObject;
+  liveall := GFRE_DBI.NewObject;
+  live.Field('zpool_desc').AsString := 'SCRUBBING '+inttostr(random(100));
+  liveall.Field('a35864a4d66063a6474f39ce5f27e9f9').AsObject:=live;
+  SendServerCommand('FIRMOS','UPDATELIVE',nil,liveall);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_BROWSEPATH(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);

@@ -194,6 +194,7 @@ var resdbo     : IFRE_DB_Object;
     z          : TFRE_DB_ZFS;
 begin
   //writeln('ZSNAP LOOP');
+  GFRE_DB.LogDebug(dblc_APPLICATION,'>ZFS SNAPSHOT STAT RUNNING');
   z := TFRE_DB_ZFS.Create;
   z.GetSnapshots('',false,false);
   resdbo := GFRE_DBI.NewObject;
@@ -204,7 +205,7 @@ begin
   resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
   //writeln('SWL: ZSNAP STATUS:',resdbo.DumpToString());
   fsubfeeder.PushDataToClients(resdbo);
-  GFRE_DB.LogDebug(dblc_APPLICATION,'ZFS SNAPSHOT STAT RUNNING');
+  GFRE_DB.LogDebug(dblc_APPLICATION,'<ZFS SNAPSHOT STAT RUNNING');
 end;
 
 { TZDSThread }
@@ -214,6 +215,7 @@ var resdbo     : IFRE_DB_Object;
     z          : TFRE_DB_ZFS;
 begin
   //writeln('ZDS LOOP');
+  GFRE_DB.LogDebug(dblc_APPLICATION,'>ZFS DS STAT RUNNING');
   z := TFRE_DB_ZFS.Create;
   z.EmbedDatasets;
   resdbo := GFRE_DBI.NewObject;
@@ -224,7 +226,7 @@ begin
   resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
   //writeln('SWL: ZDS STATUS:',resdbo.DumpToString());
   fsubfeeder.PushDataToClients(resdbo);
-  GFRE_DB.LogDebug(dblc_APPLICATION,'ZFS DS STAT RUNNING');
+  GFRE_DB.LogDebug(dblc_APPLICATION,'<ZFS DS STAT RUNNING');
 end;
 
 { TDiskAndEnclosureThread }
