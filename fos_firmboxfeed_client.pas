@@ -39,6 +39,8 @@ unit fos_firmboxfeed_client;
 
 {$mode objfpc}{$H+}
 {$codepage UTF8}
+{$modeswitch nestedprocvars}
+
 
 
 interface
@@ -72,11 +74,16 @@ type
     disk_hal              : TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT;
     mysqlconnection       : TSQLConnection;
     mysqltransaction      : TSQLTransaction;
+    servicedata_lock      : IFOS_LOCK;
+    servicedata           : IFRE_DB_Object;
+    live_all              : IFRE_DB_Object;
+    liveupdate_lock       : IFOS_LOCK;
 
   private
     procedure  CCB_RequestDiskEncPoolData  (const DATA : IFRE_DB_Object ; const status:TFRE_DB_COMMAND_STATUS ; const error_txt:string);
-    function   _VoipEntryCmd           (const cmd     : string; const input : IFRE_DB_Object) : IFRE_DB_Object;
-
+    procedure  CCB_RequestServiceStructure (const DATA : IFRE_DB_Object ; const status:TFRE_DB_COMMAND_STATUS ; const error_txt:string);
+    function   _VoipEntryCmd               (const cmd     : string; const input : IFRE_DB_Object) : IFRE_DB_Object;
+    procedure  _MatchLinkStats             (const data : IFRE_DB_Object);
   public
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  MySessionDisconnected   (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
@@ -115,6 +122,25 @@ begin
     cdcs_TIMEOUT: ;
     cdcs_ERROR: begin
        GFRE_BT.CriticalAbort('Request DiskEncPoolData Error - Server Returned Error: '+error_txt);
+    end;
+  end;
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.CCB_RequestServiceStructure(const DATA: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const error_txt: string);
+begin
+  GFRE_DBI.LogNotice(dblc_FLEXCOM,'CCB_RequestServiceStructure '+ inttostr(Ord(status)));
+  case status of
+    cdcs_OK: begin
+      servicedata_lock.Acquire;
+      try
+        servicedata := data.CloneToNewObject();
+      finally
+        servicedata_lock.Release;
+      end;
+    end;
+    cdcs_TIMEOUT: ;
+    cdcs_ERROR: begin
+       GFRE_BT.CriticalAbort('RequestServiceStructure Error - Server Returned Error: '+error_txt);
     end;
   end;
 end;
@@ -279,6 +305,62 @@ begin
   end;
 end;
 
+procedure TFRE_BOX_FEED_CLIENT._MatchLinkStats(const data: IFRE_DB_Object);
+var i     : integer;
+    iobj  : IFRE_DB_Object;
+    dobj  : IFRE_DB_Object;
+    zone  : IFRE_DB_Object;
+    iname : string;
+
+    procedure _zoneIterator(const obj: IFRE_DB_Object);
+//    procedure _zoneIterator(const obj: IFRE_DB_Object; var halt:boolean);
+
+      //procedure CalcDifferences;
+      //begin
+      //  if zone.Field('objname').asstring)='demo' then   //DEBUG CODE
+      //    begin
+      //
+      //    end;
+      //end;
+
+    begin
+//      halt := false;
+//      writeln('SWL ',obj.Field('objname').asstring);
+      if obj.Field('objname').asstring=iname then
+        begin
+//          halt := true;
+//          if obj.FieldExists('oldstat') then
+//            CalcDifferences;
+          writeln('SWL SENDSTAT FOR DATALINK ',obj.UID_String,' ',dobj.DumpToString());  //TODO SENDSTAT
+          obj.Field('oldstat').asobject := dobj.CloneToNewObject;
+        end;
+    end;
+
+begin
+  servicedata_lock.Acquire;
+  try
+    writeln('SWL MACHINE LINK STATS');
+    for i:=0 to data.Field('DATA').ValueCount-1 do
+      begin
+        iobj := data.Field('DATA').AsObjectItem[i];
+        dobj := iobj.Field('DATA').asobject;
+        iname := iobj.Field('name').asstring;
+        if (Pos('z',iname)=1)  and (Pos('_',iname)>0) then
+          iname := Copy(iname,Pos('_',iname)+1,maxint);
+        writeln('SWL INTERFACE NAME',iname,' ',dobj.Field('zonename').asstring);
+        if servicedata.FetchObjWithStringFieldValue('OBJNAME',dobj.Field('zonename').asstring,zone,TFRE_DB_ZONE.ClassName) then
+          begin
+            writeln('SWL ZONE FOUND', zone.Field('objname').asstring);
+//            if zone.Field('objname').asstring='demo' then
+//              writeln('SWL ZONE',zone.DumpToString());
+            zone.ForAllObjects(@_zoneIterator);
+          end;
+      end;
+  finally
+    servicedata_lock.Release;
+  end;
+end;
+
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 var i           : integer;
     machineUIDS : TFRE_DB_GUIDArray;
@@ -308,6 +390,7 @@ begin
     for i:=0 to high(machineUIDS) do begin
       GFRE_DBI.LogNotice(dblc_FLEXCOM,'SENDING REQUEST FOR MACHINE REQUEST_DISK_ENC_POOL_DATA '+FREDB_G2H(machineUIDS[i]));
       SendServerCommand('TFRE_DB_MACHINE','REQUEST_DISK_ENC_POOL_DATA',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestDiskEncPoolData);
+      SendServerCommand('TFRE_DB_MACHINE','REQUEST_SERVICE_STRUCTURE',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestServiceStructure);
     end;
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_STORAGE_APP APP NOT FOUND!');
@@ -353,6 +436,11 @@ begin
   //statscontroller.StartNetworkParser(true);
   //statscontroller.StartCacheParser(true);
   //statscontroller.StartZFSParser(true);
+
+  GFRE_TF.Get_Lock(liveupdate_lock);
+  live_all := GFRE_DBI.NewObject;
+  GFRE_TF.Get_Lock(servicedata_lock);
+  servicedata:=GFRE_DBI.NewObject;
 
 
   disk_hal   := TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT.Create;
@@ -404,6 +492,10 @@ begin
 //  FEED_Timer30.FinalizeIt;
   //vmc.Finalize ;
 
+  liveupdate_lock.Finalize;
+  servicedata_lock.Finalize;
+  servicedata.Finalize;
+
   disk_hal.Free;
   statscontroller.Finalize;
 
@@ -414,6 +506,7 @@ var g_disc_delay : integer=0;
 
 procedure TFRE_BOX_FEED_CLIENT.MyConnectionTimer;
 var vmo : IFRE_DB_Object;
+    lio : IFRE_DB_Object;
 begin
   //if FAPP_Feeding then
   //  begin
@@ -458,6 +551,13 @@ begin
 //      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),vmo);
        SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),@CCB_RequestDiskEncPoolData);
 //    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
+      liveupdate_lock.Acquire;
+      try
+        lio:=live_all.CloneToNewObject;
+      finally
+        liveupdate_lock.Release;
+      end;
+      SendServerCommand('FIRMOS','UPDATELIVE',nil,lio);
     end;
 end;
 
@@ -479,18 +579,43 @@ begin
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.SubfeederEvent(const id: string; const dbo: IFRE_DB_Object);
-var live,liveall : IFRE_DB_Object;
+var subfeedmodule :string;
+
+    procedure SendLiveStatCallback(const all_status_data: IFRE_DB_Object);
+    begin
+      liveupdate_lock.Acquire;
+      try
+        live_all.Field(all_status_data.Field('statuid').asGUID.AsHexString).AsObject:=all_status_data;
+        writeln('SWL SETTING LIVEDATA',live_all.DumpToString());
+      finally
+        liveupdate_lock.Release;
+      end;
+    end;
+
+
 begin
-//  writeln('SUBFEEDER EVENT ID : ',id);
+  //var live,liveall : IFRE_DB_Object;
+  //    disk_hal.ReceivedDBO(dbo);
+  //    live    := GFRE_DBI.NewObject;
+  //    liveall := GFRE_DBI.NewObject;
+  //    live.Field('zpool_desc').AsString := 'SCRUBBING '+inttostr(random(100));
+  //    liveall.Field('a35864a4d66063a6474f39ce5f27e9f9').AsObject:=live;
+  //    SendServerCommand('FIRMOS','UPDATELIVE',nil,liveall);
+
+
+  writeln('SUBFEEDER EVENT ID : ',id);
 //  writeln(dbo.DumpToString());
   writeln('-----------------------------------------------------------------------------------------------------');
-  disk_hal.ReceivedDBO(dbo);
-  live    := GFRE_DBI.NewObject;
-  liveall := GFRE_DBI.NewObject;
-  live.Field('zpool_desc').AsString := 'SCRUBBING '+inttostr(random(100));
-  liveall.Field('a35864a4d66063a6474f39ce5f27e9f9').AsObject:=live;
-  SendServerCommand('FIRMOS','UPDATELIVE',nil,liveall);
+  subfeedmodule := dbo.Field('SUBFEED').asstring;
+  if subfeedmodule = 'LINKSTAT' then
+    begin
+//      _MatchLinkStats(dbo);
+//      writeln(dbo.DumpToString());
+    end
+  else
+    disk_hal.ReceivedDBO(dbo,@SendLiveStatCallback);
 end;
+
 
 procedure TFRE_BOX_FEED_CLIENT.REM_BROWSEPATH(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
 var reply_data : IFRE_DB_Object;
