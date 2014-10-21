@@ -188,10 +188,12 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
-      AddOneToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));
+      //AddOneToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));
+      AddStatisticToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       SetFinalRightTransformFunction(@CalculateIcon,[]);
+      //SetStatisticTransformationFunction(@StatisticFields); { set fields }
     end;
     dc := session.NewDerivedCollection('MONITORING_PHYSICAL_GRID');
     with dc do begin
