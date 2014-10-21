@@ -93,6 +93,9 @@ var
   Application : TFRE_CPECONSOLE_FEED;
 
 begin
+  cFRE_MWS_IP:='10.54.3.246';
+  cFRE_Feed_User:='cpefeeder@system';
+  cFRE_Feed_Pass:='cpefeeder';
   Application:=TFRE_CPECONSOLE_FEED.Create(nil,TFRE_CPE_FEED_CLIENT.Create);
   Application.Run;
   Application.Free;
