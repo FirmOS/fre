@@ -607,13 +607,11 @@ begin
     shareObj.Field('fileserver').AsObjectLink:=service.UID;
     CheckDbResult(shareColl.Store(shareObj));
     { TODO:  Create the Dataset/Share ... / Enter Quota Code here}
+    Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
   end else begin
     CheckDbResult(conn.Update(shareObj.CloneToNewObject()));
     SetupQuotaAndUpdate(shareObj); { if the update went ok, then setup quota }
-    exit;
   end;
-
-  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
 function TFRE_FIRMBOX_VIRTUAL_FILESERVER_MOD.WEB_VFSShareMenu(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
