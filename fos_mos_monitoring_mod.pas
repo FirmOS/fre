@@ -26,12 +26,9 @@ uses
   fre_scsi,
   fre_hal_schemes,
   fre_diff_transport,
-  fre_monitoring,
-  fre_hal_mos;
+  fre_monitoring;
 
 type
-
-  { TFOS_CITYCOM_MOS_LOGICAL_MOD }
 
   { TFOS_CITYCOM_MOS_BASE_MOD }
 
@@ -80,6 +77,10 @@ implementation
 
 procedure Register_DB_Extensions;
 begin
+  fre_monitoring.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  fre_scsi.Register_DB_Extensions;
+
   GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_MOS_LOGICAL_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_MOS_PHYSICAL_MOD);
 
@@ -92,6 +93,9 @@ function TFOS_CITYCOM_MOS_BASE_MOD._getMOSObjContent(const input: IFRE_DB_Object
 var
   res   : TFRE_DB_CONTENT_DESC;
   mosObj: IFRE_DB_Object;
+  scheme: IFRE_DB_SchemeObject;
+  ig    : IFRE_DB_InputGroupSchemeDefinition;
+  form  : TFRE_DB_FORM_PANEL_DESC;
 begin
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
@@ -99,7 +103,21 @@ begin
     if mosObj.MethodExists('MOSContent') then begin
       res:=mosObj.Invoke('MOSContent',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
     end else begin
-      res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_no_details'));
+      try
+        if GFRE_DBI.GetSystemScheme(mosObj.Implementor_HC.ClassType,scheme) then begin
+          ig:=scheme.GetInputGroup('main');
+          form:=TFRE_DB_FORM_PANEL_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_main'),true,false);
+          form.AddSchemeFormGroup(ig,ses);
+          form.FillWithObjectValues(mosObj,ses);
+          res:=form;
+        end else begin
+          res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_no_details'));
+        end;
+      except
+        on E:Exception do begin
+          res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_no_details'));
+        end;
+      end;
     end;
   end else begin
     res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_select_one'));
@@ -150,6 +168,9 @@ begin
     CreateModuleText(conn,'error_monitoring_struct_file','Error on reading the monitoring structure file. Please place a valid structure.svg file into the binary directoy.');
     CreateModuleText(conn,'grid_name','Name');
     CreateModuleText(conn,'grid_status','Status');
+    CreateModuleText(conn,'info_content_select_one','Please select one object to get detailed information about it.');
+    CreateModuleText(conn,'info_content_no_details','There are no details available for the selected object.');
+    CreateModuleText(conn,'info_content_main','Main Information');
   end;
 end;
 
