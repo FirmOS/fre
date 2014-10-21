@@ -33,9 +33,17 @@ type
 
   { TFOS_CITYCOM_MOS_LOGICAL_MOD }
 
-  TFOS_CITYCOM_MOS_LOGICAL_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  { TFOS_CITYCOM_MOS_BASE_MOD }
+
+  TFOS_CITYCOM_MOS_BASE_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
-    function        _getMOSObjContent                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  _getMOSObjContent (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  _getMOSObjMenu    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+  end;
+
+  { TFOS_CITYCOM_MOS_LOGICAL_MOD }
+
+  TFOS_CITYCOM_MOS_LOGICAL_MOD = class (TFOS_CITYCOM_MOS_BASE_MOD)
   protected
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
@@ -50,7 +58,7 @@ type
 
   { TFOS_CITYCOM_MOS_PHYSICAL_MOD }
 
-  TFOS_CITYCOM_MOS_PHYSICAL_MOD = class (TFRE_DB_APPLICATION_MODULE)
+  TFOS_CITYCOM_MOS_PHYSICAL_MOD = class (TFOS_CITYCOM_MOS_BASE_MOD)
   protected
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
@@ -67,6 +75,7 @@ type
 
 procedure Register_DB_Extensions;
 
+
 implementation
 
 procedure Register_DB_Extensions;
@@ -75,6 +84,43 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFOS_CITYCOM_MOS_PHYSICAL_MOD);
 
   //GFRE_DBI.Initialize_Extension_Objects;
+end;
+
+{ TFOS_CITYCOM_MOS_BASE_MOD }
+
+function TFOS_CITYCOM_MOS_BASE_MOD._getMOSObjContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res   : TFRE_DB_CONTENT_DESC;
+  mosObj: IFRE_DB_Object;
+begin
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
+    writeln('SWL: MOSOBJ',mosobj.DumpToString());
+    if mosObj.MethodExists('MOSContent') then begin
+      res:=mosObj.Invoke('MOSContent',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
+    end else begin
+      res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_no_details'));
+    end;
+  end else begin
+    res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_select_one'));
+  end;
+  res.contentId:='MOS_OBJ_CONTENT';
+  Result:=res;
+end;
+
+function TFOS_CITYCOM_MOS_BASE_MOD._getMOSObjMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  mosObj: IFRE_DB_Object;
+begin
+  CheckClassVisibility4MyDomain(ses);
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
+    if mosObj.MethodExists('MOSMenu') then begin
+      Result:=mosObj.Invoke('MOSMenu',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
+    end else begin
+      Result:=GFRE_DB_NIL_DESC;
+    end;
+  end;
 end;
 
 { TFOS_CITYCOM_MOS_PHYSICAL_MOD }
@@ -156,10 +202,15 @@ begin
 end;
 
 function TFOS_CITYCOM_MOS_PHYSICAL_MOD.WEB_ContentGrid(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dc  : IFRE_DB_DERIVED_COLLECTION;
+  grid: TFRE_DB_VIEW_LIST_DESC;
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  Result:=ses.FetchDerivedCollection('MONITORING_PHYSICAL_GRID').GetDisplayDescription;
+  dc:=ses.FetchDerivedCollection('MONITORING_PHYSICAL_GRID');
+  grid:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+  Result:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,grid,_getMOSObjContent(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC,nil,nil,true,-1,1,1);
 end;
 
 function TFOS_CITYCOM_MOS_PHYSICAL_MOD.WEB_ContentGraph(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -185,30 +236,10 @@ begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedObj');
   end;
 
-  Result:=GFRE_DB_NIL_DESC;
+  Result:=_getMOSObjContent(input,ses,app,conn);
 end;
 
 { TFOS_CITYCOM_MOS_LOGICAL_MOD }
-
-function TFOS_CITYCOM_MOS_LOGICAL_MOD._getMOSObjContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  res   : TFRE_DB_CONTENT_DESC;
-  mosObj: IFRE_DB_Object;
-begin
-  if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
-    writeln('SWL: MOSOBJ',mosobj.DumpToString());
-    if mosObj.MethodExists('MOSContent') then begin
-      res:=mosObj.Invoke('MOSContent',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
-    end else begin
-      res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_no_details'));
-    end;
-  end else begin
-    res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_content_select_one'));
-  end;
-  res.contentId:='MOS_OBJ_CONTENT';
-  Result:=res;
-end;
 
 class procedure TFOS_CITYCOM_MOS_LOGICAL_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
@@ -254,7 +285,7 @@ begin
       AddOneToOnescheme('caption_mos','',FetchModuleTextShort(session,'grid_name'));
       AddOneToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));
     end;
-    dc := session.NewDerivedCollection('MONITORING_GRID');
+    dc := session.NewDerivedCollection('MONITORING_LOGICAL_GRID');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_MOS_COLLECTION));
       SetDeriveTransformation(transform);
@@ -271,24 +302,14 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  dc:=ses.FetchDerivedCollection('MONITORING_GRID');
+  dc:=ses.FetchDerivedCollection('MONITORING_LOGICAL_GRID');
   grid:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   Result:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,grid,_getMOSObjContent(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC,nil,nil,true,-1,1,1);
 end;
 
 function TFOS_CITYCOM_MOS_LOGICAL_MOD.WEB_GridMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  mosObj: IFRE_DB_Object;
 begin
-  CheckClassVisibility4MyDomain(ses);
-  if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),mosObj));
-    if mosObj.MethodExists('MOSMenu') then begin
-      Result:=mosObj.Invoke('MOSMenu',input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
-    end else begin
-      Result:=GFRE_DB_NIL_DESC;
-    end;
-  end;
+  Result:=_getMOSObjMenu(input,ses,app,conn);
 end;
 
 function TFOS_CITYCOM_MOS_LOGICAL_MOD.WEB_GridSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
