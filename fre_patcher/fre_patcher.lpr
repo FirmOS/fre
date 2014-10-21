@@ -1016,6 +1016,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       vpn.Field('protocol').AsString:='tcp';
       vpn.Field('remote').AddString('109.73.144.150 1196');
       vpn.Field('remote').AddString('fdd7:f47b:4605:705::1 1196');
+      vpn.Field('bridgeip').asstring:=lan;
       vpn.Field('ca').asstream.LoadFromStream(caobj.Field('VPNKMUB').AsObject.Field('crt_stream').AsStream);
       crtobj.FetchObjWithStringFieldValue('objname','ccpe1',crt,TFRE_DB_CERTIFICATE.ClassName);
       vpn.Field('crt').asstream.LoadFromStream(crt.Field('crt_stream').AsStream);
@@ -1027,8 +1028,8 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       dhcp     := TFRE_DB_CPE_DHCP_SERVICE.CreateForDB;
       dhcpsub  := TFRE_DB_DHCP_Subnet.CreateForDB;
       dhcpsub.Field('subnet').AsString:='10.55.0.'+inttostr(b_ip)+'/27';
-      dhcpsub.Field('range_start').AsString:='10.55.0.'+inttostr(b_ip+10);
-      dhcpsub.Field('range_end').AsString:='10.55.0.'+inttostr(b_ip+31);
+//      dhcpsub.Field('range_start').AsString:='10.55.0.'+inttostr(b_ip+10);
+//      dhcpsub.Field('range_end').AsString:='10.55.0.'+inttostr(b_ip+31);
       dhcpsub.Field('router').AsString:='10.55.0.'+inttostr(b_ip+1);
       dhcpsub.Field('dns').AsString:='172.23.1.1';
       dhcpsub.Field('option_tftp66').asstring:='192.168.82.3';
@@ -1079,9 +1080,14 @@ begin
     begin
      coll:=conn.CreateCollection(CFRE_DB_ASSET_COLLECTION);
      coll.DefineIndexOnField('provisioningmac',fdbft_String,true,false,'mac',true,false);
+
     end
   else
-    coll:=conn.GetCollection(CFRE_DB_ASSET_COLLECTION);
+    begin
+      coll:=conn.GetCollection(CFRE_DB_ASSET_COLLECTION);
+      if not coll.IndexExists('mac') then
+        coll.DefineIndexOnField('provisioningmac',fdbft_String,true,false,'mac',true,false);
+    end;
 
   coll.ClearCollection;
 
