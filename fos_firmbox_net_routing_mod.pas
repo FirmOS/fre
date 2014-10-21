@@ -177,8 +177,50 @@ begin
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_SliderChanged(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var machineid : TFRE_DB_GUID;
+    inp,opd    : IFRE_DB_Object;
+
+   procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
+   var
+     res     : TFRE_DB_MESSAGE_DESC;
+     i       : NativeInt;
+     cnt     : NativeInt;
+     newnew  : IFRE_DB_Object;
+
+   begin
+     case status of
+       cdcs_OK:
+         begin
+           res:=TFRE_DB_MESSAGE_DESC.create.Describe('BW','SETUP OK',fdbmt_info);
+         end;
+       cdcs_TIMEOUT:
+         begin
+           Res := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','COMMUNICATION TIMEOUT SET BW',fdbmt_error); { FIXXME }
+         end;
+       cdcs_ERROR:
+         begin
+           Res := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','COULD NOT SET BW ['+new_input.Field('ERROR').AsString+']',fdbmt_error); { FIXXME }
+         end;
+     end;
+     ses.SendServerClientAnswer(res,ocid);
+     cnt := 0;
+   end;
+
+
 begin
-  Result:=GFRE_DB_NIL_DESC;  // CHANGE INTERNET BANDWIDTH
+  writeln('SWL: SLIDER CHANGED', input.DumpToString);
+  inp := GFRE_DBI.NewObject;
+  inp.Field('BW').Asstring :=input.field('SLIDER').asstring;
+  if ses.InvokeRemoteRequestMachineMac('00:25:90:82:bf:ae','TFRE_BOX_FEED_CLIENT','UPDATEBANDWIDTH',inp,@GotAnswer,nil)=edb_OK then  //FIXXME
+    begin
+      Result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+      exit;
+    end
+  else
+    begin
+      Result := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','COULD NOT SET BANDWIDTH',fdbmt_error); { FIXXME }
+      inp.Finalize;
+    end
 end;
 
 end.

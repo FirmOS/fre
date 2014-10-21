@@ -254,9 +254,8 @@ begin
           q.ParamByName('kdnr').AsString  := getKNDR(extension,serviceObj);
           q.ParamByName('user').AsString  := getUser(extension,serviceObj);
           q.ParamByName('pwd').AsString    := extension.Field('password').AsString;
-          q.ParamByName('geraet').AsString    := telephone.Field('slqID').AsString;
+          q.ParamByName('geraet').AsString    := telephone.Field('sqlID').AsString;
           q.ParamByName('autoprov_profil').AsString := '1';
-          q.ParamByName('geraet').AsString    := telephone.Field('slqID').AsString;
           q.ParamByName('nstrein').AsString   := extension.Field('number').AsString;
           q.ParamByName('nstraus').AsString   := extension.Field('number').AsString;
           q.ParamByName('zurclid').AsString   := '1';
@@ -586,7 +585,7 @@ var subfeedmodule :string;
       liveupdate_lock.Acquire;
       try
         live_all.Field(all_status_data.Field('statuid').asGUID.AsHexString).AsObject:=all_status_data;
-        writeln('SWL SETTING LIVEDATA',live_all.DumpToString());
+//        writeln('SWL SETTING LIVEDATA',live_all.DumpToString());
       finally
         liveupdate_lock.Release;
       end;
@@ -655,12 +654,19 @@ begin
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.REM_UPDATEBANDWIDTH(const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
-var replyData : IFRE_DB_Object;
+var replyData  : IFRE_DB_Object;
+    cmd        : string;
+    errcode    : Integer;
 begin
   writeln('CALLED REM_UPDATEBANDWIDTH');
   writeln(input.DumpToString());
+  cmd := 'ssh -i /opt/local/fre/id_rsa_bw root@10.54.3.100 /root/setbandwidth '+input.FieldPath('BW').AsString;
+  //writeln(cmd);
+  errcode := FRE_ProcessCMD(cmd);
+  writeln('resultcode ',errcode);
   input.Finalize;
   replyData := GFRE_DBI.NewObject;
+  replyData.Field('resultcode').AsInt32 := errcode;
   AnswerSyncCommand(command_id,replyData);
 end;
 
