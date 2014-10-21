@@ -87,6 +87,7 @@ begin
     CreateModuleText(conn,'fileserver_virtual_description','Virtual NAS','Virtual NAS','Virtual NAS');
 
     CreateModuleText(conn,'tb_create_vfs','Create');
+    CreateModuleText(conn,'customer_chooser_label','Customer');
     CreateModuleText(conn,'tb_delete_vfs','Delete');
     CreateModuleText(conn,'cm_delete_vfs','Delete');
     CreateModuleText(conn,'grid_vfs_name','Fileserver');
@@ -221,7 +222,7 @@ begin
       AddOneToOnescheme('servicedomain','','',dt_string,false);
     end;
 
-    vfs_customers := session.NewDerivedCollection(CFOS_DB_VFS_CUSTOMERS_DCOLL);
+    vfs_customers := session.NewDerivedCollection('VFS_CUSTOMER_CHOOSER');
     with vfs_customers do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_CUSTOMERS_COLLECTION));
       SetDeriveTransformation(transform);
@@ -311,6 +312,8 @@ begin
 
   GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESERVER,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vfs_add_diag_cap'),600,true,true,false);
+
+  res.AddChooser.Describe(FetchModuleTextShort(ses,'customer_chooser_label'),'customer',ses.FetchDerivedCollection('VFS_CUSTOMER_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false);
   serverfunc := CWSF(@WEB_StoreVFS);
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),serverfunc,fdbbt_submit);
@@ -325,6 +328,7 @@ var
   idx         : String;
   customer    : IFRE_DB_Object;
   isNew       : Boolean;
+  sdomain     : TFRE_DB_GUID;
 begin
   if not GFRE_DBI.GetSystemScheme(TFRE_DB_VIRTUAL_FILESERVER,schemeObject) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_VIRTUAL_FILESERVER]);
@@ -337,11 +341,22 @@ begin
     isNew:=false;
   end else begin
 
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('data.customer').AsString),customer));
-    if not customer.FieldExists('servicedomain') then
-      raise EFRE_DB_Exception.Create(edb_ERROR,'The given customer has no service domain set!');
+    if input.FieldPathExists('data.customer') then begin
+      CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('data.customer').AsString),customer));
+      if not customer.FieldExists('servicedomain') then
+        raise EFRE_DB_Exception.Create(edb_ERROR,'The given customer has no service domain set!');
 
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VIRTUAL_FILESERVER,customer.Field('servicedomain').AsObjectLink) then
+      input.Field('data').AsObject.DeleteField('customer');
+      sdomain:=customer.Field('servicedomain').AsObjectLink;
+    end else begin
+      if input.FieldPathExists('data.domainId') then begin
+        sdomain:=FREDB_H2G(input.FieldPath('data.domainId').AsString);
+      end else begin
+        raise EFRE_DB_Exception.Create(edb_ERROR,'No domain Id given for new VoIP Service');
+      end;
+    end;
+
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VIRTUAL_FILESERVER,sdomain) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
@@ -352,7 +367,7 @@ begin
     end;
 
     vfsService:=TFRE_DB_VIRTUAL_FILESERVER.CreateForDB;
-    vfsService.SetDomainID(customer.Field('servicedomain').AsObjectLink);
+    vfsService.SetDomainID(sdomain);
     vfsService.Field('uniquephysicalid').AsString:=idx;
     isNew:=true;
   end;
@@ -408,7 +423,6 @@ begin
     panel.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
     panel.FillWithObjectValues(vfs,ses);
     if editable then begin
-      panel.SetElementDisabled('customer');
       sf:=CWSF(@WEB_StoreVFS);
       sf.AddParam.Describe('serviceId',vfs.UID_String);
       panel.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
