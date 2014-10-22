@@ -254,11 +254,16 @@ begin
           q.ParamByName('kdnr').AsString  := getKNDR(extension,serviceObj);
           q.ParamByName('user').AsString  := getUser(extension,serviceObj);
           q.ParamByName('pwd').AsString    := extension.Field('password').AsString;
-          q.ParamByName('geraet').AsString    := telephone.Field('sqlID').AsString;
-          if telephone.Field('sqlID').AsString = '10' then
-            q.ParamByName('autoprov_profil').AsString := '4'
+          if telephone.Field('sqlID').AsString = '' then
+            begin
+              q.ParamByName('autoprov_profil').AsString := '4';
+              q.ParamByName('geraet').AsString    := '10';
+            end
           else
-            q.ParamByName('autoprov_profil').AsString := '5';
+            begin
+              q.ParamByName('autoprov_profil').AsString := '5';
+              q.ParamByName('geraet').AsString    := telephone.Field('sqlID').AsString;
+            end;
 
           q.ParamByName('nstrein').AsString   := extension.Field('number').AsString;
           q.ParamByName('nstraus').AsString   := extension.Field('number').AsString;
@@ -552,7 +557,9 @@ begin
     begin
       //disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME);
 //      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),vmo);
-       SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),@CCB_RequestDiskEncPoolData);
+      writeln('DISK_DATA_FEED NO CALLBACK');
+      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),nil);
+
 //    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
       liveupdate_lock.Acquire;
       try
