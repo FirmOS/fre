@@ -644,9 +644,9 @@ var reply_data : IFRE_DB_Object;
 
 begin
   level      := input.Field('level').AsString;
-  { $IFDEV DARWIN }
+  {$IFDEF DARWIN }
   level :=  StringReplace(level,'/anord01disk/anord01ds/domains/demo/demo/zonedata/vfiler/development','/',[]);
-  { $ENDIF}
+  {$ENDIF}
   writeln('::: BROWSE - LEVEL ',level);
   reply_data := ListDirLevel(level);
   input.Finalize;
