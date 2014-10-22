@@ -255,7 +255,11 @@ begin
           q.ParamByName('user').AsString  := getUser(extension,serviceObj);
           q.ParamByName('pwd').AsString    := extension.Field('password').AsString;
           q.ParamByName('geraet').AsString    := telephone.Field('sqlID').AsString;
-          q.ParamByName('autoprov_profil').AsString := '1';
+          if telephone.Field('sqlID').AsString = '10' then
+            q.ParamByName('autoprov_profil').AsString := '4'
+          else
+            q.ParamByName('autoprov_profil').AsString := '5';
+
           q.ParamByName('nstrein').AsString   := extension.Field('number').AsString;
           q.ParamByName('nstraus').AsString   := extension.Field('number').AsString;
           q.ParamByName('zurclid').AsString   := '1';
