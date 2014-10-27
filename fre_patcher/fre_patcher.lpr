@@ -83,8 +83,8 @@ type
   { TFRE_Testserver }
   TFRE_Testserver = class(TFRE_CLISRV_APP)
   private
-    const realcust:string = '0081000359,0081000752,0081000516,0081000196,81000146,0081000661,0081000737,0081000752,0081000339,0081000695,0081000609,0081000681,0081000723,81000064,SC-PRO,SC-DEMO';
-          realdom :string = 'ANKUENDER,BINDER,CITYCOM,CORTI,GRAZETTA,RUBIKON,ZOESCHER,BINDER,DMS,DIAGONALE,EGRAZ,HILFSWERK,PEAN,JOANNEUM,PRO-COMPETENCE,DEMO';
+    const realcust:string = '0081000359,0081000752,0081000516,0081000196,81000146,0081000661,0081000737,0081000752,0081000339,0081000695,0081000609,0081000681,0081000723,81000064,SC-PRO,SC-DEMO,0081000168';
+          realdom :string = 'ANKUENDER,BINDER,CITYCOM,CORTI,GRAZETTA,RUBIKON,ZOESCHER,BINDER,DMS,DIAGONALE,EGRAZ,HILFSWERK,PEAN,JOANNEUM,PRO-COMPETENCE,DEMO,ALICONA';
     var
     realdoma   :TFRE_DB_StringArray;
     realdomida :TFRE_DB_GUIDArray;
@@ -564,6 +564,8 @@ var
   var my_domname : TFRE_DB_String;
       my_domuid  : TFRE_DB_GUID;
 begin
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
+
   GenerateSearchDomains(true);
   conn := GFRE_DBI.NewConnection;
   CheckDbResult(conn.Connect(FDBName,domainuser,domainpass));
@@ -1101,7 +1103,7 @@ begin
 //  CreateProvisioning('00:03:2d:28:07:6b','Wien Energie',);
   // Demo CC
   CreateProvisioning('00:03:2d:1d:2d:79','Demo Citycom','192.168.3.2/24',2,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe2',
-                     TFRE_DB_StringArray.Create('00:15:65:32:9e:12','00:15:65:20:d2:af','00:15:65:20:d4:91','ac:f2:c5:34:ac:6c'),
+                     TFRE_DB_StringArray.Create('00:15:65:67:b5:3b','00:15:65:20:d4:91','00:15:65:20:d2:af','34:db:fd:5c:f5:4a','00:15:65:38:39:68','00:15:65:4e:a9:1f'),
                      '[fdd7:f47b:4605:1b0d:0:0:0:1]:/anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler','b3cf9cb7d3270dcd','b3cf9cb7d3270dcd','enctest123');
   // Test FirmOS
   CreateProvisioning('00:03:2d:1d:2d:7d','Test FirmOS','192.168.3.2/24',3,3,'/opt/local/fre/hal/ca_backup_kmub.cfg','/opt/local/fre/hal/ca_backup_voip.cfg','ccpe3',
@@ -1219,13 +1221,14 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       writeln('Created Pool:',name);
     end;
 
-    function       CreateDataset(const name:string; const pool_id:TFRE_DB_GUID):TFRE_DB_GUID;
+    function       CreateDataset(const name:string; const path:string; const pool_id:TFRE_DB_GUID):TFRE_DB_GUID;
     var
       ds               : TFRE_DB_ZFS_DATASET;
     begin
       ds             := TFRE_DB_ZFS_DATASET.CreateForDB;
       ds.ObjectName  := name;
       ds.Field('poolid').AsObjectLink := pool_id;
+      ds.Field('dataset').asstring    := path;
       ds.Field('serviceParent').AsObjectLink:=pool_id;
       ds.SetDomainID(g_domain_id);
       result           := ds.UID;
@@ -1235,12 +1238,21 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     end;
 
 
-    function       CreateZone(const name:string; const serviceparent_id:TFRE_DB_GUID; const host_id:TFRE_DB_GUID; const template_id:TFRE_DB_GUID):TFRE_DB_GUID;
+    function       CreateZone(const name:string; const serviceparent_id:TFRE_DB_GUID; const host_id:TFRE_DB_GUID; const template_id:TFRE_DB_GUID; const zone_id:string=''):TFRE_DB_GUID;
     var
       zone             : TFRE_DB_ZONE;
+      newuid           : TFRE_DB_GUID;
     begin
       zone             := TFRE_DB_ZONE.CreateForDB;
       zone.ObjectName  := name;
+      if zone_id<>'' then
+        begin
+//          writeln('SWL OLD UID :',zone.UID.AsHexString);
+          newuid.SetFromHexString(zone_id);
+//          writeln('SWL NEW UID :',newuid.AsHexString);
+          zone.Field('UID').asGUID := newuid;
+//          writeln('SWL MODIFIED UID :',zone.UID.AsHexString);
+        end;
       if template_id<>CFRE_DB_NullGUID then
         zone.Field('templateid').AsObjectLink:=template_id;
       zone.Field('hostid').AsObjectLink:=host_id;
@@ -1248,8 +1260,8 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       zone.SetDomainID(g_domain_id);
       result           := zone.UID;
  //     writeln('ZONE:',zone.DumpToString());
+      writeln('Create Zone:',name,' Domain:',zone.DomainID.AsHexString,' UID:',zone.UID.AsHexString);
       CheckDBResult(zcoll.Store(zone));
-      writeln('Created Zone:',name);
     end;
 
     function AddDatalink(const clname:string; const name: string; const zoneid:TFRE_DB_GUID; const datalinkparentid:TFRE_DB_GUID; const mtu:integer;const vlan:integer;const ipmpparent:TFRE_DB_GUID; const uniquephysicalid:TFRE_DB_String;const networktype:TFRE_DB_String;const description:TFRE_DB_String=''): TFRE_DB_GUID;
@@ -1719,7 +1731,7 @@ begin
   AddIPV4('',link_id);
 
   pool_id  := CreatePool('anord01disk',host_id,'11052910530200204125');
-  ds_id    := CreateDataset('anord01disk/anord01ds',pool_id);
+  ds_id    := CreateDataset('anord01ds','anord01disk/anord01ds',pool_id);
 
 
   g_domain_id := CheckFindDomainID('CITYCOM');
@@ -1800,8 +1812,9 @@ begin
   vf_id:=CreateCFiler(zone_id,'Demo Crypto Fileserver');
   CreateShare(vf_id,pool_id,'anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
 
+
   g_domain_id:=conn.GetSysDomainUID;
-  ds_id    := CreateDataset('anord01disk/nas01ds',pool_id);
+  ds_id    := CreateDataset('nas01ds','anord01disk/nas01ds',pool_id);
 
   g_domain_id := CheckFindDomainID('CITYCOM');
   zone_id  := CreateZone('rsync0',ds_id,host_id,template_id);
@@ -1813,6 +1826,13 @@ begin
   zone_id  := CreateZone('corti',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:4b:eb:3a','lan','Lan');
   AddIPV4('192.168.0.18/24',link_id);
+
+  g_domain_id := CheckFindDomainID('ALICONA');
+  zone_id  := CreateZone('alicona',ds_id,host_id,template_id,'ac3d29b3cd1b2daf213449c08b209426');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1772,CFRE_DB_NullGUID,'02:08:20:c4:58:FF','lan','Lan');
+  AddIPV4('10.10.10.10/24',link_id);
+  vf_id:=CreateVFiler(zone_id,'Virtual Fileserver');
+  CreateShare(vf_id,pool_id,'anord01disk/nas01ds/domains/e54401a713603afcdcaa4527d3037c1a/ac3d29b3cd1b2daf213449c08b209426/zonedata/vfiler/backup','Backup',3145728,3145728);
 
   g_domain_id:=conn.GetSysDomainUID;
   host_id  := CreateHost('SNord01',dc_id,'00:25:90:82:c0:0c');
@@ -1861,7 +1881,7 @@ begin
 
   dc_id := CreateDC('RZ Sued');
   host_id  := CreateHost('ASued01',dc_id,'00:25:90:8a:cb:e2');
-  ds_id    := CreateDataset('asued01disk/asued01ds',pool_id);
+  ds_id    := CreateDataset('asued01ds','asued01disk/asued01ds',pool_id);
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'asued01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.112/25',ipmp_nfs);
@@ -1898,7 +1918,7 @@ begin
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
   zone_id  := CreateZone('test',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:c9:f3:6a','lan');
-  ds_id    := CreateDataset('asued01disk/nas02ds',pool_id);
+  ds_id    := CreateDataset('nas02ds','asued01disk/nas02ds',pool_id);
 
   g_domain_id:=conn.GetSysDomainUID;
   host_id  := CreateHost('SSued01',dc_id,'00:25:90:82:c0:04');
@@ -1973,7 +1993,7 @@ begin
   host_id  := CreateHost('Fosdev',dc_id,'00:0c:29:71:65:fd');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   pool_id  := CreatePool('syspool',host_id);
-  ds_id    := CreateDataset('syspool',pool_id);
+  ds_id    := CreateDataset('/','syspool',pool_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:0c:29:71:65:fd','generic');
   AddIPV4('10.1.0.84/24',link_id);
   AddIPV4('172.22.0.99/24',link_id);
