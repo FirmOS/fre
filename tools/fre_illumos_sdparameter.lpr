@@ -98,8 +98,8 @@ begin
   end;
 
   InitMinimal(false);
-  GFRE_DBI.Initialize_Extension_Objects;
   fre_dbbase.Register_DB_Extensions;
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
   Initialize_Read_FRE_CFG_Parameter;
 
   if HasOption('H','remotehost') then begin

@@ -16,7 +16,6 @@ type
 
   TFRE_FIRMBOX_STORE_APP=class(TFRE_DB_APPLICATION)
   private
-    procedure       SetupApplicationStructure ; override;
     procedure       _UpdateSitemap            (const session: TFRE_DB_UserSession);
   protected
     procedure       MySessionInitialize       (const session: TFRE_DB_UserSession);override;
@@ -24,7 +23,6 @@ type
   public
     class procedure RegisterSystemScheme      (const scheme:IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallDBObjects4Domain   (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID); override;
   end;
 
 procedure Register_DB_Extensions;
@@ -34,17 +32,9 @@ implementation
 procedure Register_DB_Extensions;
 begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_STORE_APP);
-  GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFRE_FIRMBOX_STORE_APP }
-
-procedure TFRE_FIRMBOX_STORE_APP.SetupApplicationStructure;
-begin
-  inherited SetupApplicationStructure;
-  InitAppDesc('description');
-end;
-
 
 procedure TFRE_FIRMBOX_STORE_APP._UpdateSitemap( const session: TFRE_DB_UserSession);
 var
@@ -100,10 +90,6 @@ begin
     end;
 end;
 
-class procedure TFRE_FIRMBOX_STORE_APP.InstallDBObjects4Domain(const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TGUID);
-begin
-  inherited InstallDBObjects4Domain(conn, currentVersionId, domainUID);
-end;
 
 
 end.

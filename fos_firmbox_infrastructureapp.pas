@@ -33,7 +33,6 @@ implementation
 procedure Register_DB_Extensions;
 begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_INFRASTRUCTURE_APP);
-  GFRE_DBI.Initialize_Extension_Objects;
 end;
 
 { TFRE_FIRMBOX_INFRASTRUCTURE_APP }
