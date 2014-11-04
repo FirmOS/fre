@@ -25,6 +25,7 @@ program fpmake_packages;
        Dependencies.Add('FOS_FIRMBOX');
        with Targets do begin
         AddUnit('fos_mos_common.pas');
+        AddUnit('fos_mos_monitoring_mod.pas');
         AddUnit('fos_mos_monitoringapp.pas');
         AddUnit('fos_mos_networkapp.pas');
         AddUnit('webapp/fos_monitoring_app.pas');
