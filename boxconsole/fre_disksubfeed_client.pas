@@ -64,10 +64,9 @@ const
   cReadSGLogIntervalSec      = 120;
 
   cZpoolQueryIntervalMSec     = 1000;
-  cEnclosureQueryIntervalMSec = 10000;
-  cMpathQueryIntervalMSec     = 10000;
+  cEnclosureQueryIntervalMSec = 5000;
+  cMpathQueryIntervalMSec     = 5000;
   cZDSIntervalMSec            = 5000;
-  cZSNAPIntervalMSec          = 5000;
 
   DoubleLineEnd              = LineEnding+LineEnding;
 
@@ -115,13 +114,6 @@ type
     procedure   MyLoop ; override;
   end;
 
-  { TZSNAPThread }
-
-  TZSNAPThread=class(TFRE_SINGLE_CMD_THREAD)
-  public
-    procedure   MyLoop ; override;
-  end;
-
   { TDiskAndEnclosureThread }
 
   TDiskAndEnclosureThread=class(TFRE_SINGLE_CMD_THREAD)
@@ -162,7 +154,6 @@ type
     Fdiskenclosurethread                     : TDiskAndEnclosureThread;
     FMpathAdmThread                          : TMPathAdmThread;
     FZpoolThread                             : TZpoolThread;
-    FZSnapThread                             : TZSNAPThread;
     FZDSThread                               : TZDSThread;
 
     procedure  _TerminateThreads             ;
@@ -174,7 +165,6 @@ type
     procedure  StartMpathAdmThread           ;
     procedure  StartZPoolThread              ;
     procedure  StartZDSThread                ;
-    procedure  StartZSNAPThread              ;
 
   protected
     procedure  Setup           ; override;
@@ -187,46 +177,27 @@ type
 
 implementation
 
-{ TZSNAPThread }
-
-procedure TZSNAPThread.MyLoop;
-var resdbo     : IFRE_DB_Object;
-    z          : TFRE_DB_ZFS;
-begin
-  //writeln('ZSNAP LOOP');
-  GFRE_DB.LogDebug(dblc_APPLICATION,'>ZFS SNAPSHOT STAT RUNNING');
-  z := TFRE_DB_ZFS.Create;
-  z.GetSnapshots('',false,false);
-  resdbo := GFRE_DBI.NewObject;
-  resdbo.Field('subfeed').asstring      := 'ZSNAP';
-  resdbo.Field('resultcode').AsInt32    := 0;
-  resdbo.Field('error').asstring        := '';
-  resdbo.Field('data').AsObject         := z;
-  resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
-  //writeln('SWL: ZSNAP STATUS:',resdbo.DumpToString());
-  fsubfeeder.PushDataToClients(resdbo);
-  GFRE_DB.LogDebug(dblc_APPLICATION,'<ZFS SNAPSHOT STAT RUNNING');
-end;
-
 { TZDSThread }
 
 procedure TZDSThread.MyLoop;
 var resdbo     : IFRE_DB_Object;
     z          : TFRE_DB_ZFS;
+    error      : string;
+    zfsfs      : IFRE_DB_Object;
+    time       : NativeInt;
 begin
-  //writeln('ZDS LOOP');
   GFRE_DB.LogDebug(dblc_APPLICATION,'>ZFS DS STAT RUNNING');
-  z := TFRE_DB_ZFS.Create;
-  z.EmbedDatasets;
+  time := fosillu_zfs_GetZFSFilesystems(error,zfsfs);
   resdbo := GFRE_DBI.NewObject;
   resdbo.Field('subfeed').asstring      := 'ZDS';
   resdbo.Field('resultcode').AsInt32    := 0;
-  resdbo.Field('error').asstring        := '';
-  resdbo.Field('data').AsObject         := z;
+  resdbo.Field('error').asstring        := error;
+  resdbo.Field('data').AsObject         := zfsfs;
+  resdbo.Field('runtime').AsInt64       := time;
   resdbo.Field('machinename').Asstring  := cFRE_MACHINE_NAME;
   //writeln('SWL: ZDS STATUS:',resdbo.DumpToString());
   fsubfeeder.PushDataToClients(resdbo);
-  GFRE_DB.LogDebug(dblc_APPLICATION,'<ZFS DS STAT RUNNING');
+  GFRE_DB.LogDebug(dblc_APPLICATION,'<ZFS DS STAT RUNNING - '+inttostr(time)+' ms');
 end;
 
 { TDiskAndEnclosureThread }
@@ -271,6 +242,7 @@ end;
 { TFRE_SINGLE_CMD_THREAD }
 
 procedure TFRE_SINGLE_CMD_THREAD.Execute;
+var startt,endt : TFRE_DB_DateTime64;
 begin
   MyInit;
   try
@@ -279,7 +251,11 @@ begin
         if Terminated then
           exit;
         MyLoop;
+        startt := GFRE_DT.Now_UTC;
+        //writeln('>>DEBUG : ',fid,', WAITFOR ',GFRE_DT.ToStrUTC(startt),' ',fsleep_period);
         ftimed_event.WaitFor(fsleep_period);
+        endt  := GFRE_DT.Now_UTC;
+        //writeln('<<DEBUG : ',fid,' WAITFOR ',GFRE_DT.ToStrUTC(endt),' lasted ',endt-startt,' for period ',fsleep_period);
       until Terminated;
     finally
       try
@@ -337,6 +313,7 @@ procedure TFRE_LINKSTAT_PARSER.MyOutStreamCallBack(const stream: TStream);
 var st           : TStringStream;
     str          : string;
     epos,newpos  : NativeInt;
+    i: Integer;
 
     procedure ParseOneBlock;
     var new_feedobj   : IFRE_DB_Object;
@@ -373,6 +350,7 @@ begin
        break;
      end;
   until false;
+  GFRE_DB.LogDebug(dblc_APPLICATION,'LINKSTAT RUNNING');
   stream.Size:=0;
 end;
 
@@ -468,8 +446,6 @@ begin
       FMpathAdmThread.Terminate;
   if Assigned(FZpoolThread) then
       FZpoolThread.Terminate;
-  if Assigned(FZSnapThread) then
-      FZSnapThread.Terminate;
   if Assigned(FZDSThread) then
       FZDSThread.Terminate;
 end;
@@ -493,12 +469,6 @@ begin
       FZpoolThread.WaitFor;
       FZpoolThread.Free;
       FZpoolThread:=nil;
-    end;
-  if Assigned(FZSnapThread) then
-    begin
-      FZSnapThread.WaitFor;
-      FZSnapThread.Free;
-      FZSnapThread:=nil;
     end;
   if Assigned(FZDSThread) then
     begin
@@ -540,12 +510,6 @@ procedure TFRE_DISKSUB_FEED_SERVER.StartZDSThread;
 begin
   FZDSThread:=TZDSThread.Create(self,'zds',cZDSIntervalMSec);
 end;
-
-procedure TFRE_DISKSUB_FEED_SERVER.StartZSNAPThread;
-begin
-  FZSnapThread:=TZSNAPThread.Create(self,'zsnaps',cZSNAPIntervalMSec);
-end;
-
 
 
 procedure TFRE_DISKSUB_FEED_SERVER.Setup;
@@ -593,7 +557,6 @@ begin
     StartMpathAdmThread;
     StartLinkstatParser;
     StartZDSThread;
-    StartZSNAPThread;
   except on e:Exception do begin
     GFRE_DBI.LogError(dblc_APPLICATION,'COULD NOT START SUBSUBFEEDER %s',[e.Message]);
   end; end;

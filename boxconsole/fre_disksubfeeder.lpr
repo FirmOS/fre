@@ -39,16 +39,22 @@ program fre_disksubfeeder;
 
 {$mode objfpc}{$H+}
 {$LIBRARYPATH ../../lib}
+{$LINKLIB umem}
 
 uses
-  cmem,
+  //cmem,
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
   Classes, SysUtils,
+  fre_libevent_core,
+  fre_system,
+  fre_fcom_ssl,
+  fre_aps_comm_impl,
   fre_disksubfeed_client,
-  fre_basesubfeed_app,
-  fre_aps_comm_impl;
+  fre_basedbo_server,
+  fre_basesubfeed_app;
+
 
 {$I fos_version_helper.inc}
 
@@ -71,7 +77,7 @@ var
 
 procedure TFRE_DISKSUB_FEED.TestMethod;
 begin
-  writeln('PUNCHING AN UNFREED STRINGLIST INTO bTHE MEM FOR HEAPTRACE CHECK');
+  writeln('PUNCHING AN UNFREED STRINGLIST INTO THE MEM FOR HEAPTRACE CHECK');
   TStringList.Create;
 end;
 
@@ -80,8 +86,19 @@ begin
   writeln(GFOS_VHELP_GET_VERSION_STRING);
 end;
 
+  {
+    DEBUG Leaks using libumem
+    LD_PRELOAD=libumem.so
+    UMEM_DEBUG=default,verbose
+    mdb ./fre_disksubfeeder -o follow_fork_mode=parent
+    ::sybp _exit
+    ::findleaks
+  }
+
+{ TTestThread }
+
 begin
-  cAPSC_JACK_TIMEOUT:=5*60000;
+  cAPSC_JACK_TIMEOUT := 5*60000;
   Application:=TFRE_DISKSUB_FEED.Create(nil,TFRE_DISKSUB_FEED_SERVER.Create);
   Application.Run;
   Application.Free;

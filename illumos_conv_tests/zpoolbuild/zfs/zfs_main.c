@@ -69,6 +69,13 @@
 #include "zfs_util.h"
 #include "zfs_comutil.h"
 
+#include <getopt.h>
+
+extern char *optarg;
+extern int  opterr;
+extern int  optind;
+extern int  optopt;
+
 libzfs_handle_t *g_zfs;
 
 static FILE *mnttab_file;
@@ -332,6 +339,15 @@ safe_malloc(size_t size)
 		nomem();
 
 	return (data);
+}
+
+char * strdup(const char *s1)
+{
+    char *s2 = malloc(strlen(s1) + 1);
+    
+    if (s2)
+        (void) strcpy(s2, s1);
+    return (s2);
 }
 
 static char *
@@ -3011,8 +3027,9 @@ static int
 zfs_do_list(int argc, char **argv)
 {
 	int c;
-	static char default_fields[] =
-	    "name,used,available,referenced,mountpoint";
+//	static char default_fields[] =
+//	    "name,used,available,referenced,mountpoint";
+    static char default_fields[] = "name";
 	int types = ZFS_TYPE_DATASET;
 	boolean_t types_specified = B_FALSE;
 	char *fields = NULL;
@@ -3024,8 +3041,10 @@ zfs_do_list(int argc, char **argv)
 	zfs_sort_column_t *sortcol = NULL;
 	int flags = ZFS_ITER_PROP_LISTSNAPS | ZFS_ITER_ARGS_CAN_BE_PATHS;
 
-	/* check options */
-	while ((c = getopt(argc, argv, "HS:d:o:prs:t:")) != -1) {
+    printf("HELLO WORLD\n");
+    /* check options */
+    
+ 	while ((c = getopt(argc, argv, "HS:d:o:prs:t:")) != -1) {
 		switch (c) {
 		case 'o':
 			fields = optarg;
@@ -3101,12 +3120,20 @@ zfs_do_list(int argc, char **argv)
 			usage(B_FALSE);
 		}
 	}
-
-	argc -= optind;
+  	argc -= optind;
 	argv += optind;
 
-	if (fields == NULL)
+    
+
+ 
+    types_specified = B_TRUE;
+    flags &= ~ZFS_ITER_PROP_LISTSNAPS;
+    types = ZFS_TYPE_DATASET;
+  
+    if (fields == NULL) {
+        printf("default fileds <%d>\n",flags);
 		fields = default_fields;
+    }
 
 	/*
 	 * If "-o space" and no types were specified, don't display snapshots.
@@ -3119,7 +3146,7 @@ zfs_do_list(int argc, char **argv)
 	 * normally include the name of the dataset.  For 'zfs list', we always
 	 * want this property to be first.
 	 */
-	if (zprop_get_list(g_zfs, fields, &cb.cb_proplist, ZFS_TYPE_DATASET)
+	if (zprop_getcre_list(g_zfs, fields, &cb.cb_proplist, ZFS_TYPE_DATASET)
 	    != 0)
 		usage(B_FALSE);
 
@@ -3130,9 +3157,13 @@ zfs_do_list(int argc, char **argv)
 	 * flags on the ZFS handle.
 	 */
 	libzfs_set_cachedprops(g_zfs, B_TRUE);
+    printf("SET THE CACHEDPROPS FLAG");
 	for (pl = cb.cb_proplist; pl != NULL; pl = pl->pl_next) {
 		if (zfs_prop_cacheable(pl->pl_prop))
+        {
 			libzfs_set_cachedprops(g_zfs, B_FALSE);
+            printf("UNSET THE CACHEDPROPS FLAG");
+        }
 	}
 
 	cb.cb_first = B_TRUE;
@@ -6606,7 +6637,7 @@ main(int argc, char **argv)
 	char *cmdname;
 
 	(void) setlocale(LC_ALL, "");
-	(void) textdomain(TEXT_DOMAIN);
+	//(void) textdomain(TEXT_DOMAIN);
 
 	opterr = 0;
 

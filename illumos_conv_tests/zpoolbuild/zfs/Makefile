@@ -30,9 +30,10 @@ OBJS=		zfs_main.o zfs_iter.o
 SRCS=		$(OBJS:%.o=%.c)
 POFILES=	zfs_main.po zfs_iter.po
 POFILE=		zfs.po
+CC=/opt/local/gcc47/bin/gcc
 
-include ../Makefile.cmd
-include ../Makefile.ctf
+#include ../Makefile.cmd
+#include ../Makefile.ctf
 
 FSTYPE=         zfs
 LINKPROGS=	mount umount
@@ -41,12 +42,13 @@ USRLIBFSTYPE=	$(ROOTLIB)/fs/$(FSTYPE)
 
 LDLIBS += -lzfs_core -lzfs -luutil -lumem -lnvpair -lsec -lidmap
 
-INCS += -I../../common/zfs
+#INCS += -I. -I../../common/zfs
+INCS += -I.
 
 C99MODE=	-xc99=%all
 C99LMODE=	-Xc99=%all
 
-CPPFLAGS += -D_LARGEFILE64_SOURCE=1 -D_REENTRANT $(INCS)
+CPPFLAGS += -D_LARGEFILE64_SOURCE=1 -D_REENTRANT $(INCS) -std=c99 
 $(NOT_RELEASE_BUILD)CPPFLAGS += -DDEBUG
 
 # lint complains about unused _umem_* functions
@@ -99,4 +101,4 @@ $(ROOTETCFSTYPELINKS):
 
 FRC:
 
-include ../Makefile.targ
+#include ../Makefile.targ

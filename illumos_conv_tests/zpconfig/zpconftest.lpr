@@ -1,9 +1,12 @@
 program zpconftest;
 
 {$mode objfpc}{$H+}
+{$LINKLIB libumem.so}
 
 uses
-  cthreads,fosillu_nvpair,fosillu_libzfs,fosillu_zfs,Classes, fos_illumos_defs,ctypes,sysutils,strutils;
+  //cthreads,
+  cmem,
+  fosillu_nvpair,fosillu_libzfs,fosillu_zfs,Classes, fos_illumos_defs,ctypes,sysutils,strutils;
 
 var
   zph : Plibzfs_handle_t;
@@ -203,14 +206,141 @@ var
       zpool_close(zp);
   end;
 
+ type
+   zfs_cb_data=record
+     zproplist   : Pzprop_list_t;
+     props_table : Array [0..ord(ZFS_NUM_PROPS)] of uint8_t;
+   end;
+   Pzfs_cb_data = ^zfs_cb_data;
+
+ var funcp:zfs_iter_f;
+     funcp2:zfs_iter_f;
+
+  function dataset_cb_zvol(z_hdl:Pzfs_handle_t; data:pointer):cint;cdecl;
+  begin
+    writeln('ZFS TYPE FROM ZVOL ',zfs_get_type(z_hdl),' ',zfs_get_name(z_hdl));
+    exit(0);
+  end;
+
+  function dataset_cb(z_hdl:Pzfs_handle_t; data:pointer):cint;cdecl;
+  //var ztyp       : zfs_type_t;
+  //    cbd        : Pzfs_cb_data;
+  //    userprops  : Pnvlist_t;
+  //    propval    : Pnvlist_t;
+  //    propstr    : Pchar;
+  //    source     : zprop_source_t;
+  //    property_  : array [0..ZFS_MAXPROPLEN] of char;
+  //    sourcename : array [0..ZFS_MAXNAMELEN] of char;
+  //    src        : string;
+
+      //procedure print_ds;
+      //var pl : Pzprop_list_t;
+      //begin
+      //  userprops := zfs_get_user_props(z_hdl);
+      //  pl := cbd^.zproplist;
+      //  while(pl<>Nil) do
+      //    begin
+      //      if pl^.pl_prop <> ZPROP_INVAL then
+      //        begin
+      //          if zfs_prop_get(z_hdl,zfs_prop_t(pl^.pl_prop),@property_,sizeof(property_),@source,@sourcename,SizeOf(sourcename),B_TRUE)=0 then
+      //            begin
+      //              case source of
+      //                ZPROP_SRC_NONE:      src := '-';
+      //                ZPROP_SRC_DEFAULT:   src := 'D';
+      //                ZPROP_SRC_TEMPORARY: src := 'TT';
+      //                ZPROP_SRC_LOCAL:     src := 'L';
+      //                ZPROP_SRC_INHERITED: src := 'I';
+      //                ZPROP_SRC_RECEIVED:  src := 'R';
+      //              end;
+      //              writeln('  SYS:',zfs_prop_to_name(zfs_prop_t(pl^.pl_prop)),': ',pchar(property_),' SOURCE : ',src);//' ',pchar(sourcename));
+      //            end;
+      //        end
+      //      else
+      //      if ord(zfs_prop_userquota_(pchar(pl^.pl_user_prop)))<>0 then
+      //        begin
+      //           writeln('userquota!');
+      //        end
+      //      else
+      //      if ord(zfs_prop_written_(pchar(pl^.pl_user_prop)))<>0 then
+      //        begin
+      //          writeln('written!');
+      //        end
+      //      else
+      //        begin
+      //          if nvlist_lookup_nvlist(userprops,Pcchar(pl^.pl_user_prop),@propval)<>0 then
+      //            propstr:='-'
+      //          else
+      //            begin
+      //              if nvlist_lookup_string(propval,PCChar(ZPROP_VALUE),@propstr)<>0 then
+      //                propstr := 'lookup failure';
+      //                writeln('  USR:',Pchar(pl^.pl_user_prop),': ''',propstr,'''');
+      //            end;
+      //        end;
+      //      pl :=  pl^.pl_next;
+      //    end;
+      //end;
+
+  begin
+    //cbd := Pzfs_cb_data(data);
+    //ztyp := zfs_get_type(z_hdl);
+    writeln('ZFS TYPE ',zfs_get_type(z_hdl),' ',zfs_get_name(z_hdl));
+    //if not assigned(cbd^.zproplist) then
+    //  writeln('EXPAND PD ',integer(cbd^.zproplist),' ',zfs_expand_proplist(z_hdl,@cbd^.zproplist,B_TRUE,B_TRUE),' ',integer(cbd^.zproplist));
+    //print_ds;
+
+    if zfs_get_type(z_hdl) <> ZFS_TYPE_VOLUME then
+      begin
+        if zfs_get_type(z_hdl) = ZFS_TYPE_FILESYSTEM then
+          zfs_iter_filesystems(z_hdl,funcp,data);
+        if (zfs_get_type(z_hdl) and (ZFS_TYPE_SNAPSHOT or ZFS_TYPE_BOOKMARK)) = 0 then
+          zfs_iter_snapshots(z_hdl,funcp,data);
+      end
+    else
+      begin
+        //if (zfs_get_type(z_hdl) and (ZFS_TYPE_SNAPSHOT or ZFS_TYPE_BOOKMARK)) = 0 then
+         zfs_iter_snapshots(z_hdl,funcp2,data);
+      end;
+    //if (ztyp and (ZFS_TYPE_SNAPSHOT or ZFS_TYPE_BOOKMARK)) = 0 then
+    //   zfs_iter_bookmarks(z_hdl,funcp,data);
+    result := 0;
+    zfs_close(z_hdl);
+  end;
+
+  const default:pchar='name';
+
+  procedure list_datasets;
+  var data_cb : zfs_cb_data;
+  begin
+    data_cb.zproplist:=Nil;
+    zprop_get_list(zph,default,@data_cb.zproplist,ZFS_TYPE_DATASET);
+    funcp := @dataset_cb;
+    funcp2 := @dataset_cb_zvol;
+    zfs_iter_root(zph,funcp,@data_cb);
+    zprop_free_list(data_cb.zproplist);
+  end;
+
+  var startt,enddt : TDateTime;
+      endless : boolean;
 begin
-  writeln('FOS ZPC Test');
+  writeln('FOS ZPC Test, set FOS_ENDLESS<>'' to run endless');
+  endless := GetEnvironmentVariable('FOS_ENDLESS')='';
   zph := nil;
   zph := libzfs_init();
-  if paramstr(1)='' then
-    dump_config('syspool')
-  else
-    dump_config(paramstr(1));
+  libzfs_print_on_error(zph,B_TRUE);
+ // libzfs_mnttab_cache(zph,B_TRUE);
+  libzfs_set_cachedprops(zph,B_TRUE);
+  //if paramstr(1)='' then
+  //  dump_config('syspool')
+  //else
+  //  dump_config(paramstr(1));
+  repeat
+    startt:=now;
+    writeln('START RUN ');
+    list_datasets;
+    enddt:=now;
+    writeln('END RUN ',(enddt-startt)*100000:5:4);
+  until endless;
+  libzfs_mnttab_cache(zph,B_FALSE);
   libzfs_fini(zph);
 end.
 
