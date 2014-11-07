@@ -182,7 +182,7 @@ var machineid : TFRE_DB_GUID;
 
    procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
    var
-     res     : TFRE_DB_MESSAGE_DESC;
+     res     : TFRE_DB_CONTENT_DESC;
      i       : NativeInt;
      cnt     : NativeInt;
      newnew  : IFRE_DB_Object;
@@ -191,7 +191,8 @@ var machineid : TFRE_DB_GUID;
      case status of
        cdcs_OK:
          begin
-           res:=TFRE_DB_MESSAGE_DESC.create.Describe('BW','SETUP OK',fdbmt_info);
+//           res:=TFRE_DB_MESSAGE_DESC.create.Describe('BW','SETUP OK',fdbmt_info);
+           res := GFRE_DB_NIL_DESC;
          end;
        cdcs_TIMEOUT:
          begin
