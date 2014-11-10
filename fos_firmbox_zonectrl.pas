@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils,unix,ctypes,unixtype,fos_illumos_defs,fosillu_priv,fosillu_libzonecfg,fosillu_priv_names,
-  fos_tool_interfaces,fosillu_libzfs;
+  fos_tool_interfaces,fosillu_libzfs,fre_db_interface;
 
 const
   CMD_HELP      =   0;
@@ -53,8 +53,74 @@ var zents  : array of zone_entry_t;
 procedure sanity_check(zone : string; cmd_num : integer; running, unsafe_when_running, force : boolean);
 
 procedure list_zones;
+procedure fre_create_zone  (const zone_dbo:IFRE_DB_Object);
+procedure fre_destroy_zone (const zone_dbo:IFRE_DB_Object);
 
 implementation
+
+procedure add_dataset      (const handle: zone_dochandle_t; const fs_dir,fs_type,fs_special:string);
+var
+  fstab           : zone_fstab;
+  err             : integer;
+  msg             : string;
+begin
+ //zone_fs_special : array[0..(MAXPATHLEN)-1] of cchar;
+ //zone_fs_dir : array[0..(MAXPATHLEN)-1] of cchar;
+ //zone_fs_type : array[0..(FSTYPSZ)-1] of cchar;
+ //zone_fs_options : Pzone_fsopt_t;
+ //zone_fs_raw : array[0..(MAXPATHLEN)-1] of cchar;
+
+//  writeln('adding fs');
+  FillByte(fstab,sizeof(fstab),0);
+  StrPLCopy(Pchar(@fstab.zone_fs_dir),fs_dir,MAXPATHLEN);
+  StrPLCopy(Pchar(@fstab.zone_fs_type),fs_type,FSTYPSZ);
+  StrPLCopy(PChar(@fstab.zone_fs_special),fs_special,MAXPATHLEN);
+
+//  Writeln(Strpas(@fstab.zone_fs_dir));
+  err := zonecfg_add_filesystem(handle,@fstab);
+  if err<>Z_OK then
+    begin
+      msg := StrPas(zonecfg_strerror(err));
+      raise Exception.Create('error on adding fs :'+inttostr(err)+' '+msg);
+    end;
+end;
+
+procedure add_device       (const handle: zone_dochandle_t; const dev_match : string);
+var
+  devtab          : zone_devtab;
+  err             : integer;
+  msg             : string;
+begin
+ //zone_dev_match : array[0..(MAXPATHLEN)-1] of cchar;
+ FillByte(devtab,sizeof(devtab),0);
+ StrPLCopy(Pchar(@devtab.zone_dev_match),dev_match,MAXPATHLEN);
+// writeln('adding device');
+
+ err := zonecfg_add_dev(handle,@devtab);
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on adding device :'+inttostr(err)+' '+msg);
+   end;
+end;
+
+procedure add_dataset      (const handle: zone_dochandle_t; const ds_name : string);
+var
+  err             : integer;
+  msg             : string;
+  dstab           : zone_dstab;
+begin
+// zone_dataset_name : array[0..(MAXNAMELEN)-1] of cchar;
+  FillByte(dstab,sizeof(dstab),0);
+  StrPLCopy(Pchar(@dstab.zone_dataset_name),ds_name,MAXNAMELEN);
+  writeln('adding dataset');
+  err := zonecfg_add_ds(handle,@dstab);
+  if err<>Z_OK then
+    begin
+      msg := StrPas(zonecfg_strerror(err));
+      raise Exception.Create('error on adding dataset :'+inttostr(err)+' '+msg);
+    end;
+end;
 
 procedure lookup_zone_info(const zone_name:string; zid : zoneid_t ; var zent : zone_entry_t);
 var uuid   : uuid_t;
@@ -357,6 +423,187 @@ begin
    //writeln;
 end;
 
+procedure fre_create_zone(const zone_dbo: IFRE_DB_Object);
+var
+  handle          : zone_dochandle_t;
+  zone_template   : string;
+  zone_name       : string;
+  zone_path       : string;
+  zone_dataset    : string;
+  zone_brand      : string;
+  err             : integer;
+  msg             : string;
+  czonename       : Array[0..ZONENAME_MAX] of char;
+  czonepath       : Array[0..MAXPATHLEN] of char;
+  privs           : Ppriv_set_t;
+  privname        : PChar;
+
+begin
+ writeln('SWL ZONE:',zone_dbo.DumpToString());
+ zone_name    := zone_dbo.UID.AsHexString;
+ zone_path    := zone_dbo.Field('zonepath').asstring;
+ zone_dataset := zone_dbo.Field('zonedataset').asstring;
+ zone_brand   := 'fbz';
+
+ handle := zonecfg_init_handle();
+ if handle = Nil then
+   raise Exception.create('could not init handle');
+
+ zone_template:='SUNWblank';
+
+ err := zonecfg_get_template_handle(PChar(zone_template),PChar(zone_name),handle);
+
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on zone creation :'+msg);
+   end;
+
+ writeln('got template handle');
+
+ err := zonecfg_set_zonepath(handle,PChar(zone_path));
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on setting zonepath :'+msg);
+   end;
+
+ err := zonecfg_set_brand(handle,PChar(zone_brand));
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on setting zonebrand :'+msg);
+   end;
+
+ err := zonecfg_set_iptype(handle,ZS_EXCLUSIVE);
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on setting ip type :'+msg);
+   end;
+
+ err := zonecfg_set_autoboot(handle,B_TRUE);
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on setting autoboot :'+msg);
+   end;
+
+ err:=zonecfg_get_name(handle,czonename,ZONENAME_MAX);
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on getting zonename :'+msg);
+   end;
+ writeln('assigned zonename ',czonename);
+
+ //err :=zonecfg_verify_save(handle,Pchar('/syspool/zonefile'#0));
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on verify save zone :'+inttostr(err)+' '+msg);
+ //  end;
+
+ //err := zonecfg_update_userauths(handle,PChar(zone_name));
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on update userauth zone :'+inttostr(err)+' '+msg);
+ //  end;
+
+ //err := zonecfg_check_handle(handle);
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on check handle zone :'+inttostr(err)+' '+msg);
+ //  end;
+ //writeln('check handle ok!');
+ //
+ //err := zonecfg_get_zonepath(handle,czonepath,MAXPATHLEN);
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on get zonepath :'+inttostr(err)+' '+msg);
+ //  end;
+ //writeln(czonepath);
+
+ //err := brand_verify(handle);
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on get zonepath :'+inttostr(err)+' '+msg);
+ //  end;
+
+ //privs := priv_allocset();
+ //if privs=nil then
+ //  begin
+ //    raise Exception.Create('priv allocset failed');
+ //  end;
+ //
+ //err := zonecfg_get_privset(handle,privs,@privname);
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on get_privset :'+inttostr(err)+' '+msg);
+ //  end;
+ //writeln('privname ',privname);
+ //priv_freeset(privs);
+ //
+ //err := zonecfg_setadminent(handle);
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on setadminent :'+inttostr(err)+' '+msg);
+ //  end;
+ //err := zonecfg_endadminent(handle);
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on endadminent :'+inttostr(err)+' '+msg);
+ //  end;
+ //
+ //err := zonecfg_authorize_users(handle,Pchar(zone_name));
+ //if err<>Z_OK then
+ //  begin
+ //    msg := StrPas(zonecfg_strerror(err));
+ //    raise Exception.Create('error on authorize users :'+inttostr(err)+' '+msg);
+ //  end;
+ //
+ //
+
+ add_dataset(handle,'/etc','lofs',zone_path+DirectorySeparator+'/zonedata/etc');
+ add_dataset(handle,'/var','lofs',zone_path+DirectorySeparator+'/zonedata/var');
+ add_dataset(handle,'/opt/local/etc','lofs',zone_path+DirectorySeparator+'/zonedata/optetc');
+ add_dataset(handle,'/opt/local/fre','lofs',zone_path+DirectorySeparator+'/zonedata/optfre');
+ add_dataset(handle,'/vfiler','lofs',zone_path+DirectorySeparator+'/zonedata/vfiler');
+
+ add_device (handle,'/dev/zvol/rdsk/'+zone_dataset+'/vmdisk/*');
+ add_dataset(handle,zone_dataset+'/vmdisk');
+
+ err := zonecfg_save(handle);
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on saving zone :'+inttostr(err)+' '+msg);
+   end;
+end;
+
+procedure fre_destroy_zone(const zone_dbo: IFRE_DB_Object);
+var
+  zone_name : string;
+  err       : integer;
+  msg       : string;
+begin
+ writeln('SWL ZONE:',zone_dbo.DumpToString());
+ zone_name  := zone_dbo.UID.AsHexString;
+
+ err := zonecfg_destroy(Pchar(zone_name),B_FALSE);
+ if err<>Z_OK then
+   begin
+     msg := StrPas(zonecfg_strerror(err));
+     raise Exception.Create('error on destroying zone :'+inttostr(err)+' '+msg);
+   end;
+end;
 
 
 end.
