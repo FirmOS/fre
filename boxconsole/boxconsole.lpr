@@ -60,7 +60,8 @@ uses
   {$ENDIF}
   FRE_DB_EMBEDDED_IMPL,
   FRE_CONFIGURATION,FRE_BASE_SERVER,
-  fos_firmboxfeed_client,fre_basefeed_app;
+  fos_firmboxfeed_client,
+  fre_basefeed_app;
 
 
 {$IFDEF FOS_WITH_CONSOLE}

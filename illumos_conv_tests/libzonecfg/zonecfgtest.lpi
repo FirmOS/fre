@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
     <Version Value="9"/>
@@ -37,17 +37,14 @@
       <Unit0>
         <Filename Value="zonecfgtest.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="zonecfgtest"/>
       </Unit0>
       <Unit1>
         <Filename Value="../zpconfig/fos_illumos_defs.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fos_illumos_defs"/>
       </Unit1>
       <Unit2>
         <Filename Value="../../fos_firmbox_svcctrl.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fos_firmbox_svcctrl"/>
       </Unit2>
       <Unit3>
         <Filename Value="../../fos_firmbox_zonectrl.pas"/>
@@ -79,17 +76,6 @@ if TargetOS = 'solaris' then
     <CodeGeneration>
       <TargetCPU Value="i386"/>
     </CodeGeneration>
-    <Linking>
-      <Debugging>
-        <UseHeaptrc Value="True"/>
-      </Debugging>
-    </Linking>
-    <Other>
-      <CompilerMessages>
-        <MsgFileName Value=""/>
-      </CompilerMessages>
-      <CompilerPath Value="$(CompPath)"/>
-    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

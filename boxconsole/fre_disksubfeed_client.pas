@@ -48,7 +48,7 @@ uses
   Classes, SysUtils,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,fre_basedbo_server,fre_system,fre_db_core,
   fre_dbbase,fre_zfs,fre_scsi,fre_hal_disk_enclosure_pool_mangement,fre_base_parser
   {$IFDEF SOLARIS}
-  ,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool;
+  ,fosillu_hal_dbo_common, fosillu_hal_dbo_zfs_pool,fosillu_hal_dbo_zfs_dataset;
   {$ELSE}
   ;
   {$ENDIF}

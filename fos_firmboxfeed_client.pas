@@ -103,7 +103,8 @@ type
     procedure  REM_INSERTVOIPENTRY     (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
     procedure  REM_STARTVM             (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
     procedure  REM_STOPVM              (const command_id : Qword ; const input : IFRE_DB_Object ; const cmd_type : TFRE_DB_COMMANDTYPE);
-    procedure  REM_REQUESTDISKDATA     (const command_id: Qword; const input: IFRE_DB_Object; const cmd_type: TFRE_DB_COMMANDTYPE);
+    procedure  REM_REQUESTDISKDATA     (const command_id : Qword ; const input: IFRE_DB_Object  ; const cmd_type : TFRE_DB_COMMANDTYPE);
+
   end;
 
 
