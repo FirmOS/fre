@@ -165,7 +165,7 @@ begin
   end;
 end;
 
-{ TFOS_FIRMBOX_GLOBAL_NS_MOD }
+{ TFOS_FIRMBOX_NAMESERVER_MOD }
 
 class procedure TFOS_FIRMBOX_NAMESERVER_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
