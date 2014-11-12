@@ -95,7 +95,7 @@ function TFOS_FIRMBOX_GROUPWARE_MOD.WEB_Content(const input: IFRE_DB_Object; con
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  Result:=TFRE_DB_HORDE_DESC.create.Describe('horde.firmos.at');
+  Result:=TFRE_DB_HORDE_DESC.create.Describe('webmail.demo.styriacloud.net');
 end;
 
 end.
