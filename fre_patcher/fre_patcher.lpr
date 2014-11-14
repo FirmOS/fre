@@ -106,6 +106,7 @@ type
     procedure   MoveDomainCollecions                    ;
     procedure   GenerateDeviceData                      ;
     procedure   GenerateDataCenterData                  ;
+    procedure   ExportEmbeddedZones                     ;
     procedure   AddAFeederUser                          (const feederusername:string ; const feederpass:string ; const feederclass :string);
     procedure   AddAuser                                (const userstringencoding : string);
 
@@ -201,6 +202,7 @@ begin
     'genauto'      : GenerateAutomaticWFSteps;
     'movedc'       : MoveDomainCollecions;
     'devicedata'   : GenerateDeviceData;
+    'exportzones'  : ExportEmbeddedZones;
     'gendatacenter': GenerateDatacenterData;
   end;
 end;
@@ -2038,6 +2040,36 @@ begin
   CreateExtension(voip_id,tel_id_22,'DW-30',30,'192.168.82.59','00:15:65:20:d4:91','12345');
   CreateExtension(voip_id,tel_id_22,'DW-40',40,'10.55.0.66','00:15:65:38:39:68','12345');
 
+  conn.Free;
+end;
+
+procedure TFRE_Testserver.ExportEmbeddedZones;
+var coll : IFRE_DB_COLLECTION;
+    conn : TFRE_DB_CONNECTION;
+
+  procedure zone_iterator(const obj:IFRE_DB_Object);
+  var zone : TFRE_DB_ZONE;
+  begin
+    if obj.IsA(TFRE_DB_ZONE,zone) then
+      begin
+        zone.Embed(conn);
+        writeln('SWL: ZONE:',zone.DumpToString());
+        zone.SaveToFile(cFRE_HAL_CFG_DIR+DirectorySeparator+'zone_'+zone.UID.AsHexString+'.dbo');
+      end;
+  end;
+
+begin
+  FRE_DBBASE.Register_DB_Extensions;
+  fos_citycom_base.Register_DB_Extensions;
+  fre_zfs.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
+
+  coll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
+  coll.ForAll(@zone_iterator);
   conn.Free;
 end;
 
