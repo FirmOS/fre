@@ -1,6 +1,7 @@
 unit fosillu_dladm;
 
 {$mode objfpc}{$H+}
+{$codepage utf-8}
 {$modeswitch advancedrecords }
 
 interface

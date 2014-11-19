@@ -4,13 +4,15 @@ program fosbrand;
 
 {$LIBRARYPATH ../../lib}
 
+{$LINKLIB libdladm}
+
 uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
   Classes, SysUtils, CustApp, fosillu_libzonecfg,fre_process,
   FRE_SYSTEM,FOS_DEFAULT_IMPLEMENTATION,FOS_TOOL_INTERFACES,FOS_FCOM_TYPES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,
-  FRE_DB_CORE,fre_dbbase, FRE_DB_EMBEDDED_IMPL, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs
+  FRE_DB_CORE,fre_dbbase, FRE_DB_EMBEDDED_IMPL, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs,fosillu_dladm,fosillu_libdladm
   { you can add units after this };
 
 type
@@ -41,12 +43,16 @@ var
   zone_dbo      : IFRE_DB_Object;
   zone_path     : string;
   zone          : TFRE_DB_ZONE;
+  dlres         : dladm_status_t;
+
 begin
   InitMinimal(false);
   fre_zfs.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
 
-
+  dlres := dladm_open(@GILLU_DLADM);
+  if dlres<>DLADM_STATUS_OK then
+    raise Exception.Create('could not initialze libdlam');
 
   for i:=0 to ParamCount do
   begin

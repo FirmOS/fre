@@ -1,6 +1,7 @@
 program dladmtest;
 
 {$mode objfpc}{$H+}
+{$codepage utf-8}
 
 uses
   cthreads, unixtype,Classes,fre_db_interface,fos_default_implementation,
