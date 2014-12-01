@@ -587,38 +587,38 @@ begin
   if session.IsInteractiveSession then begin
     conn:=session.GetDBConnection;
     __idxCPU:=-1;__idxRAM:=-1;__idxCache:=-1;__idxDisk:=-1;__idxNet:=-1;
-    CHARTDATA := conn.getCollection('ZONES_SPACE');
-    DC_CHARTDATA_ZONES := session.NewDerivedCollection('DC_ZONES_SPACE');
-    with DC_CHARTDATA_ZONES do begin
-      SetDeriveParent(CHARTDATA);
-      SetDisplayTypeChart('Space on Diskpool',fdbct_pie,TFRE_DB_StringArray.Create('value'),True,True,nil,true);
-    end;
-
-    disks := conn.GetCollection('POOL_DISKS');
-    idx:=0;
-
-    ast   := session.NewDerivedCollection('APP_POOL_AST');
-    ast.SetDeriveParent(disks);
-    ast.SetDefaultOrderField('diskid',true);
-    ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20);
-    SetLength(labels,ast.ItemCount);
-    ast.ForAllDerived(@_AddDisk);
-    ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20); // Hack for labels, must be redone
-
-    rbw   := session.NewDerivedCollection('APP_POOL_RBW');
-    rbw.SetDeriveParent(disks);
-    rbw.SetDefaultOrderField('diskid',true);
-    rbw.SetDisplayTypeChart('Raw Disk Bandwidth Read (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('rbw'),false,false,labels,false,400000);
-
-    wbw   := session.NewDerivedCollection('APP_POOL_WBW');
-    wbw.SetDeriveParent(disks);
-    wbw.SetDefaultOrderField('diskid',true);
-    wbw.SetDisplayTypeChart('Raw Disk Bandwidth Write (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('wbw'),false,false,labels,false,400000);
-
-    busy  := session.NewDerivedCollection('APP_POOL_BUSY');
-    busy.SetDeriveParent(disks);
-    busy.SetDefaultOrderField('diskid',true);
-    busy.SetDisplayTypeChart('Raw Disk Busy Times [%]',fdbct_column,TFRE_DB_StringArray.Create('b'),false,false,labels,false,100);
+    //CHARTDATA := conn.getCollection('ZONES_SPACE');   //FIXXME - Use LiveChart
+    //DC_CHARTDATA_ZONES := session.NewDerivedCollection('DC_ZONES_SPACE');
+    //with DC_CHARTDATA_ZONES do begin
+    //  SetDeriveParent(CHARTDATA);
+    //  SetDisplayTypeChart('Space on Diskpool',fdbct_pie,TFRE_DB_StringArray.Create('value'),True,True,nil,true);
+    //end;
+    //
+    //disks := conn.GetCollection('POOL_DISKS');
+    //idx:=0;
+    //
+    //ast   := session.NewDerivedCollection('APP_POOL_AST');
+    //ast.SetDeriveParent(disks);
+    //ast.SetDefaultOrderField('diskid',true);
+    //ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20);
+    //SetLength(labels,ast.ItemCount);
+    //ast.ForAllDerived(@_AddDisk);
+    //ast.SetDisplayTypeChart('Pool Disk Avg. Service Time (ms)',fdbct_column,TFRE_DB_StringArray.Create('ast'),false,false,labels,false,20); // Hack for labels, must be redone
+    //
+    //rbw   := session.NewDerivedCollection('APP_POOL_RBW');
+    //rbw.SetDeriveParent(disks);
+    //rbw.SetDefaultOrderField('diskid',true);
+    //rbw.SetDisplayTypeChart('Raw Disk Bandwidth Read (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('rbw'),false,false,labels,false,400000);
+    //
+    //wbw   := session.NewDerivedCollection('APP_POOL_WBW');
+    //wbw.SetDeriveParent(disks);
+    //wbw.SetDefaultOrderField('diskid',true);
+    //wbw.SetDisplayTypeChart('Raw Disk Bandwidth Write (kBytes/s)',fdbct_column,TFRE_DB_StringArray.Create('wbw'),false,false,labels,false,400000);
+    //
+    //busy  := session.NewDerivedCollection('APP_POOL_BUSY');
+    //busy.SetDeriveParent(disks);
+    //busy.SetDefaultOrderField('diskid',true);
+    //busy.SetDisplayTypeChart('Raw Disk Busy Times [%]',fdbct_column,TFRE_DB_StringArray.Create('b'),false,false,labels,false,100);
 
   end;
 end;
@@ -736,7 +736,7 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  c1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
+  //c1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,ses.FetchDerivedCollection('DC_ZONES_SPACE').GetDisplayDescription,nil,nil,nil,false);
   c2:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_cpu',2,120,CWSF(@WEB_CPUStatusStopStart),0,100,app.FetchAppTextShort(ses,'overview_caption_cpu'),TFRE_DB_StringArray.create('f00','0f0'),
         TFRE_DB_StringArray.create(app.FetchAppTextShort(ses,'overview_cpu_system_legend'),app.FetchAppTextShort(ses,'overview_cpu_user_legend')),11,CWSF(@WEB_CPUStatusInit));
   c3:=TFRE_DB_LIVE_CHART_DESC.create.DescribeLine('appl_stat_net',2,120,CWSF(@WEB_NetStatusStopStart),0,100,app.FetchAppTextShort(ses,'overview_caption_net'),TFRE_DB_StringArray.create('f00','0f0'),
@@ -749,17 +749,19 @@ begin
         TFRE_DB_StringArray.create(app.FetchAppTextShort(ses,'overview_cache_misses_legend'),app.FetchAppTextShort(ses,'overview_cache_hits_legend')),11,CWSF(@WEB_CacheStatusInit));
 
   sub1l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c2,c5,nil,nil,nil,false,1,1);
-  sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub1l,c1,nil,nil,nil,false,2,1);
+  //sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub1l,c1,nil,nil,nil,false,2,1);
+  sub1:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub1l,nil,nil,nil,false,2,1);
 
   sub2l:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(c3,c4,nil,nil,nil,false,1,1);
   sub2:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(sub2l,c6,nil,nil,nil,false,2,1);
   left:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub2,nil,sub1,nil,false,-1,1,-1,1);
 
-  sub3:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(GetSession(input).FetchDerivedCollection('APP_POOL_BUSY').GetDisplayDescription,GetSession(input).FetchDerivedCollection('APP_POOL_AST').GetDisplayDescription,nil,nil,nil,false,1,1);
-  sub4:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(GetSession(input).FetchDerivedCollection('APP_POOL_WBW').GetDisplayDescription,GetSession(input).FetchDerivedCollection('APP_POOL_RBW').GetDisplayDescription,nil,nil,nil,false,1,1);
-  right:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub4,nil,sub3,nil,false,-1,1,-1,1);
+  //sub3:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(GetSession(input).FetchDerivedCollection('APP_POOL_BUSY').GetDisplayDescription,GetSession(input).FetchDerivedCollection('APP_POOL_AST').GetDisplayDescription,nil,nil,nil,false,1,1);
+  //sub4:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(GetSession(input).FetchDerivedCollection('APP_POOL_WBW').GetDisplayDescription,GetSession(input).FetchDerivedCollection('APP_POOL_RBW').GetDisplayDescription,nil,nil,nil,false,1,1);
+  //right:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,sub4,nil,sub3,nil,false,-1,1,-1,1);
 
-  res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(left,right,nil,nil,nil,false,3,2);
+  //res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(left,right,nil,nil,nil,false,3,2);
+  res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,left,nil,nil,nil,false,3,2);
   result := res;
 end;
 

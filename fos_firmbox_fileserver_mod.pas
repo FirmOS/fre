@@ -754,7 +754,7 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  store:=TFRE_DB_STORE_DESC.create.Describe('mypath',CWSF(@WEB_VFSShareBrowserGetEntries),nil,nil,nil,'VFSShareBrowser');
+  store:=TFRE_DB_STORE_DESC.create.Describe('mypath',CWSF(@WEB_VFSShareBrowserGetEntries),nil,nil,'VFSShareBrowser');
 
   layout:=TFRE_DB_VIEW_LIST_LAYOUT_DESC.create.Describe();
   layout.AddDataElement.Describe('name',FetchModuleTextShort(ses,'fs_browser_name'),dt_string,true,false,3,true,false,false,'icon','icon_open');
