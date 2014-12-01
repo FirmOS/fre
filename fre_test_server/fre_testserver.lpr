@@ -146,11 +146,10 @@ end;
 
 begin
   cFRE_LOGIN_OVERRIDE  := 'Login';
-  cFRE_DB_ALLOWED_APPS := 'TFOS_CITYCOM_ADC_ADMIN_APP';
+  //cFRE_DB_ALLOWED_APPS := 'TFOS_CITYCOM_ADC_ADMIN_APP';
   cFRE_TITLE_OVERRIDE:='<span style="top=25%; font-size: 120px;" > </span>';
   Application:=TFRE_Testserver.Create(nil);
   Application.Title:='FirmOS Testserver';
-  Application.DefaultExtensions := 'TEST';
   Application.Run;
   Application.Free;
 end.
