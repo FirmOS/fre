@@ -707,7 +707,7 @@ begin
   //conn.Free;
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
-  coll := conn.SYSC.Collection('SysWorkflowScheme');
+  coll := conn.AdmGetWorkFlowCollection;
   try
    writeln('DEF INDEX ',coll.DefineIndexOnField('error_idx',fdbft_String,true,true).Code);
   except
@@ -1550,9 +1550,11 @@ begin
   GenerateSearchDomains(false);
 
   FRE_DBBASE.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
   fos_citycom_base.Register_DB_Extensions;
   fre_zfs.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
+  fos_citycom_voip_mod.Register_DB_Extensions;
 
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
@@ -1744,6 +1746,13 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:85:d9:ab','internet','Internet');
   AddIPV4('109.73.158.185/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
+
+  zone_id  := CreateZone('rzfiler',ds_id,host_id,template_id,'5ba8438d4d1f166f7348fcfa00129b52');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,ixgbe_id,0,0,CFRE_DB_NullGUID,'02:08:20:bc:85:cc','mgmt','Mgmt LAN');
+  AddIPV4('10.54.3.239/24',link_id);
+  AddRoutingIPV4('default','10.54.3.252',zone_id,'Default Route');
+  vf_id:=CreateVFiler(zone_id,'Virtual Fileserver');
+  CreateShare(vf_id,pool_id,'anord01disk/anord01ds/domains/'+g_domain_id.AsHexString+'/'+zone_id.AsHexString+'/zonedata/vfiler/rzintern','rzintern',0,0);
 
   zone_id  := CreateZone('dbnord',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,ixgbe_id,0,0,CFRE_DB_NullGUID,'02:08:20:3a:62:ce','mgmt','Mgmt LAN');
@@ -2077,7 +2086,6 @@ begin
   cFRE_PS_LAYER_USE_EMBEDDED := true; { always patch local ? }
   Application:=TFRE_Testserver.Create(nil);
   Application.Title:='FirmOS Generic #Patcher';
-  Application.DefaultExtensions := 'TEST';
   Application.Run;
   Application.Free;
 end.
