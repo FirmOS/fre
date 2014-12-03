@@ -520,10 +520,15 @@ begin
   scheme.AddSchemeField('port',fdbft_Int64);
 
   schemeField:=scheme.AddSchemeField('type',fdbft_String).SetupFieldDef(true,false,'dns_resource_record_type');
-  schemeField.addVisDepField('priority','MX');
-  schemeField.addVisDepField('priority','SRV');
-  schemeField.addVisDepField('weight','SRV');
-  schemeField.addVisDepField('port','SRV');
+  schemeField.addEnumDepField('priority','MX',fdv_visible);
+  schemeField.addEnumDepField('priority','SRV',fdv_visible);
+  schemeField.addEnumDepField('weight','SRV',fdv_visible);
+  schemeField.addEnumDepField('port','SRV',fdv_visible);
+
+  schemeField.addEnumDepField('value','CNAME',fdv_none,GetTranslateableTextKey('scheme_value_cname'));
+  schemeField.addEnumDepField('value','TXT',fdv_none,GetTranslateableTextKey('scheme_value_txt'));
+  schemeField.addEnumDepField('value','A',fdv_none,GetTranslateableTextKey('scheme_value_a'));
+  schemeField.addEnumDepField('value','AAAA',fdv_none,GetTranslateableTextKey('scheme_value_aaaa'));
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('host',GetTranslateableTextKey('scheme_host'));
@@ -541,7 +546,7 @@ end;
 
 class procedure TFOS_DB_DNS_RESOURCE_RECORD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='1.0';
+  newVersionId:='1.1';
 
   if (currentVersionId='') then begin
     currentVersionId := '1.0';
@@ -563,6 +568,15 @@ begin
     StoreTranslateableText(conn,'dns_rr_spf','SPF (Sender Policy Framework)');
     StoreTranslateableText(conn,'dns_rr_srv','SRV (Service locator)');
     StoreTranslateableText(conn,'dns_rr_ns','NS (Name server record)');
+
+  end;
+  if (currentVersionId='1.0') then begin
+    currentVersionId := '1.1';
+
+    StoreTranslateableText(conn,'scheme_value_cname','Alias');
+    StoreTranslateableText(conn,'scheme_value_txt','Text');
+    StoreTranslateableText(conn,'scheme_value_a','IPv4');
+    StoreTranslateableText(conn,'scheme_value_aaaa','IPv6');
 
   end;
 end;
@@ -770,7 +784,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('host');
+      AddOneToOnescheme('host','label');
       AddOneToOnescheme('type','type','',dt_string,false);
     end;
 
@@ -877,6 +891,7 @@ var
   rrecord         : IFRE_DB_Object;
   sf              : TFRE_DB_SERVER_FUNC_DESC;
   store           : TFRE_DB_STORE_DESC;
+  domain_def      : TFRE_DB_GUIDArray;
 begin
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedDomain') and (ses.GetSessionModuleData(ClassName).Field('selectedDomain').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedDomain').AsStringItem[0]),nw_domain));
@@ -902,8 +917,9 @@ begin
 
     form.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false).SetCaption(FetchModuleTextShort(ses,'network_domain_edit_default'));
 
-    if nw_domain.FieldExists('default') then begin
-      CheckDbResult(conn.Fetch(nw_domain.Field('default').AsObjectLink,rrecord));
+    domain_def:=conn.GetReferences(nw_domain.UID,false,'TFOS_DB_DNS_RESOURCE_RECORD','network_domain_default');
+    if Length(domain_def)>0 then begin
+      CheckDbResult(conn.Fetch(domain_def[0],rrecord));
       form.FillWithObjectValues(rrecord,ses,'default');
     end;
 
@@ -1099,6 +1115,7 @@ begin
     schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.default').AsObject,resource,true,conn);
     resource.Field('network_domain').AsObjectLink:=domain.UID;
     resource.Field('network_domain_default').AsObjectLink:=domain.UID;
+    resource.Field('uniquephysicalid').AsString:='@' + domain.UID_String;
     CheckDbResult(resourceColl.Store(resource));
   end;
 
@@ -1150,6 +1167,7 @@ begin
     schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.default').AsObject,resource,true,conn);
     resource.Field('network_domain').AsObjectLink:=nw_domain.UID;
     resource.Field('network_domain_default').AsObjectLink:=nw_domain.UID;
+    resource.Field('uniquephysicalid').AsString:='@' + nw_domain.UID_String;
     CheckDbResult(resourceColl.Store(resource));
   end;
 
