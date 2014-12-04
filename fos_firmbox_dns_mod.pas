@@ -527,8 +527,8 @@ begin
 
   schemeField.addEnumDepField('value','CNAME',fdv_none,GetTranslateableTextKey('scheme_value_cname'));
   schemeField.addEnumDepField('value','TXT',fdv_none,GetTranslateableTextKey('scheme_value_txt'));
-  schemeField.addEnumDepField('value','A',fdv_none,GetTranslateableTextKey('scheme_value_a'));
-  schemeField.addEnumDepField('value','AAAA',fdv_none,GetTranslateableTextKey('scheme_value_aaaa'));
+  schemeField.addEnumDepField('value','A',fdv_none,GetTranslateableTextKey('scheme_value_a'),'ip');
+  schemeField.addEnumDepField('value','AAAA',fdv_none,GetTranslateableTextKey('scheme_value_aaaa'),'ipv6');
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('host',GetTranslateableTextKey('scheme_host'));
