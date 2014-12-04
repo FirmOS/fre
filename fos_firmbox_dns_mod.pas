@@ -539,8 +539,9 @@ begin
   group.AddInput('weight',GetTranslateableTextKey('scheme_weight'));
   group.AddInput('port',GetTranslateableTextKey('scheme_port'));
 
-  group:=scheme.AddInputGroup('main_default').Setup(GetTranslateableTextKey('scheme_main_group'));
-  group.AddInput('value',GetTranslateableTextKey('scheme_value'));
+  group:=scheme.AddInputGroup('main_default').Setup(GetTranslateableTextKey('scheme_main_default_group'));
+  group.AddInput('type',GetTranslateableTextKey('scheme_type'),false,true,'A');
+  group.AddInput('value',GetTranslateableTextKey('scheme_value_a'));
   group.AddInput('ttl',GetTranslateableTextKey('scheme_ttl'));
 end;
 
@@ -578,6 +579,7 @@ begin
     StoreTranslateableText(conn,'scheme_value_a','IPv4');
     StoreTranslateableText(conn,'scheme_value_aaaa','IPv6');
 
+    StoreTranslateableText(conn,'scheme_main_default_group','Domain A Record');
   end;
 end;
 
@@ -596,7 +598,7 @@ begin
   scheme.AddSchemeField('default',fdbft_ObjLink);
 
   group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
-  group.AddInput('customer',GetTranslateableTextKey('scheme_customer'),false,false,CFOS_DB_DNS_CUSTOMERS_DCOLL,true);
+  group.AddInput('customer',GetTranslateableTextKey('scheme_customer'),false,false,'',CFOS_DB_DNS_CUSTOMERS_DCOLL,true);
   group.AddInput('objname',GetTranslateableTextKey('scheme_name'));
 end;
 
@@ -692,6 +694,9 @@ begin
     CreateModuleText(conn,'chooser_customer','Customer');
     CreateModuleText(conn,'grid_network_domains_customer','Customer');
     CreateModuleText(conn,'grid_customer_default_value','No Customer assigned');
+
+    DeleteTranslateableText(conn,'network_domain_create_default');
+    DeleteTranslateableText(conn,'network_domain_edit_default');
   end;
 end;
 
@@ -915,7 +920,7 @@ begin
 
     form.FillWithObjectValues(nw_domain,ses,'domain');
 
-    form.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false).SetCaption(FetchModuleTextShort(ses,'network_domain_edit_default'));
+    form.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false);
 
     domain_def:=conn.GetReferences(nw_domain.UID,false,'TFOS_DB_DNS_RESOURCE_RECORD','network_domain_default');
     if Length(domain_def)>0 then begin
@@ -1046,7 +1051,7 @@ begin
     end;
   end;
 
-  res.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false).SetCaption(FetchModuleTextShort(ses,'network_domain_create_default'));
+  res.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CWSF(@WEB_CreateNetworkDomain),fdbbt_submit);
   Result:=res;
