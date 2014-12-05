@@ -540,7 +540,7 @@ begin
   group.AddInput('port',GetTranslateableTextKey('scheme_port'));
 
   group:=scheme.AddInputGroup('main_default').Setup(GetTranslateableTextKey('scheme_main_default_group'));
-  group.AddInput('value',GetTranslateableTextKey('scheme_value_a'));
+  group.AddInput('value',GetTranslateableTextKey('scheme_value_a'),false,false,'','',false,dh_chooser_combo,coll_NONE,false,'ip');
   group.AddInput('ttl',GetTranslateableTextKey('scheme_ttl'));
 end;
 
