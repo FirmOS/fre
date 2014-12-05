@@ -42,6 +42,7 @@ type
     function        _AddModifyResourceRecord            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
+    procedure       CalculateDescription                (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DomainDetailsContent            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -579,6 +580,8 @@ begin
     StoreTranslateableText(conn,'scheme_value_aaaa','IPv6');
 
     StoreTranslateableText(conn,'scheme_main_default_group','Domain A Record');
+    DeleteTranslateableText(conn,'scheme_host');
+    StoreTranslateableText(conn,'scheme_host','Hostname');
   end;
 end;
 
@@ -696,6 +699,12 @@ begin
 
     DeleteTranslateableText(conn,'network_domain_create_default');
     DeleteTranslateableText(conn,'network_domain_edit_default');
+    DeleteModuleText(conn,'grid_records_host');
+    CreateModuleText(conn,'grid_records_host','Hostname');
+
+    DeleteModuleText(conn,'grid_network_domains_default');
+    CreateModuleText(conn,'grid_network_domains_default_value','Domain A Record: %value%');
+    CreateModuleText(conn,'grid_network_domains_default_ttl',' (TTL: %ttl%)');
   end;
 end;
 
@@ -805,7 +814,10 @@ begin
     with transform do begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
       AddOneToOnescheme('objname','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
-      AddMatchingReferencedField('default','value','default',FetchModuleTextShort(session,'grid_network_domains_default'));
+      AddOneToOnescheme('default','default','',dt_description);
+      AddMatchingReferencedField('TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN_DEFAULT','value','default_value');
+      AddMatchingReferencedField('TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN_DEFAULT','ttl','default_ttl');
+      SetFinalRightTransformFunction(@CalculateDescription,[FetchModuleTextShort(session,'grid_network_domains_default_value'),FetchModuleTextShort(session,'grid_network_domains_default_ttl')]);
       AddFulltextFilterOnTransformed(['objname']);
     end;
     domains_grid := session.NewDerivedCollection('NETWORK_DOMAINS_GRID');
@@ -853,6 +865,19 @@ begin
       SetDefaultOrderField('objname',true);
       Filters.AddStdClassRightFilter('rights','servicedomain','','','TFOS_DB_NETWORK_DOMAIN',[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
     end;
+  end;
+end;
+
+procedure TFOS_FIRMBOX_DNS_MOD.CalculateDescription(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
+var
+  descr: String;
+begin
+  if transformed_object.field('default_value').AsString<>'' then begin
+    descr:=StringReplace(langres[0],'%value%',transformed_object.Field('default_value').AsString,[rfReplaceAll]);
+    if transformed_object.Field('default_ttl').AsString<>'' then begin
+      descr:=descr + StringReplace(langres[1],'%ttl%',transformed_object.Field('default_ttl').AsString,[rfReplaceAll]);;
+    end;
+    transformed_object.Field('default').AsString:=descr;
   end;
 end;
 
