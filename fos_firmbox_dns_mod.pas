@@ -146,7 +146,7 @@ begin
 
   group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('host',GetTranslateableTextKey('scheme_host'));
-  group.AddInput('value',GetTranslateableTextKey('scheme_value'));
+  group.AddInput('value',GetTranslateableTextKey('scheme_value'),false,false,'','',false,dh_chooser_combo,coll_NONE,false,'ip');
   group.AddInput('ttl',GetTranslateableTextKey('scheme_ttl'));
 end;
 
@@ -460,13 +460,13 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
 
-  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_NAMESERVER_MOD',obj) then begin
+  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_NAMESERVER_MOD@'+ses.GetDomainUID_String,obj) then begin
     isNew:=false;
     configObj:=obj.Implementor_HC as TFRE_DB_APPLICATION_CONFIG;
   end else begin
     isNew:=true;
     configObj:=TFRE_DB_APPLICATION_CONFIG.CreateForDB;
-    configObj.Field('id').AsString:='TFOS_FIRMBOX_NAMESERVER_MOD';
+    configObj.Field('id').AsString:='TFOS_FIRMBOX_NAMESERVER_MOD@'+ses.GetDomainUID_String;
   end;
   if configObj.FieldExists('default_'+input.Field('default').AsString) then begin //REMOVE OLD DEFAULT OBJ SET FOR THE GIVEN SLOT
     CheckDbResult(conn.FetchAs(configObj.Field('default_'+input.Field('default').AsString).AsGUID,TFOS_DB_DNS_NAMESERVER_RECORD,nsObj));
@@ -1066,7 +1066,7 @@ begin
   res.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_create_dns1'),'domain.dns1',store,dh_chooser_combo,true,false,true);
   res.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_create_dns2'),'domain.dns2',store);
 
-  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_NAMESERVER_MOD',obj) then begin
+  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_NAMESERVER_MOD@'+ses.GetDomainUID_String,obj) then begin
     if obj.FieldExists('default_1') then begin
       res.SetElementValue('domain.dns1',obj.Field('default_1').AsString);
     end;
