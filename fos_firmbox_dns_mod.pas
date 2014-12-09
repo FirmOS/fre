@@ -45,6 +45,12 @@ type
     procedure       CalculateDescription                (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+
+    function        WEB_GlobalNameserverContent         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NameserverContent               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_GlobalDomains                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Domains                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+
     function        WEB_DomainDetailsContent            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DomainRecordsContent            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_NetworkDomainsMenu              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -95,6 +101,14 @@ type
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
 
+  { TFOS_DB_PROVIDER_NETWORK_DOMAIN }
+
+  TFOS_DB_PROVIDER_NETWORK_DOMAIN=class(TFRE_DB_SERVICE)
+  protected
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+  end;
+
   { TFOS_DB_DNS_RESOURCE_RECORD }
 
   TFOS_DB_DNS_RESOURCE_RECORD=class(TFRE_DB_ObjectEx)
@@ -118,6 +132,7 @@ implementation
 procedure Register_DB_Extensions;
 begin
   GFRE_DBI.RegisterObjectClassEx(TFOS_DB_NETWORK_DOMAIN);
+  GFRE_DBI.RegisterObjectClassEx(TFOS_DB_PROVIDER_NETWORK_DOMAIN);
   GFRE_DBI.RegisterObjectClassEx(TFOS_DB_DNS_RESOURCE_RECORD);
   GFRE_DBI.RegisterObjectClassEx(TFOS_DB_DNS_NAMESERVER_RECORD);
 
@@ -125,6 +140,18 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFOS_FIRMBOX_NAMESERVER_MOD);
 
   //GFRE_DBI.Initialize_Extension_Objects;
+end;
+
+{ TFOS_DB_PROVIDER_NETWORK_DOMAIN }
+
+class procedure TFOS_DB_PROVIDER_NETWORK_DOMAIN.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  inherited RegisterSystemScheme(scheme);
+end;
+
+class procedure TFOS_DB_PROVIDER_NETWORK_DOMAIN.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  inherited InstallDBObjects(conn, currentVersionId, newVersionId);
 end;
 
 { TFOS_DB_DNS_NAMESERVER_RECORD }
@@ -815,8 +842,8 @@ begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
       AddOneToOnescheme('objname','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddOneToOnescheme('default','default','',dt_description);
-      AddMatchingReferencedField('TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN_DEFAULT','value','default_value');
-      AddMatchingReferencedField('TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN_DEFAULT','ttl','default_ttl');
+      AddMatchingReferencedField('TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN_DEFAULT','value','default_value','',false);
+      AddMatchingReferencedField('TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN_DEFAULT','ttl','default_ttl','',false);
       SetFinalRightTransformFunction(@CalculateDescription,[FetchModuleTextShort(session,'grid_network_domains_default_value'),FetchModuleTextShort(session,'grid_network_domains_default_ttl')]);
       AddFulltextFilterOnTransformed(['objname']);
     end;
@@ -886,8 +913,21 @@ var
   dc,dc_records : IFRE_DB_DERIVED_COLLECTION;
   domains_grid  : TFRE_DB_VIEW_LIST_DESC;
   domain_content: TFRE_DB_SUBSECTIONS_DESC;
+
+  subsecs: TFRE_DB_SUBSECTIONS_DESC;
+
 begin
   CheckClassVisibility4MyDomain(ses);
+
+  subsecs:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
+  subsecs.AddSection.Describe(CWSF(@WEB_GlobalDomains),'DOMAINS PROVIDER',1);
+  subsecs.AddSection.Describe(CWSF(@WEB_Domains),'DOMAINS CUSTOMER',2);
+  subsecs.AddSection.Describe(CWSF(@WEB_GlobalNameserverContent),'NAMESERVER PROVIDER',3);
+  subsecs.AddSection.Describe(CWSF(@WEB_NameserverContent),'NAMESERVER CUSTOMER',4);
+
+  Result:=subsecs;
+
+  exit;
 
   ses.GetSessionModuleData(ClassName).DeleteField('selectedDomain');
   dc:=ses.FetchDerivedCollection('NETWORK_DOMAINS_GRID');
@@ -907,6 +947,47 @@ begin
   domain_content.AddSection.Describe(CWSF(@WEB_DomainRecordsContent),FetchModuleTextShort(ses,'network_domain_content_section_records'),2);
 
   Result:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(domains_grid,domain_content,nil,nil,nil,true,1,1);
+end;
+
+function TFOS_FIRMBOX_DNS_MOD.WEB_GlobalNameserverContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me! - See Nameserver MOD');
+end;
+
+function TFOS_FIRMBOX_DNS_MOD.WEB_NameserverContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me! - See Nameserver MOD');
+end;
+
+function TFOS_FIRMBOX_DNS_MOD.WEB_GlobalDomains(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dc,dc_records : IFRE_DB_DERIVED_COLLECTION;
+  domains_grid  : TFRE_DB_VIEW_LIST_DESC;
+  domain_content: TFRE_DB_SUBSECTIONS_DESC;
+begin
+  ses.GetSessionModuleData(ClassName).DeleteField('selectedDomain');
+  dc:=ses.FetchDerivedCollection('NETWORK_DOMAINS_GRID');
+  domains_grid:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD) then begin
+    domains_grid.AddButton.Describe(CWSF(@WEB_AddNetworkDomain),'',FetchModuleTextShort(ses,'tb_create_network_domain'),FetchModuleTextHint(ses,'tb_create_network_domain'));
+  end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD) then begin
+    domains_grid.AddButton.DescribeManualType('del_network_domain',CWSF(@WEB_NetworkDomainDelete),'',FetchModuleTextShort(ses,'tb_delete_network_domain'),FetchModuleTextHint(ses,'tb_delete_network_domain'),true);
+  end;
+
+  dc_records:=ses.FetchDerivedCollection('DNS_RECORDS_GRID');
+  domains_grid.AddFilterEvent(dc_records.getDescriptionStoreId(),'uid');
+
+  domain_content:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
+  domain_content.AddSection.Describe(CWSF(@WEB_DomainDetailsContent),FetchModuleTextShort(ses,'network_domain_content_section_details'),1);
+  domain_content.AddSection.Describe(CWSF(@WEB_DomainRecordsContent),FetchModuleTextShort(ses,'network_domain_content_section_records'),2);
+
+  Result:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(domains_grid,domain_content,nil,nil,nil,true,1,1);
+end;
+
+function TFOS_FIRMBOX_DNS_MOD.WEB_Domains(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me! - See Provider Domains');
 end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_DomainDetailsContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -1056,7 +1137,7 @@ begin
   if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  GetSystemScheme(TFOS_DB_NETWORK_DOMAIN,scheme);
+  GetSystemScheme(TFOS_DB_PROVIDER_NETWORK_DOMAIN,scheme);
   GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,rr_scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'network_domain_create_diag_cap'),600,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'domain');
