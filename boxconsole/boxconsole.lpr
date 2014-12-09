@@ -47,6 +47,13 @@ program boxconsole;
 {.$DEFINE FOS_WITH_CONSOLE}
 
 
+// ********************************************
+// TODO:
+// COREDUMP Configurieren -> /opt/local/fre/system_coredump
+//
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 uses
   //cmem,
   {$IFDEF UNIX}
