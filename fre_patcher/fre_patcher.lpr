@@ -192,14 +192,14 @@ begin
   _CheckAdminUserSupplied;
   _CheckAdminPassSupplied;
   case option of
-    'city1'        : PatchCity1;
-    'cityaddons'   : PatchCityAddons;
-    'cityobjs'     : PatchCityObjs;
-    'resetversions': PatchVersions;
+    'city1'        : PatchCity1;                //DONE (28.8)
+    'cityaddons'   : PatchCityAddons;           //DONE (28.8)
+    'cityobjs'     : PatchCityObjs;             //DONE (28.8)
+    'resetversions': PatchVersions;             //DONE (28.8)
     {$IFDEF FREMYSQL}
-    'importacc'    : ImportCitycomAccounts;
+    'importacc'    : ImportCitycomAccounts;     //DONE (28.8)
     {$ENDIF}
-    'genauto'      : GenerateAutomaticWFSteps;
+    'genauto'      : GenerateAutomaticWFSteps;  //DONE (28.8)
     'movedc'       : MoveDomainCollecions;
     'devicedata'   : GenerateDeviceData;
     'exportzones'  : ExportEmbeddedZones;
