@@ -29,11 +29,16 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <Units Count="1">
+    <Units Count="2">
       <Unit0>
         <Filename Value="fossvc.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
+      <Unit1>
+        <Filename Value="../../hal/fosillu_ipadm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fosillu_ipadm"/>
+      </Unit1>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -43,7 +48,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="../../core/fos_include;$(ProjOutDir)"/>
-      <OtherUnitFiles Value="../../core;../../core/fre_aps;../../core/fre_core;../../core/fre_fcom;../../core/fre_blockcom;../../core/fre_db;../../core/fre_external;../../core/fre_server;../../core/fos_interfaces;../../core/fre_apps;../../core/fre_external/synapse;..;../../hal"/>
+      <OtherUnitFiles Value="../../core;../../core/fre_aps;../../core/fre_core;../../core/fre_fcom;../../core/fre_blockcom;../../core/fre_db;../../core/fre_external;../../core/fre_server;../../core/fos_interfaces;../../core/fre_apps;../../core/fre_external/synapse;..;../../hal;../../citycom/webapp"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Conditionals Value="if TargetOS = 'darwin' then

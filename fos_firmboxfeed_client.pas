@@ -48,7 +48,8 @@ interface
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
-  fre_diff_transport,fre_process,fre_mysql_ll,sqldb;
+  fre_diff_transport,fre_process,fre_mysql_ll,sqldb,
+  fos_firmbox_zonectrl,fosillu_hal_dbo_common;
 
 
 type
@@ -84,6 +85,7 @@ type
     procedure  CCB_RequestServiceStructure (const DATA : IFRE_DB_Object ; const status:TFRE_DB_COMMAND_STATUS ; const error_txt:string);
     function   _VoipEntryCmd               (const cmd     : string; const input : IFRE_DB_Object) : IFRE_DB_Object;
     procedure  _MatchLinkStats             (const data : IFRE_DB_Object);
+    procedure  TestzoneCreation;
   public
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  MySessionDisconnected   (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
@@ -370,6 +372,48 @@ begin
   end;
 end;
 
+procedure TFRE_BOX_FEED_CLIENT.TestzoneCreation;
+var //zone : TFRE_DB_ZONE;
+    //uid : TFRE_DB_GUID;
+    obj   : IFRE_DB_Object;
+begin
+  //zone := TFRE_DB_ZONE.CreateForDB;
+  //uid.SetFromHexString('da3589f766d26339955efa03278f865a');
+  //zone.SetDomainID(uid);
+  //uid.SetFromHexString('845116bce7d853cc75fbc08741dea522');
+  //zone.Field('UID').AsGUID:=uid;
+  //zone.ObjectName:='testzone';
+  //zone.Field('domainname').asstring        := 'testdomain';
+  //zone.Field('masterdatasetpath').asstring := '/syspool';
+  //zone.Field('masterdataset').asstring     := 'syspool';
+  //zone.Field('zonepath').asstring          := zone.Field('masterdatasetpath').asstring+'/domains/'+zone.DomainID.AsHexString+'/'+zone.UID.AsHexString;
+  //zone.Field('zonedataset').asstring       := zone.Field('masterdataset').asstring+'/domains/'+zone.DomainID.AsHexString+'/'+zone.UID.AsHexString;
+  //zone.Field('templatedataset').asstring   := 'syspool/template/fbz093';
+  //fre_create_zone(zone);
+  //writeln('zone created');
+  //readln;
+  //fre_destroy_zone(zone);
+  //writeln('zone destroyed');
+  obj := GFRE_DBI.CreateFromFile('/home/fosbuild/zone_15a56c904a7f00248929bfdb576a45c9.dbo');
+  fre_create_zone(obj);
+  writeln('zone created');
+  readln;
+  fre_boot_zone(obj);
+  writeln('zone booting');
+  readln;
+//  fre_shutdown_zone(obj);
+//  writeln('zone shutdown');
+//  readln;
+//  fre_halt_zone(obj);
+//  writeln('zone halting');
+//  readln;
+//  fre_destroy_zone(obj);
+//  writeln('zone destroyed');
+
+
+  abort;
+end;
+
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 var i           : integer;
     machineUIDS : TFRE_DB_GUIDArray;
@@ -445,6 +489,9 @@ begin
   //statscontroller.StartNetworkParser(true);
   //statscontroller.StartCacheParser(true);
   //statscontroller.StartZFSParser(true);
+
+
+  InitIllumosLibraryHandles;
 
   GFRE_TF.Get_Lock(liveupdate_lock);
   live_all := GFRE_DBI.NewObject;

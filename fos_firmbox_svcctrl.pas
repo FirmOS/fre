@@ -43,6 +43,7 @@ var GBOXSVC : TFOS_BOXSVC_CONTROLLER;
 procedure fre_init_libsvc;
 procedure fre_create_service                               (const svcobj: IFRE_DB_Object);
 procedure fre_destroy_service                              (const svcobj: IFRE_DB_Object);
+function  fre_get_servicelist                              (const substring_filter: string=''): IFRE_DB_Object;
 
 function  fre_get_local_service_scope                      : Pscf_scope_t;
 procedure fre_destroy_service_scope                        (const scope: Pscf_scope_t);
@@ -214,11 +215,19 @@ var service_name : string;
     current_tx    : Pscf_transaction_t;
     err           : Integer;
     msg           : string;
+    isEnabled     : boolean;
 
     i             : NativeInt;
     dependency    : IFRE_DB_Object;
+    deb_service   : PScf_service_t;
+    deb_pg        : PScf_propertygroup_t;
+
 begin
   service_name := svcobj.Field('svc_name').asstring;
+  if svcobj.FieldExists('svc_enabled') then
+    isEnabled    := svcobj.Field('svc_enabled').AsBoolean
+  else
+    isEnabled    := false;
 
   fre_init_libsvc;
 
@@ -262,6 +271,54 @@ begin
         end;
     end;
 
+  if svcobj.FieldExists('svc_dependent') then
+    begin
+      for i := 0 to svcobj.Field('svc_dependent').ValueCount-1 do
+        begin
+          dependency   := svcobj.Field('svc_dependent').AsObjectItem[i];
+          writeln('SWL DEPENDENT: ',dependency.Field('fmri').asstring);
+          deb_service  := fre_get_service(Copy(dependency.Field('fmri').asstring,6,maxint),imp_scope);
+          try
+            deb_pg       := fre_create_add_service_propertygroup(dependency.Field('name').asstring,SCF_GROUP_DEPENDENCY,deb_service);
+            try
+              current_tx := fre_create_start_transaction(deb_pg);
+              try
+                fre_add_property_to_propertygroup_string(SCF_PROPERTY_GROUPING,dependency.Field('grouping').asstring,SCF_TYPE_ASTRING,current_tx);
+                fre_add_property_to_propertygroup_string(SCF_PROPERTY_RESTART_ON,dependency.Field('restart_on').asstring,SCF_TYPE_ASTRING,current_tx);
+                fre_add_property_to_propertygroup_string(SCF_PROPERTY_ENTITIES,'svc:/'+service_name,SCF_TYPE_FMRI,current_tx);
+                fre_add_property_to_propertygroup_string(SCF_PROPERTY_TYPE_,'service',SCF_TYPE_ASTRING,current_tx);
+                fre_add_property_to_propertygroup_boolean('external',true,current_tx);
+              finally
+                fre_commit_destroy_transaction(current_tx);
+              end;
+            finally
+              fre_destroy_propertgroup_handle(deb_pg);
+            end;
+            err  := _smf_refresh_all_instances(deb_service);
+            if err<>0 then
+              begin
+                msg := StrPas(scf_strerror(scf_error));
+                raise Exception.Create('could not refresh all instances for dependent fmri:'+inttostr(err)+' '+msg);
+              end;
+          finally
+            fre_destroy_service_handle(deb_service);
+          end;
+
+          imp_pg       := fre_create_add_service_propertygroup(SCF_PG_DEPENDENTS,SCF_GROUP_FRAMEWORK,imp_service);
+          try
+            current_tx := fre_create_start_transaction(imp_pg);
+            try
+              fre_add_property_to_propertygroup_string(dependency.Field('name').asstring,dependency.Field('fmri').asstring,SCF_TYPE_FMRI,current_tx);
+            finally
+              fre_commit_destroy_transaction(current_tx);
+            end;
+          finally
+            fre_destroy_propertgroup_handle(imp_pg);
+          end;
+        end;
+    end;
+   writeln('SWL DEPENDENT DONE');
+
   imp_pg       := fre_create_add_service_propertygroup(SCF_PG_GENERAL,SCF_GROUP_FRAMEWORK,imp_service);
   try
     current_tx := fre_create_start_transaction(imp_pg);
@@ -303,6 +360,23 @@ begin
     fre_destroy_propertgroup_handle(imp_pg);
   end;
 
+  if svcobj.FieldExists('svc_restart_exec') then
+    begin
+      imp_pg       := fre_create_add_service_propertygroup('restart',SCF_GROUP_METHOD,imp_service);
+      try
+        current_tx := fre_create_start_transaction(imp_pg);
+        try
+          fre_add_property_to_propertygroup_string(SCF_PROPERTY_TYPE_,'method',SCF_TYPE_ASTRING,current_tx);
+          fre_add_property_to_propertygroup_string(SCF_PROPERTY_EXEC,svcobj.Field('svc_restart_exec').asstring,SCF_TYPE_ASTRING,current_tx);
+          fre_add_property_to_propertygroup_count(SCF_PROPERTY_TIMEOUT,svcobj.Field('svc_restart_timeout').AsUInt64,current_tx);
+        finally
+          fre_commit_destroy_transaction(current_tx);
+        end;
+      finally
+        fre_destroy_propertgroup_handle(imp_pg);
+      end;
+    end;
+
   imp_pg       := fre_create_add_service_propertygroup(SCF_PG_METHOD_CONTEXT,SCF_GROUP_FRAMEWORK,imp_service);
   try
     current_tx := fre_create_start_transaction(imp_pg);
@@ -316,6 +390,8 @@ begin
         fre_add_property_to_propertygroup_string(SCF_PROPERTY_WORKING_DIRECTORY,svcobj.Field('svc_working_directory').asstring,SCF_TYPE_ASTRING,current_tx);
       if svcobj.FieldExists('svc_environment') then
         fre_add_property_to_propertygroup_string(SCF_PROPERTY_ENVIRONMENT,svcobj.Field('svc_environment').asstring,SCF_TYPE_ASTRING,current_tx);
+      if (svcobj.FieldExists('svc_privileges')) and (svcobj.Field('svc_privileges').asstring<>'') then
+        fre_add_property_to_propertygroup_string(SCF_PROPERTY_PRIVILEGES,svcobj.Field('svc_privileges').asstring,SCF_TYPE_ASTRING,current_tx);
     finally
       fre_commit_destroy_transaction(current_tx);
     end;
@@ -343,7 +419,7 @@ begin
     try
       current_tx := fre_create_start_transaction(imp_pg);
       try
-        fre_add_property_to_propertygroup_boolean(SCF_PROPERTY_ENABLED,false,current_tx);
+        fre_add_property_to_propertygroup_boolean(SCF_PROPERTY_ENABLED,isEnabled,current_tx);
       finally
         fre_commit_destroy_transaction(current_tx);
       end;
@@ -396,6 +472,76 @@ begin
       fre_destroy_service_handle(imp_service);
     end;
   fre_destroy_service_scope(imp_scope);
+end;
+
+function fre_get_servicelist(const substring_filter: string): IFRE_DB_Object;
+var scope           : Pscf_scope_t;
+    sciter          : Pscf_iter_t;
+    service         : Pscf_service_t;
+    err             : integer;
+    msg             : string;
+    service_name    : PChar;
+    fmri            : string;
+    max_fmri_length : integer;
+    svcdbo          : IFRE_DB_Object;
+begin
+  result := GFRE_DBI.NewObject;
+
+  max_fmri_length := scf_limit(SCF_LIMIT_MAX_FMRI_LENGTH);
+  service_name    := GetMem(max_fmri_length);
+
+  scope  := fre_get_local_service_scope;
+  try
+    GFRE_DBI.LogDebug(dblc_APPLICATION,'create iter');
+    sciter:=scf_iter_create(gsfc_handle);
+    try
+      if sciter=nil then
+        begin
+          msg := StrPas(scf_strerror(scf_error));
+          raise Exception.Create('could not create iter:'+' '+msg);
+        end;
+      err  := scf_iter_scope_services(sciter,scope);
+      if err<>0 then
+        begin
+          msg := StrPas(scf_strerror(scf_error));
+          raise Exception.Create('could not iter services:'+inttostr(err)+' '+msg);
+        end;
+      service := fre_create_service_handle;
+      try
+        while (true) do
+          begin
+            err := scf_iter_next_service(sciter,service);
+            if err=0 then
+              break;
+            if err<>1 then
+              begin
+                msg := StrPas(scf_strerror(scf_error));
+                raise Exception.Create('could not iter next service:'+inttostr(err)+' '+msg);
+              end;
+            err := scf_service_to_fmri(service,service_name,max_fmri_length+1);
+            if err<0 then
+              begin
+                msg := StrPas(scf_strerror(scf_error));
+                raise Exception.Create('could not get fmri from service:'+inttostr(err)+' '+msg);
+              end;
+            fmri := StrPas(service_name);
+            if (length(substring_filter)=0) or (Pos(substring_filter,fmri)>0) then
+              begin
+                svcdbo:= GFRE_DBI.NewObject;
+                svcdbo.Field('fmri').AsString:=StrPas(service_name);
+                result.Field(svcdbo.UID.AsHexString).AsObject:=svcdbo;
+              end;
+          end;
+      finally
+        fre_destroy_service_handle(service);
+      end;
+    finally
+      scf_iter_destroy(sciter);
+    end;
+  finally
+    fre_destroy_service_scope(scope);
+    FreeMem(service_name);
+  end;
 end;
 
 procedure fre_destroy_propertgroup_handle(const pg: Pscf_propertygroup_t);
