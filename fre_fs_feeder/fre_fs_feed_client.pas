@@ -95,7 +95,7 @@ implementation
 procedure TFRE_FS_FEED_CLIENT.SetupFSEventConnection;
 begin
   FFSEventConn := TFRE_FS_ES_CLIENT.create;
-  FFSEventConn.SetHost('10.1.0.150');
+  FFSEventConn.SetHost('127.0.0.1');
   FFSEventConn.SetPort('8021');
   FFSEventConn.SetIP_Mode(true);
   FFSEventConn.SetFS_Password('x');
