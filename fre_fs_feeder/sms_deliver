@@ -1,9 +1,10 @@
 #!/bin/bash
-env > /tmp/testenv
+#env > /tmp/testenv
 #mailmessage="$(cat -)";
 #echo "$mailmessage" > /tmp/message
 
 body="0" 
+header=""
 bodytext=""
 ip=$1
 port=$2
@@ -11,27 +12,30 @@ port=$2
 while read line; do
   if ! [ "${line}" = "" ]; then
     if [ "$body" = "0" ]; then
-      echo "${line}" >> /tmp/header
+      header=$(printf "%s\n%s" "$header" "${line}")    
     else
-      bodytext=$(printf "%s\n%s" $bodytext ${line}) 
+      bodytext=$(printf "%s\n%s" "$bodytext" "${line}")
     fi    
   else
     body="1"
   fi
 done
-echo "$bodytext" > /tmp/wholebody
+
+#echo -e "$bodytext" > /tmp/wholebody
+#echo -e "$header" > /tmp/header
+
 smscmd=$(printf "SENDSMS##%s##%s##%s" "$SENDER" "$LOCAL_PART" "$bodytext")
-echo "$smscmd" > /tmp/cmd
+#echo -e "$smscmd" > /tmp/cmd
 res=$(echo "$smscmd" | nc "$ip" "$port")
 rescode=$?
 
-echo "$res" > /tmp/res
+#echo "$res" > /tmp/res
 if ! [ "$rescode" = "0" ]; then
   echo "SMS Feeder not connected, resultcode :"$rescode
   exit 1
 fi  
 
-echo "$rescode" > /tmp/resultcode
+#echo "$rescode" > /tmp/resultcode
 
 if [[ $res == "OK"* ]]; then
   echo "$res";
