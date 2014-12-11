@@ -912,7 +912,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       s       :string;
       b_ip    :integer;
       i       :integer;
-      r       :TFRE_DB_IPV6_NETROUTE;
+      r       :TFRE_DB_IPV6_HOSTNET;
       shareobj: TFRE_DB_VIRTUAL_FILESHARE;
     begin
       cpe:=TFRE_DB_CRYPTOCPE.CreateForDB;
@@ -971,7 +971,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       tnl.Field(ip6.UID.AsHexString).AsObject:=ip6;
       network.Field(tnl.ObjectName).AsObject:=tnl;
 
-      r := TFRE_DB_IPV6_NETROUTE.CreateForDB;
+      r := TFRE_DB_IPV6_HOSTNET.CreateForDB;
       r.SetIPCIDR('fdd7:f47b:4605:1b0d::/64');
       r.SetGatewayIP('fdd7:f47b:4605:02c4:0001:0000:0000:'+inttostr(zone_nr));
       network.Field(r.UID_String).AsObject:=r;
@@ -1363,9 +1363,9 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
 
     function AddRoutingIPV4( const ip_mask:string; const gw:string; const zone_id:TFRE_DB_GUID;const description:string=''): TFRE_DB_GUID;
     var
-      r    : TFRE_DB_IPV4_NETROUTE;
+      r    : TFRE_DB_IPV4_HOSTNET;
     begin
-      r               := TFRE_DB_IPV4_NETROUTE.CreateForDB;
+      r               := TFRE_DB_IPV4_HOSTNET.CreateForDB;
       r.SetIPCIDR(ip_mask);
       r.SetGatewayIP(gw);
       r.ObjectName:=ip_mask;
@@ -1684,6 +1684,7 @@ begin
 
   tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
   tmpl.ObjectName:='FBZ_093';
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_LDAP_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_VMACHINE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_SSH_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_VIRTUAL_FILESERVER.Classname);
@@ -1696,9 +1697,10 @@ begin
   tmpl.Field('serviceclasses').AddString(TFRE_DB_MYSQL_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_HTTP_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFOS_DB_CITYCOM_VOIP_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
+//  tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_PHPFPM_SERVICE.ClassName);
   template_id := tmpl.UID;
   CheckDBResult(tcoll.Store(tmpl));
 
@@ -1823,18 +1825,17 @@ begin
   vf_id:=CreateCFiler(zone_id,'Demo Crypto Fileserver');
   CreateShare(vf_id,pool_id,'anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
 
-
   g_domain_id:=conn.GetSysDomainUID;
   ds_id    := CreateDataset('nas01ds','anord01disk/nas01ds',pool_id);
 
-  g_domain_id := CheckFindDomainID('CITYCOM');
-  zone_id  := CreateZone('rsync0',ds_id,host_id,template_id);
+  g_domain_id := CheckFindDomainID('CITYCOM');     // 5f769a1c6fe25d1c867c795318534c22
+  zone_id  := CreateZone('rsync0',ds_id,host_id,template_id,'23014325c44ae24f7d06939cab6c6de5');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicrsync0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:bc:85:c9','internet','Internet');
   AddIPV4('109.73.158.190/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
-  g_domain_id := CheckFindDomainID('CORTI');
-  zone_id  := CreateZone('corti',ds_id,host_id,template_id);
+  g_domain_id := CheckFindDomainID('CORTI');  //f1289bf93586c97f8a505b6ef801e89f
+  zone_id  := CreateZone('corti',ds_id,host_id,template_id,'f10d590ee94e7540e881dffb8f714fbc');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:4b:eb:3a','lan','Lan');
   AddIPV4('192.168.0.18/24',link_id);
 
@@ -2017,9 +2018,10 @@ begin
   e1_id    := link_id;
 
   g_domain_id := CheckFindDomainID('DEMO');
-  zone_id  := CreateZone('demo',ds_id,host_id,template_id);
+  zone_id  := CreateZone('demo',ds_id,host_id,template_id,'6631b9d59a19ab782c83631265370cd6');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,e1_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a4:c6:7c','cpe','Crypto CPE');
   AddIPV6('',link_id);
+  AddIPV6('fdd7:f47b:4605:0705:1:0:0:3/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,e0_id,0,1588,CFRE_DB_NullGUID,'02:08:20:e7:40:51','internet','Internet');
   AddIPV4('91.143.108.194/27',link_id);
   AddRoutingIPV4('default','91.143.108.193',zone_id,'Default Route');
@@ -2069,9 +2071,11 @@ var coll : IFRE_DB_COLLECTION;
 
 begin
   FRE_DBBASE.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
   fos_citycom_base.Register_DB_Extensions;
   fre_zfs.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
+  fos_citycom_voip_mod.Register_DB_Extensions;
 
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
