@@ -264,7 +264,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         CheckDbResult(coll_machine.Store(machine),'Add Machine');
 
         if noping=false then begin
-          AddVMPingTestCase(StringReplace(name+'_PING','.','_',[rfReplaceAll]),TFRE_DB_StringArray.Create(ip),rtt);
+   //       AddVMPingTestCase(StringReplace(name+'_PING','.','_',[rfReplaceAll]),TFRE_DB_StringArray.Create(ip),rtt);
         end;
       end;
 
@@ -626,7 +626,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         end;
 
       begin
-        collsite   := CONN.GetCollection('site');
+        collsite   := CONN.CreateCollection('site');
         collsite.ForAll(@_site_endpoints);
 
 //             _addCheck;
@@ -635,6 +635,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
 
 begin
+  writeln('INIT  MONSYS_OLD');
 
   CONN := GFRE_DBI.NewConnection;
   CONN.Connect(dbname,'admin@system','admin');
@@ -646,7 +647,7 @@ begin
   coll_machine        := CONN.CreateCollection('machine');
   coll_testcasestatus := CONN.CreateCollection('testcasestatus');
 
-  coll_testcase := conn.CreateCollection('testcase',true);
+  coll_testcase := conn.CreateCollection('testcase',false);
   if not coll_testcase.IndexExists('def') then
     coll_testcase.DefineIndexOnField('objname',fdbft_String,true,true);
 
@@ -665,15 +666,30 @@ begin
   ///    AddSCPJob;
 
     AddService('nordpool');
-      AddMachine('snord01','10.54.3.1',tmFOSServ);
+      AddMachine('snord01','10.54.3.11',tmFOSServ);
       AddTCPZFSReplication('ZFS_REPL_NORDPOOL_01','Replication RZ nordp','10.54.240.198','nordp',
                         'drsdisk/drssnapshots/s01_nordp',86400);
       AddTCPZFSReplication('ZFS_REPL_NORDDISK_TEST','Replication RZ norddisk test','10.54.240.198','norddisk/test',
                         'drsdisk/drssnapshots/norddisktest',86400);
-    AddService('nordpool');
-      AddMachine('ssued01','10.54.3.2',tmFOSServ);
+    AddService('suedpool');
+      AddMachine('ssued01','10.54.3.12',tmFOSServ);
       AddTCPZFSReplication('ZFS_REPL_SUEDPOOL_01','Replication RZ suedp','10.54.240.198','suedp',
                         'drsdisk/drssnapshots/s01_suedp',86400);
+    AddService('anord01');
+        AddMachine('anord01','10.54.3.13',tmFOSServ);
+        AddTCPZFSReplication('ZFS_DRS_ANORD_01','Replication RZ anord','10.54.240.198','anord01disk/anord01ds',
+                          'drsdisk/drssnapshots/anord01ds',86400,'DRS');
+        AddTCPZFSReplication('ZFS_DRS_NAS_01','Replication RZ nnord','10.54.240.198','anord01disk/nas01ds',
+                          'drsdisk/drssnapshots/nas01ds',86400,'DRS');
+        AddTCPZFSReplication('ZFS_ASYNC_ANORD_01','Replication Async anord','10.54.250.112','anord01disk/anord01ds',
+                          'asued01disk/anord01ds',86400);
+    AddService('asued01');
+        AddMachine('asued01','10.54.3.14',tmFOSServ);
+        AddTCPZFSReplication('ZFS_DRS_ASUED_01','Replication RZ asued','10.54.240.198','asued01disk/asued01ds',
+                          'drsdisk/drssnapshots/asued01ds',86400,'DRS');
+        AddTCPZFSReplication('ZFS_ASYNC_ASUED_01','Replication Async asued','10.54.250.102','asued01disk/asued01ds',
+                          'anord01disk/asued01ds',86400);
+
 
       AddService('Internet');
         AddMachine('Gateway','91.114.28.42',tmFOSServ);
