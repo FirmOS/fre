@@ -29,6 +29,8 @@ const
   CFOS_DB_DNS_RECORDS_COLLECTION      = 'dns_records';
 
   CFOS_DB_DNS_CUSTOMERS_DCOLL         = 'dns_customers_chooser';
+
+  CPARAM_GLOBAL                       = 'global';
 type
 
   { TFOS_FIRMBOX_DNS_MOD }
@@ -41,6 +43,8 @@ type
     class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
     function        _AddModifyResourceRecord            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
     function        _AddModifyNameserver                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
+
+    procedure       _getClasses                         (const global:Boolean; var networkDomainClass,resourceRecordClass,nameserverClass: TFRE_DB_ObjectClassEx);
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
     procedure       CalculateDescription                (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
@@ -48,9 +52,7 @@ type
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
-    function        WEB_Domains                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_GlobalDomains                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-
+    function        WEB_DomainsContent                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DomainDetailsContent            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DomainRecordsContent            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_NetworkDomainsMenu              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -68,7 +70,6 @@ type
     function        WEB_ResourceRecordsMenu             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ResourceRecordsSC               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
-    function        WEB_GlobalNameserverContent         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_NameserverContent               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_NameserverMenu                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddNameserver                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -162,6 +163,7 @@ end;
 class procedure TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
+  scheme.SetOverlayRights4UserClass('WEBUSER',[sr_FETCH]);
 end;
 
 class procedure TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -456,6 +458,11 @@ begin
     CreateModuleText(conn,'cm_delete_nameserver','Delete');
     CreateModuleText(conn,'cm_set_as_default_1','Set as Default 1');
     CreateModuleText(conn,'cm_set_as_default_2','Set as Default 2');
+
+    CreateModuleText(conn,'global_domains_section','Global Domains');
+    CreateModuleText(conn,'domains_section','Private Domains');
+    CreateModuleText(conn,'global_nameserver_section','Global Nameserver');
+    CreateModuleText(conn,'nameserver_section','Private Nameserver');
   end;
 end;
 
@@ -490,33 +497,40 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD._AddModifyResourceRecord(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean): IFRE_DB_Object;
 var
-  scheme     : IFRE_DB_SchemeObject;
-  res        : TFRE_DB_FORM_DIALOG_DESC;
-  sf         : TFRE_DB_SERVER_FUNC_DESC;
-  diagCap    : TFRE_DB_String;
-  recordDBO  : IFRE_DB_Object;
-  typeChooser: TFRE_DB_INPUT_CHOOSER_DESC;
-  formInput  : TFRE_DB_INPUT_DESC;
-  dbo        : IFRE_DB_Object;
+  scheme                 : IFRE_DB_SchemeObject;
+  res                    : TFRE_DB_FORM_DIALOG_DESC;
+  sf                     : TFRE_DB_SERVER_FUNC_DESC;
+  diagCap                : TFRE_DB_String;
+  recordDBO              : IFRE_DB_Object;
+  dbo                    : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
-  GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,scheme);
-
   sf:=CWSF(@WEB_StoreResourceRecord);
   if isModify then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_DNS_RESOURCE_RECORD,dbo.DomainID) then
+
+    global:=dbo.Implementor_HC is TFOS_DB_PROVIDER_DNS_RESOURCE_RECORD;
+    _getClasses(global,ndClass,rrClass,nsClass);
+
+    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,rrClass,dbo.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('rrecordId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'resource_record_modify_diag_cap');
   end else begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('dependency.uid_ref.filtervalues').AsStringItem[0]),dbo));
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,dbo.DomainID) then
+
+    global:=dbo.Implementor_HC is TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+    _getClasses(global,ndClass,rrClass,nsClass);
+
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,rrClass,dbo.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('networkDomainId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'resource_record_create_diag_cap');
   end;
+  GetSystemScheme(rrClass,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
 
@@ -532,21 +546,38 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD._AddModifyNameserver(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify: Boolean): IFRE_DB_Object;
 var
-  sf       : TFRE_DB_SERVER_FUNC_DESC;
-  diagCap  : TFRE_DB_String;
-  recordDBO: IFRE_DB_Object;
-  scheme   : IFRE_DB_SchemeObject;
-  res      : TFRE_DB_FORM_DIALOG_DESC;
+  sf                     : TFRE_DB_SERVER_FUNC_DESC;
+  diagCap                : TFRE_DB_String;
+  recordDBO              : IFRE_DB_Object;
+  scheme                 : IFRE_DB_SchemeObject;
+  res                    : TFRE_DB_FORM_DIALOG_DESC;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
+  global                 : Boolean;
+  dbo                    : IFRE_DB_Object;
 begin
-  GetSystemScheme(TFOS_DB_DNS_NAMESERVER_RECORD,scheme);
-
   sf:=CWSF(@WEB_StoreNameserver);
   if isModify then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+
+    global:=dbo.Implementor_HC is TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD;
+    _getClasses(global,ndClass,rrClass,nsClass);
+
+    if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,nsClass) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
     sf.AddParam.Describe('rrecordId',input.Field('selected').AsString);
     diagCap:=FetchModuleTextShort(ses,'nameserver_modify_diag_cap');
   end else begin
+    global:=input.Field(CPARAM_GLOBAL).AsString='true';
+    _getClasses(global,ndClass,rrClass,nsClass);
+
+    if not conn.sys.CheckClassRight4MyDomain(sr_STORE,nsClass) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    sf.AddParam.Describe(CPARAM_GLOBAL,input.Field(CPARAM_GLOBAL).AsString);
     diagCap:=FetchModuleTextShort(ses,'nameserver_create_diag_cap');
   end;
+  GetSystemScheme(nsClass,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
 
@@ -558,6 +589,19 @@ begin
   end;
 
   Result:=res;
+end;
+
+procedure TFOS_FIRMBOX_DNS_MOD._getClasses(const global: Boolean; var networkDomainClass, resourceRecordClass, nameserverClass: TFRE_DB_ObjectClassEx);
+begin
+  if global then begin
+    networkDomainClass:=TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+    resourceRecordClass:=TFOS_DB_PROVIDER_DNS_RESOURCE_RECORD;
+    nameserverClass:=TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD;
+  end else begin
+    networkDomainClass:=TFOS_DB_NETWORK_DOMAIN;
+    resourceRecordClass:=TFOS_DB_DNS_RESOURCE_RECORD;
+    nameserverClass:=TFOS_DB_DNS_NAMESERVER_RECORD;
+  end;
 end;
 
 procedure TFOS_FIRMBOX_DNS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -596,8 +640,8 @@ begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
       AddOneToOnescheme('objname','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddOneToOnescheme('default','default','',dt_description);
-      AddMatchingReferencedField('TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN_DEFAULT','value','default_value','',false);
-      AddMatchingReferencedField('TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN_DEFAULT','ttl','default_ttl','',false);
+      AddMatchingReferencedField('<NETWORK_DOMAIN_DEFAULT','value','default_value','',false);
+      AddMatchingReferencedField('<NETWORK_DOMAIN_DEFAULT','ttl','default_ttl','',false);
       SetFinalRightTransformFunction(@CalculateDescription,[FetchModuleTextShort(session,'grid_network_domains_default_value'),FetchModuleTextShort(session,'grid_network_domains_default_ttl')]);
       AddFulltextFilterOnTransformed(['objname']);
     end;
@@ -607,7 +651,7 @@ begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
       SetDefaultOrderField('objname',true);
-      Filters.AddSchemeObjectFilter('service',['TFOS_DB_NETWORK_DOMAIN']);
+      //Filters.AddSchemeObjectFilter('service',['TFOS_DB_NETWORK_DOMAIN']);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -624,7 +668,7 @@ begin
     records_grid := session.NewDerivedCollection('DNS_RECORDS_GRID');
     with records_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
-      SetUseDependencyAsRefLinkFilter(['TFOS_DB_DNS_RESOURCE_RECORD<NETWORK_DOMAIN'],false,'uid');
+      SetUseDependencyAsRefLinkFilter(['<NETWORK_DOMAIN'],false,'uid');
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_ResourceRecordsMenu),nil,CWSF(@WEB_ResourceRecordsSC));
       SetDefaultOrderField('host',true);
@@ -661,7 +705,7 @@ begin
     records_grid := session.NewDerivedCollection('NAMESERVER_RECORDS_GRID');
     with records_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
-      SetUseDependencyAsRefLinkFilter(['RECORDS>TFOS_DB_DNS_RESOURCE_RECORD'],false,'uid');
+      SetUseDependencyAsRefLinkFilter(['RECORDS>'],false,'uid');
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_NameserverMenu));
       SetDefaultOrderField('host',true);
@@ -703,38 +747,100 @@ var
   domains_grid  : TFRE_DB_VIEW_LIST_DESC;
   domain_content: TFRE_DB_SUBSECTIONS_DESC;
 
-  subsecs: TFRE_DB_SUBSECTIONS_DESC;
+  subsecs       : TFRE_DB_SUBSECTIONS_DESC;
+  sf            : TFRE_DB_SERVER_FUNC_DESC;
+  count         : Integer;
 
 begin
   CheckClassVisibility4MyDomain(ses);
 
+  count:=0;
+  if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_PROVIDER_NETWORK_DOMAIN) then begin
+    count:=count+1;
+  end;
+  if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_NETWORK_DOMAIN) then begin
+    count:=count+1;
+  end;
+  if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD) then begin
+    count:=count+1;
+  end;
+  if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+    count:=count+1;
+  end;
+
   subsecs:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
-  subsecs.AddSection.Describe(CWSF(@WEB_GlobalDomains),'DOMAINS PROVIDER',1);
-  subsecs.AddSection.Describe(CWSF(@WEB_Domains),'DOMAINS CUSTOMER',2);
-  subsecs.AddSection.Describe(CWSF(@WEB_GlobalNameserverContent),'NAMESERVER PROVIDER',3);
-  subsecs.AddSection.Describe(CWSF(@WEB_NameserverContent),'NAMESERVER CUSTOMER',4);
+  if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_PROVIDER_NETWORK_DOMAIN) then begin
+    if count=1 then begin
+      input.Field(CPARAM_GLOBAL).AsString:='true';
+      Result:=WEB_DomainsContent(input,ses,app,conn);
+      exit;
+    end;
+    sf:=CWSF(@WEB_DomainsContent);
+    sf.AddParam.Describe(CPARAM_GLOBAL,'true');
+    subsecs.AddSection.Describe(sf,FetchModuleTextShort(ses,'global_domains_section'),1);
+  end;
+  if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_NETWORK_DOMAIN) then begin
+    if count=1 then begin
+      input.Field(CPARAM_GLOBAL).AsString:='false';
+      Result:=WEB_DomainsContent(input,ses,app,conn);
+      exit;
+    end;
+    sf:=CWSF(@WEB_DomainsContent);
+    sf.AddParam.Describe(CPARAM_GLOBAL,'false');
+    subsecs.AddSection.Describe(sf,FetchModuleTextShort(ses,'domains_section'),2);
+  end;
+  if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD) then begin
+    if count=1 then begin
+      input.Field(CPARAM_GLOBAL).AsString:='true';
+      Result:=WEB_NameserverContent(input,ses,app,conn);
+      exit;
+    end;
+    sf:=CWSF(@WEB_NameserverContent);
+    sf.AddParam.Describe(CPARAM_GLOBAL,'true');
+    subsecs.AddSection.Describe(sf,FetchModuleTextShort(ses,'global_nameserver_section'),3);
+  end;
+  if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+    if count=1 then begin
+      input.Field(CPARAM_GLOBAL).AsString:='false';
+      Result:=WEB_NameserverContent(input,ses,app,conn);
+      exit;
+    end;
+    sf:=CWSF(@WEB_NameserverContent);
+    sf.AddParam.Describe(CPARAM_GLOBAL,'false');
+    subsecs.AddSection.Describe(sf,FetchModuleTextShort(ses,'nameserver_section'),4);
+  end;
 
   Result:=subsecs;
 end;
 
-function TFOS_FIRMBOX_DNS_MOD.WEB_GlobalNameserverContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFOS_FIRMBOX_DNS_MOD.WEB_NameserverContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  dc_records  : IFRE_DB_DERIVED_COLLECTION;
-  records_grid: TFRE_DB_VIEW_LIST_DESC;
-  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  dc_records             : IFRE_DB_DERIVED_COLLECTION;
+  records_grid           : TFRE_DB_VIEW_LIST_DESC;
+  sf                     : TFRE_DB_SERVER_FUNC_DESC;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   CheckClassVisibility4MyDomain(ses);
 
+  global:=input.Field(CPARAM_GLOBAL).AsString='true';
+  _getClasses(global,ndClass,rrClass,nsClass);
+
   dc_records:=ses.FetchDerivedCollection('NAMESERVER_RECORDS_GRID');
+  dc_records.Filters.RemoveFilter('service');
+  dc_records.Filters.AddSchemeObjectFilter('service',[nsClass.ClassName]);
+
   records_grid:=dc_records.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
-  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
-    records_grid.AddButton.Describe(CWSF(@WEB_AddNameserver),'',FetchModuleTextShort(ses,'tb_create_nameserver'),FetchModuleTextHint(ses,'tb_create_nameserver'));
+  if conn.sys.CheckClassRight4MyDomain(sr_STORE,nsClass) then begin
+    sf:=CWSF(@WEB_AddNameserver);
+    sf.AddParam.Describe(CPARAM_GLOBAL,input.Field(CPARAM_GLOBAL).AsString);
+    records_grid.AddButton.Describe(sf,'',FetchModuleTextShort(ses,'tb_create_nameserver'),FetchModuleTextHint(ses,'tb_create_nameserver'));
   end;
-  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,nsClass) then begin
     records_grid.AddButton.Describe(CWSF(@WEB_NameserverDelete),'',FetchModuleTextShort(ses,'tb_delete_nameserver'),FetchModuleTextHint(ses,'tb_delete_nameserver'),fdgbd_single);
   end;
-  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,nsClass) then begin
     records_grid.AddButton.Describe(CWSF(@WEB_ModifyNameserver),'',FetchModuleTextShort(ses,'tb_modify_nameserver'),FetchModuleTextHint(ses,'tb_modify_nameserver'),fdgbd_single);
     sf:=CWSF(@WEB_SetAsDefault);
     sf.AddParam.Describe('default','1');
@@ -747,23 +853,27 @@ begin
   Result:=records_grid;
 end;
 
-function TFOS_FIRMBOX_DNS_MOD.WEB_NameserverContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-begin
-  Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me! - See Nameserver MOD');
-end;
-
 function TFOS_FIRMBOX_DNS_MOD.WEB_NameserverMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res : TFRE_DB_MENU_DESC;
-  func: TFRE_DB_SERVER_FUNC_DESC;
+  res                    : TFRE_DB_MENU_DESC;
+  func                   : TFRE_DB_SERVER_FUNC_DESC;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
+  dbo                    : IFRE_DB_Object;
 begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
-  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+
+  global:=dbo.Implementor_HC is TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD;
+  _getClasses(global,ndClass,rrClass,nsClass);
+
+  if conn.sys.CheckClassRight4MyDomain(sr_DELETE,nsClass) then begin
     func:=CWSF(@WEB_NameserverDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_nameserver'),'',func);
   end;
-  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+  if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,nsClass) then begin
     func:=CWSF(@WEB_ModifyNameserver);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_nameserver'),'',func);
@@ -781,44 +891,51 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_AddNameserver(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFOS_DB_DNS_NAMESERVER_RECORD) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-
   Result:=_AddModifyNameserver(input,ses,app,conn,false);
 end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_ModifyNameserver(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-
   Result:=_AddModifyNameserver(input,ses,app,conn,true);
 end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_StoreNameserver(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  schemeObject : IFRE_DB_SchemeObject;
-  nameserverObj: TFOS_DB_DNS_NAMESERVER_RECORD;
-  isNew        : Boolean;
-  resourceColl : IFRE_DB_COLLECTION;
+  schemeObject           : IFRE_DB_SchemeObject;
+  nameserverObj          : TFOS_DB_DNS_NAMESERVER_RECORD;
+  isNew                  : Boolean;
+  resourceColl           : IFRE_DB_COLLECTION;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
+  global                 : Boolean;
+  dbo                    : IFRE_DB_Object;
 begin
-  if not conn.sys.CheckClassRight4MyDomain(sr_STORE,TFOS_DB_DNS_NAMESERVER_RECORD) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-
-  if not GFRE_DBI.GetSystemScheme(TFOS_DB_DNS_NAMESERVER_RECORD,schemeObject) then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_DNS_NAMESERVER_RECORD]);
-
   if input.FieldExists('rrecordId') then begin
-    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('rrecordId').AsString),TFOS_DB_DNS_NAMESERVER_RECORD,nameserverObj));
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('rrecordId').AsString),dbo));
+    nameserverObj:=dbo.Implementor_HC as TFOS_DB_DNS_NAMESERVER_RECORD;
+
+    global:=dbo.Implementor_HC is TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD;
+    _getClasses(global,ndClass,rrClass,nsClass);
+
+    if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,nsClass) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
     isNew:=false;
   end else begin
+    global:=input.Field(CPARAM_GLOBAL).AsString='true';
+    _getClasses(global,ndClass,rrClass,nsClass);
+
+    if not conn.sys.CheckClassRight4MyDomain(sr_STORE,nsClass) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
     resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
-    nameserverObj:=TFOS_DB_DNS_NAMESERVER_RECORD.CreateForDB;
+    nameserverObj:= nsClass.CreateForDB as TFOS_DB_DNS_NAMESERVER_RECORD;
     nameserverObj.Field('uniquephysicalid').AsString:=input.FieldPath('data.host').AsString;
     nameserverObj.ObjectName:=input.FieldPath('data.host').AsString;
     nameserverObj.Field('type').AsString:='NS';
     isNew:=true;
   end;
+  if not GFRE_DBI.GetSystemScheme(nsClass,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[nsClass.ClassName]);
 
   schemeObject.SetObjectFieldsWithScheme(input.Field('data').AsObject,nameserverObj,isNew,conn);
 
@@ -833,34 +950,47 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_NameserverDelete(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  sf         : TFRE_DB_SERVER_FUNC_DESC;
-  cap,msg    : String;
-  rrecord    : IFRE_DB_Object;
+  sf                     : TFRE_DB_SERVER_FUNC_DESC;
+  cap,msg                : String;
+  rrecord                : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
-  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFOS_DB_DNS_NAMESERVER_RECORD) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
+
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),rrecord));
+  global:=rrecord.Implementor_HC is TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD;
+  _getClasses(global,ndClass,rrClass,nsClass);
+
+  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,nsClass) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   sf:=CWSF(@WEB_NameserverDeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
   cap:=FetchModuleTextShort(ses,'nameserver_delete_diag_cap');
 
-  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),rrecord));
   msg:=StringReplace(FetchModuleTextShort(ses,'nameserver_delete_diag_msg'),'%rr_str%',rrecord.Field('host').AsString,[rfReplaceAll]);
   Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_NameserverDeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  i       : NativeInt;
+  i                      : NativeInt;
+  rrecord                : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
-  if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,TFOS_DB_DNS_NAMESERVER_RECORD) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
-      CheckDbResult(conn.Delete(FREDB_H2G(input.Field('selected').AsStringArr[i])));
+      CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[i]),rrecord));
+
+      global:=rrecord.Implementor_HC is TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD;
+      _getClasses(global,ndClass,rrClass,nsClass);
+
+      if not conn.sys.CheckClassRight4MyDomain(sr_DELETE,nsClass) then
+        raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+      CheckDbResult(conn.Delete(rrecord.UID));
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -870,36 +1000,47 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_SetAsDefault(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  nsObj    : TFOS_DB_DNS_NAMESERVER_RECORD;
-  nsObjUID : TFRE_DB_GUID;
-  obj      : IFRE_DB_Object;
-  configObj: TFRE_DB_APPLICATION_CONFIG;
-  isNew    : Boolean;
+  nsObj,dbo              : IFRE_DB_Object;
+  nsObjUID               : TFRE_DB_GUID;
+  obj                    : IFRE_DB_Object;
+  configObj              : TFRE_DB_APPLICATION_CONFIG;
+  isNew                  : Boolean;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
+  cfgPreFix              : String;
 begin
-  if not (conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) and conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_APPLICATION_CONFIG)) then
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),nsObj));
+
+  global:=nsObj.Implementor_HC is TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD;
+  _getClasses(global,ndClass,rrClass,nsClass);
+  cfgPreFix:='default_';
+  if global then begin
+    cfgPreFix:=cfgPreFix+'global_';
+  end;
+
+  if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,nsClass,nsObj.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_APPLICATION_CONFIG,nsObj.DomainID)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-
-  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_NAMESERVER_MOD@'+ses.GetDomainUID_String,obj) then begin
+  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_DNS_MOD@'+FREDB_G2H(nsObj.DomainID),obj) then begin
     isNew:=false;
     configObj:=obj.Implementor_HC as TFRE_DB_APPLICATION_CONFIG;
   end else begin
     isNew:=true;
     configObj:=TFRE_DB_APPLICATION_CONFIG.CreateForDB;
-    configObj.Field('id').AsString:='TFOS_FIRMBOX_NAMESERVER_MOD@'+ses.GetDomainUID_String;
+    configObj.SetDomainID(nsObj.DomainID);
+    configObj.Field('id').AsString:='TFOS_FIRMBOX_DNS_MOD@'+ses.GetDomainUID_String;
   end;
-  if configObj.FieldExists('default_'+input.Field('default').AsString) then begin //REMOVE OLD DEFAULT OBJ SET FOR THE GIVEN SLOT
-    CheckDbResult(conn.FetchAs(configObj.Field('default_'+input.Field('default').AsString).AsGUID,TFOS_DB_DNS_NAMESERVER_RECORD,nsObj));
-    nsObj.DeleteField('default');
-    CheckDbResult(conn.Update(nsObj));
+  if configObj.FieldExists(cfgPreFix+input.Field('default').AsString) then begin //REMOVE OLD DEFAULT OBJ SET FOR THE GIVEN SLOT
+    CheckDbResult(conn.Fetch(configObj.Field(cfgPreFix+input.Field('default').AsString).AsGUID,dbo));
+    dbo.DeleteField('default');
+    CheckDbResult(conn.Update(dbo));
   end;
-  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFOS_DB_DNS_NAMESERVER_RECORD,nsObj));
   if nsObj.FieldExists('default') then begin //REMOVE NEW OBJ FROM CONFIG IF ALREADY USED AS (A DIFFRENT) DEFAULT
-    configObj.DeleteField('default_'+IntToStr(nsObj.Field('default').AsInt16));
+    configObj.DeleteField(cfgPreFix+IntToStr(nsObj.Field('default').AsInt16));
   end;
   nsObj.Field('default').AsInt16:=FREDB_String2NativeInt(input.Field('default').AsString);
   CheckDbResult(conn.Update(nsObj.CloneToNewObject()));
-  configObj.Field('default_'+input.Field('default').AsString).AsGUID:=nsObj.UID;
+  configObj.Field(cfgPreFix+input.Field('default').AsString).AsGUID:=nsObj.UID;
   if isNew then begin
     CheckDbResult(conn.AdmGetApplicationConfigCollection.Store(configObj));
   end else begin
@@ -908,19 +1049,32 @@ begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFOS_FIRMBOX_DNS_MOD.WEB_GlobalDomains(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFOS_FIRMBOX_DNS_MOD.WEB_DomainsContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  dc,dc_records : IFRE_DB_DERIVED_COLLECTION;
-  domains_grid  : TFRE_DB_VIEW_LIST_DESC;
-  domain_content: TFRE_DB_SUBSECTIONS_DESC;
+  dc,dc_records          : IFRE_DB_DERIVED_COLLECTION;
+  domains_grid           : TFRE_DB_VIEW_LIST_DESC;
+  domain_content         : TFRE_DB_SUBSECTIONS_DESC;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
+  global                 : Boolean;
+  sf                     : TFRE_DB_SERVER_FUNC_DESC;
 begin
+  CheckClassVisibility4MyDomain(ses);
+
+  global:=input.Field(CPARAM_GLOBAL).AsString='true';
+  _getClasses(global,ndClass,rrClass,nsClass);
+
   ses.GetSessionModuleData(ClassName).DeleteField('selectedDomain');
   dc:=ses.FetchDerivedCollection('NETWORK_DOMAINS_GRID');
+  dc.Filters.RemoveFilter('service');
+  dc.Filters.AddSchemeObjectFilter('service',[ndClass.ClassName]);
+
   domains_grid:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD) then begin
-    domains_grid.AddButton.Describe(CWSF(@WEB_AddNetworkDomain),'',FetchModuleTextShort(ses,'tb_create_network_domain'),FetchModuleTextHint(ses,'tb_create_network_domain'));
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,ndClass) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,rrClass) then begin
+    sf:=CWSF(@WEB_AddNetworkDomain);
+    sf.AddParam.Describe(CPARAM_GLOBAL,input.Field(CPARAM_GLOBAL).AsString);
+    domains_grid.AddButton.Describe(sf,'',FetchModuleTextShort(ses,'tb_create_network_domain'),FetchModuleTextHint(ses,'tb_create_network_domain'));
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,ndClass) and conn.sys.CheckClassRight4AnyDomain(sr_DELETE,rrClass) then begin
     domains_grid.AddButton.DescribeManualType('del_network_domain',CWSF(@WEB_NetworkDomainDelete),'',FetchModuleTextShort(ses,'tb_delete_network_domain'),FetchModuleTextHint(ses,'tb_delete_network_domain'),true);
   end;
 
@@ -929,45 +1083,57 @@ begin
 
   domain_content:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
   domain_content.AddSection.Describe(CWSF(@WEB_DomainDetailsContent),FetchModuleTextShort(ses,'network_domain_content_section_details'),1);
-  domain_content.AddSection.Describe(CWSF(@WEB_DomainRecordsContent),FetchModuleTextShort(ses,'network_domain_content_section_records'),2);
+  sf:=CWSF(@WEB_DomainRecordsContent);
+  sf.AddParam.Describe(CPARAM_GLOBAL,input.Field(CPARAM_GLOBAL).AsString);
+  domain_content.AddSection.Describe(sf,FetchModuleTextShort(ses,'network_domain_content_section_records'),2);
 
   Result:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(domains_grid,domain_content,nil,nil,nil,true,1,1);
 end;
 
-function TFOS_FIRMBOX_DNS_MOD.WEB_Domains(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-begin
-  Result:=TFRE_DB_HTML_DESC.create.Describe('Please implement me! - See Provider Domains');
-end;
-
 function TFOS_FIRMBOX_DNS_MOD.WEB_DomainDetailsContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  scheme,rr_scheme: IFRE_DB_SchemeObject;
-  res             : TFRE_DB_CONTENT_DESC;
-  form            : TFRE_DB_FORM_PANEL_DESC;
-  editable        : Boolean;
-  nw_domain       : IFRE_DB_Object;
-  defaultG        : TFRE_DB_INPUT_GROUP_DESC;
-  rrecord         : IFRE_DB_Object;
-  sf              : TFRE_DB_SERVER_FUNC_DESC;
-  store           : TFRE_DB_STORE_DESC;
-  domain_def      : TFRE_DB_GUIDArray;
+  scheme,rr_scheme        : IFRE_DB_SchemeObject;
+  res                     : TFRE_DB_CONTENT_DESC;
+  form                    : TFRE_DB_FORM_PANEL_DESC;
+  editable                : Boolean;
+  nw_domain               : IFRE_DB_Object;
+  defaultG                : TFRE_DB_INPUT_GROUP_DESC;
+  rrecord                 : IFRE_DB_Object;
+  sf                      : TFRE_DB_SERVER_FUNC_DESC;
+  store                   : TFRE_DB_STORE_DESC;
+  domain_def              : TFRE_DB_GUIDArray;
+  global                  : Boolean;
+  ndClass,rrClass,nsClass : TFRE_DB_ObjectClassEx;
+  nameserver_dc           : IFRE_DB_DERIVED_COLLECTION;
 begin
   if ses.GetSessionModuleData(ClassName).FieldExists('selectedDomain') and (ses.GetSessionModuleData(ClassName).Field('selectedDomain').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedDomain').AsStringItem[0]),nw_domain));
 
-    if not (conn.sys.CheckClassRight4DomainId(sr_FETCH,TFOS_DB_NETWORK_DOMAIN,nw_domain.DomainID) and conn.sys.CheckClassRight4DomainId(sr_FETCH,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID)) then
+    global:=nw_domain.Implementor_HC is TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+    _getClasses(global,ndClass,rrClass,nsClass);
+
+    if not (conn.sys.CheckClassRight4DomainId(sr_FETCH,ndClass,nw_domain.DomainID) and conn.sys.CheckClassRight4DomainId(sr_FETCH,rrClass,nw_domain.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-    GetSystemScheme(TFOS_DB_NETWORK_DOMAIN,scheme);
-    GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,rr_scheme);
-    editable:=(conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_NETWORK_DOMAIN,nw_domain.DomainID) and
-               conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID) and
-               conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID) and
-               conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID));
+    GetSystemScheme(ndClass,scheme);
+    GetSystemScheme(rrClass,rr_scheme);
+    editable:=(conn.sys.CheckClassRight4DomainId(sr_UPDATE,ndClass,nw_domain.DomainID) and
+               conn.sys.CheckClassRight4DomainId(sr_STORE,rrClass,nw_domain.DomainID) and
+               conn.sys.CheckClassRight4DomainId(sr_UPDATE,rrClass,nw_domain.DomainID) and
+               conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,nw_domain.DomainID));
     form:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,editable);
     form.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'domain');
 
-    store:=ses.FetchDerivedCollection('NAMESERVER_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC;
+    nameserver_dc:=ses.FetchDerivedCollection('NAMESERVER_CHOOSER');
+    nameserver_dc.Filters.RemoveFilter('service_type');
+    nameserver_dc.Filters.RemoveFilter('service_domain');
+    if global then begin
+      nameserver_dc.Filters.AddSchemeObjectFilter('service_type',['TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD']);
+    end else begin
+      nameserver_dc.Filters.AddSchemeObjectFilter('service_type',['TFOS_DB_DNS_NAMESERVER_RECORD']);
+      //nameserver_dc.Filters.AddUIDFieldFilter('service_domain','domainid',[nw_domain.DomainID],dbnf_EXACT); //FIXXME - uncomment me
+    end;
+    store:=nameserver_dc.GetStoreDescription as TFRE_DB_STORE_DESC;
 
     form.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_edit_dns1'),'domain.dns1',store,dh_chooser_combo,true,false,true);
     form.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_edit_dns2'),'domain.dns2',store);
@@ -976,7 +1142,7 @@ begin
 
     form.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false);
 
-    domain_def:=conn.GetReferences(nw_domain.UID,false,'TFOS_DB_DNS_RESOURCE_RECORD','network_domain_default');
+    domain_def:=conn.GetReferences(nw_domain.UID,false,rrClass.ClassName,'network_domain_default');
     if Length(domain_def)>0 then begin
       CheckDbResult(conn.Fetch(domain_def[0],rrecord));
       form.FillWithObjectValues(rrecord,ses,'default');
@@ -997,12 +1163,17 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_DomainRecordsContent(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  dc_records  : IFRE_DB_DERIVED_COLLECTION;
-  records_grid: TFRE_DB_VIEW_LIST_DESC;
-  add_enabled : Boolean;
-  nw_domain   : IFRE_DB_Object;
+  dc_records             : IFRE_DB_DERIVED_COLLECTION;
+  records_grid           : TFRE_DB_VIEW_LIST_DESC;
+  add_enabled            : Boolean;
+  nw_domain              : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   CheckClassVisibility4MyDomain(ses);
+
+  global:=input.Field(CPARAM_GLOBAL).AsString='true';
+  _getClasses(global,ndClass,rrClass,nsClass);
 
   dc_records:=ses.FetchDerivedCollection('DNS_RECORDS_GRID');
   records_grid:=dc_records.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
@@ -1010,16 +1181,16 @@ begin
   add_enabled:=ses.GetSessionModuleData(ClassName).FieldExists('selectedDomain') and (ses.GetSessionModuleData(ClassName).Field('selectedDomain').ValueCount=1);
   if add_enabled then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedDomain').AsString),nw_domain));
-    add_enabled:=add_enabled and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_NETWORK_DOMAIN,nw_domain.DomainID) and  conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID);
+    add_enabled:=add_enabled and conn.sys.CheckClassRight4DomainId(sr_UPDATE,ndClass,nw_domain.DomainID) and  conn.sys.CheckClassRight4DomainId(sr_STORE,rrClass,nw_domain.DomainID);
   end;
 
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,rrClass) then begin
     records_grid.AddButton.DescribeManualType('add_record',CWSF(@WEB_AddResourceRecord),'',FetchModuleTextShort(ses,'tb_create_resource_record'),FetchModuleTextHint(ses,'tb_create_resource_record'),not add_enabled);
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,rrClass) then begin
     records_grid.AddButton.DescribeManualType('del_record',CWSF(@WEB_ResourceRecordDelete),'',FetchModuleTextShort(ses,'tb_delete_resource_record'),FetchModuleTextHint(ses,'tb_delete_resource_record'),true);
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_DNS_RESOURCE_RECORD) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,rrClass) then begin
     records_grid.AddButton.DescribeManualType('mod_record',CWSF(@WEB_ModifyResourceRecord),'',FetchModuleTextShort(ses,'tb_modify_resource_record'),FetchModuleTextHint(ses,'tb_modify_resource_record'),true);
   end;
 
@@ -1028,13 +1199,18 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_NetworkDomainsMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res      : TFRE_DB_MENU_DESC;
-  func     : TFRE_DB_SERVER_FUNC_DESC;
-  nw_domain: IFRE_DB_Object;
+  res                    : TFRE_DB_MENU_DESC;
+  func                   : TFRE_DB_SERVER_FUNC_DESC;
+  nw_domain              : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),nw_domain));
-  if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_NETWORK_DOMAIN,nw_domain.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID) then begin
+  global:=nw_domain.Implementor_HC is TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+  _getClasses(global,ndClass,rrClass,nsClass);
+
+  if conn.sys.CheckClassRight4DomainId(sr_DELETE,ndClass,nw_domain.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,nw_domain.DomainID) then begin
     func:=CWSF(@WEB_NetworkDomainDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_network_domain'),'',func);
@@ -1044,9 +1220,11 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_NetworkDomainsSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  add_disabled: Boolean;
-  nw_domain   : IFRE_DB_Object;
-  del_disabled: Boolean;
+  add_disabled           : Boolean;
+  nw_domain              : IFRE_DB_Object;
+  del_disabled           : Boolean;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -1056,10 +1234,13 @@ begin
     ses.GetSessionModuleData(ClassName).Field('selectedDomain').AsStringArr:=input.Field('selected').AsStringArr;
     if input.Field('selected').ValueCount=1 then begin
       CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),nw_domain));
-      if conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID) then begin
+      global:=nw_domain.Implementor_HC is TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+      _getClasses(global,ndClass,rrClass,nsClass);
+
+      if conn.sys.CheckClassRight4DomainId(sr_STORE,rrClass,nw_domain.DomainID) then begin
         add_disabled:=false;
       end;
-      if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_NAMESERVER_RECORD,nw_domain.DomainID) then begin
+      if conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,nw_domain.DomainID) then begin
         del_disabled:=false;
       end;
     end;
@@ -1078,54 +1259,82 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_AddNetworkDomain(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  scheme,rr_scheme: IFRE_DB_SchemeObject;
-  res             : TFRE_DB_FORM_DIALOG_DESC;
-  store           : TFRE_DB_STORE_DESC;
-  obj             : IFRE_DB_Object;
+  scheme,rr_scheme       : IFRE_DB_SchemeObject;
+  res                    : TFRE_DB_FORM_DIALOG_DESC;
+  store                  : TFRE_DB_STORE_DESC;
+  obj                    : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
+  nameserver_dc          : IFRE_DB_DERIVED_COLLECTION;
+  sf                     : TFRE_DB_SERVER_FUNC_DESC;
+  cfgPreFix              : String;
 begin
-  if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_NETWORK_DOMAIN) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD)) then
+  global:=input.Field(CPARAM_GLOBAL).AsString='true';
+  _getClasses(global,ndClass,rrClass,nsClass);
+
+  if not (conn.sys.CheckClassRight4AnyDomain(sr_STORE,ndClass) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,rrClass)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  GetSystemScheme(TFOS_DB_PROVIDER_NETWORK_DOMAIN,scheme);
-  GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,rr_scheme);
+  GetSystemScheme(ndClass,scheme);
+  GetSystemScheme(rrClass,rr_scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'network_domain_create_diag_cap'),600,true,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'domain');
 
-  store:=ses.FetchDerivedCollection('NAMESERVER_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC;
+  nameserver_dc:=ses.FetchDerivedCollection('NAMESERVER_CHOOSER');
+  nameserver_dc.Filters.RemoveFilter('service_type');
+  nameserver_dc.Filters.RemoveFilter('service_domain');
+  if global then begin
+    nameserver_dc.Filters.AddSchemeObjectFilter('service_type',['TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD']);
+  end else begin
+    nameserver_dc.Filters.AddSchemeObjectFilter('service_type',['TFOS_DB_DNS_NAMESERVER_RECORD']);
+    //nameserver_dc.Filters.AddUIDFieldFilter('service_domain','domainid',[nw_domain.DomainID],dbnf_EXACT); //FIXXXME!!!
+  end;
+  store:=nameserver_dc.GetStoreDescription as TFRE_DB_STORE_DESC;
 
   res.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_create_dns1'),'domain.dns1',store,dh_chooser_combo,true,false,true);
   res.AddChooser.Describe(FetchModuleTextShort(ses,'network_domain_create_dns2'),'domain.dns2',store);
 
-  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_NAMESERVER_MOD@'+ses.GetDomainUID_String,obj) then begin
-    if obj.FieldExists('default_1') then begin
-      res.SetElementValue('domain.dns1',obj.Field('default_1').AsString);
+  cfgPreFix:='default_';
+  if global then begin
+    cfgPreFix:=cfgPreFix+'global_';
+  end;
+  if conn.AdmGetApplicationConfigCollection.GetIndexedObj('TFOS_FIRMBOX_DNS_MOD@'+ses.GetDomainUID_String,obj) then begin
+    if obj.FieldExists(cfgPreFix+'1') then begin
+      res.SetElementValue('domain.dns1',obj.Field(cfgPreFix+'1').AsString);
     end;
-    if obj.FieldExists('default_2') then begin
-      res.SetElementValue('domain.dns2',obj.Field('default_2').AsString);
+    if obj.FieldExists(cfgPreFix+'2') then begin
+      res.SetElementValue('domain.dns2',obj.Field(cfgPreFix+'2').AsString);
     end;
   end;
 
   res.AddSchemeFormGroup(rr_scheme.GetInputGroup('main_default'),ses,false,false,'default',false);
 
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CWSF(@WEB_CreateNetworkDomain),fdbbt_submit);
+  sf:=CWSF(@WEB_CreateNetworkDomain);
+  sf.AddParam.Describe(CPARAM_GLOBAL,input.Field(CPARAM_GLOBAL).AsString);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
   Result:=res;
 end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_CreateNetworkDomain(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  domain        : TFOS_DB_NETWORK_DOMAIN;
-  resource      : TFOS_DB_DNS_RESOURCE_RECORD;
-  schemeObject  : IFRE_DB_SchemeObject;
-  schemeObjectRR: IFRE_DB_SchemeObject;
-  serviceColl   : IFRE_DB_COLLECTION;
-  resourceColl  : IFRE_DB_COLLECTION;
-  idx           : String;
-  customer      : IFRE_DB_Object;
-  sdomain       : TFRE_DB_GUID;
+  domain                 : TFOS_DB_NETWORK_DOMAIN;
+  resource               : TFOS_DB_DNS_RESOURCE_RECORD;
+  schemeObject           : IFRE_DB_SchemeObject;
+  schemeObjectRR         : IFRE_DB_SchemeObject;
+  serviceColl            : IFRE_DB_COLLECTION;
+  resourceColl           : IFRE_DB_COLLECTION;
+  idx                    : String;
+  customer               : IFRE_DB_Object;
+  sdomain                : TFRE_DB_GUID;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   if not input.FieldPathExists('data.domain') then raise EFRE_DB_Exception.Create('Missing input data: network domain');
   if not input.FieldPathExists('data.domain.objname') then raise EFRE_DB_Exception.Create('Missing required input data: network domain name');
   if not input.FieldPathExists('data.domain.dns1') then raise EFRE_DB_Exception.Create('Missing input data: dns1');
+
+  global:=input.Field(CPARAM_GLOBAL).AsString='true';
+  _getClasses(global,ndClass,rrClass,nsClass);
 
   if input.FieldPathExists('data.domain.customer') then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('data.domain.customer').AsString),customer));
@@ -1142,32 +1351,32 @@ begin
     end;
   end;
 
-  if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_NETWORK_DOMAIN,sdomain) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,sdomain)) then
+  if not (conn.sys.CheckClassRight4DomainId(sr_STORE,ndClass,sdomain) and conn.sys.CheckClassRight4DomainId(sr_STORE,rrClass,sdomain)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  if not GFRE_DBI.GetSystemScheme(TFOS_DB_NETWORK_DOMAIN,schemeObject) then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_NETWORK_DOMAIN]);
+  if not GFRE_DBI.GetSystemScheme(ndClass,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[ndClass.ClassName]);
 
   serviceColl:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
 
-  idx:='DNS_'+input.FieldPath('data.domain.objname').AsString;
+  idx:='DNS_'+input.FieldPath('data.domain.objname').AsString; //FIXXXME
   if serviceColl.ExistsIndexed(idx) then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'network_domain_create_error_exists_cap'),FetchModuleTextShort(ses,'network_domain_create_error_exists_msg'),fdbmt_error);
     exit;
   end;
 
-  domain:=TFOS_DB_NETWORK_DOMAIN.CreateForDB;
+  domain:=ndClass.CreateForDB as TFOS_DB_NETWORK_DOMAIN;
   schemeObject.SetObjectFieldsWithScheme(input.FieldPath('data.domain').AsObject,domain,true,conn);
   domain.Field('uniquephysicalid').AsString:=idx;
   domain.SetDomainID(sdomain);
 
-  if not GFRE_DBI.GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,schemeObjectRR) then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_DNS_RESOURCE_RECORD]);
+  if not GFRE_DBI.GetSystemScheme(rrClass,schemeObjectRR) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[rrClass.ClassName]);
 
   CheckDbResult(serviceColl.Store(domain.CloneToNewObject()));
-  if input.FieldPathExists('data.default.value') and (input.FieldPath('data.default.value').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
-    resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
+  if input.FieldPathExists('data.default.value') then begin
+    resource:=rrClass.CreateForDB as TFOS_DB_DNS_RESOURCE_RECORD;
     resource.SetDomainID(domain.DomainID);
     input.FieldPath('data.default').AsObject.Field('type').AsString:='A';
     input.FieldPath('data.default').AsObject.Field('host').AsString:='@';
@@ -1183,30 +1392,36 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_UpdateNetworkDomain(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  resource      : TFOS_DB_DNS_RESOURCE_RECORD;
-  schemeObject  : IFRE_DB_SchemeObject;
-  schemeObjectRR: IFRE_DB_SchemeObject;
-  resourceColl  : IFRE_DB_COLLECTION;
-  nw_domain     : IFRE_DB_Object;
-  resourceDBO   : IFRE_DB_Object;
-  defaultUID    : TFRE_DB_GUID;
-  domain_def    : TFRE_DB_GUIDArray;
-  i             : Integer;
+  resource               : TFOS_DB_DNS_RESOURCE_RECORD;
+  schemeObject           : IFRE_DB_SchemeObject;
+  schemeObjectRR         : IFRE_DB_SchemeObject;
+  resourceColl           : IFRE_DB_COLLECTION;
+  nw_domain              : IFRE_DB_Object;
+  resourceDBO            : IFRE_DB_Object;
+  defaultUID             : TFRE_DB_GUID;
+  domain_def             : TFRE_DB_GUIDArray;
+  i                      : Integer;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
+  dbo                    : IFRE_DB_Object;
+  isNew                  : Boolean;
 begin
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('nwDomainId').AsString),nw_domain));
+  global:=nw_domain.Implementor_HC is TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+  _getClasses(global,ndClass,rrClass,nsClass);
 
-  if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_NETWORK_DOMAIN,nw_domain.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,nw_domain.DomainID)) then
+  if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,ndClass,nw_domain.DomainID) and
+          conn.sys.CheckClassRight4DomainId(sr_STORE,rrClass,nw_domain.DomainID) and
+          conn.sys.CheckClassRight4DomainId(sr_UPDATE,rrClass,nw_domain.DomainID) and
+          conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,nw_domain.DomainID)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
 
-  if not GFRE_DBI.GetSystemScheme(TFOS_DB_NETWORK_DOMAIN,schemeObject) then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_NETWORK_DOMAIN]);
+  if not GFRE_DBI.GetSystemScheme(ndClass,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[ndClass.ClassName]);
 
-  if not GFRE_DBI.GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,schemeObjectRR) then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_DNS_RESOURCE_RECORD]);
+  if not GFRE_DBI.GetSystemScheme(rrClass,schemeObjectRR) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[rrClass.ClassName]);
 
   resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
 
@@ -1215,19 +1430,34 @@ begin
   end;
 
   if input.FieldPathExists('data.default') then begin
-    domain_def:=conn.GetReferences(nw_domain.UID,false,'TFOS_DB_DNS_RESOURCE_RECORD','network_domain_default');
-    for i := 0 to High(domain_def) do begin
-      CheckDbResult(conn.Delete(domain_def[i]));
+    domain_def:=conn.GetReferences(nw_domain.UID,false,rrClass.ClassName,'network_domain_default');
+
+    if input.FieldPathExists('data.default.value') and (input.FieldPath('data.default.value').AsString=cFRE_DB_SYS_CLEAR_VAL_STR) then begin //delete default
+      for i := 0 to Length(domain_def) - 1 do begin
+        CheckDbResult(conn.Delete(domain_def[i]));
+      end;
+    end else begin
+      if Length(domain_def)>0 then begin
+        isNew:=false;
+        CheckDbResult(conn.Fetch(domain_def[0],dbo));
+        resource:=dbo.Implementor_HC as TFOS_DB_DNS_RESOURCE_RECORD;
+      end else begin
+        isNew:=true;
+        resource:=rrClass.CreateForDB as TFOS_DB_DNS_RESOURCE_RECORD;
+        resource.SetDomainID(nw_domain.DomainID);
+        resource.Field('network_domain').AsObjectLink:=nw_domain.UID;
+        resource.Field('network_domain_default').AsObjectLink:=nw_domain.UID;
+        resource.Field('uniquephysicalid').AsString:='@' + nw_domain.UID_String;
+        input.FieldPath('data.default').AsObject.Field('type').AsString:='A';
+        input.FieldPath('data.default').AsObject.Field('host').AsString:='@';
+      end;
+      schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.default').AsObject,resource,isNew,conn);
+      if isNew then begin
+        CheckDbResult(resourceColl.Store(resource));
+      end else begin
+        CheckDbResult(resourceColl.Update(resource));
+      end;
     end;
-    resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
-    resource.SetDomainID(nw_domain.DomainID);
-    input.FieldPath('data.default').AsObject.Field('type').AsString:='A';
-    input.FieldPath('data.default').AsObject.Field('host').AsString:='@';
-    schemeObjectRR.SetObjectFieldsWithScheme(input.FieldPath('data.default').AsObject,resource,true,conn);
-    resource.Field('network_domain').AsObjectLink:=nw_domain.UID;
-    resource.Field('network_domain_default').AsObjectLink:=nw_domain.UID;
-    resource.Field('uniquephysicalid').AsString:='@' + nw_domain.UID_String;
-    CheckDbResult(resourceColl.Store(resource));
   end;
 
   CheckDbResult(conn.Update(nw_domain));
@@ -1237,15 +1467,19 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_NetworkDomainDelete(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  sf     : TFRE_DB_SERVER_FUNC_DESC;
-  cap,msg: String;
-  domain : IFRE_DB_Object;
+  sf                     : TFRE_DB_SERVER_FUNC_DESC;
+  cap,msg                : String;
+  domain                 : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
 
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),domain));
+  global:=domain.Implementor_HC is TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+  _getClasses(global,ndClass,rrClass,nsClass);
 
-  if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_NETWORK_DOMAIN,domain.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,domain.DomainID)) then
+  if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,ndClass,domain.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,domain.DomainID)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   sf:=CWSF(@WEB_NetworkDomainDeleteConfirmed);
@@ -1258,20 +1492,24 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_NetworkDomainDeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  i,j          : NativeInt;
-  nwDomainId   : TFRE_DB_GUID;
-  domain       : IFRE_DB_Object;
-  resources    : TFRE_DB_ObjLinkArray;
-  refs         : TFRE_DB_GUIDArray;
+  i,j                    : NativeInt;
+  nwDomainId             : TFRE_DB_GUID;
+  domain                 : IFRE_DB_Object;
+  refs                   : TFRE_DB_GUIDArray;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       nwDomainId:=FREDB_H2G(input.Field('selected').AsStringArr[i]);
       CheckDbResult(conn.Fetch(nwDomainId,domain));
-      if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_NETWORK_DOMAIN,domain.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,domain.DomainID)) then
+      global:=domain.Implementor_HC is TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+      _getClasses(global,ndClass,rrClass,nsClass);
+
+      if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,ndClass,domain.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,domain.DomainID)) then
         raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-      refs:=conn.GetReferences(domain.UID,false,'TFOS_DB_DNS_RESOURCE_RECORD');
+      refs:=conn.GetReferences(domain.UID,false,rrClass.ClassName);
       for j := 0 to High(refs) do begin
         CheckDbResult(conn.Delete(refs[j]));
       end;
@@ -1298,15 +1536,15 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_StoreResourceRecord(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  domain        : IFRE_DB_Object;
-  resource      : TFOS_DB_DNS_RESOURCE_RECORD;
-  schemeObject  : IFRE_DB_SchemeObject;
-  resourceColl  : IFRE_DB_COLLECTION;
-  isNew: Boolean;
+  domain                 : IFRE_DB_Object;
+  resource               : TFOS_DB_DNS_RESOURCE_RECORD;
+  schemeObject           : IFRE_DB_SchemeObject;
+  resourceColl           : IFRE_DB_COLLECTION;
+  isNew                  : Boolean;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
+  dbo                    : IFRE_DB_Object;
 begin
-  if not GFRE_DBI.GetSystemScheme(TFOS_DB_DNS_RESOURCE_RECORD,schemeObject) then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFOS_DB_DNS_RESOURCE_RECORD]);
-
   if not (input.FieldExists('networkDomainId') or input.FieldExists('rrecordId')) then
     raise EFRE_DB_Exception.Create('Error: Network Domain Id or Resource Record Id has to be passed to WEB_StoreResourceRecord.');
 
@@ -1316,24 +1554,35 @@ begin
   end;
 
   if input.FieldExists('rrecordId') then begin
-    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('rrecordId').AsString),TFOS_DB_DNS_RESOURCE_RECORD,resource));
-    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_DNS_RESOURCE_RECORD,resource.DomainID) then
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('rrecordId').AsString),dbo));
+
+    global:=dbo.Implementor_HC is TFOS_DB_PROVIDER_DNS_RESOURCE_RECORD;
+    _getClasses(global,ndClass,rrClass,nsClass);
+    resource:=dbo.Implementor_HC as TFOS_DB_DNS_RESOURCE_RECORD;
+
+    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,rrClass,resource.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     isNew:=false;
   end else begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('networkDomainId').AsString),domain));
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFOS_DB_DNS_RESOURCE_RECORD,domain.DomainID) then
+
+    global:=domain.Implementor_HC is TFOS_DB_PROVIDER_NETWORK_DOMAIN;
+    _getClasses(global,ndClass,rrClass,nsClass);
+
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,rrClass,domain.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     resourceColl:=conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
-    resource:=TFOS_DB_DNS_RESOURCE_RECORD.CreateForDB;
+    resource:=rrClass.CreateForDB as TFOS_DB_DNS_RESOURCE_RECORD;
     resource.SetDomainID(domain.DomainID);
     resource.Field('network_domain').AsObjectLink:=domain.UID;
     resource.Field('uniquephysicalid').AsString:=input.FieldPath('data.host').AsString + '@' + domain.UID_String;
     isNew:=true;
   end;
 
+  if not GFRE_DBI.GetSystemScheme(rrClass,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[rrClass.ClassName]);
   schemeObject.SetObjectFieldsWithScheme(input.Field('data').AsObject,resource,isNew,conn);
 
   if isNew then begin
@@ -1347,15 +1596,20 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_ResourceRecordDelete(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  sf         : TFRE_DB_SERVER_FUNC_DESC;
-  cap,msg    : String;
-  rrecord    : IFRE_DB_Object;
+  sf                     : TFRE_DB_SERVER_FUNC_DESC;
+  cap,msg                : String;
+  rrecord                : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
 
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),rrecord));
 
-  if not conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,rrecord.DomainID) then
+  global:=rrecord.Implementor_HC is TFOS_DB_PROVIDER_DNS_RESOURCE_RECORD;
+  _getClasses(global,ndClass,rrClass,nsClass);
+
+  if not conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,rrecord.DomainID) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   sf:=CWSF(@WEB_ResourceRecordDeleteConfirmed);
@@ -1368,13 +1622,19 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_ResourceRecordDeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  i       : NativeInt;
-  rrecord : IFRE_DB_Object;
+  i                      : NativeInt;
+  rrecord                : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[i]),rrecord));
-      if not conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,rrecord.DomainID) then
+
+      global:=rrecord.Implementor_HC is TFOS_DB_PROVIDER_DNS_RESOURCE_RECORD;
+      _getClasses(global,ndClass,rrClass,nsClass);
+
+      if not conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,rrecord.DomainID) then
         raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
       CheckDbResult(conn.Delete(rrecord.UID));
@@ -1387,18 +1647,24 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_ResourceRecordsMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res    : TFRE_DB_MENU_DESC;
-  func   : TFRE_DB_SERVER_FUNC_DESC;
-  rrecord: IFRE_DB_Object;
+  res                    : TFRE_DB_MENU_DESC;
+  func                   : TFRE_DB_SERVER_FUNC_DESC;
+  rrecord                : IFRE_DB_Object;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),rrecord));
-  if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,rrecord.DomainID) then begin
+
+  global:=rrecord.Implementor_HC is TFOS_DB_PROVIDER_DNS_RESOURCE_RECORD;
+  _getClasses(global,ndClass,rrClass,nsClass);
+
+  if conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,rrecord.DomainID) then begin
     func:=CWSF(@WEB_ResourceRecordDelete);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_resource_record'),'',func);
   end;
-  if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_DNS_RESOURCE_RECORD,rrecord.DomainID) then begin
+  if conn.sys.CheckClassRight4DomainId(sr_UPDATE,rrClass,rrecord.DomainID) then begin
     func:=CWSF(@WEB_ModifyResourceRecord);
     func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_resource_record'),'',func);
@@ -1408,9 +1674,11 @@ end;
 
 function TFOS_FIRMBOX_DNS_MOD.WEB_ResourceRecordsSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  mod_disabled: Boolean;
-  rrecord     : IFRE_DB_Object;
-  del_disabled: Boolean;
+  mod_disabled           : Boolean;
+  rrecord                : IFRE_DB_Object;
+  del_disabled           : Boolean;
+  global                 : Boolean;
+  ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -1419,10 +1687,14 @@ begin
   if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
     if input.Field('selected').ValueCount=1 then begin
       CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),rrecord));
-      if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_DNS_RESOURCE_RECORD,rrecord.DomainID) then begin
+
+      global:=rrecord.Implementor_HC is TFOS_DB_PROVIDER_DNS_RESOURCE_RECORD;
+      _getClasses(global,ndClass,rrClass,nsClass);
+
+      if conn.sys.CheckClassRight4DomainId(sr_UPDATE,rrClass,rrecord.DomainID) then begin
         mod_disabled:=false;
       end;
-      if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFOS_DB_DNS_RESOURCE_RECORD,rrecord.DomainID) then begin
+      if conn.sys.CheckClassRight4DomainId(sr_DELETE,rrClass,rrecord.DomainID) then begin
         del_disabled:=false;
       end;
     end;
