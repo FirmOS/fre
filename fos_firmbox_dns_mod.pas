@@ -459,6 +459,8 @@ begin
     CreateModuleText(conn,'cm_set_as_default_1','Set as Default 1');
     CreateModuleText(conn,'cm_set_as_default_2','Set as Default 2');
 
+    CreateModuleText(conn,'grid_nameserver_customer','Customer');
+
     CreateModuleText(conn,'global_domains_section','Global Domains');
     CreateModuleText(conn,'domains_section','Private Domains');
     CreateModuleText(conn,'global_nameserver_section','Global Nameserver');
@@ -614,6 +616,7 @@ var
   namesever_ch : IFRE_DB_DERIVED_COLLECTION;
   enum         : IFRE_DB_Enum;
   dns_customers: IFRE_DB_DERIVED_COLLECTION;
+  multidomain  : Boolean;
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -634,10 +637,32 @@ begin
       Filters.AddStringFieldFilter('TYPE_FILTER','type','NS',dbft_EXACT);
     end;
 
+    multidomain:=Length(conn.SYS.GetDomainsForClassRight(sr_FETCH,TFOS_DB_PROVIDER_NETWORK_DOMAIN))>1;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
+      AddOneToOnescheme('objname','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
+      AddOneToOnescheme('default','default','',dt_description);
+      AddMatchingReferencedField('<NETWORK_DOMAIN_DEFAULT','value','default_value','',false);
+      AddMatchingReferencedField('<NETWORK_DOMAIN_DEFAULT','ttl','default_ttl','',false);
+      SetFinalRightTransformFunction(@CalculateDescription,[FetchModuleTextShort(session,'grid_network_domains_default_value'),FetchModuleTextShort(session,'grid_network_domains_default_ttl')]);
+      AddFulltextFilterOnTransformed(['objname']);
+    end;
+    domains_grid := session.NewDerivedCollection('GLOBAL_NETWORK_DOMAINS_GRID');
+    with domains_grid do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
+      SetDefaultOrderField('objname',true);
+      Filters.AddSchemeObjectFilter('service',['TFOS_DB_PROVIDER_NETWORK_DOMAIN']);
+    end;
+
+    multidomain:=Length(conn.SYS.GetDomainsForClassRight(sr_FETCH,TFOS_DB_NETWORK_DOMAIN))>1;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
       AddOneToOnescheme('objname','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddOneToOnescheme('default','default','',dt_description);
       AddMatchingReferencedField('<NETWORK_DOMAIN_DEFAULT','value','default_value','',false);
@@ -651,7 +676,7 @@ begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
       SetDefaultOrderField('objname',true);
-      //Filters.AddSchemeObjectFilter('service',['TFOS_DB_NETWORK_DOMAIN']);
+      Filters.AddSchemeObjectFilter('service',['TFOS_DB_NETWORK_DOMAIN']);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -702,7 +727,9 @@ begin
       SetFinalRightTransformFunction(@CalculateNameserverGridFields,[]);
     end;
 
-    records_grid := session.NewDerivedCollection('NAMESERVER_RECORDS_GRID');
+    multidomain:=Length(conn.SYS.GetDomainsForClassRight(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD))>1;
+
+    records_grid := session.NewDerivedCollection('GLOBAL_NAMESERVER_RECORDS_GRID');
     with records_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetUseDependencyAsRefLinkFilter(['RECORDS>'],false,'uid');
@@ -710,6 +737,34 @@ begin
       SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_NameserverMenu));
       SetDefaultOrderField('host',true);
       Filters.AddStringFieldFilter('TYPE_FILTER','type','NS',dbft_EXACT);
+      Filters.AddSchemeObjectFilter('service',[TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD.ClassName]);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_nameserver_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
+      AddOneToOnescheme('host','host',FetchModuleTextShort(session,'grid_nameserver_records_host'),dt_string,true,true,false,1,'icon');
+      AddOneToOnescheme('value','value',FetchModuleTextShort(session,'grid_nameserver_records_value'),dt_string);
+      AddOneToOnescheme('ttl','ttl',FetchModuleTextShort(session,'grid_nameserver_records_ttl'),dt_number);
+      AddOneToOnescheme('type','type','',dt_string,false);
+      AddOneToOnescheme('icon','icon','',dt_string,false);
+      AddOneToOnescheme('default','default','',dt_number,false);
+      SetFinalRightTransformFunction(@CalculateNameserverGridFields,[]);
+    end;
+
+    records_grid := session.NewDerivedCollection('NAMESERVER_RECORDS_GRID');
+    with records_grid do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
+      SetUseDependencyAsRefLinkFilter(['RECORDS>'],false,'uid');
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_NameserverMenu));
+      if multidomain then begin
+        SetDefaultOrderField('customer',true);
+      end else begin
+        SetDefaultOrderField('host',true);
+      end;
+      Filters.AddStringFieldFilter('TYPE_FILTER','type','NS',dbft_EXACT);
+      Filters.AddSchemeObjectFilter('service',[TFOS_DB_DNS_NAMESERVER_RECORD.ClassName]);
     end;
 
   end;
@@ -826,9 +881,11 @@ begin
   global:=input.Field(CPARAM_GLOBAL).AsString='true';
   _getClasses(global,ndClass,rrClass,nsClass);
 
-  dc_records:=ses.FetchDerivedCollection('NAMESERVER_RECORDS_GRID');
-  dc_records.Filters.RemoveFilter('service');
-  dc_records.Filters.AddSchemeObjectFilter('service',[nsClass.ClassName]);
+  if global then begin
+    dc_records:=ses.FetchDerivedCollection('GLOBAL_NAMESERVER_RECORDS_GRID');
+  end else begin
+    dc_records:=ses.FetchDerivedCollection('NAMESERVER_RECORDS_GRID');
+  end;
 
   records_grid:=dc_records.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
@@ -1064,9 +1121,11 @@ begin
   _getClasses(global,ndClass,rrClass,nsClass);
 
   ses.GetSessionModuleData(ClassName).DeleteField('selectedDomain');
-  dc:=ses.FetchDerivedCollection('NETWORK_DOMAINS_GRID');
-  dc.Filters.RemoveFilter('service');
-  dc.Filters.AddSchemeObjectFilter('service',[ndClass.ClassName]);
+  if global then begin
+    dc:=ses.FetchDerivedCollection('GLOBAL_NETWORK_DOMAINS_GRID');
+  end else begin
+    dc:=ses.FetchDerivedCollection('NETWORK_DOMAINS_GRID');
+  end;
 
   domains_grid:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   if conn.sys.CheckClassRight4AnyDomain(sr_STORE,ndClass) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,rrClass) then begin
