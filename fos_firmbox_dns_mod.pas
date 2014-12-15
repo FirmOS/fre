@@ -210,7 +210,7 @@ end;
 
 class procedure TFOS_DB_DNS_NAMESERVER_RECORD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='1.0';
+  newVersionId:='1.1';
 
   if (currentVersionId='') then begin
     currentVersionId := '1.0';
@@ -221,6 +221,14 @@ begin
     StoreTranslateableText(conn,'scheme_ttl','Time to live');
 
     StoreTranslateableText(conn,'dns_rr_ns','NS (Name server record)');
+  end;
+  if (currentVersionId='1.0') then begin
+    currentVersionId := '1.1';
+
+    DeleteTranslateableText(conn,'scheme_host');
+    DeleteTranslateableText(conn,'scheme_value');
+    StoreTranslateableText(conn,'scheme_host','Hostname');
+    StoreTranslateableText(conn,'scheme_value','IPv4');
   end;
 end;
 
