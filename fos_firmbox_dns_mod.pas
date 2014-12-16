@@ -1389,6 +1389,10 @@ begin
   end;
   customer_dc.Filters.AddStdClassRightFilter('rights','servicedomain','','','TFOS_DB_NETWORK_DOMAIN',[sr_STORE],ses.GetDBConnection.SYS.GetCurrentUserTokenClone);
 
+  if (customer_dc.ItemCount=0) then begin
+    Result:=WEB_AddNetworkDomainDetails(input,ses,app,conn);
+    exit;
+  end;
   if (customer_dc.ItemCount=1) then begin
     customer:=customer_dc.First;
     ses.GetSessionModuleData(ClassName).Field('selectedCustomerAND').AsGUID:=customer.UID;
@@ -1465,7 +1469,7 @@ begin
       if input.FieldPathExists('data.customer') then begin
         CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('data.customer').AsString),customer));
       end else begin
-        raise EFRE_DB_Exception.Create('Input parameter customer missing!');
+        raise EFRE_DB_Exception.Create('No servicedomain found!');
       end;
     end;
     if multidomain then begin
