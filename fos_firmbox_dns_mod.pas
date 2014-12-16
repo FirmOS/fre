@@ -46,10 +46,13 @@ type
     function        _AddModifyNameserver                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
 
     procedure       _getClasses                         (const global:Boolean; var networkDomainClass,resourceRecordClass,nameserverClass: TFRE_DB_ObjectClassEx);
+    procedure       _showGlobal                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; var domains,nameserver:Boolean);
+    procedure       _showLocal                          (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; var domains,nameserver:Boolean);
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
     procedure       CalculateDescription                (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     procedure       CalculateNameserverGridFields       (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
+    function        isEnabled                           (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
@@ -639,6 +642,52 @@ begin
   end;
 end;
 
+procedure TFOS_FIRMBOX_DNS_MOD._showGlobal(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; var domains, nameserver: Boolean);
+var
+  dc: IFRE_DB_DERIVED_COLLECTION;
+begin
+  domains:=false;
+  nameserver:=false;
+
+  if conn.SYS.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_PROVIDER_NETWORK_DOMAIN) and conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD) then begin //PROVIDER
+    domains:=true;
+    nameserver:=true;
+    exit;
+  end;
+  dc:=ses.FetchDerivedCollection('GLOBAL_NETWORK_DOMAINS_GRID');
+  if dc.ItemCount>0 then begin
+    domains:=true;
+  end;
+end;
+
+procedure TFOS_FIRMBOX_DNS_MOD._showLocal(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; var domains, nameserver: Boolean);
+var
+  dc: IFRE_DB_DERIVED_COLLECTION;
+begin
+  domains:=false;
+  nameserver:=false;
+
+  if conn.SYS.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_NETWORK_DOMAIN) and conn.SYS.CheckClassRight4AnyDomain(sr_STORE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin //PROVIDER
+    domains:=true;
+    nameserver:=true;
+    exit;
+  end;
+
+  dc:=ses.FetchDerivedCollection('NAMESERVER_CHOOSER');
+  dc.Filters.RemoveFilter('service_type');
+  dc.Filters.RemoveFilter('service_domain');
+  dc.Filters.AddSchemeObjectFilter('service_type',['TFOS_DB_DNS_NAMESERVER_RECORD']);
+
+  if dc.ItemCount>0 then begin
+    if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+      nameserver:=true;
+    end;
+    if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_NETWORK_DOMAIN) then begin
+      domains:=true;
+    end;
+  end;
+end;
+
 procedure TFOS_FIRMBOX_DNS_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
   app          : TFRE_DB_APPLICATION;
@@ -829,6 +878,18 @@ begin
   end;
 end;
 
+function TFOS_FIRMBOX_DNS_MOD.isEnabled(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  domains,nameserver: Boolean;
+begin
+  _showGlobal(ses,conn,domains,nameserver);
+  Result:=domains or nameserver;
+  if not Result then begin
+    _showLocal(ses,conn,domains,nameserver);
+    Result:=domains or nameserver;
+  end;
+end;
+
 function TFOS_FIRMBOX_DNS_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   dc,dc_records : IFRE_DB_DERIVED_COLLECTION;
@@ -838,26 +899,34 @@ var
   subsecs       : TFRE_DB_SUBSECTIONS_DESC;
   sf            : TFRE_DB_SERVER_FUNC_DESC;
   count         : Integer;
-
+  gD,gN,lD,lN   : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
 
+  _showGlobal(ses,conn,gD,gN);
+  _showLocal(ses,conn,lD,lN);
+
   count:=0;
-  if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_PROVIDER_NETWORK_DOMAIN) then begin
+  if gD then begin
     count:=count+1;
   end;
-  if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_NETWORK_DOMAIN) then begin
+  if gN then begin
     count:=count+1;
   end;
-  if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD) then begin
+  if lD then begin
     count:=count+1;
   end;
-  if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+  if lD then begin
     count:=count+1;
   end;
 
+  if count=0 then begin
+    Result:=TFRE_DB_HTML_DESC.create.Describe('');
+    exit;
+  end;
+
   subsecs:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
-  if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_PROVIDER_NETWORK_DOMAIN) then begin
+  if gD then begin
     if count=1 then begin
       input.Field(CPARAM_GLOBAL).AsString:='true';
       Result:=WEB_DomainsContent(input,ses,app,conn);
@@ -867,7 +936,7 @@ begin
     sf.AddParam.Describe(CPARAM_GLOBAL,'true');
     subsecs.AddSection.Describe(sf,FetchModuleTextShort(ses,'global_domains_section'),1);
   end;
-  if conn.SYS.CheckClassRight4AnyDomain(sr_FETCH,TFOS_DB_NETWORK_DOMAIN) then begin
+  if lD then begin
     if count=1 then begin
       input.Field(CPARAM_GLOBAL).AsString:='false';
       Result:=WEB_DomainsContent(input,ses,app,conn);
@@ -877,7 +946,7 @@ begin
     sf.AddParam.Describe(CPARAM_GLOBAL,'false');
     subsecs.AddSection.Describe(sf,FetchModuleTextShort(ses,'domains_section'),2);
   end;
-  if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD) then begin
+  if gN then begin
     if count=1 then begin
       input.Field(CPARAM_GLOBAL).AsString:='true';
       Result:=WEB_NameserverContent(input,ses,app,conn);
@@ -887,7 +956,7 @@ begin
     sf.AddParam.Describe(CPARAM_GLOBAL,'true');
     subsecs.AddSection.Describe(sf,FetchModuleTextShort(ses,'global_nameserver_section'),3);
   end;
-  if conn.SYS.CheckClassRight4AnyDomain(sr_UPDATE,TFOS_DB_DNS_NAMESERVER_RECORD) then begin
+  if lN then begin
     if count=1 then begin
       input.Field(CPARAM_GLOBAL).AsString:='false';
       Result:=WEB_NameserverContent(input,ses,app,conn);
