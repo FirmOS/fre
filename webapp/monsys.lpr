@@ -62,7 +62,6 @@ var
 begin
   Application:=TFRE_MonSys.Create(nil);
   Application.Title:='FirmOS Monitoring System';
-  Application.DefaultExtensions := 'MONSYS';
   Application.Run;
   Application.Free;
 end.
