@@ -29,7 +29,7 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <Units Count="2">
+    <Units Count="3">
       <Unit0>
         <Filename Value="fossvc.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -39,6 +39,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="fosillu_ipadm"/>
       </Unit1>
+      <Unit2>
+        <Filename Value="../../hal/fosillu_hal_svcctrl.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fosillu_hal_svcctrl"/>
+      </Unit2>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
