@@ -45,49 +45,60 @@ var
 
   svc           : TFRE_DB_SERVICE;
 
-  procedure EnableService(const obj: IFRE_DB_Object);
-  var ip : TFRE_DB_IP_HOSTNET;
-      dl : TFRE_DB_DATALINK;
+  function EnableService(const obj: IFRE_DB_Object):boolean;
+  var ip     : TFRE_DB_IP_HOSTNET;
+      ip4    : TFRE_DB_IPV4_HOSTNET;
+      dl     : TFRE_DB_DATALINK;
+      resdbo : IFRE_DB_Object;
+
   begin
+    result := false;
     writeln('SWL: ENABLE');
     if obj.IsA(TFRE_DB_IP_HOSTNET,ip) then
       begin
         if ip.Parent.IsA(TFRE_DB_DATALINK,dl) then
           ip.Field('datalinkname').asstring := dl.ObjectName;
-        ip.Field('datalinkname').asstring :='e1000g0';  //DEBUG
-        ip.RIF_StartService;
+//        ip.Field('datalinkname').asstring :='e1000g0';  //DEBUG
+//        if obj.isA(TFRE_DB_IPV4_HOSTNET,ip4) then       //DEBUG
+//          ip.Field('dhcp').asboolean := true;           //DEBUG
+        resdbo := ip.RIF_StartService;
+        result := resdbo.Field('started').asboolean;
       end;
   end;
 
-  procedure DisableService(const obj: IFRE_DB_Object);
-  var ip : TFRE_DB_IP_HOSTNET;
-      dl : TFRE_DB_DATALINK;
+  function DisableService(const obj: IFRE_DB_Object):boolean;
+  var ip     : TFRE_DB_IP_HOSTNET;
+      dl     : TFRE_DB_DATALINK;
+      resdbo : IFRE_DB_Object;
   begin
+    result :=false;
     writeln('SWL: DISABLE');
     if obj.IsA(TFRE_DB_IP_HOSTNET,ip) then
       begin
         if ip.Parent.IsA(TFRE_DB_DATALINK,dl) then
           ip.Field('datalinkname').asstring := dl.ObjectName;
-        ip.Field('datalinkname').asstring :='e1000g0';  //DEBUG
-        ip.RIF_StopService;
+        //ip.Field('datalinkname').asstring :='e1000g0';  //DEBUG
+        resdbo := ip.RIF_StopService;
+        result := resdbo.Field('stopped').asboolean;
       end;
   end;
 
-  procedure RestartService(const obj: IFRE_DB_Object);
+  function RestartService(const obj: IFRE_DB_Object):boolean;
   begin
+    result :=false;
     writeln('SWL: RESTART');
   end;
 
-  procedure TryToChangeServiceState(const obj: IFRE_DB_Object);
+  function TryToChangeServiceState(const obj: IFRE_DB_Object):boolean;
   begin
-     if HasOption('*','enable') then
-      EnableService(obj)
+    if HasOption('*','enable') then
+      result := EnableService(obj)
     else
       if HasOption('*','disable') then
-        DisableService(obj)
+        result := DisableService(obj)
       else
         if HasOption('*','restart') then
-          RestartService(obj)
+          result := RestartService(obj)
         else
           raise Exception.Create('no enable,disable,restart option choosen!');
   end;
@@ -122,10 +133,14 @@ var
 
   procedure _DeleteService(const obj:IFRE_DB_Object);
   var fmri        : string;
+      svc_name    : string;
   begin
-    fmri := obj.Field('fmri').asstring;
-    obj.Field('svc_name').asstring:=Copy(fmri,6,maxint);
+    fmri     := obj.Field('fmri').asstring;
+    svc_name := Copy(fmri,6,maxint);
+    obj.Field('svc_name').asstring:=svc_name;
     writeln('SWL: REMOVE SERVICE ',fmri);
+    if Pos('fos_routing',svc_name)>0 then
+      fre_remove_dependency('milestone/network',StringReplace(svc_name,'/','',[rfReplaceAll]));
     fre_destroy_service(obj);
   end;
 
@@ -192,13 +207,17 @@ begin
       end;
 
       Terminate;
-      Exit;
+      halt(0);
     end;
 
-  if HasOption('*','ip') then
+  if HasOption('*','ip') or HasOption('*','routing') then
     begin
       _LoadZoneDBO;
-      uid_string := GetOptionValue('*','ip');
+      if HasOption('*','ip') then
+        uid_string := GetOptionValue('*','ip')
+      else
+        uid_string := GetOptionValue('*','routing');
+
       if uid_string='' then
         raise Exception.Create('No UID for ip option set!');
       uid.SetFromHexString(uid_string);
@@ -206,32 +225,24 @@ begin
       if not zone_dbo.FetchObjByUID(uid,foundobj) then
         raise Exception.Create('UID not found for this zone!');
 
-      TryToChangeServiceState(foundobj);
-
-      Terminate;
-      Exit;
+      if TryToChangeServiceState(foundobj) then
+        begin
+          Terminate;
+          halt(0);
+        end
+      else
+        begin
+          Terminate;
+          halt(1);
+        end;
     end;
-
-  if HasOption('*','routing') then
-    begin
-      _LoadZoneDBO;
-      uid_string := GetOptionValue('*','routing');
-      if uid_string='' then
-        raise Exception.Create('No UID for routing option set!');
-      uid.SetFromHexString(uid_string);
-
-      if not zone_dbo.FetchObjByUID(uid,foundobj) then
-        raise Exception.Create('UID not found for this zone!');
-
-      TryToChangeServiceState(foundobj);
-
-      Terminate;
-      Exit;
-    end;
-
 
   if HasOption('t','test') then
     begin
+      fre_remove_dependency('fos/fosip',StringReplace('fos/fosip_cpe0_6761c387e535e2f221106b9776cff2d1','/','',[rfReplaceAll]));
+      Terminate;
+      Exit;
+
       svc := TFRE_DB_SERVICE.Create;
       svc.SetSvcNameandType('fos/test','Exim Mailservice (MTA)','child','core,signal');
       svc.SetSvcEnvironment('/','mail','mail','LANG=C');

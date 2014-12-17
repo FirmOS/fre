@@ -12,7 +12,8 @@ uses
   {$ENDIF}
   Classes, SysUtils, CustApp, fosillu_libzonecfg,fre_process,
   FRE_SYSTEM,FOS_DEFAULT_IMPLEMENTATION,FOS_TOOL_INTERFACES,FOS_FCOM_TYPES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,
-  FRE_DB_CORE,fre_dbbase, FRE_DB_EMBEDDED_IMPL, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs,fosillu_dladm,fosillu_libdladm
+  FRE_DB_CORE,fre_dbbase, FRE_DB_EMBEDDED_IMPL, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs,fosillu_dladm,fosillu_libdladm,
+  fos_citycom_voip_mod
   { you can add units after this };
 
 type
@@ -49,6 +50,7 @@ begin
   InitMinimal(false);
   fre_zfs.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
+  fos_citycom_voip_mod.Register_DB_Extensions;
 
   dlres := dladm_open(@GILLU_DLADM);
   if dlres<>DLADM_STATUS_OK then
@@ -68,6 +70,7 @@ begin
   zone_dbo_file := Copy(zone_path,1,Pos('/domains',zone_path)-1)+'/zones/'+zone_name+'/zone.dbo';
   writeln('SWL: ',zone_dbo_file);
   zone_dbo  := GFRE_DBI.CreateFromFile(zone_dbo_file);
+//  writeln('SWL ZONE:',zone_dbo.DumpToString());
 //  0=[/usr/lib/brand/fbz/fosbrand] 1=[--post] 2=[15a56c904a7f00248929bfdb576a45c9] 3=[/syspool/domains/df842e6d890b0fb5bb3a1b8db0cc8dc6/15a56c904a7f00248929bfdb576a45c9] 4=[2] 5=[0]
 
   if (state=ZONE_STATE_INSTALLED) and (pre=false) and (cmd=0) then

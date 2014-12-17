@@ -44,6 +44,7 @@ procedure fre_init_libsvc;
 procedure fre_create_service                               (const svcobj: IFRE_DB_Object);
 procedure fre_destroy_service                              (const svcobj: IFRE_DB_Object);
 function  fre_get_servicelist                              (const substring_filter: string=''): IFRE_DB_Object;
+procedure fre_remove_dependency                            (const service_name: string; const dependency:string);
 
 function  fre_get_local_service_scope                      : Pscf_scope_t;
 procedure fre_destroy_service_scope                        (const scope: Pscf_scope_t);
@@ -65,7 +66,7 @@ function  fre_create_add_instance_to_service               (const instance_name:
 procedure fre_destroy_instance_handle                      (const instance : Pscf_instance_t);
 function  fre_create_add_instance_propertygroup            (const groupname:string;const grouptype:string; const instance: Pscf_instance_t): Pscf_propertygroup_t;
 function  fre_get_instance                                 (const instance_name: string; const service: Pscf_service_t) : Pscf_instance_t;
-
+function  fre_create_pg                                    : Pscf_propertygroup_t;
 
 
 
@@ -163,13 +164,7 @@ function fre_create_add_service_propertygroup(const groupname: string; const gro
 var err : integer;
     msg : string;
 begin
-  GFRE_DBI.LogDebug(dblc_APPLICATION,'create propertygroup');
-  result := scf_pg_create(gsfc_handle);
-  if result=nil then
-    begin
-      msg := StrPas(scf_strerror(scf_error));
-      raise Exception.Create('could not create property group:'+' '+msg);
-    end;
+  result := fre_create_pg;
 
   GFRE_DBI.LogDebug(dblc_APPLICATION,'add propertygroup');
   err := scf_service_add_pg(service,Pchar(groupname),Pchar(grouptype),0,result);
@@ -544,6 +539,43 @@ begin
   end;
 end;
 
+procedure fre_remove_dependency(const service_name: string; const dependency: string);
+var   scope     : Pscf_scope_t;
+      service   : Pscf_service_t;
+      pg        : Pscf_propertygroup_t;
+      err       : integer;
+      msg       : string;
+begin
+  fre_init_libsvc;
+
+  scope    := fre_get_local_service_scope;
+
+  service  := fre_get_service(service_name,scope);
+  try
+    pg  := fre_create_pg;
+    try
+      err := scf_service_get_pg(service,PChar(dependency),pg);
+      if err<>0 then
+        begin
+          msg := StrPas(scf_strerror(scf_error))+' '+dependency;
+          raise Exception.Create('could not get propertygroup:'+inttostr(err)+' '+msg);
+        end;
+      writeln('SWL: PROPERTY GROUP FOUND');
+      err := scf_pg_delete(pg);
+      if err<>0 then
+        begin
+          msg := StrPas(scf_strerror(scf_error))+' '+dependency;
+          raise Exception.Create('could not delete propertygroup:'+inttostr(err)+' '+msg);
+        end;
+      writeln('SWL: PROPERTY GROUP DELETED '+dependency);
+    finally
+      fre_destroy_propertgroup_handle(pg);
+    end;
+  finally
+    fre_destroy_service_handle(service);
+  end;
+end;
+
 procedure fre_destroy_propertgroup_handle(const pg: Pscf_propertygroup_t);
 begin
   scf_pg_destroy(pg);
@@ -766,6 +798,19 @@ begin
         end;
       msg := StrPas(scf_strerror(scf_error));
       raise Exception.Create('could not get instance:'+inttostr(err)+' '+msg);
+    end;
+end;
+
+function fre_create_pg: Pscf_propertygroup_t;
+var err : integer;
+    msg : string;
+begin
+  GFRE_DBI.LogDebug(dblc_APPLICATION,'create propertygroup');
+  result := scf_pg_create(gsfc_handle);
+  if result=nil then
+    begin
+      msg := StrPas(scf_strerror(scf_error));
+      raise Exception.Create('could not create property group:'+' '+msg);
     end;
 end;
 
