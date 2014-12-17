@@ -48,8 +48,11 @@ interface
 uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
-  fre_diff_transport,fre_process,fre_mysql_ll,sqldb,
-  fosillu_hal_zonectrl,fosillu_hal_dbo_common;
+  fre_diff_transport,fre_process,fre_mysql_ll,sqldb
+  {$IFDEF SOLARIS}
+  ,fosillu_hal_zonectrl,fosillu_hal_dbo_common
+  {$ENDIF}
+  ;
 
 
 type
@@ -377,6 +380,7 @@ var //zone : TFRE_DB_ZONE;
     //uid : TFRE_DB_GUID;
     obj   : IFRE_DB_Object;
 begin
+  {$IFDEF SOLARIS}
   //zone := TFRE_DB_ZONE.CreateForDB;
   //uid.SetFromHexString('da3589f766d26339955efa03278f865a');
   //zone.SetDomainID(uid);
@@ -409,7 +413,7 @@ begin
 //  readln;
 //  fre_destroy_zone(obj);
 //  writeln('zone destroyed');
-
+  {$ENDIF}
 
   abort;
 end;
@@ -490,9 +494,9 @@ begin
   //statscontroller.StartCacheParser(true);
   //statscontroller.StartZFSParser(true);
 
-
+  {$IFDEF SOLARIS}
   InitIllumosLibraryHandles;
-
+  {$ENDIF}
   GFRE_TF.Get_Lock(liveupdate_lock);
   live_all := GFRE_DBI.NewObject;
   GFRE_TF.Get_Lock(servicedata_lock);

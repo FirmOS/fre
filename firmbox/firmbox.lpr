@@ -62,7 +62,6 @@ var
 begin
   Application:=TFRE_Firmbox.Create(nil);
   Application.Title:='Firmbox';
-  Application.DefaultExtensions := 'FIRMBOX';
   Application.Run;
   Application.Free;
 end.
