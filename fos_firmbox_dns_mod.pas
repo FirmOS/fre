@@ -496,13 +496,13 @@ var
 begin
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+  end;
+  if currentVersionId='0.1' then begin
+    currentVersionId := '0.2';
     if not conn.CollectionExists(CFOS_DB_DNS_RECORDS_COLLECTION) then begin
       coll := conn.CreateCollection(CFOS_DB_DNS_RECORDS_COLLECTION);
       CheckDbResult(coll.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false));
     end;
-  end;
-  if currentVersionId='0.1' then begin
-    currentVersionId := '0.2';
     if conn.CollectionExists('network_domains') then begin
       conn.DeleteCollection('network_domains');
     end;
