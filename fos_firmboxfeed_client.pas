@@ -49,7 +49,7 @@ uses
   Classes, SysUtils,fre_base_client,FOS_TOOL_INTERFACES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,FOS_VM_CONTROL_INTERFACE,
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
   fre_diff_transport,fre_process,fre_mysql_ll,sqldb,
-  fos_firmbox_zonectrl,fosillu_hal_dbo_common;
+  fosillu_hal_zonectrl,fosillu_hal_dbo_common;
 
 
 type
