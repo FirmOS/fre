@@ -2018,9 +2018,9 @@ begin
   e1_id    := link_id;
 
   g_domain_id := CheckFindDomainID('DEMO');
-  zone_id  := CreateZone('demo',ds_id,host_id,template_id,'6631b9d59a19ab782c83631265370cd6');
+  zone_id  := CreateZone('demo',ds_id,host_id,template_id,'15a56c904a7f00248929bfdb576a45c9');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,e1_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a4:c6:7c','cpe','Crypto CPE');
-  AddIPV6('',link_id);
+//  AddIPV6('',link_id);
   AddIPV6('fdd7:f47b:4605:0705:1:0:0:3/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,e0_id,0,1588,CFRE_DB_NullGUID,'02:08:20:e7:40:51','internet','Internet');
   AddIPV4('91.143.108.194/27',link_id);
