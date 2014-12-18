@@ -87,7 +87,7 @@ type
 
   { TFOS_DB_NETWORK_DOMAIN }
 
-  TFOS_DB_NETWORK_DOMAIN=class(TFRE_DB_SERVICE)
+  TFOS_DB_NETWORK_DOMAIN=class(TFRE_DB_SUBSERVICE)
   protected
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
@@ -901,7 +901,7 @@ var
   count         : Integer;
   gD,gN,lD,lN   : Boolean;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4AnyDomain(ses);
 
   _showGlobal(ses,conn,gD,gN);
   _showLocal(ses,conn,lD,lN);
@@ -978,7 +978,7 @@ var
   global                 : Boolean;
   ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4AnyDomain(ses);
 
   global:=input.Field(CPARAM_GLOBAL).AsString='true';
   _getClasses(global,ndClass,rrClass,nsClass);
@@ -1237,7 +1237,7 @@ var
   global                 : Boolean;
   sf                     : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4AnyDomain(ses);
 
   global:=input.Field(CPARAM_GLOBAL).AsString='true';
   _getClasses(global,ndClass,rrClass,nsClass);
@@ -1351,7 +1351,7 @@ var
   global                 : Boolean;
   ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4AnyDomain(ses);
 
   global:=input.Field(CPARAM_GLOBAL).AsString='true';
   _getClasses(global,ndClass,rrClass,nsClass);
@@ -1407,7 +1407,7 @@ var
   global                 : Boolean;
   ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4AnyDomain(ses);
 
   add_disabled:=true;
   del_disabled:=true;
@@ -1931,7 +1931,7 @@ var
   global                 : Boolean;
   ndClass,rrClass,nsClass: TFRE_DB_ObjectClassEx;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4AnyDomain(ses);
 
   mod_disabled:=true;
   del_disabled:=true;
