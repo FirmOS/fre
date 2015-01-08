@@ -1221,7 +1221,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         end
       else
         begin
-          ds             := TFRE_DB_ZFS_DATASET.CreateForDB;
+          ds             := TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
         end;
       ds.ObjectName  := name;
       ds.Field('poolid').AsObjectLink := pool_id;
