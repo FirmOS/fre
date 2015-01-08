@@ -42,10 +42,10 @@ var
   foundobj      : IFRE_DB_Object;
   uid_string    : string;
   uid           : TFRE_DB_GUID;
-
+  svc_name      : string;
   svc           : TFRE_DB_SERVICE;
 
-  function EnableService(const obj: IFRE_DB_Object):boolean;
+  function StartService(const obj: IFRE_DB_Object):boolean;
   var ip     : TFRE_DB_IP_HOSTNET;
       ip4    : TFRE_DB_IPV4_HOSTNET;
       dl     : TFRE_DB_DATALINK;
@@ -53,7 +53,7 @@ var
 
   begin
     result := false;
-    writeln('SWL: ENABLE');
+    writeln('SWL: START');
     if obj.IsA(TFRE_DB_IP_HOSTNET,ip) then
       begin
         if ip.Parent.IsA(TFRE_DB_DATALINK,dl) then
@@ -66,13 +66,13 @@ var
       end;
   end;
 
-  function DisableService(const obj: IFRE_DB_Object):boolean;
+  function StopService(const obj: IFRE_DB_Object):boolean;
   var ip     : TFRE_DB_IP_HOSTNET;
       dl     : TFRE_DB_DATALINK;
       resdbo : IFRE_DB_Object;
   begin
     result :=false;
-    writeln('SWL: DISABLE');
+    writeln('SWL: STOP');
     if obj.IsA(TFRE_DB_IP_HOSTNET,ip) then
       begin
         if ip.Parent.IsA(TFRE_DB_DATALINK,dl) then
@@ -91,11 +91,11 @@ var
 
   function TryToChangeServiceState(const obj: IFRE_DB_Object):boolean;
   begin
-    if HasOption('*','enable') then
-      result := EnableService(obj)
+    if HasOption('*','start') then
+      result := StartService(obj)
     else
-      if HasOption('*','disable') then
-        result := DisableService(obj)
+      if HasOption('*','stop') then
+        result := StopService(obj)
       else
         if HasOption('*','restart') then
           result := RestartService(obj)
@@ -107,12 +107,29 @@ var
   var dl     : TFRE_DB_DATALINK;
       resdbo : IFRE_DB_Object;
       svc    : TFRE_DB_SERVICE;
+
+    procedure _RemoveIPHostnetService(const fld:IFRE_DB_Field);
+    var fmri     : string;
+        foundobj : IFRE_DB_Object;
+    begin
+      if fld.FieldType=fdbft_String then
+        begin
+          fmri := fld.AsString;
+          if svclist.FetchObjWithStringFieldValue('fmri',fmri,foundobj,'') then
+            begin
+              writeln('SWL: IP SERVICE CREATED/EXISTING');
+              svclist.DeleteField(foundobj.UID.AsHexString);
+            end;
+        end;
+    end;
+
   begin
     if obj.IsA(TFRE_DB_DATALINK,dl) then
       begin
         writeln('SWL: NOW DATALINK ',dl.ObjectName,' ',obj.UID.AsHexString);
         resdbo := dl.RIF_CreateOrUpdateServices;
-        writeln(resdbo.DumpToString());
+        resdbo.ForAllFields(@_RemoveIPHostnetService,true,true);
+//        writeln(resdbo.DumpToString());
       end
     else
       if obj.IsA(TFRE_DB_SERVICE,svc) then
@@ -126,7 +143,7 @@ var
           else
             begin
               resdbo := svc.RIF_CreateOrUpdateService;
-              writeln(resdbo.DumpToString());
+            //  writeln(resdbo.DumpToString());
             end;
         end;
   end;
@@ -137,10 +154,19 @@ var
   begin
     fmri     := obj.Field('fmri').asstring;
     svc_name := Copy(fmri,6,maxint);
+    writeln('SWL: REMOVE DEPENDENCY ',fmri);
+    try
+      if Pos('fos_ip_',svc_name)>0 then
+        fre_remove_dependency('fos/fosip',StringReplace(svc_name,'/','',[rfReplaceAll]));
+      if Pos('fos_routing',svc_name)>0 then
+        fre_remove_dependency('milestone/network',StringReplace(svc_name,'/','',[rfReplaceAll]));
+    except on E:Exception do
+      begin
+        writeln('SWL: DEPENDENCY FOR '+svc_name+' DOES NOT EXIST');
+      end;
+    end;
     obj.Field('svc_name').asstring:=svc_name;
     writeln('SWL: REMOVE SERVICE ',fmri);
-    if Pos('fos_routing',svc_name)>0 then
-      fre_remove_dependency('milestone/network',StringReplace(svc_name,'/','',[rfReplaceAll]));
     fre_destroy_service(obj);
   end;
 
@@ -156,7 +182,7 @@ begin
   fre_hal_schemes.Register_DB_Extensions;
   fos_citycom_voip_mod.Register_DB_Extensions;
 
-  ErrorMsg:=CheckOptions('cslt',['createsvc','services','list','test','ip:','routing:','enable','disable','restart']);
+  ErrorMsg:=CheckOptions('cslt',['createsvc','services','list','test','ip:','routing:','start','stop','restart','enable:','disable:','refresh:']);
   if ErrorMsg<>'' then begin
     ShowException(Exception.Create(ErrorMsg));
     Terminate;
@@ -256,6 +282,22 @@ begin
       Exit;
 //  readln;
 //  fre_destroy_service(svc);
+    end;
+
+  if HasOption('*','enable') then
+    begin
+      svc_name := GetOptionValue('*','enable');
+      fre_enable_or_disable_service(svc_name,true);
+      Terminate;
+      Exit;
+    end;
+
+  if HasOption('*','disable') then
+    begin
+      svc_name := GetOptionValue('*','disable');
+      fre_enable_or_disable_service(svc_name,false);
+      Terminate;
+      Exit;
     end;
 
 
