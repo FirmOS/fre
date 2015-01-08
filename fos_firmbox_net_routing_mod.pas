@@ -115,7 +115,7 @@ var
   if_grid   : TFRE_DB_CONTENT_DESC;
   content   : TFRE_DB_CONTENT_DESC;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4AnyDomain(ses);
 
   ses.GetSessionModuleData(ClassName).DeleteField('selectedIF');
 
@@ -126,7 +126,7 @@ end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_IFSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4AnyDomain(ses);
 
   if input.FieldExists('selected') and (input.Field('selected').ValueCount>0)  then begin
     ses.GetSessionModuleData(ClassName).Field('selectedIF').AsStringArr:=input.Field('selected').AsStringArr;
