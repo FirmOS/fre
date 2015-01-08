@@ -65,6 +65,7 @@ uses
   fre_zfs,
   fos_firmbox_vmapp,
   fos_firmbox_vm_machines_mod,
+  fos_firmbox_dns_mod,
   fos_citycom_voip_mod,
   fos_citycom_adc_common,
   sysutils,
@@ -1519,6 +1520,14 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      CheckDbResult(svc_coll.Store(cf));
    end;
 
+   procedure RemoveLinksifExists(const collname:string);
+   begin
+     if conn.CollectionExists(collname) then
+       begin
+         RemoveObjLinks(conn.GetCollection(collname));
+       end;
+   end;
+
   procedure ClearCollectionifExists(const collname:string;const removelinks:boolean=false);
   begin
     if conn.CollectionExists(collname) then
@@ -1695,6 +1704,15 @@ begin
   hwColl.ClearCollection;
   rcoll.ClearCollection;
   ipcoll.ClearCollection;
+
+  RemoveLinksifExists(CFOS_DB_VOIP_EXT_EXP_REL_COLLECTION);
+  RemoveLinksifExists(CFOS_DB_VOIP_EXTENSIONS_COLLECTION);
+  RemoveLinksifExists(CFOS_DB_VOIP_PHONEBOOK_COLLECTION);
+  ClearCollectionifExists(CFOS_DB_VOIP_EXT_EXP_REL_COLLECTION);
+  ClearCollectionifExists(CFOS_DB_VOIP_EXTENSIONS_COLLECTION);
+  ClearCollectionifExists(CFOS_DB_VOIP_PHONEBOOK_COLLECTION);
+
+  ClearCollectionifExists(CFOS_DB_DNS_RECORDS_COLLECTION);
 
   ClearCollectionifExists(CFOS_DB_SERVICES_COLLECTION,true);
   zcoll.ClearCollection;
