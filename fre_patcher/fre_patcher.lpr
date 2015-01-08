@@ -61,6 +61,7 @@ uses
   fre_basecli_app,
   fre_certificate_app,
   fre_hal_schemes,
+  fre_scsi,
   fre_zfs,
   fos_firmbox_vmapp,
   fos_firmbox_vm_machines_mod,
@@ -107,6 +108,7 @@ type
     procedure   GenerateDeviceData                      ;
     procedure   GenerateDataCenterData                  ;
     procedure   ExportEmbeddedZones                     ;
+    procedure   PoolConfig                              ;
     procedure   AddAFeederUser                          (const feederusername:string ; const feederpass:string ; const feederclass :string);
     procedure   AddAuser                                (const userstringencoding : string);
 
@@ -204,6 +206,7 @@ begin
     'devicedata'   : GenerateDeviceData;
     'exportzones'  : ExportEmbeddedZones;
     'gendatacenter': GenerateDatacenterData;
+    'poolconfig'   : PoolConfig;
   end;
 end;
 
@@ -1070,7 +1073,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       shareobj.ObjectName:='SecureFiles';
       vf.Field(shareobj.UID_String).asObject:=shareobj;
 
-      writeln('SWL:'+cfg.DumpToString());
+      //writeln('SWL:'+cfg.DumpToString());
       cfg.SaveToFile('/opt/local/fre/hal/'+mac+'_cpe.cfg');
 
       CheckDbResult(coll.Store(cpe));
@@ -1155,8 +1158,10 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     zcoll          : IFRE_DB_COLLECTION;
     pcoll          : IFRE_DB_COLLECTION;
     pool_id        : TFRE_DB_GUID;
+    rootds_id      : TFRE_DB_GUID;
     dscoll         : IFRE_DB_COLLECTION;
     ds_id          : TFRE_DB_GUID;
+    domainsds_id   : TFRE_DB_GUID;
     zone_id        : TFRE_DB_GUID;
     svc_coll       : IFRE_DB_COLLECTION;
     link_id        : TFRE_DB_GUID;
@@ -1187,7 +1192,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       dc.SetDomainID(g_domain_id);
       result       := dc.UID;
       CheckDBResult(dccoll.Store(dc));
-      writeln('Created Datacenter:',name);
+      //writeln('Created Datacenter:',name);
     end;
 
     function       CreateHost(const name:string; const dc_id:TFRE_DB_GUID; const mac: TFRE_DB_String):TFRE_DB_GUID;
@@ -1203,10 +1208,34 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       host.SetDomainID(g_domain_id);
       result           := host.UID;
       CheckDBResult(hcoll.Store(host));
-      writeln('Created Host:',name);
+      //writeln('Created Host:',name);
     end;
 
-    function       CreatePool(const name:string; const host_id:TFRE_DB_GUID;const zfs_guid:string=''):TFRE_DB_GUID;
+    function       CreateZFSDataset(const name:string; const path:string; const pool_id:TFRE_DB_GUID; const serviceparent_id:TFRE_DB_GUID; const isparent_ds:boolean=false):TFRE_DB_GUID;
+    var
+      ds               : TFRE_DB_ZFS_DATASET;
+    begin
+      if isparent_ds then
+        begin
+          ds             := TFRE_DB_ZFS_DATASET_PARENT.CreateForDB;
+        end
+      else
+        begin
+          ds             := TFRE_DB_ZFS_DATASET.CreateForDB;
+        end;
+      ds.ObjectName  := name;
+      ds.Field('poolid').AsObjectLink := pool_id;
+      ds.Field('dataset').asstring    := path;
+      ds.Field('serviceParent').AsObjectLink:=serviceparent_id;
+      ds.SetDomainID(g_domain_id);
+      result           := ds.UID;
+      writeln('DATASET:',ds.DumpToString());
+      CheckDBResult(dscoll.Store(ds));
+      writeln('SWL Created DataSet:',name,' ',path);
+    end;
+
+
+    function       CreatePool(const name:string; const host_id:TFRE_DB_GUID;out rootds_id:TFRE_DB_GUID;const zfs_guid:string=''):TFRE_DB_GUID;
     var
       pool             : TFRE_DB_ZFS_POOL;
     begin
@@ -1220,30 +1249,38 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       pool.SetDomainID(g_domain_id);
       result           := pool.UID;
       CheckDBResult(pcoll.Store(pool));
-      writeln('Created Pool:',name);
+      //writeln('Created Pool:',name);
+      rootds_id := CreateZFSDataset(name,'/'+name,result,result,false);
+
+
     end;
 
-    function       CreateDataset(const name:string; const path:string; const pool_id:TFRE_DB_GUID):TFRE_DB_GUID;
-    var
-      ds               : TFRE_DB_ZFS_DATASET;
+    function CreateParentDatasetwithStructure(const name:string; const pool_id:TFRE_DB_GUID;const serviceparent_id:TFRE_DB_GUID):TFRE_DB_GUID;
+    var parentds_id:TFRE_DB_GUID;
+        domains_id:TFRE_DB_GUID;
     begin
-      ds             := TFRE_DB_ZFS_DATASET.CreateForDB;
-      ds.ObjectName  := name;
-      ds.Field('poolid').AsObjectLink := pool_id;
-      ds.Field('dataset').asstring    := path;
-      ds.Field('serviceParent').AsObjectLink:=pool_id;
-      ds.SetDomainID(g_domain_id);
-      result           := ds.UID;
-//      writeln('DATASET:',ds.DumpToString());
-      CheckDBResult(dscoll.Store(ds));
-      writeln('Created DataSet:',name);
+      parentds_id := CreateZFSDataset(name,'/'+name,pool_id,serviceparent_id,true);
+      domains_id  := CreateZFSDataSet(name+'/domains','/'+name+'/domains',pool_id,parentds_id,false);
+      result      := domains_id;
     end;
 
+    function CreateDataSetChild(const serviceparent_id:TFRE_DB_GUID;const dsname:string):TFRE_DB_GUID;
+    var parentobj  : IFRE_DB_Object;
+        dataset    : TFRE_DB_ZFS_DATASET;
+    begin
+      if dscoll.Fetch(serviceparent_id,parentobj)=false then
+        raise Exception.Create('could not fetch domains ds');
+      if parentobj.IsA(TFRE_DB_ZFS_DATASET,dataset) then
+        result := CreateZFSDataset(dataset.ObjectName+'/'+dsname,dataset.Field('dataset').asstring+'/'+dsname,dataset.Field('poolid').AsGUID,serviceparent_id,false)
+      else
+        raise Exception.Create('serviceparent for domain dataset is not a dataset');
+    end;
 
     function       CreateZone(const name:string; const serviceparent_id:TFRE_DB_GUID; const host_id:TFRE_DB_GUID; const template_id:TFRE_DB_GUID; const zone_id:string=''):TFRE_DB_GUID;
     var
       zone             : TFRE_DB_ZONE;
       newuid           : TFRE_DB_GUID;
+      zds_id           : TFRE_DB_GUID;
     begin
       zone             := TFRE_DB_ZONE.CreateForDB;
       zone.ObjectName  := name;
@@ -1258,11 +1295,20 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       if template_id<>CFRE_DB_NullGUID then
         zone.Field('templateid').AsObjectLink:=template_id;
       zone.Field('hostid').AsObjectLink:=host_id;
-      zone.Field('serviceParent').AsObjectLink:=serviceparent_id;
+      if host_id=serviceparent_id then
+        begin
+          // no dataset for global zone
+          zone.Field('serviceParent').AsObjectLink:=serviceparent_id;
+        end
+      else
+        begin
+          zds_id := CreateDataSetChild(serviceparent_id,zone.UID.AsHexString);
+          zone.Field('serviceParent').AsObjectLink:=zds_id;
+        end;
       zone.SetDomainID(g_domain_id);
       result           := zone.UID;
  //     writeln('ZONE:',zone.DumpToString());
-      writeln('Create Zone:',name,' Domain:',zone.DomainID.AsHexString,' UID:',zone.UID.AsHexString);
+      writeln('SWL Create Zone:',name,' Domain:',zone.DomainID.AsHexString,' UID:',zone.UID.AsHexString);
       CheckDBResult(zcoll.Store(zone));
     end;
 
@@ -1308,7 +1354,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       result := datalink.UID;
 //      writeln('DATALINK:',datalink.DumpToString());
       CheckDbResult(svc_coll.Store(datalink),'Add Datalink');
-      writeln('Created Datalink:',name);
+      //writeln('SWL Created Datalink:',name);
     end;
 
     function AddIPV4( const ip_mask:string;const parent_id:TFRE_DB_GUID): TFRE_DB_GUID;
@@ -1333,7 +1379,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       result           := ip.UID;
 //      writeln('IPV4',ip.DumpToString());
       CheckDBResult(ipcoll.Store(ip));
-      writeln('Created ipv4:',ip_mask);
+      //writeln('SWL Created ipv4:',ip_mask);
     end;
 
     function AddIPV6( const ip_mask:string;const parent_id:TFRE_DB_GUID): TFRE_DB_GUID;
@@ -1358,7 +1404,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       result           := ip.UID;
 //      writeln('IPV6',ip.DumpToString());
       CheckDBResult(ipcoll.Store(ip));
-      writeln('Created ipv6:',ip_mask);
+      // writeln('SWL Created ipv6:',ip_mask);
     end;
 
     function AddRoutingIPV4( const ip_mask:string; const gw:string; const zone_id:TFRE_DB_GUID;const description:string=''): TFRE_DB_GUID;
@@ -1379,7 +1425,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       result           := r.UID;
 //      writeln('ROUTING IPV4',r.DumpToString());
       CheckDBResult(rcoll.Store(r));
-      writeln('Created Route ipv4:',ip_mask,' ',gw);
+      // writeln('SWL Created Route ipv4:',ip_mask,' ',gw);
     end;
 
     procedure RemoveObjLinks(const coll:IFRE_DB_COLLECTION);
@@ -1390,7 +1436,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         begin
           if fld.FieldType=fdbft_ObjLink then
             begin
-              writeln('deleting field :',fld.fieldname);
+              // writeln('SWL deleting field :',fld.fieldname);
               obj.DeleteField(fld.FieldName);
             end;
         end;
@@ -1437,7 +1483,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      shareobj.ObjectName:=sharename;
      shareobj.Field('quota_mb').AsUInt32:=quota;
      shareobj.Field('referenced_mb').AsUInt32:=quota;
-     writeln('VFS:',shareobj.DumpToString());
+     // writeln('SWL VFS:',shareobj.DumpToString());
      CheckDbResult(shareColl.Store(shareObj));
    end;
 
@@ -1453,7 +1499,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      vf.Field('serviceParent').AsObjectLink:=zone_id;
      vf.Field('zoneid').AsObjectLink:=zone_id;
      result:= vf.UId;
-     writeln('VF:',vf.DumpToString());
+     //writeln('SWL VF:',vf.DumpToString());
      CheckDbResult(svc_coll.Store(vf));
    end;
 
@@ -1469,7 +1515,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      cf.Field('serviceParent').AsObjectLink:=zone_id;
      cf.Field('zoneid').AsObjectLink:=zone_id;
      result:= cf.UId;
-     writeln('CF:',cf.DumpToString());
+     // writeln('SWL CF:',cf.DumpToString());
      CheckDbResult(svc_coll.Store(cf));
    end;
 
@@ -1479,7 +1525,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       begin
         if removelinks then
           begin
-            writeln('removeobj link '+collname);
+            //writeln('SWL removeobj link '+collname);
             RemoveObjLinks(conn.GetCollection(collname));
           end;
         conn.GetCollection(collname).ClearCollection;
@@ -1503,7 +1549,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      voip.Field('standard_extension_night').AsInt32:=std;
      voip.Field('exchange_line').AsInt32:=eline;
 
-     writeln('VoIP:',voip.DumpToString());
+     //writeln('SWL VoIP:',voip.DumpToString());
      CheckDbResult(svc_coll.Store(voip));
    end;
 
@@ -1640,6 +1686,7 @@ begin
   ClearCollectionifExists(CFRE_DB_ZFS_IOSTAT_COLLECTION);
   ClearCollectionifExists(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
   ClearCollectionifExists(CFRE_DB_ZFS_VDEV_COLLECTION,true);
+
   extColl:=conn.GetCollection(CFOS_DB_VOIP_EXTENSIONS_COLLECTION);
   hwColl:=conn.GetCollection(CFOS_DB_VOIP_HARDWARE_COLLECTION);
 
@@ -1651,7 +1698,7 @@ begin
 
   ClearCollectionifExists(CFOS_DB_SERVICES_COLLECTION,true);
   zcoll.ClearCollection;
-  dscoll.ClearCollection;
+  ClearCollectionifExists(CFRE_DB_ZFS_DATASET_COLLECTION,true);
   pcoll.ClearCollection;
   tcoll.ClearCollection;
   if conn.CollectionExists('hosts') then
@@ -1707,6 +1754,8 @@ begin
   g_domain_id:=conn.GetSysDomainUID;
 
   dc_id    := CreateDC('RZ Nord');
+  host_id  := CreateHost('SNB02',dc_id,'00:25:90:f9:5a:0e');
+
   host_id  := CreateHost('ANord01',dc_id,'00:25:90:82:bf:ae');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'anord01_ipmp_nfs','mgmt');
@@ -1736,12 +1785,13 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:bf:af','generic');
   AddIPV4('',link_id);
 
-  pool_id  := CreatePool('anord01disk',host_id,'11052910530200204125');
-  ds_id    := CreateDataset('anord01ds','anord01disk/anord01ds',pool_id);
+  pool_id    := CreatePool('anord01disk',host_id,rootds_id,'11052910530200204125');
+  domainsds_id := CreateParentDatasetwithStructure('anord01disk/anord01ds',pool_id,rootds_id);
 
 
   g_domain_id := CheckFindDomainID('CITYCOM');
   g_c_domain_id := g_domain_id;
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('boot1',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:50:4c:9c','cpe','Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::20/64',link_id);
@@ -1774,11 +1824,13 @@ begin
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
   g_domain_id := CheckFindDomainID('GRAZETTA');
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('grazetta',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,363,CFRE_DB_NullGUID,'02:08:20:96:f2:03','lan','Lan');
   AddIPV4('192.168.50.5/24',link_id);
 
   g_domain_id := CheckFindDomainID('PRO-COMPETENCE');
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('kmurz_a',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:84:b2:0d','cpe','Crypto CPE');
   AddIPV6('',link_id);
@@ -1797,11 +1849,13 @@ begin
   CreateVM(zone_id,'qemulin1','172.24.1.1',5901);
 
   g_domain_id := CheckFindDomainID('ZOESCHER');
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('zoescher',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1745,CFRE_DB_NullGUID,'02:08:20:c4:58:31','lan','Lan');
   AddIPV4('192.168.0.144/24',link_id);
 
   g_domain_id := CheckFindDomainID('DEMO');
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('demo',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a:8:9c','cpe','Crypto CPE');
   AddIPV6('',link_id);
@@ -1825,21 +1879,24 @@ begin
   vf_id:=CreateCFiler(zone_id,'Demo Crypto Fileserver');
   CreateShare(vf_id,pool_id,'anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
 
-  g_domain_id:=conn.GetSysDomainUID;
-  ds_id    := CreateDataset('nas01ds','anord01disk/nas01ds',pool_id);
+  g_domain_id :=conn.GetSysDomainUID;
+  domainsds_id:= CreateParentDatasetwithStructure('anord01disk/nas01ds',pool_id,rootds_id);
 
   g_domain_id := CheckFindDomainID('CITYCOM');     // 5f769a1c6fe25d1c867c795318534c22
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('rsync0',ds_id,host_id,template_id,'23014325c44ae24f7d06939cab6c6de5');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicrsync0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:bc:85:c9','internet','Internet');
   AddIPV4('109.73.158.190/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
   g_domain_id := CheckFindDomainID('CORTI');  //f1289bf93586c97f8a505b6ef801e89f
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('corti',ds_id,host_id,template_id,'f10d590ee94e7540e881dffb8f714fbc');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:4b:eb:3a','lan','Lan');
   AddIPV4('192.168.0.18/24',link_id);
 
   g_domain_id := CheckFindDomainID('ALICONA');
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('alicona',ds_id,host_id,template_id,'ac3d29b3cd1b2daf213449c08b209426');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1772,CFRE_DB_NullGUID,'02:08:20:c4:58:FF','lan','Lan');
   AddIPV4('10.10.10.10/24',link_id);
@@ -1855,7 +1912,7 @@ begin
   AddIPV4('',link_id);
 
   host_id  := CreateHost('FSNord01',dc_id,'00:25:90:8a:c7:c0');
-  pool_id  := CreatePool('nordp',host_id);
+  pool_id  := CreatePool('nordp',host_id,rootds_id);
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'fsnord01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.100/25',ipmp_nfs);
@@ -1893,7 +1950,8 @@ begin
 
   dc_id := CreateDC('RZ Sued');
   host_id  := CreateHost('ASued01',dc_id,'00:25:90:8a:cb:e2');
-  ds_id    := CreateDataset('asued01ds','asued01disk/asued01ds',pool_id);
+  pool_id  := CreatePool('asued01disk',host_id,rootds_id);
+  domainsds_id    := CreateParentDatasetwithStructure('asued01disk/asued01ds',pool_id,rootds_id);
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'asued01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.112/25',ipmp_nfs);
@@ -1922,6 +1980,7 @@ begin
   AddIPV4('',link_id);
 
   g_domain_id := CheckFindDomainID('CITYCOM');
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('ns2',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:bf:8c:ae','cpe','Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::12/64',link_id);
@@ -1930,7 +1989,7 @@ begin
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
   zone_id  := CreateZone('test',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:c9:f3:6a','lan');
-  ds_id    := CreateDataset('nas02ds','asued01disk/nas02ds',pool_id);
+  domainsds_id := CreateParentDatasetwithStructure('asued01disk/nas02ds',pool_id,rootds_id);
 
   g_domain_id:=conn.GetSysDomainUID;
   host_id  := CreateHost('SSued01',dc_id,'00:25:90:82:c0:04');
@@ -1943,7 +2002,7 @@ begin
 
   host_id  := CreateHost('FSSued01',dc_id,'00:25:90:8a:c7:d8');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
-  pool_id  := CreatePool('suedp',host_id);
+  pool_id  := CreatePool('suedp',host_id,rootds_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'fssued01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.110/25',ipmp_nfs);
   AddIPV4('10.54.250.210/25',ipmp_nfs);
@@ -1978,8 +2037,8 @@ begin
 
   dc_id := CreateDC('RZ DRS');
   host_id  := CreateHost('DRS',dc_id,'00:25:90:8a:c3:2e');
-  pool_id  := CreatePool('drsdisk',host_id);
-  pool_id  := CreatePool('rpool',host_id);
+  pool_id  := CreatePool('drsdisk',host_id,rootds_id);
+  pool_id  := CreatePool('rpool',host_id,rootds_id);
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_drs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'drs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'drs_ipmp_drs','mgmt');
   AddIPV4('10.54.240.198/24',ipmp_drs);
@@ -2004,8 +2063,8 @@ begin
   dc_id := CreateDC('RZ Test');
   host_id  := CreateHost('Fosdev',dc_id,'00:0c:29:71:65:fd');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
-  pool_id  := CreatePool('syspool',host_id);
-  ds_id    := CreateDataset('/','syspool',pool_id);
+  pool_id  := CreatePool('syspool',host_id,rootds_id);
+  domainsds_id  := CreateParentDatasetwithStructure('syspool',pool_id,rootds_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:0c:29:71:65:fd','generic');
   AddIPV4('10.1.0.84/24',link_id);
   AddIPV4('172.22.0.99/24',link_id);
@@ -2018,6 +2077,7 @@ begin
   e1_id    := link_id;
 
   g_domain_id := CheckFindDomainID('DEMO');
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('demo',ds_id,host_id,template_id,'15a56c904a7f00248929bfdb576a45c9');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,e1_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a4:c6:7c','cpe','Crypto CPE');
 //  AddIPV6('',link_id);
@@ -2084,6 +2144,222 @@ begin
   coll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
   coll.ForAll(@zone_iterator);
   conn.Free;
+end;
+
+procedure TFRE_Testserver.PoolConfig;
+var mdatan:IFRE_DB_Object;
+    mdatas:IFRE_DB_Object;
+    mdata :IFRE_DB_Object;
+    dummy :IFRE_DB_Object;
+    ienc  :integer;
+    islot :integer;
+    smap  :string;
+    dnobj :IFRE_DB_Object;
+    dsobj :IFRE_DB_Object;
+    ds    :string;
+    gbase :string;
+    lunnum:integer;
+    cl    :TStringList;
+    al    :TStringList;
+    il    :TStringList;
+    zpool :string;
+    zenc  :integer;
+    vdev  :string;
+    fcprefix :string;
+    fcpostfix:string;
+    p    : integer;
+    zi   : integer;
+
+
+  procedure diskiter(const obj:IFRE_DB_OBject);
+  var disk : TFRE_DB_SAS_DISK;
+      enc  : TFRE_DB_ENCLOSURE;
+      eobj : IFRE_DB_Object;
+      lung : string;
+      cs   : string;
+      ms   : string;
+      i    : integer;
+
+    procedure AddLU(const devsuffix:string);
+    begin
+      lung := gbase +IntToHex(lunnum,4);
+      //writeln(lung);
+      inc(lunnum);
+      cs := 'stmfadm create-lu -p guid='+lung+' /dev/rdsk/'+disk.devicename+devsuffix;
+      cl.add(cs);
+      ms := 'stmfadm import-lu /dev/rdsk/'+disk.devicename+devsuffix;
+      il.add(ms);
+      disk.Field('LUN'+devsuffix).asstring := lung;
+      al.add('stmfadm add-view '+lung);
+    end;
+
+  begin
+    if obj.IsA(TFRE_DB_SAS_DISK,disk) then
+      begin
+        if disk.FieldExists('enclosure_uid') then
+          begin
+            mdata.FetchObjByUID(disk.EnclosureUID,eobj);
+            disk.Field('MAPPEDSLOT').asstring:='E:'+inttostr(eobj.Field('NEWNUMBER').asuint16)+'S:'+inttostr(disk.SlotNr);
+            writeln(disk.devicename,' ',disk.Serial_number,' ',disk.EnclosureNr,' ',disk.SlotNr,' MAPPED ->',disk.Field('MAPPEDSLOT').asstring+' '+eobj.Field('deviceidentifier').asstring);
+            //if Pos('Z1',disk.Serial_number)=1 then ds := ds +' '+disk.devicename;
+            //writeln(IntToHex(lunnum,4));
+             if Pos('Z1',disk.Serial_number)=1 then
+               begin
+                 AddLU('');
+               end;
+             if Pos('STM',disk.Serial_number)=1 then
+               begin
+                  for i:=1 to 4 do
+                    begin
+                      addLU('p'+inttostr(i));
+                    end;
+               end;
+          end;
+      end;
+  end;
+
+  procedure enciter(const obj:IFRE_DB_Object);
+  var enc: TFRE_DB_ENCLOSURE;
+      newnr : integer;
+
+  //Z1Y1E36L 5003048000cad63f 0
+  //Z1Y1ECAE 5003048000ca2b3f 1
+  //Z1Y1Q0GL 5003048000358c3f 2
+  //Z1X2DL31 5003048000ca283f 3
+  //Z1Y1REJ9 5003048000cacf3f 4
+  //Z1Y1QXDT 5003048000cad13f 5
+
+
+  begin
+    if obj.IsA(TFRE_DB_ENCLOSURE,enc) then
+      begin
+        case enc.DeviceIdentifier of
+          //SNB02
+          '5003048000358c3f' :  newnr := 2;
+          '5003048000ca283f' :  newnr := 3;
+          '5003048000ca2b3f' :  newnr := 1;
+          '5003048000cacf3f' :  newnr := 4;
+          '5003048000cad13f' :  newnr := 5;
+          '5003048000cad63f' :  newnr := 0;
+          //SSB02
+          '5003048000be953f' :  newnr := 3;
+          '5003048000cad03f' :  newnr := 0;
+          '5003048000cad53f' :  newnr := 2;
+          '5003048000cad73f' :  newnr := 1;
+          '5003048001016d3f' :  newnr := 5;
+          '500304800101883f' :  newnr := 4;
+        else
+          writeln(enc.DeviceIdentifier);
+          writeln('NOT ASSIGNED NEW ENCLOSURE NUMBER');
+          abort;
+        end;
+        enc.Field('NEWNUMBER').asuint16:=newnr;
+        writeln(enc.DeviceIdentifier,' ',enc.EnclosureNr, enc.UID_String,' NEW ENCLOSURE NUMBER:',enc.Field('NEWNUMBER').asuint16);
+      end;
+  end;
+
+begin
+  FRE_DBBASE.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
+  fos_citycom_base.Register_DB_Extensions;
+  fre_scsi.Register_DB_Extensions;
+  fre_zfs.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  fos_citycom_voip_mod.Register_DB_Extensions;
+
+  cl:= TStringList.Create;
+  al:= TstringList.Create;
+  il:= TStringList.Create;
+
+  writeln('pool config');
+  gbase := '600144F090F95A2B000053000000';  // 2b5af990;
+  lunnum := 1;
+
+  mdatan:=GFRE_DBI.CreateFromFile('mdatasnb02.dbo');
+//  writeln(mdata1.DumpToString());
+  mdata := mdatan;
+  mdata.Field('enclosures').AsObject.ForAllObjects(@enciter,true);
+  mdata.Field('disks').AsObject.ForAllObjects(@diskiter,true);
+
+  cl.SaveToFile('create_lun_snb02.sh');
+  al.SaveToFile('add_view_snb02.sh');
+  il.SaveToFile('import_lun_snb02.sh');
+  cl.Clear;
+  al.clear;
+  //  writeln(ds);
+  ds :='';
+
+  gbase := '600144F090F9597F000053000000';  // 7f59f990
+  lunnum := 1;
+
+  mdatas:=GFRE_DBI.CreateFromFile('mdatassb02.dbo');
+//  writeln(mdata1.DumpToString());
+  mdata := mdatas;
+  mdata.Field('enclosures').AsObject.ForAllObjects(@enciter,true);
+  mdata.Field('disks').AsObject.ForAllObjects(@diskiter,true);
+  //  writeln(ds);
+  cl.SaveToFile('create_lun_ssb02.sh');
+  al.SaveToFile('add_view_ssb02.sh');
+  il.SaveToFile('import_lun_ssb02.sh');
+  cl.Clear;
+
+
+  fcprefix  :='c0t';
+  fcpostfix :='d0';
+  for p:= 0 to 1 do
+    begin
+      if p=0 then begin
+        zpool    := 'zpool create nordp02';
+        zenc     := 0;
+      end;
+      if p=1 then begin
+        zpool    := 'zpool create suedp02';
+        zenc     := 5;
+      end;
+      for ienc:= 0 to 2 do
+        for islot := (0+(p*5)) to (4+(p*5)) do
+          begin
+            vdev := '';
+            smap:='E:'+inttostr(ienc)+'S:'+inttostr(islot);
+            mdatan.FetchObjWithStringFieldValue('MAPPEDSLOT',smap,dnobj,TFRE_DB_SAS_DISK.ClassName);
+            mdatas.FetchObjWithStringFieldValue('MAPPEDSLOT',smap,dsobj,TFRE_DB_SAS_DISK.ClassName);
+    //        writeln(smap,' NORD:'+dnobj.Field('LUN').asstring+' SUED:'+dsobj.Field('LUN').asstring);
+            vdev := ' mirror '+ fcprefix+dnobj.Field('LUN').asstring+fcpostfix + ' ' +fcprefix+dsobj.Field('LUN').asstring+fcpostfix;
+            smap:='E:'+inttostr(ienc+3)+'S:'+inttostr(islot);
+            mdatan.FetchObjWithStringFieldValue('MAPPEDSLOT',smap,dnobj,TFRE_DB_SAS_DISK.ClassName);
+            mdatas.FetchObjWithStringFieldValue('MAPPEDSLOT',smap,dsobj,TFRE_DB_SAS_DISK.ClassName);
+    //        writeln(smap,' NORD:'+dnobj.Field('devicename').asstring+' SUED:'+dsobj.Field('devicename').asstring);
+            vdev := vdev+ ' '+ fcprefix+dnobj.Field('LUN').asstring+fcpostfix + ' ' +fcprefix+dsobj.Field('LUN').asstring+fcpostfix;
+            //writeln(vdev);
+            zpool := zpool+vdev;
+          end;
+          writeln('zil');
+          vdev := '';
+          smap:='E:'+inttostr(zenc)+'S:'+inttostr(27);
+          mdatan.FetchObjWithStringFieldValue('MAPPEDSLOT',smap,dnobj,TFRE_DB_SAS_DISK.ClassName);
+          mdatas.FetchObjWithStringFieldValue('MAPPEDSLOT',smap,dsobj,TFRE_DB_SAS_DISK.ClassName);
+          for zi:=1 to 4 do
+            begin
+              vdev := vdev +' mirror '+ fcprefix+dnobj.Field('LUN'+'p'+inttostr(zi)).asstring+fcpostfix+' '+fcprefix+dsobj.Field('LUN'+'p'+inttostr(zi)).asstring+fcpostfix;
+            end;
+          //writeln(vdev);
+          zpool := zpool+' log'+vdev;
+
+          writeln('spare');
+          vdev := '';
+          for zi:=(1+(p*2)) to (2+p*2) do begin
+            smap:='E:'+inttostr(zi)+'S:'+inttostr(27);
+            writeln(smap);
+            mdatan.FetchObjWithStringFieldValue('MAPPEDSLOT',smap,dnobj,TFRE_DB_SAS_DISK.ClassName);
+            mdatas.FetchObjWithStringFieldValue('MAPPEDSLOT',smap,dsobj,TFRE_DB_SAS_DISK.ClassName);
+            vdev := vdev +' '+fcprefix+dnobj.Field('LUN').asstring+fcpostfix+' '+fcprefix+dsobj.Field('LUN').asstring+fcpostfix;
+            //writeln(vdev);
+          end;
+          zpool := zpool+' spare'+vdev;
+
+          writeln(zpool);
+    end;
+
 end;
 
 begin
