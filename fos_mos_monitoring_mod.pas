@@ -200,7 +200,7 @@ begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',nil,nil,CWSF(@WEB_MObjSC));
-      SetParentToChildLinkField ('<SERVICEPARENT');
+      SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_DATASET_FILE.ClassName]);
     end;
   end;
 end;
