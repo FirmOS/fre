@@ -34,10 +34,10 @@ type
   TFOS_INFRASTRUCTURE_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _canAddDS                           (const conn: IFRE_DB_CONNECTION): Boolean;
-    function        _canAddMachine                      (const conn: IFRE_DB_CONNECTION): Boolean;
-    function        _canAddPool                         (const conn: IFRE_DB_CONNECTION): Boolean;
-    function        _canAddPDataset                     (const conn: IFRE_DB_CONNECTION): Boolean;
-    function        _canAddZone                         (const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canAddMachine                      (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canAddPool                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canAddPDataset                     (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canAddZone                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
   protected
     procedure       SetupAppModuleStructure             ; override;
   public
@@ -84,35 +84,35 @@ begin
   Result:=res;
 end;
 
-function TFOS_INFRASTRUCTURE_MOD._canAddMachine(const conn: IFRE_DB_CONNECTION): Boolean;
+function TFOS_INFRASTRUCTURE_MOD._canAddMachine(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_MACHINE);
+  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_MACHINE) and (ses.FetchDerivedCollection('DC_CHOOSER').ItemCount>0);
   Result:=res;
 end;
 
-function TFOS_INFRASTRUCTURE_MOD._canAddPool(const conn: IFRE_DB_CONNECTION): Boolean;
+function TFOS_INFRASTRUCTURE_MOD._canAddPool(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_POOL);
+  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_POOL) and (ses.FetchDerivedCollection('MACHINE_CHOOSER').ItemCount>0);
   Result:=res;
 end;
 
-function TFOS_INFRASTRUCTURE_MOD._canAddPDataset(const conn: IFRE_DB_CONNECTION): Boolean;
+function TFOS_INFRASTRUCTURE_MOD._canAddPDataset(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_DATASET_PARENT);
+  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_DATASET_PARENT) and (ses.FetchDerivedCollection('POOL_CHOOSER').ItemCount>0);
   Result:=res;
 end;
 
-function TFOS_INFRASTRUCTURE_MOD._canAddZone(const conn: IFRE_DB_CONNECTION): Boolean;
+function TFOS_INFRASTRUCTURE_MOD._canAddZone(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE);
+  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE) and (ses.FetchDerivedCollection('DATASET_CHOOSER').ItemCount>0) and (ses.FetchDerivedCollection('TEMPLATE_CHOOSER').ItemCount>0);
   Result:=res;
 end;
 
@@ -301,7 +301,9 @@ begin
   dc:=ses.FetchDerivedCollection('INFRASTRUCTURE_GRID');
   grid:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
-  grid.AddButton.Describe(CWSF(@WEB_Add),'',FetchModuleTextShort(ses,'tb_add'));
+  if _canAddDS(conn) or _canAddMachine(ses,conn) or _canAddPDataset(ses,conn) or _canAddPool(ses,conn) or _canAddZone(ses,conn) then begin
+    grid.AddButton.Describe(CWSF(@WEB_Add),'',FetchModuleTextShort(ses,'tb_add'));
+  end;
 
   Result:=grid;
 end;
@@ -325,7 +327,7 @@ begin
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'dc',true,true);
     chooser.addDependentInputGroup(group,'DC');
   end;
-  if _canAddMachine(conn) then begin
+  if _canAddMachine(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_machine'),'M');
     GFRE_DBI.GetSystemSchemeByName('TFRE_DB_MACHINE',scheme);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_datacenter'),'m.dc',ses.FetchDerivedCollection('DC_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
@@ -333,7 +335,7 @@ begin
     chooser.addDependentInputGroup(group,'M');
     chooser.addDependentInput('m.dc','M',fdv_visible);
   end;
-  if _canAddPool(conn) then begin
+  if _canAddPool(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_pool'),'P');
     GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZFS_POOL',scheme);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_machine'),'p.machine',ses.FetchDerivedCollection('MACHINE_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
@@ -341,7 +343,7 @@ begin
     chooser.addDependentInputGroup(group,'P');
     chooser.addDependentInput('p.machine','P',fdv_visible);
   end;
-  if _canAddPDataset(conn) then begin
+  if _canAddPDataset(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_dataset'),'DS');
     GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZFS_DATASET_PARENT',scheme);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_pool'),'ds.pool',ses.FetchDerivedCollection('POOL_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
@@ -349,7 +351,7 @@ begin
     chooser.addDependentInputGroup(group,'DS');
     chooser.addDependentInput('ds.pool','DS',fdv_visible);
   end;
-  if _canAddZone(conn) then begin
+  if _canAddZone(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_zone'),'Z');
     GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_dataset'),'z.ds',ses.FetchDerivedCollection('DATASET_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
