@@ -943,50 +943,50 @@ begin
   chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide0',idestore,dh_chooser_combo,false,false,false,false,'disk');
 
   diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk0',diskstore,dh_chooser_combo,true);
-  chooser.addDependentInput('disk0','disk');
+  chooser.addDependentInput('disk0','disk',fdv_visible);
   group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname0',true);
   group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize0',true,false,false,false,'40');
-  diskchooser.addDependentInput('diskname0','create');
-  diskchooser.addDependentInput('disksize0','create');
+  diskchooser.addDependentInput('diskname0','create',fdv_visible);
+  diskchooser.addDependentInput('disksize0','create',fdv_visible);
   isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso0',isostore,dh_chooser_combo,true);
-  chooser.addDependentInput('iso0','iso');
+  chooser.addDependentInput('iso0','iso',fdv_visible);
 
   group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide1'));
   //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide1',idestore,true,dh_chooser_combo,false,false,false,'iso');
   chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide1',idestore);
 
   diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk1',diskstore,dh_chooser_combo,true);
-  chooser.addDependentInput('disk1','disk');
+  chooser.addDependentInput('disk1','disk',fdv_visible);
   group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname1',true);
   group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize1',true,false,false,false,'40');
-  diskchooser.addDependentInput('diskname1','create');
-  diskchooser.addDependentInput('disksize1','create');
+  diskchooser.addDependentInput('diskname1','create',fdv_visible);
+  diskchooser.addDependentInput('disksize1','create',fdv_visible);
   isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso1',isostore,dh_chooser_combo,true);
-  chooser.addDependentInput('iso1','iso');
+  chooser.addDependentInput('iso1','iso',fdv_visible);
 
   group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide2'));
   chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide2',idestore);
 
   diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk2',diskstore,dh_chooser_combo,true);
-  chooser.addDependentInput('disk2','disk');
+  chooser.addDependentInput('disk2','disk',fdv_visible);
   group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname2',true);
   group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize2',true,false,false,false,'40');
-  diskchooser.addDependentInput('diskname2','create');
-  diskchooser.addDependentInput('disksize2','create');
+  diskchooser.addDependentInput('diskname2','create',fdv_visible);
+  diskchooser.addDependentInput('disksize2','create',fdv_visible);
   isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso2',isostore,dh_chooser_combo,true);
-  chooser.addDependentInput('iso2','iso');
+  chooser.addDependentInput('iso2','iso',fdv_visible);
 
   group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide3'));
   chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide3',idestore);
 
   diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk3',diskstore,dh_chooser_combo,true);
-  chooser.addDependentInput('disk3','disk');
+  chooser.addDependentInput('disk3','disk',fdv_visible);
   group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname3',true);
   group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize3',true,false,false,false,'40');
-  diskchooser.addDependentInput('diskname3','create');
-  diskchooser.addDependentInput('disksize3','create');
+  diskchooser.addDependentInput('diskname3','create',fdv_visible);
+  diskchooser.addDependentInput('disksize3','create',fdv_visible);
   isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso3',isostore,dh_chooser_combo,true);
-  chooser.addDependentInput('iso3','iso');
+  chooser.addDependentInput('iso3','iso',fdv_visible);
 
   group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_advanced'),true,true);
 
