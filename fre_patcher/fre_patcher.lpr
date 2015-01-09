@@ -1261,7 +1261,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         domains_id:TFRE_DB_GUID;
     begin
       parentds_id := CreateZFSDataset(name,'/'+name,pool_id,serviceparent_id,true);
-      domains_id  := CreateZFSDataSet(name+'/domains','/'+name+'/domains',pool_id,parentds_id,false);
+      domains_id  := CreateZFSDataSet('domains','/'+name+'/domains',pool_id,parentds_id,false);
       result      := domains_id;
     end;
 
@@ -1272,7 +1272,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       if dscoll.Fetch(serviceparent_id,parentobj)=false then
         raise Exception.Create('could not fetch domains ds');
       if parentobj.IsA(TFRE_DB_ZFS_DATASET,dataset) then
-        result := CreateZFSDataset(dataset.ObjectName+'/'+dsname,dataset.Field('dataset').asstring+'/'+dsname,dataset.Field('poolid').AsGUID,serviceparent_id,false)
+        result := CreateZFSDataset(dsname,dataset.Field('dataset').asstring+'/'+dsname,dataset.Field('poolid').AsGUID,serviceparent_id,false)
       else
         raise Exception.Create('serviceparent for domain dataset is not a dataset');
     end;
@@ -1804,7 +1804,7 @@ begin
   AddIPV4('',link_id);
 
   pool_id    := CreatePool('anord01disk',host_id,rootds_id,'11052910530200204125');
-  domainsds_id := CreateParentDatasetwithStructure('anord01disk/anord01ds',pool_id,rootds_id);
+  domainsds_id := CreateParentDatasetwithStructure('anord01ds',pool_id,rootds_id);
 
 
   g_domain_id := CheckFindDomainID('CITYCOM');
@@ -1898,7 +1898,7 @@ begin
   CreateShare(vf_id,pool_id,'anord01disk/anord01ds/domains/demo/demo/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
 
   g_domain_id :=conn.GetSysDomainUID;
-  domainsds_id:= CreateParentDatasetwithStructure('anord01disk/nas01ds',pool_id,rootds_id);
+  domainsds_id:= CreateParentDatasetwithStructure('nas01ds',pool_id,rootds_id);
 
   g_domain_id := CheckFindDomainID('CITYCOM');     // 5f769a1c6fe25d1c867c795318534c22
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
@@ -1969,7 +1969,7 @@ begin
   dc_id := CreateDC('RZ Sued');
   host_id  := CreateHost('ASued01',dc_id,'00:25:90:8a:cb:e2');
   pool_id  := CreatePool('asued01disk',host_id,rootds_id);
-  domainsds_id    := CreateParentDatasetwithStructure('asued01disk/asued01ds',pool_id,rootds_id);
+  domainsds_id    := CreateParentDatasetwithStructure('asued01ds',pool_id,rootds_id);
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'asued01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.112/25',ipmp_nfs);
@@ -2007,7 +2007,7 @@ begin
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
   zone_id  := CreateZone('test',ds_id,host_id,template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:c9:f3:6a','lan');
-  domainsds_id := CreateParentDatasetwithStructure('asued01disk/nas02ds',pool_id,rootds_id);
+  domainsds_id := CreateParentDatasetwithStructure('nas02ds',pool_id,rootds_id);
 
   g_domain_id:=conn.GetSysDomainUID;
   host_id  := CreateHost('SSued01',dc_id,'00:25:90:82:c0:04');
