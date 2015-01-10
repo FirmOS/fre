@@ -33,11 +33,17 @@ type
 
   TFOS_INFRASTRUCTURE_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
-    function        _canAddDS                           (const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canAddDC                           (const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canAddMachine                      (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canAddPool                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canAddPDataset                     (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canAddZone                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+
+    function        _storeDC                            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        _storeMachine                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        _storePool                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        _storeDataset                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        _storeZone                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   protected
     procedure       SetupAppModuleStructure             ; override;
   public
@@ -51,6 +57,7 @@ type
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Add                             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Store                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -76,7 +83,7 @@ begin
   scheme.SetParentSchemeByName('TFRE_DB_APPLICATION_MODULE');
 end;
 
-function TFOS_INFRASTRUCTURE_MOD._canAddDS(const conn: IFRE_DB_CONNECTION): Boolean;
+function TFOS_INFRASTRUCTURE_MOD._canAddDC(const conn: IFRE_DB_CONNECTION): Boolean;
 var
   res: Boolean;
 begin
@@ -114,6 +121,82 @@ var
 begin
   res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE) and (ses.FetchDerivedCollection('DATASET_CHOOSER').ItemCount>0) and (ses.FetchDerivedCollection('TEMPLATE_CHOOSER').ItemCount>0);
   Result:=res;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._storeDC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  schemeObject: IFRE_DB_SchemeObject;
+  coll        : IFRE_DB_COLLECTION;
+  dc          : TFRE_DB_DATACENTER;
+begin
+  if not _canAddDC(conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  coll:=conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION);
+  if coll.ExistsIndexed(input.Field('objname').AsString) then begin
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_dc'),fdbmt_error);
+    exit;
+  end;
+
+  if not GFRE_DBI.GetSystemScheme(TFRE_DB_DATACENTER,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_DATACENTER]);
+
+  dc:=TFRE_DB_DATACENTER.CreateForDB;
+  schemeObject.SetObjectFieldsWithScheme(input,dc,true,conn);
+
+  CheckDbResult(coll.Store(dc));
+
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._storeMachine(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  schemeObject: IFRE_DB_SchemeObject;
+  coll        : IFRE_DB_COLLECTION;
+  machine     : TFRE_DB_MACHINE;
+  dcId        : TFRE_DB_GUID;
+begin
+  if not _canAddMachine(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  coll:=conn.GetCollection(cFRE_DB_MACHINE_COLLECTION);
+  if coll.ExistsIndexed(input.Field('objname').AsString) then begin
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_machine'),fdbmt_error);
+    exit;
+  end;
+
+  if not GFRE_DBI.GetSystemScheme(TFRE_DB_MACHINE,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_MACHINE]);
+
+  machine:=TFRE_DB_MACHINE.CreateForDB;
+  dcId:=FREDB_H2G(input.Field('dc').AsString);
+  input.DeleteField('dc');
+
+  machine.Field('datacenterid').AsObjectLink:=dcId;
+  machine.Field('mosparentIds').AsObjectLink:=dcId;
+  machine.Field('serviceParent').AsObjectLink:=dcId;
+
+  schemeObject.SetObjectFieldsWithScheme(input,machine,true,conn);
+
+  CheckDbResult(coll.Store(machine));
+
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._storePool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not _canAddPool(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._storeDataset(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not _canAddPDataset(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._storeZone(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not _canAddZone(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
 procedure TFOS_INFRASTRUCTURE_MOD.SetupAppModuleStructure;
@@ -181,6 +264,10 @@ begin
     CreateModuleText(conn,'add_infrastructure_parent_machine_value','%machine_str% (%datacenter_str%)');
     CreateModuleText(conn,'add_infrastructure_parent_pool_value','%pool_str% (%datacenter_str%: %machine_str%)');
     CreateModuleText(conn,'add_infrastructure_parent_dataset_value','%dataset_str% (%datacenter_str%: %machine_str% - %pool_str%)');
+
+    CreateModuleText(conn,'add_infrastructure_error_exists_cap','Error');
+    CreateModuleText(conn,'add_infrastructure_error_exists_message_dc','A datacenter with the given name already exists. Please choose another name.');
+    CreateModuleText(conn,'add_infrastructure_error_exists_message_machine','A machine with the given name already exists. Please choose another name.');
   end;
 end;
 
@@ -301,7 +388,7 @@ begin
   dc:=ses.FetchDerivedCollection('INFRASTRUCTURE_GRID');
   grid:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
-  if _canAddDS(conn) or _canAddMachine(ses,conn) or _canAddPDataset(ses,conn) or _canAddPool(ses,conn) or _canAddZone(ses,conn) then begin
+  if _canAddDC(conn) or _canAddMachine(ses,conn) or _canAddPDataset(ses,conn) or _canAddPool(ses,conn) or _canAddZone(ses,conn) then begin
     grid.AddButton.Describe(CWSF(@WEB_Add),'',FetchModuleTextShort(ses,'tb_add'));
   end;
 
@@ -316,12 +403,12 @@ var
   chooser: TFRE_DB_INPUT_CHOOSER_DESC;
   group  : TFRE_DB_INPUT_GROUP_DESC;
 begin
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_diag_cap'),600,true,true,false);
 
   store:=TFRE_DB_STORE_DESC.create.Describe('id');
   chooser:=res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_type'),'type',store,dh_chooser_combo,true,true,true);
 
-  if _canAddDS(conn) then begin
+  if _canAddDC(conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_datacenter'),'DC');
     GFRE_DBI.GetSystemSchemeByName('TFRE_DB_DATACENTER',scheme);
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'dc',true,true);
@@ -361,8 +448,39 @@ begin
     chooser.addDependentInput('z.template','Z',fdv_visible);
     chooser.addDependentInput('z.ds','Z',fdv_visible);
   end;
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CWSF(@WEB_Store),fdbbt_submit);
 
   Result:=res;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_Store(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if not input.FieldPathExists('data.type') then raise EFRE_DB_Exception.Create(edb_ERROR,'Missing required parameter "type"');
+  case input.FieldPath('data.type').AsString of
+    'DC': begin
+            if not input.FieldPathExists('data.dc') then raise EFRE_DB_Exception.Create(edb_ERROR,'Missing required data');
+            Result:=_storeDC(input.FieldPath('data.dc').AsObject,ses,app,conn);
+          end;
+    'M' : begin
+            if not input.FieldPathExists('data.m') then raise EFRE_DB_Exception.Create(edb_ERROR,'Missing required data');
+            Result:=_storeMachine(input.FieldPath('data.m').AsObject,ses,app,conn);
+          end;
+    'P' : begin
+            if not input.FieldPathExists('data.p') then raise EFRE_DB_Exception.Create(edb_ERROR,'Missing required data');
+            Result:=_storePool(input.FieldPath('data.p').AsObject,ses,app,conn);
+          end;
+    'DS': begin
+            if not input.FieldPathExists('data.ds') then raise EFRE_DB_Exception.Create(edb_ERROR,'Missing required data');
+            Result:=_storeDataset(input.FieldPath('data.ds').AsObject,ses,app,conn);
+          end;
+    'Z' : begin
+            if not input.FieldPathExists('data.z') then raise EFRE_DB_Exception.Create(edb_ERROR,'Missing required data');
+            Result:=_storeZone(input.FieldPath('data.z').AsObject,ses,app,conn);
+          end;
+    else begin
+      raise EFRE_DB_Exception.Create(edb_ERROR,'Unknown infrastructure type');
+    end;
+  end;
 end;
 
 end.
