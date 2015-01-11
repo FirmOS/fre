@@ -53,6 +53,7 @@ type
     procedure       CalcDatasetChooserLabel             (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object; const langres: array of TFRE_DB_String);
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -214,8 +215,52 @@ begin
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._storePool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  schemeObject: IFRE_DB_SchemeObject;
+  mId         : TFRE_DB_GUID;
+  coll        : IFRE_DB_COLLECTION;
+  pool        : TFRE_DB_ZFS_POOL;
+  ds          : TFRE_DB_ZFS_DATASET_FILE;
+  dcoll       : IFRE_DB_COLLECTION;
+  idx         : String;
 begin
   if not _canAddPool(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  coll:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
+  dcoll:=conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION);
+
+  idx:=input.Field('objname').AsString + '@' + input.Field('machine').AsString;
+
+  if coll.ExistsIndexed(idx,false,'upid') then begin
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_pool'),fdbmt_error);
+    exit;
+  end;
+
+  if not GFRE_DBI.GetSystemScheme(TFRE_DB_ZFS_POOL,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_ZFS_POOL]);
+
+  pool:=TFRE_DB_ZFS_POOL.CreateForDB;
+  mId:=FREDB_H2G(input.Field('machine').AsString);
+  input.DeleteField('machine');
+
+  pool.MachineID:=mId;
+  pool.Field('mosparentIds').AsObjectLink:=mId;
+  pool.Field('serviceParent').AsObjectLink:=mId;
+  pool.Field('uniquephysicalid').AsString:=idx;
+  schemeObject.SetObjectFieldsWithScheme(input,pool,true,conn);
+
+  CheckDBResult(coll.Store(pool.CloneToNewObject()));
+
+  //create root dataset
+
+  ds:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
+  ds.ObjectName:=pool.ObjectName;
+  ds.Field('poolid').AsObjectLink:=pool.UID;
+  ds.Field('dataset').asstring:='/'+pool.ObjectName;
+  ds.Field('serviceParent').AsObjectLink:=pool.UID;
+
+  CheckDBResult(dcoll.Store(ds));
+
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
@@ -300,6 +345,15 @@ begin
     CreateModuleText(conn,'add_infrastructure_error_exists_cap','Error');
     CreateModuleText(conn,'add_infrastructure_error_exists_message_dc','A datacenter with the given name already exists. Please choose another name.');
     CreateModuleText(conn,'add_infrastructure_error_exists_message_machine','A machine with the given name already exists. Please choose another name.');
+    CreateModuleText(conn,'add_infrastructure_error_exists_message_pool','A pool with the given name already exists on the chosen machine. Please choose another name.');
+  end;
+end;
+
+class procedure TFOS_INFRASTRUCTURE_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+begin
+  CreateDiskDataCollections(conn);
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
   end;
 end;
 
