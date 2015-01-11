@@ -258,6 +258,7 @@ begin
   ds.Field('poolid').AsObjectLink:=pool.UID;
   ds.Field('dataset').asstring:='/'+pool.ObjectName;
   ds.Field('serviceParent').AsObjectLink:=pool.UID;
+  ds.Field('uniquephysicalid').AsString:=ds.Field('dataset').AsString + '@' + pool.UID_String;
 
   CheckDBResult(dcoll.Store(ds));
 
@@ -265,8 +266,42 @@ begin
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._storeDataset(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  coll        : IFRE_DB_COLLECTION;
+  idx         : String;
+  schemeObject: IFRE_DB_SchemeObject;
+  pool        : TFRE_DB_ZFS_POOL;
+  ds          : TFRE_DB_ZFS_DATASET_FILE;
+  rootDS         : IFRE_DB_Object;
 begin
   if not _canAddPDataset(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  coll:=conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION);
+
+  if not GFRE_DBI.GetSystemScheme(TFRE_DB_ZFS_DATASET_PARENT,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_ZFS_DATASET_PARENT]);
+
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('pool').AsString),TFRE_DB_ZFS_POOL,pool));
+  input.DeleteField('pool');
+
+  if not coll.GetIndexedObj('/'+pool.ObjectName + '@' + pool.UID_String,rootDS,'upid') then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'Root dataset not found.');
+
+  ds:=TFRE_DB_ZFS_DATASET_PARENT.CreateForDB;
+  ds.Field('poolid').AsObjectLink:=pool.UID;
+  schemeObject.SetObjectFieldsWithScheme(input,ds,true,conn);
+  ds.Field('dataset').AsString:='/'+pool.ObjectName+'/'+ds.ObjectName;
+  idx:=ds.Field('dataset').AsString + '@' + pool.UID_String;
+
+  if coll.ExistsIndexed(idx,false,'upid') then begin
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_dataset'),fdbmt_error);
+    exit;
+  end;
+  ds.Field('serviceParent').AsObjectLink:=rootDS.UID;
+  ds.Field('uniquephysicalid').AsString:=idx;
+
+  CheckDBResult(coll.Store(ds));
+
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
@@ -346,6 +381,7 @@ begin
     CreateModuleText(conn,'add_infrastructure_error_exists_message_dc','A datacenter with the given name already exists. Please choose another name.');
     CreateModuleText(conn,'add_infrastructure_error_exists_message_machine','A machine with the given name already exists. Please choose another name.');
     CreateModuleText(conn,'add_infrastructure_error_exists_message_pool','A pool with the given name already exists on the chosen machine. Please choose another name.');
+    CreateModuleText(conn,'add_infrastructure_error_exists_message_dataset','A dataset with the given name already exists on the chosen pool. Please choose another name.');
   end;
 end;
 
