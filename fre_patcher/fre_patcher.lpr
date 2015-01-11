@@ -1247,6 +1247,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         pool.setZFSGuid(zfs_guid);
       pool.Field('mosparentIds').AddObjectLink(host_id);
       pool.Field('serviceParent').AsObjectLink:=host_id;
+      pool.Field('uniquephysicalid').AsString:=name+'@'+FREDB_G2H(host_id);
       pool.SetDomainID(g_domain_id);
       result           := pool.UID;
       CheckDBResult(pcoll.Store(pool));
