@@ -21,6 +21,7 @@ uses
   FOS_TOOL_INTERFACES,
   FRE_DB_INTERFACE,
   FRE_DB_COMMON,fre_system,
+  fre_dbbusiness,
   //fre_hal_disk_enclosure_pool_mangement,
   fre_zfs,
   //fre_scsi,
@@ -308,6 +309,8 @@ end;
 function TFOS_INFRASTRUCTURE_MOD._storeZone(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   if not _canAddZone(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
@@ -371,6 +374,7 @@ begin
     CreateModuleText(conn,'add_infrastructure_parent_machine','Machine');
     CreateModuleText(conn,'add_infrastructure_parent_pool','Pool');
     CreateModuleText(conn,'add_infrastructure_parent_dataset','Dataset');
+    CreateModuleText(conn,'add_infrastructure_customer','Customer');
     CreateModuleText(conn,'add_infrastructure_zone_template','Template');
 
     CreateModuleText(conn,'add_infrastructure_parent_machine_value','%machine_str% (%datacenter_str%)');
@@ -423,6 +427,22 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname');
+      AddOneToOnescheme('servicedomain','','',dt_string,false);
+    end;
+    dc := session.NewDerivedCollection('ZONE_CUSTOMER_CHOOSER');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_CUSTOMERS_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDefaultOrderField('objname',true);
+      Filters.AddStdClassRightFilter('rights','servicedomain','','','TFRE_DB_ZONE',[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddOneToOnescheme('global','','',dt_boolean,False,false,false,1,'','','false');
+      AddOneToOnescheme('deprecated','','',dt_boolean,False,false,false,1,'','','false');
     end;
     dc := session.NewDerivedCollection('TEMPLATE_CHOOSER');
     with dc do begin
@@ -430,6 +450,8 @@ begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
       SetDefaultOrderField('objname',true);
+      Filters.AddBooleanFieldFilter('global','global',true,false);
+      Filters.AddBooleanFieldFilter('deprecated','deprecated',true,false);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -563,10 +585,12 @@ begin
   if _canAddZone(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_zone'),'Z');
     GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
+    res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_customer'),'z.customer',ses.FetchDerivedCollection('ZONE_CUSTOMER_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true,false,true);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_dataset'),'z.ds',ses.FetchDerivedCollection('DATASET_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'z',true,true);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_zone_template'),'z.template',ses.FetchDerivedCollection('TEMPLATE_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
     chooser.addDependentInputGroup(group,'Z');
+    chooser.addDependentInput('z.customer','Z',fdv_visible);
     chooser.addDependentInput('z.template','Z',fdv_visible);
     chooser.addDependentInput('z.ds','Z',fdv_visible);
   end;
