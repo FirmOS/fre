@@ -1736,6 +1736,7 @@ begin
 
   tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
   tmpl.ObjectName:='GLOBAL';
+  tmpl.global:=true;
   tmpl.Field('serviceclasses').AddString(TFRE_DB_GLOBAL_FILESERVER.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_AGGR.ClassName);
