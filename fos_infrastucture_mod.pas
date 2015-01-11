@@ -154,6 +154,20 @@ var
   coll        : IFRE_DB_COLLECTION;
   machine     : TFRE_DB_MACHINE;
   dcId        : TFRE_DB_GUID;
+  zone        : TFRE_DB_ZONE;
+  zcoll       : IFRE_DB_COLLECTION;
+  tcoll       : IFRE_DB_COLLECTION;
+  gtemplate   : IFRE_DB_Object;
+  halt        : Boolean;
+
+  procedure _getGlobalTemplate(const obj : IFRE_DB_Object ; var halt : boolean);
+  begin
+    if (obj.Implementor_HC as TFRE_DB_FBZ_TEMPLATE).global then begin
+      gtemplate:=obj;
+      halt:=true;
+    end;
+  end;
+
 begin
   if not _canAddMachine(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
@@ -166,6 +180,13 @@ begin
   if not GFRE_DBI.GetSystemScheme(TFRE_DB_MACHINE,schemeObject) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_MACHINE]);
 
+  tcoll:=conn.GetCollection(CFRE_DB_TEMPLATE_COLLECTION);
+  gtemplate:=nil;
+  halt:=false;
+  tcoll.ForAllBreak(@_getGlobalTemplate,halt);
+  if not Assigned(gtemplate) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'No template found for global zone');
+
   machine:=TFRE_DB_MACHINE.CreateForDB;
   dcId:=FREDB_H2G(input.Field('dc').AsString);
   input.DeleteField('dc');
@@ -176,7 +197,18 @@ begin
 
   schemeObject.SetObjectFieldsWithScheme(input,machine,true,conn);
 
-  CheckDbResult(coll.Store(machine));
+  CheckDbResult(coll.Store(machine.CloneToNewObject()));
+
+  //create global zone
+  zcoll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
+
+  zone:=TFRE_DB_ZONE.CreateForDB;
+  zone.ObjectName:='global';
+  zone.Field('templateid').AsObjectLink:=gtemplate.UID;
+  zone.Field('hostid').AsObjectLink:=machine.UID;
+  zone.Field('serviceParent').AsObjectLink:=machine.UID;
+
+  CheckDBResult(zcoll.Store(zone));
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
