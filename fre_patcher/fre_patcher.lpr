@@ -1226,9 +1226,9 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         end;
       ds.ObjectName  := name;
       ds.Field('poolid').AsObjectLink := pool_id;
-      ds.Field('dataset').asstring    := path;
+      ds.Field('mountpoint').asstring    := path;
       ds.Field('serviceParent').AsObjectLink:=serviceparent_id;
-      ds.Field('uniquephysicalid').AsString:=ds.Field('dataset').AsString+'@'+FREDB_G2H(pool_id);
+      ds.Field('uniquephysicalid').AsString:=ds.Field('mountpoint').AsString+'@'+FREDB_G2H(pool_id);
       ds.SetDomainID(g_domain_id);
       result           := ds.UID;
       writeln('DATASET:',ds.DumpToString());
@@ -1274,7 +1274,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       if dscoll.Fetch(serviceparent_id,parentobj)=false then
         raise Exception.Create('could not fetch domains ds');
       if parentobj.IsA(TFRE_DB_ZFS_DATASET,dataset) then
-        result := CreateZFSDataset(dsname,dataset.Field('dataset').asstring+'/'+dsname,dataset.Field('poolid').AsGUID,serviceparent_id,false)
+        result := CreateZFSDataset(dsname,dataset.Field('mountpoint').asstring+'/'+dsname,dataset.Field('poolid').AsGUID,serviceparent_id,false)
       else
         raise Exception.Create('serviceparent for domain dataset is not a dataset');
     end;
@@ -1751,7 +1751,7 @@ begin
 
 
   tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
-  tmpl.ObjectName:='FBZ_093';
+  tmpl.ObjectName:='FBZ095';
   tmpl.Field('serviceclasses').AddString(TFRE_DB_LDAP_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_VMACHINE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_SSH_SERVICE.ClassName);
