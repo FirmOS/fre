@@ -2085,7 +2085,7 @@ begin
   host_id  := CreateHost('Fosdev',dc_id,'00:0c:29:71:65:fd');
   zone_id  := CreateZone('global',host_id,host_id,gz_template_id);
   pool_id  := CreatePool('syspool',host_id,rootds_id);
-  domainsds_id  := CreateParentDatasetwithStructure('syspool','syspool',pool_id,rootds_id);
+  domainsds_id  := CreateParentDatasetwithStructure('parentds','syspool',pool_id,rootds_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:0c:29:71:65:fd','generic');
   AddIPV4('10.1.0.84/24',link_id);
   AddIPV4('172.22.0.99/24',link_id);
