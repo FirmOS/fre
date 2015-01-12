@@ -40,6 +40,7 @@ type
     function        _canAddPDataset                     (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canAddZone                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
 
+    function        _fillDSObj                          (const dsObj: TFRE_DB_ZFS_DATASET;const poolId: TFRE_DB_GUID; const parentPath: String; const serviceParent: TFRE_DB_GUID; const coll: IFRE_DB_COLLECTION=nil):Boolean;
     function        _storeDC                            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        _storeMachine                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        _storePool                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -125,6 +126,25 @@ begin
   Result:=res;
 end;
 
+function TFOS_INFRASTRUCTURE_MOD._fillDSObj(const dsObj: TFRE_DB_ZFS_DATASET; const poolId: TFRE_DB_GUID; const parentPath: String; const serviceParent: TFRE_DB_GUID; const coll: IFRE_DB_COLLECTION): Boolean;
+var
+  idx: String;
+begin
+  dsObj.Field('poolid').AsObjectLink:=poolId;
+  dsObj.Field('dataset').AsString:=parentPath + '/' + dsObj.ObjectName;
+  idx:=dsObj.Field('dataset').AsString + '@' + FREDB_G2H(poolId);
+
+  if Assigned(coll) then begin
+    if coll.ExistsIndexed(idx,false,'upid') then begin
+      Result:=false;
+      exit;
+    end;
+  end;
+  dsObj.Field('serviceParent').AsObjectLink:=serviceParent;
+  dsObj.Field('uniquephysicalid').AsString:=idx;
+  Result:=true;
+end;
+
 function TFOS_INFRASTRUCTURE_MOD._storeDC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   schemeObject: IFRE_DB_SchemeObject;
@@ -163,8 +183,11 @@ var
   halt        : Boolean;
 
   procedure _getGlobalTemplate(const obj : IFRE_DB_Object ; var halt : boolean);
+  var
+    tObj: TFRE_DB_FBZ_TEMPLATE;
   begin
-    if (obj.Implementor_HC as TFRE_DB_FBZ_TEMPLATE).global then begin
+    tObj:=(obj.Implementor_HC as TFRE_DB_FBZ_TEMPLATE);
+    if tObj.global and not tObj.deprecated then begin
       gtemplate:=obj;
       halt:=true;
     end;
@@ -256,11 +279,7 @@ begin
 
   ds:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
   ds.ObjectName:=pool.ObjectName;
-  ds.Field('poolid').AsObjectLink:=pool.UID;
-  ds.Field('dataset').asstring:='/'+pool.ObjectName;
-  ds.Field('serviceParent').AsObjectLink:=pool.UID;
-  ds.Field('uniquephysicalid').AsString:=ds.Field('dataset').AsString + '@' + pool.UID_String;
-
+  _fillDSObj(ds,pool.UID,'/',pool.UID);
   CheckDBResult(dcoll.Store(ds));
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
@@ -273,7 +292,7 @@ var
   schemeObject: IFRE_DB_SchemeObject;
   pool        : TFRE_DB_ZFS_POOL;
   ds          : TFRE_DB_ZFS_DATASET_FILE;
-  rootDS         : IFRE_DB_Object;
+  rootDS      : IFRE_DB_Object;
 begin
   if not _canAddPDataset(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
@@ -289,27 +308,98 @@ begin
     raise EFRE_DB_Exception.Create(edb_ERROR,'Root dataset not found.');
 
   ds:=TFRE_DB_ZFS_DATASET_PARENT.CreateForDB;
-  ds.Field('poolid').AsObjectLink:=pool.UID;
   schemeObject.SetObjectFieldsWithScheme(input,ds,true,conn);
-  ds.Field('dataset').AsString:='/'+pool.ObjectName+'/'+ds.ObjectName;
-  idx:=ds.Field('dataset').AsString + '@' + pool.UID_String;
-
-  if coll.ExistsIndexed(idx,false,'upid') then begin
+  if not _fillDSObj(ds,pool.UID,rootDS.Field('dataset').AsString,rootDS.UID,coll) then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_dataset'),fdbmt_error);
     exit;
   end;
-  ds.Field('serviceParent').AsObjectLink:=rootDS.UID;
-  ds.Field('uniquephysicalid').AsString:=idx;
-
   CheckDBResult(coll.Store(ds));
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._storeZone(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  schemeObject: IFRE_DB_SchemeObject;
+  coll        : IFRE_DB_COLLECTION;
+  ds          : TFRE_DB_ZFS_DATASET_PARENT;
+  customer    : IFRE_DB_Object;
+  sdomain     : TFRE_DB_GUID;
+  zone        : TFRE_DB_ZONE;
+  pool        : TFRE_DB_ZFS_POOL;
+  dcoll       : IFRE_DB_COLLECTION;
+  domainsDS   : TFRE_DB_ZFS_DATASET_FILE;
+  sdomainDS   : TFRE_DB_ZFS_DATASET_FILE;
+  dbo         : IFRE_DB_Object;
+  idx         : String;
+  zoneDS      : TFRE_DB_ZFS_DATASET_FILE;
 begin
   if not _canAddZone(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
+//  coll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
+//  dcoll:=conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION);
+//
+//  if not GFRE_DBI.GetSystemScheme(TFRE_DB_ZONE,schemeObject) then
+//    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_ZONE]);
+//
+//  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('ds').AsString),TFRE_DB_ZFS_DATASET_PARENT,ds));
+//  input.DeleteField('ds');
+//
+//  zone:=TFRE_DB_ZONE.CreateForDB;
+//  if input.FieldExists('customer') then begin
+//    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('customer').AsString),customer));
+//    if not customer.FieldExists('servicedomain') then
+//      raise EFRE_DB_Exception.Create(edb_ERROR,'The given customer has no service domain set!');
+//
+//    input.DeleteField('customer');
+//    sdomain:=customer.Field('servicedomain').AsObjectLink;
+//  end else begin
+//    if input.FieldExists('domainId') then begin
+//      sdomain:=FREDB_H2G(input.Field('domainId').AsString);
+//    end else begin
+//      raise EFRE_DB_Exception.Create(edb_ERROR,'No domain id given for the new zone!');
+//    end;
+//  end;
+//  zone.SetDomainID(sdomain);
+//
+//  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('ds').AsString),TFRE_DB_ZFS_DATASET_PARENT,ds));
+//  input.DeleteField('ds');
+//  CheckDbResult(conn.FetchAs(ds.Field('poolid').AsObjectLink,TFRE_DB_ZFS_POOL,pool));
+//  zone.Field('hostid').AsObjectLink:=pool.Field('serviceParent').AsObjectLink;
+//
+//  if not dcoll.GetIndexedObj(ds.Field('dataset').AsString + '/domains',dbo,'upid') then begin //domains DS
+//    domainsDS:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
+//    domainsDS.ObjectName:='domains';
+//    _fillDSObj(domainsDS,pool.UID,ds.Field('dataset').AsString,ds.UID);
+//    CheckDBResult(dcoll.Store(domainsDS));
+//  end else begin
+//    domainsDS:=dbo.Implementor_HC as TFRE_DB_ZFS_DATASET_FILE;
+//  end;
+//
+//  if not dcoll.GetIndexedObj(domainsDS.Field('dataset').AsString + '/' + FREDB_G2H(sdomain),dbo,'upid') then begin //service domain DS
+//    sdomainDS:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
+//    sdomainDS.ObjectName:=FREDB_G2H(sdomain);
+//    _fillDSObj(sdomainDS,pool.UID,domainsDS.Field('dataset').AsString,domainsDS.UID);
+//    CheckDBResult(dcoll.Store(sdomainDS));
+//  end else begin
+//    sdomainDS:=dbo.Implementor_HC as TFRE_DB_ZFS_DATASET_FILE;
+//  end;
+//
+//  zoneDS:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
+//  zoneDS.ObjectName:=zone.ObjectName;
+//  _fillDSObj(sdomainDS,pool.UID,sdomainDS.Field('dataset').AsString,sdomainDS.UID);
+//  CheckDBResult(dcoll.Store(zoneDS));
+//
+////  zone.Field('serviceParent').AsObjectLink:=pool.Field('serviceParent').AsObjectLink;
+//
+//  //if coll.ExistsIndexed(idx,false,'upid') then begin
+//  //  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_dataset'),fdbmt_error);
+//  //  exit;
+//  //end;
+//  //ds.Field('serviceParent').AsObjectLink:=rootDS.UID;
+//  //ds.Field('uniquephysicalid').AsString:=idx;
+//  //
+//  //CheckDBResult(coll.Store(zone));
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
@@ -420,8 +510,8 @@ begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'');//,CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
-      SetParentToChildLinkField ('<SERVICEPARENT');
-      Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZONE.ClassName]);
+      SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_DATASET_FILE.ClassName]);
+      Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZONE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName]);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
