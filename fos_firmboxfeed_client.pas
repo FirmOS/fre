@@ -50,7 +50,7 @@ uses
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
   fre_diff_transport,fre_process,fre_mysql_ll,sqldb
   {$IFDEF SOLARIS}
-  ,fosillu_hal_zonectrl,fosillu_hal_dbo_common
+  ,fosillu_hal_zonectrl,fosillu_hal_dbo_common,fosillu_libzonecfg
   {$ENDIF}
   ;
 
@@ -398,13 +398,20 @@ begin
   //readln;
   //fre_destroy_zone(zone);
   //writeln('zone destroyed');
-  obj := GFRE_DBI.CreateFromFile('/home/fosbuild/zone_15a56c904a7f00248929bfdb576a45c9.dbo');
-  fre_create_zone(obj);
-  writeln('zone created');
-  readln;
+  obj := GFRE_DBI.CreateFromFile('/opt/local/fre/hal/zone_15a56c904a7f00248929bfdb576a45c9.dbo');
+  writeln('SWL:',obj.DumpToString());
+  fre_create_zonecfg(obj);
+  writeln('zonecfg created');
+//  readln;
+  fre_install_zone(obj);
+  writeln('zone installed');
+//  readln;
+//  fre_set_zonestate(obj.UID.AsHexString,ZONE_STATE_INSTALLED);
+//  writeln('zone set to installed');
+//  readln;
   fre_boot_zone(obj);
   writeln('zone booting');
-  readln;
+//  readln;
 //  fre_shutdown_zone(obj);
 //  writeln('zone shutdown');
 //  readln;

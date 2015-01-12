@@ -86,7 +86,7 @@ var
   function RestartService(const obj: IFRE_DB_Object):boolean;
   begin
     result :=false;
-    writeln('SWL: RESTART');
+    writeln('SWL: RESTART NOT IMPLEMENTED YET');
   end;
 
   function TryToChangeServiceState(const obj: IFRE_DB_Object):boolean;
@@ -132,20 +132,23 @@ var
 //        writeln(resdbo.DumpToString());
       end
     else
-      if obj.IsA(TFRE_DB_SERVICE,svc) then
-        begin
-          writeln('SWL: NOW SERVICE ',obj.UID.AsHexString,' ', svc.getFMRI);
-          if svclist.FetchObjWithStringFieldValue('fmri',svc.getFMRI,foundobj,'') then
-            begin
-              writeln('SWL: SERVICE ALREADY CREATED');
-              svclist.DeleteField(foundobj.UID.AsHexString);
-            end
-          else
-            begin
-              resdbo := svc.RIF_CreateOrUpdateService;
-            //  writeln(resdbo.DumpToString());
-            end;
-        end;
+      begin
+        if obj.IsA(TFRE_DB_SERVICE,svc) then
+          begin
+            writeln('SWL: NOW SERVICE ',obj.UID.AsHexString,' ', svc.getFMRI);
+            if svclist.FetchObjWithStringFieldValue('fmri',svc.getFMRI,foundobj,'') then
+              begin
+                writeln('SWL: SERVICE ALREADY CREATED');
+                svclist.DeleteField(foundobj.UID.AsHexString);
+              end
+            else
+              begin
+                writeln('SWL CREATE OR UPDATE SERVICE ',svc.getFMRI);
+                resdbo := svc.RIF_CreateOrUpdateService;
+              //  writeln(resdbo.DumpToString());
+              end;
+          end;
+      end;
   end;
 
   procedure _DeleteService(const obj:IFRE_DB_Object);
@@ -223,7 +226,6 @@ begin
   if HasOption('s','services') then
     begin
       _LoadZoneDBo;
-
       svclist := fre_get_servicelist('fos_');
       try
         zone_dbo.ForAllObjects(@CheckServices);
@@ -231,6 +233,9 @@ begin
       finally
         svclist.Finalize;
       end;
+
+      fre_refresh_service('fos/fosip');
+      fre_refresh_service('milestone/network');
 
       Terminate;
       halt(0);
@@ -296,6 +301,14 @@ begin
     begin
       svc_name := GetOptionValue('*','disable');
       fre_enable_or_disable_service(svc_name,false);
+      Terminate;
+      Exit;
+    end;
+
+  if HasOption('*','refresh') then
+    begin
+      svc_name := GetOptionValue('*','refresh');
+      fre_refresh_service(svc_name);
       Terminate;
       Exit;
     end;
