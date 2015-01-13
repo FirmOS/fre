@@ -63,6 +63,7 @@ type
     function        _deletePool                         (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _deleteDataset                      (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _deleteZone                         (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _getDetails                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   protected
     procedure       SetupAppModuleStructure             ; override;
   public
@@ -586,6 +587,29 @@ begin
   end;
 end;
 
+function TFOS_INFRASTRUCTURE_MOD._getDetails(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res   : TFRE_DB_CONTENT_DESC;
+  dbo   : IFRE_DB_Object;
+  scheme: IFRE_DB_SchemeObject;
+  form  : TFRE_DB_FORM_PANEL_DESC;
+begin
+  if not input.FieldExists('selected') or (input.Field('selected').ValueCount<>1) then begin
+    res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_details_select_one'));
+  end else begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+
+    form:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,false);
+    GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
+    form.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+    form.FillWithObjectValues(dbo,ses);
+
+    res:=form;
+  end;
+  res.contentId:='infrastructureDetails';
+  Result:=res;
+end;
+
 procedure TFOS_INFRASTRUCTURE_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
@@ -665,6 +689,8 @@ begin
     CreateModuleText(conn,'delete_diag_cap','Remove Infrastructure');
     CreateModuleText(conn,'delete_diag_msg','Remove infrastructure object "%object_str%"?');
     CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
+
+    CreateModuleText(conn,'info_details_select_one','Please select an object to get detailed information about it.');
   end;
 end;
 
@@ -806,6 +832,7 @@ function TFOS_INFRASTRUCTURE_MOD.WEB_Content(const input: IFRE_DB_Object; const 
 var
   dc     : IFRE_DB_DERIVED_COLLECTION;
   grid   : TFRE_DB_VIEW_LIST_DESC;
+  layout : TFRE_DB_LAYOUT_DESC;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -819,7 +846,9 @@ begin
     grid.AddButton.DescribeManualType('tb_delete',CWSF(@WEB_Delete),'',FetchModuleTextShort(ses,'tb_delete'),'',true);
   end;
 
-  Result:=grid;
+  layout:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(grid,_getDetails(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC);
+
+  Result:=layout;
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_Add(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -837,13 +866,13 @@ begin
 
   if _canAddDC(conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_datacenter'),'DC');
-    GFRE_DBI.GetSystemSchemeByName('TFRE_DB_DATACENTER',scheme);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_DATACENTER.ClassName,scheme);
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'dc',true,true);
     chooser.addDependentInputGroup(group,'DC');
   end;
   if _canAddMachine(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_machine'),'M');
-    GFRE_DBI.GetSystemSchemeByName('TFRE_DB_MACHINE',scheme);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_MACHINE.ClassName,scheme);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_datacenter'),'m.dc',ses.FetchDerivedCollection('DC_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'m',true,true);
     chooser.addDependentInputGroup(group,'M');
@@ -851,7 +880,7 @@ begin
   end;
   if _canAddPool(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_pool'),'P');
-    GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZFS_POOL',scheme);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_ZFS_POOL.ClassName,scheme);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_machine'),'p.machine',ses.FetchDerivedCollection('MACHINE_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'p',true,true);
     chooser.addDependentInputGroup(group,'P');
@@ -859,7 +888,7 @@ begin
   end;
   if _canAddPDataset(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_dataset'),'DS');
-    GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZFS_DATASET_PARENT',scheme);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_ZFS_DATASET_PARENT.ClassName,scheme);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_pool'),'ds.pool',ses.FetchDerivedCollection('POOL_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'ds',true,true);
     chooser.addDependentInputGroup(group,'DS');
@@ -867,7 +896,7 @@ begin
   end;
   if _canAddZone(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_zone'),'Z');
-    GFRE_DBI.GetSystemSchemeByName('TFRE_DB_ZONE',scheme);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_ZONE.ClassName,scheme);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_customer'),'z.customer',ses.FetchDerivedCollection('ZONE_CUSTOMER_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true,false,true);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_dataset'),'z.ds',ses.FetchDerivedCollection('DATASET_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'z',true,true);
@@ -932,7 +961,8 @@ var
   dDisabled: Boolean;
 begin
   dDisabled:=not (input.FieldExists('selected') and _canDelete(ses,conn,input.Field('selected').AsString));
-  Result:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('tb_delete',dDisabled);
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('tb_delete',dDisabled));
+  Result:=_getDetails(input,ses,app,conn);
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_Delete(const input: IFRE_DB_Object;const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION;const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
