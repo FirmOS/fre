@@ -58,6 +58,11 @@ type
     function        _storePool                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        _storeDataset                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        _storeZone                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        _deleteDC                           (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _deleteMachine                      (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _deletePool                         (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _deleteDataset                      (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _deleteZone                         (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
   protected
     procedure       SetupAppModuleStructure             ; override;
   public
@@ -70,12 +75,13 @@ type
     class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
   published
-    function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     function        WEB_Add                             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Store                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_GridMenu                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_GridSC                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Delete                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteConfirmed                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -200,7 +206,7 @@ begin
   end else
   if hcObj is TFRE_DB_MACHINE then begin
     if _canDeleteDC(conn,dbo.DomainID) then begin
-      rcount:=conn.GetReferencesCount(dbo.UID,false);
+      rcount:=conn.GetReferencesCount(dbo.UID,false,TFRE_DB_ZFS_POOL.ClassName,'seviceParent');
       if rcount=0 then begin
         Result:=true;
       end;
@@ -232,7 +238,6 @@ begin
       end;
     end;
   end;
-
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._fillDSObj(const dsObj: TFRE_DB_ZFS_DATASET; const poolId: TFRE_DB_GUID; const parentPath: String; const serviceParent: TFRE_DB_GUID; const coll: IFRE_DB_COLLECTION): Boolean;
@@ -244,7 +249,7 @@ begin
   idx:=dsObj.Field('dataset').AsString + '@' + FREDB_G2H(poolId);
 
   if Assigned(coll) then begin
-    if coll.ExistsIndexed(idx,false,'upid') then begin
+    if coll.ExistsIndexedText(idx,false,'upid')<>0 then begin
       Result:=false;
       exit;
     end;
@@ -263,7 +268,7 @@ begin
   if not _canAddDC(conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   coll:=conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION);
-  if coll.ExistsIndexed(input.Field('objname').AsString) then begin
+  if coll.ExistsIndexedText(input.Field('objname').AsString)<>0 then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_dc'),fdbmt_error);
     exit;
   end;
@@ -306,7 +311,7 @@ begin
   if not _canAddMachine(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   coll:=conn.GetCollection(cFRE_DB_MACHINE_COLLECTION);
-  if coll.ExistsIndexed(input.Field('objname').AsString) then begin
+  if coll.ExistsIndexedText(input.Field('objname').AsString)<>0 then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_machine'),fdbmt_error);
     exit;
   end;
@@ -365,7 +370,7 @@ begin
 
   idx:=input.Field('objname').AsString + '@' + input.Field('machine').AsString;
 
-  if coll.ExistsIndexed(idx,false,'upid') then begin
+  if coll.ExistsIndexedText(idx,false,'upid')<>0 then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_pool'),fdbmt_error);
     exit;
   end;
@@ -496,7 +501,7 @@ begin
 
   idx:=zone.ObjectName + '@' + FREDB_G2H(sdomain);
 
-  if coll.ExistsIndexed(idx,false,'upid') then begin
+  if coll.ExistsIndexedText(idx,false,'upid')<>0 then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_zone'),fdbmt_error);
     exit;
   end;
@@ -512,6 +517,73 @@ begin
   CheckDBResult(coll.Store(zone));
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._deleteDC(const dbo: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): Boolean;
+begin
+  CheckDbResult(conn.Delete(dbo.UID));
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._deleteMachine(const dbo: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  zcoll: IFRE_DB_COLLECTION;
+  zObj : IFRE_DB_Object;
+begin
+  Result:=true;
+  //delete global zone
+  zcoll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
+  zcoll.GetIndexedObjText('global@' + dbo.UID_String,zObj,false,'upid');
+  CheckDbResult(conn.Delete(zObj.UID));
+  //delete machine
+  CheckDbResult(conn.Delete(dbo.UID));
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._deletePool(const dbo: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dcoll: IFRE_DB_COLLECTION;
+  dObj : IFRE_DB_Object;
+begin
+  Result:=true;
+  //delete root dataset
+  dcoll:=conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION);
+  dcoll.GetIndexedObjText('/' + dbo.Field('objname').AsString + '@' + dbo.UID_String,dObj,false,'upid');
+  CheckDbResult(conn.Delete(dObj.UID));
+  //delete pool
+  CheckDbResult(conn.Delete(dbo.UID));
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._deleteDataset(const dbo: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): Boolean;
+begin
+  Result:=true;
+  CheckDbResult(conn.Delete(dbo.UID));
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._deleteZone(const dbo: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dsObj          : IFRE_DB_Object;
+  domainObj      : IFRE_DB_Object;
+  domainsObj     : IFRE_DB_Object;
+  refCount       : NativeInt;
+  refCountDomains: NativeInt;
+begin
+  Result:=true;
+  //delete zone
+  CheckDbResult(conn.Fetch(dbo.Field('serviceParent').AsObjectLink,dsObj));
+  CheckDbResult(conn.Delete(dbo.UID));
+  //delete zone dataset
+  CheckDbResult(conn.Fetch(dsObj.Field('serviceParent').AsObjectLink,domainObj));
+  CheckDbResult(conn.Delete(dsObj.UID));
+  //delete domain if empty
+  refCount:=conn.GetReferencesCount(domainObj.UID,false,TFRE_DB_ZFS_DATASET_FILE.ClassName,'serviceParent');
+  if refCount=0 then begin;
+    CheckDbResult(conn.Fetch(domainObj.Field('serviceParent').AsObjectLink,domainsObj));
+    CheckDbResult(conn.Delete(domainObj.UID));
+    //delete domains if empty
+    refCountDomains:=conn.GetReferencesCount(domainsObj.UID,false,TFRE_DB_ZFS_DATASET_FILE.ClassName,'serviceParent');
+    if refCountDomains=0 then begin
+      CheckDbResult(conn.Delete(domainsObj.UID));
+    end;
+  end;
 end;
 
 procedure TFOS_INFRASTRUCTURE_MOD.SetupAppModuleStructure;
@@ -589,6 +661,10 @@ begin
     CreateModuleText(conn,'add_infrastructure_error_exists_message_pool','A pool with the given name already exists on the chosen machine. Please choose another name.');
     CreateModuleText(conn,'add_infrastructure_error_exists_message_dataset','A dataset with the given name already exists on the chosen pool. Please choose another name.');
     CreateModuleText(conn,'add_infrastructure_error_exists_message_zone','A zone with the given name already exists for the given domain. Please choose another name.');
+
+    CreateModuleText(conn,'delete_diag_cap','Remove Infrastructure');
+    CreateModuleText(conn,'delete_diag_msg','Remove infrastructure object "%object_str%"?');
+    CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
   end;
 end;
 
@@ -860,8 +936,56 @@ begin
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_Delete(const input: IFRE_DB_Object;const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION;const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  cap,msg     : String;
+  dbo         : IFRE_DB_Object;
 begin
-  Result:=GFRE_DB_NIL_DESC;
+  if not _canDelete(ses,conn,input.Field('selected').AsString) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
+
+  sf:=CWSF(@WEB_DeleteConfirmed);
+  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+  cap:=FetchModuleTextShort(ses,'delete_diag_cap');
+
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),dbo));
+  msg:=StringReplace(FetchModuleTextShort(ses,'delete_diag_msg'),'%object_str%',dbo.Field('objname').AsString,[rfReplaceAll]);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_DeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  i    : NativeInt;
+  dbo  : IFRE_DB_Object;
+  hcObj: TObject;
+begin
+  if not _canDelete(ses,conn,input.Field('selected').AsString) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[i]),dbo));
+      hcObj:=dbo.Implementor_HC;
+      if hcObj is TFRE_DB_DATACENTER then begin
+        _deleteDC(dbo,ses,app,conn);
+      end else
+      if hcObj is TFRE_DB_MACHINE then begin
+       _deleteMachine(dbo,ses,app,conn);
+      end else
+      if hcObj is TFRE_DB_ZFS_POOL then begin
+        _deletePool(dbo,ses,app,conn);
+      end else
+      if hcObj is TFRE_DB_ZFS_DATASET_PARENT then begin
+        _deleteDataset(dbo,ses,app,conn);
+      end else
+      if hcObj is TFRE_DB_ZONE then begin
+        _deleteZone(dbo,ses,app,conn);
+      end;
+    end;
+  end;
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
 end.
