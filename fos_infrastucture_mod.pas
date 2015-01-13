@@ -35,10 +35,22 @@ type
   TFOS_INFRASTRUCTURE_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _canAddDC                           (const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeleteDC                        (const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeleteDC                        (const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
     function        _canAddMachine                      (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeleteMachine                   (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeleteMachine                   (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
     function        _canAddPool                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeletePool                      (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeletePool                      (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
     function        _canAddPDataset                     (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeletePDataset                  (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeletePDataset                  (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
     function        _canAddZone                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeleteZone                      (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+    function        _canDeleteZone                      (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
+
+    function        _canDelete                          (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const id: String): Boolean;
 
     function        _fillDSObj                          (const dsObj: TFRE_DB_ZFS_DATASET;const poolId: TFRE_DB_GUID; const parentPath: String; const serviceParent: TFRE_DB_GUID; const coll: IFRE_DB_COLLECTION=nil):Boolean;
     function        _storeDC                            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -61,6 +73,9 @@ type
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Add                             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Store                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_GridMenu                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_GridSC                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Delete                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -87,43 +102,137 @@ begin
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._canAddDC(const conn: IFRE_DB_CONNECTION): Boolean;
-var
-  res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATACENTER);
-  Result:=res;
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DATACENTER);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeleteDC(const conn: IFRE_DB_CONNECTION): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DATACENTER);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeleteDC(const conn: IFRE_DB_CONNECTION;const dId: TFRE_DB_GUID): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DATACENTER,dId);
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._canAddMachine(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
-var
-  res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_MACHINE) and (ses.FetchDerivedCollection('DC_CHOOSER').ItemCount>0);
-  Result:=res;
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_MACHINE) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE) and (ses.FetchDerivedCollection('DC_CHOOSER').ItemCount>0);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeleteMachine(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_MACHINE) and conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZONE);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeleteMachine(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_MACHINE,dId) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_ZONE,dId);
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._canAddPool(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
-var
-  res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_POOL) and (ses.FetchDerivedCollection('MACHINE_CHOOSER').ItemCount>0);
-  Result:=res;
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_POOL) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_DATASET_FILE) and (ses.FetchDerivedCollection('MACHINE_CHOOSER').ItemCount>0);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeletePool(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_POOL) and conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_DATASET_FILE);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeletePool(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_ZFS_POOL,dId) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_ZFS_DATASET_FILE,dId);
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._canAddPDataset(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
-var
-  res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_DATASET_PARENT) and (ses.FetchDerivedCollection('POOL_CHOOSER').ItemCount>0);
-  Result:=res;
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_DATASET_PARENT) and (ses.FetchDerivedCollection('POOL_CHOOSER').ItemCount>0);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeletePDataset(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_DATASET_PARENT);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeletePDataset(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION;const dId: TFRE_DB_GUID): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_ZFS_DATASET_PARENT,dId);
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._canAddZone(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
-var
-  res: Boolean;
 begin
-  res:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE) and (ses.FetchDerivedCollection('DATASET_CHOOSER').ItemCount>0) and (ses.FetchDerivedCollection('TEMPLATE_CHOOSER').ItemCount>0);
-  Result:=res;
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZONE) and conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_ZFS_DATASET_FILE) and (ses.FetchDerivedCollection('DATASET_CHOOSER').ItemCount>0) and (ses.FetchDerivedCollection('TEMPLATE_CHOOSER').ItemCount>0);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeleteZone(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZONE) and conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_ZFS_DATASET_FILE);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDeleteZone(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_ZONE,dId) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_ZFS_DATASET_FILE,dId);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._canDelete(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const id: String): Boolean;
+var
+  dbo   : IFRE_DB_Object;
+  rcount: NativeInt;
+  hcObj : TObject;
+  dcoll : IFRE_DB_COLLECTION;
+  dsObj : IFRE_DB_Object;
+  pObj  : IFRE_DB_Object;
+begin
+  Result:=false;
+  CheckDbResult(conn.Fetch(FREDB_H2G(id),dbo));
+
+  hcObj:=dbo.Implementor_HC;
+
+  if hcObj is TFRE_DB_DATACENTER then begin
+    if _canDeleteDC(conn,dbo.DomainID) then begin
+      rcount:=conn.GetReferencesCount(dbo.UID,false);
+      if rcount=0 then begin
+        Result:=true;
+      end;
+    end;
+  end else
+  if hcObj is TFRE_DB_MACHINE then begin
+    if _canDeleteDC(conn,dbo.DomainID) then begin
+      rcount:=conn.GetReferencesCount(dbo.UID,false);
+      if rcount=0 then begin
+        Result:=true;
+      end;
+    end;
+  end else
+  if hcObj is TFRE_DB_ZFS_POOL then begin
+    if _canDeletePool(ses,conn,dbo.DomainID) then begin
+      dcoll:=conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION);
+      dcoll.GetIndexedObjText('/'+dbo.Field('objname').AsString + '@' + dbo.UID_String,dsObj,false,'upid');
+      rcount:=conn.GetReferencesCount(dsObj.UID,false);
+      if rcount=0 then begin
+        Result:=true;
+      end;
+    end;
+  end else
+  if hcObj is TFRE_DB_ZFS_DATASET_PARENT then begin
+    if _canDeletePDataset(ses,conn,dbo.DomainID) then begin
+      rcount:=conn.GetReferencesCount(dbo.UID,false);
+      if rcount=0 then begin
+        Result:=true;
+      end;
+    end;
+  end else
+  if hcObj is TFRE_DB_ZONE then begin
+    CheckDbResult(conn.Fetch(dbo.Field('serviceParent').AsObjectLink,pObj));
+    if not (pObj.Implementor_HC is TFRE_DB_MACHINE) then begin //global zone
+      if _canDeleteZone(ses,conn,dbo.DomainID) then begin
+        Result:=true;
+      end;
+    end;
+  end;
+
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._fillDSObj(const dsObj: TFRE_DB_ZFS_DATASET; const poolId: TFRE_DB_GUID; const parentPath: String; const serviceParent: TFRE_DB_GUID; const coll: IFRE_DB_COLLECTION): Boolean;
@@ -305,7 +414,7 @@ begin
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('pool').AsString),TFRE_DB_ZFS_POOL,pool));
   input.DeleteField('pool');
 
-  if not coll.GetIndexedObj('/'+pool.ObjectName + '@' + pool.UID_String,rootDS,'upid') then
+  if coll.GetIndexedObjText('/'+pool.ObjectName + '@' + pool.UID_String,rootDS,false,'upid')=0 then
     raise EFRE_DB_Exception.Create(edb_ERROR,'Root dataset not found.');
 
   ds:=TFRE_DB_ZFS_DATASET_PARENT.CreateForDB;
@@ -367,7 +476,7 @@ begin
   CheckDbResult(conn.FetchAs(ds.Field('poolid').AsObjectLink,TFRE_DB_ZFS_POOL,pool));
   zone.Field('hostid').AsObjectLink:=pool.Field('serviceParent').AsObjectLink;
 
-  if not dcoll.GetIndexedObj(ds.Field('dataset').AsString + '/domains@' + pool.UID_String,dbo,'upid') then begin //domains DS
+  if dcoll.GetIndexedObjText(ds.Field('dataset').AsString + '/domains@' + pool.UID_String,dbo,false,'upid')=0 then begin //domains DS
     domainsDS:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
     domainsDS.ObjectName:='domains';
     _fillDSObj(domainsDS,pool.UID,ds.Field('dataset').AsString,ds.UID);
@@ -376,7 +485,7 @@ begin
     domainsDS:=dbo.Implementor_HC as TFRE_DB_ZFS_DATASET_FILE;
   end;
 
-  if not dcoll.GetIndexedObj(domainsDS.Field('dataset').AsString + '/' + FREDB_G2H(sdomain)+'@' + pool.UID_String,dbo,'upid') then begin //service domain DS
+  if dcoll.GetIndexedObjText(domainsDS.Field('dataset').AsString + '/' + FREDB_G2H(sdomain)+'@' + pool.UID_String,dbo,false,'upid')=0 then begin //service domain DS
     sdomainDS:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
     sdomainDS.ObjectName:=FREDB_G2H(sdomain);
     _fillDSObj(sdomainDS,pool.UID,domainsDS.Field('dataset').AsString,domainsDS.UID);
@@ -451,7 +560,9 @@ begin
 
     CreateModuleText(conn,'grid_name','Name');
 
-    CreateModuleText(conn,'tb_add','Add','','Add infrastructure');
+    CreateModuleText(conn,'tb_add','Add');
+    CreateModuleText(conn,'tb_delete','Delete');
+    CreateModuleText(conn,'cm_delete','Delete');
 
     CreateModuleText(conn,'add_infrastructure_diag_cap','Add infrastructure');
     CreateModuleText(conn,'add_infrastructure_type','Type');
@@ -512,7 +623,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'');//,CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
       SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_DATASET_FILE.ClassName]);
       Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZONE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName]);
     end;
@@ -628,6 +739,9 @@ begin
   if _canAddDC(conn) or _canAddMachine(ses,conn) or _canAddPDataset(ses,conn) or _canAddPool(ses,conn) or _canAddZone(ses,conn) then begin
     grid.AddButton.Describe(CWSF(@WEB_Add),'',FetchModuleTextShort(ses,'tb_add'));
   end;
+  if _canDeleteDC(conn) or _canDeleteMachine(ses,conn) or _canDeletePDataset(ses,conn) or _canDeletePool(ses,conn) or _canDeleteZone(ses,conn) then begin
+    grid.AddButton.DescribeManualType('tb_delete',CWSF(@WEB_Delete),'',FetchModuleTextShort(ses,'tb_delete'),'',true);
+  end;
 
   Result:=grid;
 end;
@@ -720,6 +834,34 @@ begin
       raise EFRE_DB_Exception.Create(edb_ERROR,'Unknown infrastructure type');
     end;
   end;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_GridMenu(const input: IFRE_DB_Object;const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION;const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res   : TFRE_DB_MENU_DESC;
+  sf    : TFRE_DB_SERVER_FUNC_DESC;
+begin
+  res:=TFRE_DB_MENU_DESC.create.Describe;
+
+  if _canDelete(ses,conn,input.Field('selected').AsString) then begin
+    sf:=CWSF(@WEB_Delete);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete'),'',sf);
+  end;
+  Result:=res;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_GridSC(const input: IFRE_DB_Object;const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dDisabled: Boolean;
+begin
+  dDisabled:=not (input.FieldExists('selected') and _canDelete(ses,conn,input.Field('selected').AsString));
+  Result:=TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('tb_delete',dDisabled);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_Delete(const input: IFRE_DB_Object;const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION;const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 end.
