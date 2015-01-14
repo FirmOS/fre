@@ -25,7 +25,8 @@ uses
   //fre_hal_disk_enclosure_pool_mangement,
   fre_zfs,
   //fre_scsi,
-  fre_hal_schemes;
+  fre_hal_schemes,
+  fos_firmbox_pool_mod;
   //fre_diff_transport;
 
 type
@@ -34,6 +35,7 @@ type
 
   TFOS_INFRASTRUCTURE_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
+    fStoragePoolsMod                                    : TFOS_FIRMBOX_POOL_MOD;
     function        _canAddDC                           (const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canDeleteDC                        (const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canDeleteDC                        (const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
@@ -96,6 +98,7 @@ begin
   fre_hal_schemes.Register_DB_Extensions;
   fre_zfs.Register_DB_Extensions;
   //fre_scsi.Register_DB_Extensions;
+  fos_firmbox_pool_mod.Register_DB_Extensions;
 
   GFRE_DBI.RegisterObjectClassEx(TFOS_INFRASTRUCTURE_MOD);
 end;
@@ -363,6 +366,8 @@ var
   ds          : TFRE_DB_ZFS_DATASET_FILE;
   dcoll       : IFRE_DB_COLLECTION;
   idx         : String;
+  dstore      : TFRE_DB_ZFS_DATASTORAGE;
+  vcoll       : IFRE_DB_COLLECTION;
 begin
   if not _canAddPool(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
@@ -389,7 +394,14 @@ begin
   pool.Field('uniquephysicalid').AsString:=idx;
   schemeObject.SetObjectFieldsWithScheme(input,pool,true,conn);
 
+  pool.setIsNew();
+  dstore:=pool.createDatastorage;
+  dstore.SetName(pool.GetName);
+  dstore.setIsNew;
+  vcoll:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
+
   CheckDBResult(coll.Store(pool.CloneToNewObject()));
+  CheckDbResult(vcoll.Store(dstore));
 
   //create root dataset
 
@@ -599,12 +611,16 @@ begin
   end else begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
 
-    form:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,false);
-    GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
-    form.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
-    form.FillWithObjectValues(dbo,ses);
+    if dbo.Implementor_HC is TFRE_DB_ZFS_POOL then begin
+      res:=fStoragePoolsMod.WEB_Content(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
+    end else begin
+      form:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,false);
+      GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
+      form.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+      form.FillWithObjectValues(dbo,ses);
 
-    res:=form;
+      res:=form;
+    end;
   end;
   res.contentId:='infrastructureDetails';
   Result:=res;
@@ -613,6 +629,8 @@ end;
 procedure TFOS_INFRASTRUCTURE_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
+  fStoragePoolsMod:=TFOS_FIRMBOX_POOL_MOD.create;
+  AddApplicationModule(fStoragePoolsMod);
   InitModuleDesc('infrastructure_description')
 end;
 
