@@ -89,12 +89,12 @@ type
     class procedure InstallDBObjects4Domain   (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
   end;
 
-  TFRE_AlertHTMLJob = class (TFRE_DB_Testcase)
+  TFRE_AlertHTMLJob = class (TFRE_DB_JOB)
   protected
     procedure       InternalSetup               ; override;
     class procedure RegisterSystemScheme        (const scheme : IFRE_DB_SCHEMEOBJECT); override;
   public
-    procedure       ExecuteTest                 ; override;
+    procedure       ExecuteJob                  ; override;
   end;
 
   { TFRE_DB_SCP_JOB }
@@ -179,13 +179,14 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
       procedure StoreAndAddToMachine(obj:IFRE_DB_Object);
       var
         id       : TFRE_DB_GUID;
-        tc       : TFRE_DB_Testcase;
+        tc       : TFRE_DB_JOB;
         periodic : TFRE_TestPeriodic;
       begin
         id       := obj.UID;
         obj.Field('machine').AsObjectLink     := machine_id;
-        tc       := TFRE_DB_Testcase(obj.Implementor_HC);
-        periodic := tc.GetPeriodic;
+        tc       := TFRE_DB_JOB(obj.Implementor_HC);
+        //periodic := tc.GetPeriodic;
+        abort;
         writeln(obj.DumpToString);
         CheckDbResult(coll_testcase.Store(obj),'Add Testcase');
         AddTestCaseStatus(id,periodic);
@@ -288,11 +289,12 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
       begin
         jobkey := obj.Field('objname').asstring;
         if Pos(mon_key,jobkey)=1 then begin
-         case TFRE_DB_Testcase(obj.Implementor_HC).GetPeriodic of
-           everyDay :   periodic :='0 0 * * * ';
-           everyHour:   periodic :='15 * * * *';
-           everyMinute: periodic :='* * * * * ';
-         end;
+         //case TFRE_DB_JOB(obj.Implementor_HC).GetPeriodic of
+         //  everyDay :   periodic :='0 0 * * * ';
+         //  everyHour:   periodic :='15 * * * *';
+         //  everyMinute: periodic :='* * * * * ';
+         //end;
+         abort;
          line := periodic+'      fre_safejob '+jobkey;
          cronl.Add(line);
         end;
@@ -332,9 +334,9 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
 
       procedure AddTestCase(const name : string);
       var
-        obj    : TFRE_DB_Testcase;
+        obj    : TFRE_DB_JOB;
       begin
-        obj   :=TFRE_DB_Testcase.CreateForDB;
+        obj   :=TFRE_DB_JOB.CreateForDB;
         obj.SetJobkeyDescription('DUMMY'+'_'+name,'Description TODO:'+name);
         Troubleshooting(obj,'fix it :-) '+name);
         StoreAndAddToMachine(obj);
@@ -347,7 +349,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         z   :=TFRE_DB_ZFSJob.CreateForDB;
         z.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         z.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
-        z.SetPeriodic(everyHour);
+        //z.SetPeriodic(everyHour);
+        abort;
         z.SetPoolStatus('zones',7,14);
         Troubleshooting(z,'Check Disks ! ');
         StoreAndAddToMachine(z);
@@ -385,7 +388,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         z.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
 //             z.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         z.SetURL(url,header,responsematch);
-        z.SetPeriodic(everyHour);
+        //z.SetPeriodic(everyHour);
+        abort;
         Troubleshooting(z,'Delete data or extend the device !');
         StoreAndAddToMachine(z);
       end;
@@ -398,7 +402,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         t.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         t.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         t.SetLimits(warning_load,error_load);
-        t.SetPeriodic(everyHour);
+        //t.SetPeriodic(everyHour);
+        abort;
         Troubleshooting(t,'Check for slow processes or hangs !');
         StoreAndAddToMachine(t);
       end;
@@ -427,7 +432,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
          zf.SetSSHReplicate(sourceds,destds,snapshotkey,desthost,'zfsback',GetbackupKeyFileName,'/zones/firmos/zfsback/.ssh/id_rsa');
-         zf.SetPeriodic(everyDay);
+         abort;
+         //zf.SetPeriodic(everyDay);
          Troubleshooting(zf,'Check Replication ! ');
          StoreAndAddToMachine(zf);
 
@@ -435,7 +441,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey+'_CHECK',desc);
          zf.SetRemoteSSH(cremoteuser, desthost, Getremotekeyfilename);
          zf.SetSnapshotCheck(destds,'AUTO',checkperiod_sec*2,checkperiod_sec*4);
-         zf.SetPeriodic(everyHour);
+         abort;
+         //zf.SetPeriodic(everyHour);
          Troubleshooting(zf,'Check Snapshot ! ');
          StoreAndAddToMachine(zf);
       end;
@@ -447,7 +454,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf    :=TFRE_DB_ZFSJob.CreateForDB;
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetTCPReplicate(sourceds,destds,snapshotkey,desthost,CFRE_FOSCMD_PORT);
-         zf.SetPeriodic(everyDay);
+         abort;
+         //zf.SetPeriodic(everyDay);
          Troubleshooting(zf,'Check Replication ! ');
          StoreAndAddToMachine(zf);
 
@@ -468,7 +476,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
          zf.SetSnapshot(sourceds,snapshotkey);
-         zf.SetPeriodic(everyDay);
+         abort;
+         //zf.SetPeriodic(everyDay);
          Troubleshooting(zf,'Check Do Snapshot! ');
          StoreAndAddToMachine(zf);
 
@@ -476,7 +485,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey+'_CHECK',desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
          zf.SetSnapshotCheck(sourceds,'AUTO',checkperiod_sec*2,checkperiod_sec*4);
-         zf.SetPeriodic(everyHour);
+         abort;
+         //zf.SetPeriodic(everyHour);
          Troubleshooting(zf,'Check Snapshot ! ');
          StoreAndAddToMachine(zf);
       end;
@@ -495,7 +505,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          job.SetJobkeyDescription(mon_key+'_'+'INTERNETTESTCASE_HOUSING','Internetverbindung FirmOS Housing');
          job.PrepareTest('10.220.251.1','80.120.208.113',TFRE_DB_StringArray.Create ('8.8.8.8'));
         end;
-        job.SetPeriodic(everyHour);
+        abort;
+         //job.SetPeriodic(everyHour);
         Troubleshooting(job,'Restart Modem !');
         StoreAndAddToMachine(job);
       end;
@@ -928,7 +939,7 @@ begin
 end;
 
 
-procedure TFRE_AlertHTMLJob.ExecuteTest;
+procedure TFRE_AlertHTMLJob.ExecuteJob;
 var actmon  : IFRE_DB_Object;
     html    : TStringList;
     alert   : TFRE_Alert;
@@ -1323,8 +1334,9 @@ begin
   //DO_SaveJob('MONFOS_ZFS_REPL_KSMLINUX',cFRE_HAL_CFG_DIR+'jobs.dbo');
   //DO_SaveJob('MONFOS_ZFS_REPL_KSMLINUXCHECK',cFRE_HAL_CFG_DIR+'jobs.dbo');
   //DO_SaveJob('MONFOS_KSM_SBS_FILESHARE',cFRE_HAL_CFG_DIR+'jobs.dbo');
-  DO_SaveJob('MONFOS_CITYACCESS_AP_CITYBEACH',cFRE_HAL_CFG_DIR+'jobs.dbo');
-  DO_SaveJob('MONFOS_CITYACCESS_AP_JOANNEUM',cFRE_HAL_CFG_DIR+'jobs.dbo');
+
+  //DO_SaveJob('MONFOS_CITYACCESS_AP_CITYBEACH',cFRE_HAL_CFG_DIR+'jobs.dbo');
+  //DO_SaveJob('MONFOS_CITYACCESS_AP_JOANNEUM',cFRE_HAL_CFG_DIR+'jobs.dbo');
 end;
 
 function GetActualMonitoring : IFRE_DB_Object;

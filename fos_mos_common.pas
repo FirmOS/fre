@@ -165,7 +165,7 @@ begin
     mosuid:=mosObjRack.UID;
     CheckDbResult(coll.Store(mosObjRack),'Add MOS Object');
 
-    mcoll      := conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
+    mcoll      := conn.GetMachinesCollection;
 
     mosObjMachine:=TFRE_DB_MACHINE.CreateForDB;
 //    mosObjMachine.caption:='SNord 1';
