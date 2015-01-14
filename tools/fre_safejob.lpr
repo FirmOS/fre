@@ -38,6 +38,7 @@ program fre_safejob;
 } 
 
 {$mode objfpc}{$H+}
+{$LIBRARYPATH ../../lib}
 
 uses
   {$IFDEF UNIX}
@@ -64,7 +65,8 @@ begin
   FRE_DBBUSINESS.Register_DB_Extensions;
   fre_testcase.Register_DB_Extensions;
   FRE_ZFS.Register_DB_Extensions;
-  //FRE_DBCLOUDCONTROL.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
 
   //FRE_DB_Startup_Initialization_Complete;
   GFRE_DBI.LocalZone := 'Europe/Vienna';
@@ -73,7 +75,7 @@ begin
     writeln(GFOS_VHELP_GET_VERSION_STRING);
     writeln('Usage: fre_safejob <jobkey>');
   end else begin
-    DO_SaveJob(uppercase(ParamStr(1)),cFRE_HAL_CFG_DIR+'jobs.dbo');
+    DO_SaveJob(uppercase(ParamStr(1)));
   end;
 //  DO_SaveJob(TestIt.Field('TEST_JOB').AsObject);
   GFRE_LOG.Sync_Logger;
