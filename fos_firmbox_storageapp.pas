@@ -1646,7 +1646,7 @@ begin
 
     pools_grid := session.NewDerivedCollection('POOL_DISKS');
     with pools_grid do begin
-      SetDeriveParent           (conn.GetCollection(cFRE_DB_MACHINE_COLLECTION));
+      SetDeriveParent           (conn.GetMachinesCollection);
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_Multiselect],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_PoolStructureSC),nil,CWSF(@WEB_TreeDrop));
       SetParentToChildLinkField ('<PARENT_IN_ZFS_UID');
 
@@ -1666,7 +1666,7 @@ begin
 
     layout_grid := session.NewDerivedCollection('ENCLOSURE_DISKS');
     with layout_grid do begin
-      SetDeriveParent           (conn.GetCollection(cFRE_DB_MACHINE_COLLECTION));
+      SetDeriveParent           (conn.GetMachinesCollection);
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_Multiselect],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_LayoutSC),nil,CWSF(@WEB_TreeDrop));
       SetParentToChildLinkField ('<PARENT_IN_ENCLOSURE_UID');
 
@@ -2108,7 +2108,7 @@ begin
   newPool.SetName(input.FieldPath('data.pool_name').AsString);
 
   //TODO: Select Machine depended on selection
-  if conn.GetCollection(cFRE_DB_MACHINE_COLLECTION).GetIndexedUID('firmbox',muid,'def') then
+  if conn.GetMachinesCollection.GetIndexedUID('firmbox',muid,'def') then
     begin
       newpool.parentInZFSId := muid;
       newpool.MachineID := muid;

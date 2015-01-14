@@ -236,7 +236,7 @@ begin
     end;
     grid := session.NewDerivedCollection('MANAGED_SERVICES_GRID');
     with grid do begin
-      SetDeriveParent(conn.GetCollection(CFRE_DB_MACHINE_COLLECTION));
+      SetDeriveParent(conn.GetMachinesCollection);
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_ServicesMenu),nil,CWSF(@WEB_ServicesSC));
       SetParentToChildLinkField ('<SERVICEPARENT');

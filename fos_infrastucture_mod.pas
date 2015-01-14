@@ -311,7 +311,7 @@ var
 begin
   if not _canAddMachine(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  coll:=conn.GetCollection(cFRE_DB_MACHINE_COLLECTION);
+  coll:=conn.GetMachinesCollection;
   if coll.ExistsIndexedText(input.Field('objname').AsString)<>0 then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_machine'),fdbmt_error);
     exit;
@@ -781,7 +781,7 @@ begin
     end;
     dc := session.NewDerivedCollection('MACHINE_CHOOSER');
     with dc do begin
-      SetDeriveParent(conn.GetCollection(cFRE_DB_MACHINE_COLLECTION));
+      SetDeriveParent(conn.GetMachinesCollection);
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
       SetDefaultOrderField('objname',true);

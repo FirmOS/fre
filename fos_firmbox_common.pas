@@ -561,13 +561,13 @@ begin
 
   //SERVICES
 
-  coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
+  coll:=conn.GetMachinesCollection;
   mobj:=TFRE_DB_MACHINE.CreateForDB;
   mobj.ObjectName:='firmbox';
   mguid:=mobj.UID;
   CheckDbResult(coll.Store(mobj));
 
-  coll:=conn.GetCollection(CFRE_DB_MACHINE_COLLECTION);
+  coll:=conn.GetMachinesCollection;
   mobj:=TFRE_DB_MACHINE.CreateForDB;
   mobj.ObjectName:='Firmbox 1';
   mguid:=mobj.UID;
