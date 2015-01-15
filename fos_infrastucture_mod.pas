@@ -218,11 +218,13 @@ begin
   end else
   if hcObj is TFRE_DB_ZFS_POOL then begin
     if _canDeletePool(ses,conn,dbo.DomainID) then begin
-      dcoll:=conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION);
-      dcoll.GetIndexedObjText('/'+dbo.Field('objname').AsString + '@' + dbo.UID_String,dsObj,false,'upid');
-      rcount:=conn.GetReferencesCount(dsObj.UID,false);
-      if rcount=0 then begin
-        Result:=true;
+      if (hcObj as TFRE_DB_ZFS_POOL).getIsNew then begin
+        dcoll:=conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION);
+        dcoll.GetIndexedObjText('/'+dbo.Field('objname').AsString + '@' + dbo.UID_String,dsObj,false,'upid');
+        rcount:=conn.GetReferencesCount(dsObj.UID,false);
+        if rcount=0 then begin
+          Result:=true;
+        end;
       end;
     end;
   end else
@@ -553,8 +555,9 @@ end;
 
 function TFOS_INFRASTRUCTURE_MOD._deletePool(const dbo: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): Boolean;
 var
-  dcoll: IFRE_DB_COLLECTION;
-  dObj : IFRE_DB_Object;
+  dcoll   : IFRE_DB_COLLECTION;
+  dObj    : IFRE_DB_Object;
+  tmpInput: IFRE_DB_Object;
 begin
   Result:=true;
   //delete root dataset
@@ -562,7 +565,7 @@ begin
   dcoll.GetIndexedObjText('/' + dbo.Field('objname').AsString + '@' + dbo.UID_String,dObj,false,'upid');
   CheckDbResult(conn.Delete(dObj.UID));
   //delete pool
-  CheckDbResult(conn.Delete(dbo.UID));
+  fStoragePoolsMod.removeNew(TFRE_DB_StringArray.create(dbo.UID_String),ses,conn);
 end;
 
 function TFOS_INFRASTRUCTURE_MOD._deleteDataset(const dbo: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): Boolean;

@@ -51,6 +51,7 @@ type
     class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);override;
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
     procedure       MyServerInitializeModule            (const admin_dbc : IFRE_DB_CONNECTION); override;
+    procedure       removeNew                           (const ids: TFRE_DB_StringArray;const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION);
   published
     function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     //function        WEB_PoolObjNotes                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -737,6 +738,52 @@ begin
   //// Used to fix display in startup case, when no feeder has made initial data
 //  UpdateDiskCollection(pool_disks,DISKI_HACK.Get_Disk_Data_Once);
 
+end;
+
+procedure TFOS_FIRMBOX_POOL_MOD.removeNew(const ids: TFRE_DB_StringArray; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION);
+var
+  pool    : TFRE_DB_ZFS_ROOTOBJ;
+  ua      : TFRE_DB_ZFS_UNASSIGNED;
+  zfsObj  : TFRE_DB_ZFS_OBJ;
+  i       : Integer;
+
+  procedure _handleObj(const zfsObj: TFRE_DB_ZFS_OBJ);
+  var
+    children : IFRE_DB_ObjectArray;
+    i        : Integer;
+    pools    : IFRE_DB_COLLECTION;
+    vdevs    : IFRE_DB_COLLECTION;
+  begin
+    children:=zfsObj.getZFSChildren(conn);
+    for i := 0 to Length(children) - 1 do begin
+      _handleObj(children[i].Implementor_HC as TFRE_DB_ZFS_OBJ);
+    end;
+    if zfsObj.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
+      zfsObj.setIsNew(false);
+      zfsObj.setIsModified(false);
+      zfsObj.removeFromPool;
+      ua.addBlockdevice(zfsObj.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE);
+      CheckDbResult(conn.Update(zfsObj),'Remove new disk');
+    end else begin
+      if zfsObj.Implementor_HC is TFRE_DB_ZFS_POOL then begin
+        pools:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
+        CheckDbResult(pools.Remove(zfsObj.UID));
+      end else begin
+        vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
+        CheckDbResult(vdevs.Remove(zfsObj.UID));
+      end;
+    end;
+  end;
+
+begin
+  ua:=_getUnassignedPool(conn);
+  for i := 0 to High(ids) do begin
+    zfsObj:=_getZFSObj(conn,ids[i]);
+    pool:=zfsObj.getPool(conn);
+    if assigned(ua) and (pool.getId=ua.getId) then continue; //skip: already unassigned
+    if not zfsObj.getIsNew then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_remove_not_new'));
+    _handleObj(zfsObj);
+  end;
 end;
 
 function TFOS_FIRMBOX_POOL_MOD.WEB_Content(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -1453,53 +1500,14 @@ begin
 end;
 
 function TFOS_FIRMBOX_POOL_MOD.WEB_RemoveNew(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-var
-  pool    : TFRE_DB_ZFS_ROOTOBJ;
-  ua      : TFRE_DB_ZFS_UNASSIGNED;
-  zfsObj  : TFRE_DB_ZFS_OBJ;
-  i       : Integer;
-
-  procedure _handleObj(const zfsObj: TFRE_DB_ZFS_OBJ);
-  var
-    children : IFRE_DB_ObjectArray;
-    i        : Integer;
-    pools    : IFRE_DB_COLLECTION;
-    vdevs    : IFRE_DB_COLLECTION;
-  begin
-    children:=zfsObj.getZFSChildren(conn);
-    for i := 0 to Length(children) - 1 do begin
-      _handleObj(children[i].Implementor_HC as TFRE_DB_ZFS_OBJ);
-    end;
-    if zfsObj.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE then begin
-      zfsObj.setIsNew(false);
-      zfsObj.setIsModified(false);
-      zfsObj.removeFromPool;
-      ua.addBlockdevice(zfsObj.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE);
-      CheckDbResult(conn.Update(zfsObj),'Remove new disk');
-    end else begin
-      if zfsObj.Implementor_HC is TFRE_DB_ZFS_POOL then begin
-        pools:=conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION);
-        CheckDbResult(pools.Remove(zfsObj.UID));
-      end else begin
-        vdevs:=conn.GetCollection(CFRE_DB_ZFS_VDEV_COLLECTION);
-        CheckDbResult(vdevs.Remove(zfsObj.UID));
-      end;
-    end;
-  end;
-
 begin
 
   if not conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  ua:=_getUnassignedPool(conn);
-  for i := 0 to input.Field('selected').ValueCount - 1 do begin
-    zfsObj:=_getZFSObj(conn,input.Field('selected').AsStringItem[i]);
-    pool:=zfsObj.getPool(conn);
-    if assigned(ua) and (pool.getId=ua.getId) then continue; //skip: already unassigned
-    if not zfsObj.getIsNew then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_remove_not_new'));
-    _handleObj(zfsObj);
-  end;
+
+  removeNew(input.Field('selected').AsStringArr,ses,conn);
+
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_save',false));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('pool_reset',false));
 
