@@ -22,7 +22,7 @@ uses
   FRE_DB_INTERFACE,
   fre_zfs,
   fre_system,
-  //fre_hal_schemes,
+  fre_hal_schemes,
   //fre_dbbusiness,
   FRE_DB_COMMON;
 
@@ -99,6 +99,8 @@ implementation
 
 procedure Register_DB_Extensions;
 begin
+  fre_zfs.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
   GFRE_DBI.RegisterObjectClassEx(TFOS_FIRMBOX_POOL_MOD);
 end;
 
@@ -689,7 +691,8 @@ begin
     with pools_grid do begin
       SetDeriveParent           (conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION));
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_Multiselect],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_PoolStructureSC),nil,CWSF(@WEB_TreeDrop));
-      SetParentToChildLinkField ('<PARENT_IN_ZFS_UID');
+      //SetParentToChildLinkField ('<PARENT_IN_ZFS_UID');
+      SetParentToChildLinkField ('<PARENT_IN_ZFS_UID',[TFRE_DB_ZFS_POOL.ClassName]);
 
       SetDeriveTransformation   (tr_Grid);
       SetDefaultOrderField      ('caption',true);
@@ -711,6 +714,7 @@ begin
       SetDeriveParent           (conn.GetMachinesCollection);
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_Multiselect],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_LayoutSC),nil,CWSF(@WEB_TreeDrop));
       SetParentToChildLinkField ('<PARENT_IN_ENCLOSURE_UID');
+      //SetParentToChildLinkField ('<PARENT_IN_ENCLOSURE_UID',[TFRE_DB_MACHINE.ClassName]);
 
       SetDeriveTransformation   (tr_Grid);
       SetDefaultOrderField      ('caption_layout',true);

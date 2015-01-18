@@ -65,7 +65,8 @@ type
     function        _deletePool                         (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _deleteDataset                      (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _deleteZone                         (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
-    function        _getDetails                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        _getDetails                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
+    function        _getZoneDetails                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
   protected
     procedure       SetupAppModuleStructure             ; override;
   public
@@ -85,6 +86,9 @@ type
     function        WEB_GridSC                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Delete                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DeleteConfirmed                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+
+    function        WEB_ZoneContentConfiguration        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ZoneContentServices             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -602,20 +606,25 @@ begin
   end;
 end;
 
-function TFOS_INFRASTRUCTURE_MOD._getDetails(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFOS_INFRASTRUCTURE_MOD._getDetails(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): TFRE_DB_CONTENT_DESC;
 var
   res   : TFRE_DB_CONTENT_DESC;
   dbo   : IFRE_DB_Object;
   scheme: IFRE_DB_SchemeObject;
   form  : TFRE_DB_FORM_PANEL_DESC;
+  hcObj: TObject;
 begin
   if not input.FieldExists('selected') or (input.Field('selected').ValueCount<>1) then begin
     res:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'info_details_select_one'));
   end else begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
 
-    if dbo.Implementor_HC is TFRE_DB_ZFS_POOL then begin
+    hcObj:=dbo.Implementor_HC;
+    if hcObj is TFRE_DB_ZFS_POOL then begin
       res:=fStoragePoolsMod.WEB_Content(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC;
+    end else
+    if hcObj is TFRE_DB_ZONE then begin
+      res:=_getZoneDetails(input,ses,app,conn);
     end else begin
       form:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',true,false);
       GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
@@ -626,6 +635,21 @@ begin
     end;
   end;
   res.contentId:='infrastructureDetails';
+  Result:=res;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD._getZoneDetails(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): TFRE_DB_CONTENT_DESC;
+var
+  res: TFRE_DB_SUBSECTIONS_DESC;
+  sf : TFRE_DB_SERVER_FUNC_DESC;
+begin
+  res:=TFRE_DB_SUBSECTIONS_DESC.create.Describe();
+  sf:=CWSF(@WEB_ZoneContentServices);
+  sf.AddParam.Describe('selected',input.Field('selected').AsString);
+  res.AddSection.Describe(sf,FetchModuleTextShort(ses,'zone_services_tab'),1);
+  sf:=CWSF(@WEB_ZoneContentConfiguration);
+  sf.AddParam.Describe('selected',input.Field('selected').AsString);
+  res.AddSection.Describe(sf,FetchModuleTextShort(ses,'zone_config_tab'),2);
   Result:=res;
 end;
 
@@ -712,6 +736,10 @@ begin
     CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
 
     CreateModuleText(conn,'info_details_select_one','Please select an object to get detailed information about it.');
+
+    CreateModuleText(conn,'zone_services_tab','Services');
+    CreateModuleText(conn,'zone_config_tab','Configuration');
+    CreateModuleText(conn,'zone_config_form_caption','Available Services');
   end;
 end;
 
@@ -867,7 +895,7 @@ begin
     grid.AddButton.DescribeManualType('tb_delete',CWSF(@WEB_Delete),'',FetchModuleTextShort(ses,'tb_delete'),'',true);
   end;
 
-  layout:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(grid,_getDetails(input,ses,app,conn).Implementor_HC as TFRE_DB_CONTENT_DESC);
+  layout:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(grid,_getDetails(input,ses,app,conn));
 
   Result:=layout;
 end;
@@ -1037,6 +1065,44 @@ begin
     end;
   end;
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneContentConfiguration(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zone    : TFRE_DB_ZONE;
+  template: TFRE_DB_FBZ_TEMPLATE;
+  res     : TFRE_DB_FORM_PANEL_DESC;
+  i       : Integer;
+  exClass : TFRE_DB_ObjectClassEx;
+  conf    : IFRE_DB_Object;
+begin
+  //FIXXME - store config and use it
+  CheckClassVisibility4MyDomain(ses);
+
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
+  res:=TFRE_DB_FORM_PANEL_DESC.create.Describe(FetchModuleTextShort(ses,'zone_config_form_caption'));
+
+  CheckDbResult(conn.FetchAs(zone.Field('templateid').AsObjectLink,TFRE_DB_FBZ_TEMPLATE,template));
+
+  for i := 0 to template.Field('serviceclasses').ValueCount -1 do begin
+    exClass:=GFRE_DBI.GetObjectClassEx(template.Field('serviceclasses').AsStringArr[i]);
+    conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+    res.AddBool.Describe(conf.Field('caption').AsString,template.Field('serviceclasses').AsStringArr[i],false,false,false,true);
+  end;
+
+  Result:=res;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneContentServices(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zone: TFRE_DB_ZONE;
+begin
+  //FIXXME -implement me
+  CheckClassVisibility4MyDomain(ses);
+
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
+
+  Result:=TFRE_DB_HTML_DESC.create.Describe('SERVICES');
 end;
 
 end.
