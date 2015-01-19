@@ -35,9 +35,6 @@ type
     class procedure InstallDBObjects4Domain     (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
     class procedure InstallDBObjects4SysDomain  (const conn: IFRE_DB_SYS_CONNECTION; currentVersionId: TFRE_DB_NameType; domainUID: TFRE_DB_GUID); override;
     class procedure InstallUserDBObjects        (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
-
-  published
-    function        WEB_DISK_DATA_FEED          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_GLOBAL_FILESERVER_MOD }
@@ -1312,11 +1309,6 @@ begin
   if currentVersionId='1.0' then begin
     currentVersionId := '1.1';
   end;
-end;
-
-function TFRE_FIRMBOX_STORAGE_APP.WEB_DISK_DATA_FEED(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-begin
-  result := Common_Disk_DataFeed(input,ses,app,conn);
 end;
 
 

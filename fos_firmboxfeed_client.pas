@@ -69,8 +69,8 @@ type
     FStorage_Feeding      : Boolean;
     FVM_FeedAppClass      : TFRE_DB_String;
     FVM_FeedAppUid        : TFRE_DB_Guid;
-    FSTORAGE_FeedAppClass : TFRE_DB_String;
-    FSTORAGE_FeedAppUid   : TFRE_DB_Guid;
+    FADCAdmin_FeedAppClass: TFRE_DB_String;
+    FADCAdmin_FeedAppUid  : TFRE_DB_Guid;
     FAPPL_FeedAppClass    : TFRE_DB_String;
     FAPPL_FeedAppUid      : TFRE_DB_Guid;
     vmc                   : IFOS_VM_HOST_CONTROL; // Todo Move MVStats to Statscontroller
@@ -422,7 +422,7 @@ begin
 //  writeln('zone destroyed');
   {$ENDIF}
 
-  abort;
+//  abort;
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
@@ -432,11 +432,6 @@ var i           : integer;
 begin
   inherited;
 
-  if Get_AppClassAndUid('TFRE_FIRMBOX_APPLIANCE_APP',FSTORAGE_FeedAppClass,FSTORAGE_FeedAppUid) then begin
-//    FDISK_Feeding := True;
-  end else begin
-    GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_APPLIANCE_APP APP NOT FOUND!');
-  end;
   if Get_AppClassAndUid('TFRE_FIRMBOX_APPLIANCE_APP',FAPPL_FeedAppClass,FAPPL_FeedAppUid) then begin
 //    FAPP_Feeding := True;
   end else begin
@@ -448,13 +443,13 @@ begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_VM_APP APP NOT FOUND!');
   end;
 
-  if Get_AppClassAndUid('TFRE_FIRMBOX_STORAGE_APP',FStorage_FeedAppClass,FSTORAGE_FeedAppUid) then begin
+  if Get_AppClassAndUid('TFOS_CITYCOM_ADC_ADMIN_APP',FADCAdmin_FeedAppClass,FADCAdmin_FeedAppUid) then begin
     disk_hal.ResetToUnInitialized;
     machineUIDS := GetMyMachineUIDs;
     for i:=0 to high(machineUIDS) do begin
       GFRE_DBI.LogNotice(dblc_FLEXCOM,'SENDING REQUEST FOR MACHINE REQUEST_DISK_ENC_POOL_DATA '+FREDB_G2H(machineUIDS[i]));
       SendServerCommand('TFRE_DB_MACHINE','REQUEST_DISK_ENC_POOL_DATA',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestDiskEncPoolData);
-      SendServerCommand('TFRE_DB_MACHINE','REQUEST_SERVICE_STRUCTURE',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestServiceStructure);
+//      SendServerCommand('TFRE_DB_MACHINE','REQUEST_SERVICE_STRUCTURE',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestServiceStructure);
     end;
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_STORAGE_APP APP NOT FOUND!');
@@ -517,28 +512,28 @@ begin
   else
     AddSubFeederEventViaTCP(cFRE_SUBFEEDER_IP,'44101','disksub');
 
-  mysqlconnection:=TFOSMySqlConn.Create(nil);
-  mysqlconnection.UserName:='firmos';
-  mysqlconnection.Password:='kmuRZ2013$';
-  mysqlconnection.DatabaseName:='asterisk';
-  mysqlconnection.HostName:='192.168.82.3';
-  mysqltransaction:=TSQLTransaction.Create(mysqlconnection);
-  mysqltransaction.Database:=mysqlconnection;
-  writeln('TRY CONNECT DB');
-  mysqlconnection.Connected:=True;
-  writeln('CONNECTED DB');
-  Q:=TSQLQuery.Create(mysqlconnection);
-  try
-    Q.Database:=mysqlconnection;
-    Q.Transaction:=mysqltransaction;
-    q.sql.Text := 'SET CHARACTER SET `utf8`';
-    q.ExecSQL;
-    q.sql.Text := 'SET NAMES `utf8`';
-    q.ExecSQL;
-    writeln('OPEN QRY DONE');
-  finally
-    q.free;
-  end;
+  //mysqlconnection:=TFOSMySqlConn.Create(nil);
+  //mysqlconnection.UserName:='firmos';
+  //mysqlconnection.Password:='kmuRZ2013$';
+  //mysqlconnection.DatabaseName:='asterisk';
+  //mysqlconnection.HostName:='192.168.82.3';
+  //mysqltransaction:=TSQLTransaction.Create(mysqlconnection);
+  //mysqltransaction.Database:=mysqlconnection;
+  //writeln('TRY CONNECT DB');
+  //mysqlconnection.Connected:=True;
+  //writeln('CONNECTED DB');
+  //Q:=TSQLQuery.Create(mysqlconnection);
+  //try
+  //  Q.Database:=mysqlconnection;
+  //  Q.Transaction:=mysqltransaction;
+  //  q.sql.Text := 'SET CHARACTER SET `utf8`';
+  //  q.ExecSQL;
+  //  q.sql.Text := 'SET NAMES `utf8`';
+  //  q.ExecSQL;
+  //  writeln('OPEN QRY DONE');
+  //finally
+  //  q.free;
+  //end;
 
 end;
 
@@ -548,7 +543,6 @@ begin
   fre_dbbusiness.Register_DB_Extensions;
   fre_ZFS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
-  fre_diff_transport.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
 end;
 
@@ -615,9 +609,8 @@ begin
   if FStorage_Feeding then
     begin
       //disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME);
-//      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),vmo);
       writeln('DISK_DATA_FEED NO CALLBACK');
-      SendServerCommand(FSTORAGE_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FSTORAGE_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),nil);
+      SendServerCommand(FADCAdmin_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),nil);
 
 //    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
       liveupdate_lock.Acquire;
