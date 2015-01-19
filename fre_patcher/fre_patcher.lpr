@@ -70,12 +70,14 @@ uses
   fos_citycom_adc_common,
   sysutils,
   fos_citycom_base,
+  fos_tool_interfaces,
   {$IFDEF FREMYSQL}
   fre_mysql_ll,
   sqldb,
   {$ENDIF}
   fre_dbbusiness,
-  fre_dbbase
+  fre_dbbase,
+  fre_diff_transport
   ;
 
 { mysql client on osx : brew install mysql-connector-c}
@@ -110,6 +112,8 @@ type
     procedure   GenerateDataCenterData                  ;
     procedure   ExportEmbeddedZones                     ;
     procedure   PoolConfig                              ;
+    procedure   BoxconsoleData                          ;
+    procedure   jobTest                                 ;
     procedure   AddAFeederUser                          (const feederusername:string ; const feederpass:string ; const feederclass :string);
     procedure   AddAuser                                (const userstringencoding : string);
 
@@ -208,6 +212,8 @@ begin
     'exportzones'  : ExportEmbeddedZones;
     'gendatacenter': GenerateDatacenterData;
     'poolconfig'   : PoolConfig;
+    'boxconsoledata'     : BoxconsoleData;
+    'jobtest'            : jobTest;
   end;
 end;
 
@@ -1628,7 +1634,7 @@ begin
   else
     dccoll:=conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION);
 
-  hcoll:=conn.GetCollection(cFRE_DB_MACHINE_COLLECTION);
+  hcoll:=conn.GetMachinesCollection;
 
   if not conn.CollectionExists(CFRE_DB_TEMPLATE_COLLECTION) then
     begin
@@ -1727,7 +1733,7 @@ begin
       hcoll:=conn.GetCollection('hosts');
       hcoll.ClearCollection;
     end;
-  hcoll:=conn.GetCollection(cFRE_DB_MACHINE_COLLECTION);
+  hcoll:=conn.GetMachinesCollection;
   hcoll.ClearCollection;
   dccoll.ClearCollection;
 
@@ -1844,6 +1850,12 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:a9:32:69','internet','Internet');
   AddIPV4('109.73.158.187/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
+
+  zone_id  := CreateZone('mysqlnord',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'06816a0017b9521f150fc53e9a3d4dc5');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'int0',zone_id,oce0_id,0,448,CFRE_DB_NullGUID,'02:08:20:f5:ef:d0','int','Internal');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,oce0_id,0,0,CFRE_DB_NullGUID,'02:08:20:08:3a:fc','mgmt','Mgmt LAN');
+  AddIPV4('10.54.3.220',link_id);
+  AddRoutingIPV4('default','10.54.3.252',zone_id,'Default Route');
 
   g_domain_id := CheckFindDomainID('GRAZETTA');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
@@ -2009,6 +2021,12 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:16:a3:b3','internet','Internet');
   AddIPV4('109.73.158.189/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
+  zone_id  := CreateZone('mysqlsued',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'330d67552799157633cd894b1c835b1b');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'int0',zone_id,oce0_id,0,448,CFRE_DB_NullGUID,'02:08:20:c9:5c:00','int','Internal');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,oce0_id,0,0,CFRE_DB_NullGUID,'02:8:20:63:c6:32','mgmt','Mgmt LAN');
+  AddIPV4('10.54.3.221',link_id);
+  AddRoutingIPV4('default','10.54.3.252',zone_id,'Default Route');
+
   zone_id  := CreateZone('test',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:c9:f3:6a','lan');
   domainsds_id := CreateParentDatasetwithStructure('nas02ds','asued01disk',pool_id,rootds_id);
@@ -2381,6 +2399,264 @@ begin
 
           writeln(zpool);
     end;
+
+end;
+
+procedure TFRE_Testserver.BoxconsoleData;
+var ndbo: IFRE_DB_Object;
+    odbo: IFRE_DB_Object;
+    ndbo2 : IFRE_DB_Object;
+    ndbo3 : IFRE_DB_Object;
+    ndbo4 : IFRE_DB_Object;
+    transport_dbo : IFRE_DB_Object;
+    testobj       : IFRE_DB_Object;
+
+    ca: IFRE_DB_Object;
+    conn          : IFRE_DB_CONNECTION;
+
+    testguid      : TFRE_DB_GUID;
+    testobj2      : IFRE_DB_Object;
+
+
+
+begin
+  FRE_DBBASE.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
+  //fos_citycom_base.Register_DB_Extensions;
+  //fre_zfs.Register_DB_Extensions;
+  //fre_scsi.Register_DB_Extensions;
+  //fre_hal_schemes.Register_DB_Extensions;
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
+
+  ca := GFRE_DBI.NewObject;
+  ca.Field(TFRE_DB_MACHINE.Classname).asstring              := '$SYSMACHINE';
+  ca.Field(TFRE_DB_ZFS_POOL.Classname).asstring             := CFRE_DB_ZFS_POOL_COLLECTION;
+  ca.Field(TFRE_DB_SG_LOGS.Classname).asstring              := CFRE_DB_SG_LOGS_COLLECTION;
+  ca.Field(TFRE_DB_ENCLOSURE.Classname).asstring            := CFRE_DB_ENCLOSURE_COLLECTION;
+  ca.Field(TFRE_DB_DRIVESLOT.ClassName).asstring            := CFRE_DB_DRIVESLOT_COLLECTION;
+  ca.Field(TFRE_DB_SAS_EXPANDER.ClassName).AsString         := CFRE_DB_SAS_EXPANDER_COLLECTION;
+  ca.Field(TFRE_DB_OS_BLOCKDEVICE.ClassName).asstring       := CFRE_DB_DEVICE_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_DISKCONTAINER.Classname).asstring    := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_BLOCKDEVICE.Classname).asstring      := CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION;
+  ca.Field(TFRE_DB_UNDEFINED_BLOCKDEVICE.Classname).asstring:= CFRE_DB_DEVICE_COLLECTION;
+  ca.Field(TFRE_DB_SAS_DISK.Classname).asstring             := CFRE_DB_DEVICE_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_LOG.Classname).asstring              := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_SPARE.Classname).asstring            := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_DATASTORAGE.Classname).asstring      := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_VDEV.Classname).asstring             := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_UNASSIGNED.Classname).asstring       := CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION;
+  ca.Field(TFRE_DB_JOB.Classname).asstring                  := '$SYSJOBS';
+
+  transport_dbo := GFRE_DBI.NewObject;
+
+
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+
+
+
+
+  odbo:=GFRE_DBI.NewObject;
+  ndbo:=GFRE_DBI.CreateFromFile('current_boxconsole.dbo');
+  odbo.Field('UID').AsGUID:=ndbo.UID;
+
+  //testobj  := TFRE_DB_SAS_DISK.Create;
+  //testobj.Field('FAKE REF').AsObjectLink := GFRE_DBI.NewObject.UID;
+  //ndbo.Field('DISKS').AsObject.Field(testobj.UID_String).AsObject:=testobj;
+  //
+  //testobj2  := TFRE_DB_SAS_DISK.Create;
+  //testobj2.Field('FAKE REF').AsObjectLink := GFRE_DBI.NewObject.UID;
+  //ndbo.Field('DISKS').AsObject.Field(testobj2.UID_String).AsObject:=testobj2;
+  //
+
+//  writeln(ndbo.DumpToString());
+  writeln('----- NOW FULL INSERT');
+  transport_dbo.ClearAllFields;
+
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo,odbo,ca,transport_dbo);
+
+  writeln('SWL INSERT COUNT ',transport_dbo.Field(CDIFF_INSERT_LIST).ValueCount);
+  writeln(transport_dbo.DumpToString());
+
+//  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
+
+
+
+  writeln('----- NOW UPDATE FIELD');
+  transport_dbo.ClearAllFields;
+  ndbo2:=ndbo.CloneToNewObject;
+  ndbo2.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_slot10',testobj,'');
+  testobj.Field('TARGETPORT_1').asstring:='TEST';
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo2,ndbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+  writeln('----- NOW DELETE FIELD');
+  transport_dbo.ClearAllFields;
+  ndbo3:=ndbo2.CloneToNewObject;
+  ndbo3.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_slot10',testobj,'');
+  testobj.DeleteField('TARGETPORT_2');
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo3,ndbo2,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+  writeln('----- NOW DELETE OBJECT');
+  transport_dbo.ClearAllFields;
+  ndbo2:=ndbo.CloneToNewObject;
+  ndbo2.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_ses6',testobj,'');
+  ndbo2.FetchObjByUID(testobj.Field('PARENT_IN_ENCLOSURE_UID').asGUID,testobj);
+//  writeln('SWL: ENCLOSURE',testobj.DumpToString);
+  testobj.Field('EXPANDERS').asobject.DeleteField('5003048000CB8A3F_SES6');
+//  writeln('SWL: ENCLOSURE',testobj.DumpToString);
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo2,ndbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+
+  writeln('----- NOW INSERT,UPDATE,DELETE FIELD');
+  transport_dbo.ClearAllFields;
+  ndbo4:=ndbo3.CloneToNewObject;
+  ndbo4.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_slot10',testobj,'');
+  testobj.Field('TESTFIELD').asstring:='NEWFIELDVAL';
+  testobj.Field('SUPER').asboolean:=true;
+  testobj.Field('INT32').AsInt32 :=1234;
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo4,ndbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+
+end;
+
+procedure TFRE_Testserver.jobTest;
+var
+    odbo: IFRE_DB_Object;
+    transport_dbo : IFRE_DB_Object;
+
+    jobs          : IFRE_DB_Object;
+    ji            : NativeInt;
+
+    ca: IFRE_DB_Object;
+    conn          : IFRE_DB_CONNECTION;
+
+    lastlog       : string;
+    logobj        : IFRE_DB_Object;
+
+  procedure GenerateJobs;
+  var ci  : NativeInt;
+      job : TFRE_DB_JOB;
+
+  begin
+    for ci := 0 to 99 do
+      begin
+        job :=TFRE_DB_JOB.create;
+        job.SetJobkeyDescription('TEST'+inttostr(ci),'TEST');
+        job.SetJobState(jobStateImmediateStart);
+        job.IMI_Do_the_Job(nil);
+        jobs.Field(job.UID.AsHexString).AsObject:=job;
+      end;
+  end;
+
+  procedure ChangeJob(const logorupdate:boolean);
+  var ci:NativeInt;
+      i:NativeInt;
+
+      procedure JobsIterate(const obj:IFRE_DB_Object);
+      var job :TFRE_DB_JOB;
+      begin
+        if i=ci then
+          begin
+            if obj.IsA(TFRE_DB_JOB,job) then
+              begin
+                if logorupdate then
+                  begin
+                    lastlog := 'NEW TESTLOG '+inttostr(random(1000));
+                    job.AddProgressLog(lastlog,random(100));
+                  end
+                else
+                  jobs.DeleteField(job.UID.AsHexString);
+              end;
+          end;
+        inc(i);
+      end;
+
+  begin
+    ci:=Random(100);
+    i:=0;
+    jobs.ForAllObjects(@JobsIterate);
+  end;
+
+begin
+  FRE_DBBASE.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
+  //fos_citycom_base.Register_DB_Extensions;
+  //fre_zfs.Register_DB_Extensions;
+  //fre_scsi.Register_DB_Extensions;
+  //fre_hal_schemes.Register_DB_Extensions;
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
+
+  ca := GFRE_DBI.NewObject;
+  ca.Field(TFRE_DB_MACHINE.Classname).asstring              := '$SYSMACHINE';
+  ca.Field(TFRE_DB_ZFS_POOL.Classname).asstring             := CFRE_DB_ZFS_POOL_COLLECTION;
+  ca.Field(TFRE_DB_SG_LOGS.Classname).asstring              := CFRE_DB_SG_LOGS_COLLECTION;
+  ca.Field(TFRE_DB_ENCLOSURE.Classname).asstring            := CFRE_DB_ENCLOSURE_COLLECTION;
+  ca.Field(TFRE_DB_DRIVESLOT.ClassName).asstring            := CFRE_DB_DRIVESLOT_COLLECTION;
+  ca.Field(TFRE_DB_SAS_EXPANDER.ClassName).AsString         := CFRE_DB_SAS_EXPANDER_COLLECTION;
+  ca.Field(TFRE_DB_OS_BLOCKDEVICE.ClassName).asstring       := CFRE_DB_DEVICE_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_DISKCONTAINER.Classname).asstring    := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_BLOCKDEVICE.Classname).asstring      := CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION;
+  ca.Field(TFRE_DB_UNDEFINED_BLOCKDEVICE.Classname).asstring:= CFRE_DB_DEVICE_COLLECTION;
+  ca.Field(TFRE_DB_SAS_DISK.Classname).asstring             := CFRE_DB_DEVICE_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_LOG.Classname).asstring              := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_SPARE.Classname).asstring            := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_DATASTORAGE.Classname).asstring      := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_VDEV.Classname).asstring             := CFRE_DB_ZFS_VDEV_COLLECTION;
+  ca.Field(TFRE_DB_ZFS_UNASSIGNED.Classname).asstring       := CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION;
+  ca.Field(TFRE_DB_JOB.Classname).asstring                  := '$SYSJOBS';
+
+  transport_dbo := GFRE_DBI.NewObject;
+
+  /// job dbo
+
+
+  jobs   := GFRE_DBI.NewObject;
+  odbo := jobs.CloneToNewObject;
+
+  GenerateJobs;
+
+  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+  odbo := jobs.CloneToNewObject;
+
+  for ji:=0 to 10 do
+    begin
+     ChangeJob(true);
+    end;
+
+//  writeln('SWL: JOBS',jobs.DumpToString);
+
+  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+  transport_dbo.ClearAllFields;
+
+  writeln('____ DELETE JOB');
+
+  odbo := jobs.CloneToNewObject;
+  ChangeJob(False);
+
+  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+  writeln('____ MANIPULATE LOG');
+
+  odbo := jobs.CloneToNewObject;
+
+  jobs.FetchObjWithStringFieldValue('M',lastlog,logobj,'');
+  logobj.Field('TEST1').AsString :='BLABLA';
+  logobj.Field('TS').AsDateTime  :=GFRE_DT.Now_UTC;
+
+  transport_dbo.ClearAllFields;
+  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+  abort;
 
 end;
 
