@@ -36,7 +36,6 @@ begin
   fre_scsi.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
   fre_hal_mos.Register_DB_Extensions;
-  fre_diff_transport.Register_DB_Extensions;
   fos_mos_monitoringapp.Register_DB_Extensions;
   fos_mos_networkapp.Register_DB_Extensions;
   fre_accesscontrol_common.Register_DB_Extensions;

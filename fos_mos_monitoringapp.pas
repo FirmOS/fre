@@ -224,182 +224,183 @@ begin
 end;
 
 function TFOS_CITYCOM_MONITORING_APP.WEB_MOS_DATA_FEED(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  i             : NativeInt;
-  moscollection : IFRE_DB_COLLECTION;
-  mos_parent_id : TFRE_DB_GUID;
-
-  procedure _processUpdates(const updatestep:TFRE_DB_UPDATE_TRANSPORT);
-  var update_type : TFRE_DB_ObjCompareEventType;
-     obj_id       : TFRE_DB_GUID;
-     target_obj   : IFRE_DB_Object;
-     res          : TFRE_DB_Errortype;
-
-
-      procedure _setStatus(const db_mos:TFRE_DB_VIRTUALMOSOBJECT);
-      begin
-        if db_mos.Field('res_boolean').AsBoolean then
-          db_mos.SetMOSStatus(fdbstat_ok,nil,nil,nil,conn)
-        else
-          db_mos.SetMOSStatus(fdbstat_error,nil,nil,nil,conn);
-      end;
-
-      procedure _updateAddVirtualMos(const mosobj:TFRE_DB_VIRTUALMOSOBJECT);
-      var key_mos      : TFRE_DB_NameType;
-          db_mos       : TFRE_DB_VIRTUALMOSOBJECT;
-          dbo          : IFRE_DB_Object;
-
-
-
-         procedure __insertmos;
-         begin
-           dbo := mosobj.CloneToNewObject();
-           db_mos  := dbo.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT;
-           db_mos.Field('mosparentIds').AsObjectLink := mos_parent_id;
-//           db_machine.Field('caption_mos').AsString:=machinename;
-           CheckDbResult(moscollection.Store(db_mos),'store mos in moscollection');
-           conn.Fetch(mosobj.UID,dbo);
-           db_mos  := dbo.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT;
-           _setStatus(db_mos);
-           GFRE_DBI.LogInfo(dblc_APPLICATION,'Added Mos Object [%s] uid [%s] to db', [key_mos,mosobj.UID_String]);
-         end;
-
-         procedure __deletemos;
-         begin
-           CheckDbResult(conn.Delete(dbo.UID),'could not delete mos uid ['+dbo.UID_String+']');
-         end;
-
-         procedure __updatemos;
-         begin
-           db_mos  := dbo.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT;
-           db_mos.SetAllSimpleObjectFieldsFromObject(mosobj);
-           _setStatus(db_mos);
-//           CheckDbResult(moscollection.update(db_mos),'update mos in moscollection');
-         end;
-
-      begin
-        key_mos     := mosobj.GetMOSKey;
-        if moscollection.GetIndexedObj(key_mos,dbo) then
-          begin
-            if dbo.UID<>mosobj.UID then          // delete if UID is not matching
-              begin
-                __deletemos;
-                __insertmos;
-              end
-            else
-              begin
-                __updatemos;
-              end;
-          end
-        else
-          begin
-            __insertmos;
-          end;
-      end;
-
-
-  begin
-    writeln('SWL: UPDATESTEP ',updatestep.DumpToString);
-    update_type   := updatestep.GetType;
-    if updatestep.GetIsChild=false then        // root object with machines
-      begin
-        case update_type of
-         cev_FieldDeleted:
-           begin
-             raise EFRE_DB_Exception.Create(edb_ERROR,'Unsupported field delete for subobjects in root object [%s] ',[updatestep.DumpToString()]);
-           end;
-         cev_FieldAdded:
-           begin
-             if updatestep.GetNewField.FieldType<>fdbft_Object then
-               begin
-                 raise EFRE_DB_Exception.Create(edb_ERROR,'Unsupported field add for simple fields in root object [%s] ',[updatestep.DumpToString()]);
-               end
-             else
-               begin
-                 if (updatestep.GetNewField.AsObject.Implementor_HC is TFRE_DB_VIRTUALMOSOBJECT) then
-                   begin
-                     _updateAddVirtualMos ((updatestep.GetNewField.AsObject.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT));
-                   end
-                 else
-                   raise EFRE_DB_Exception.Create(edb_ERROR,'Unsupported field add for other subobjects than TFRE_DB_VIRTUALMOSOBJECT [%s] ',[updatestep.DumpToString()]);
-               end;
-           end;
-         cev_FieldChanged:
-           begin
-             raise EFRE_DB_Exception.Create(edb_ERROR,'Unsupported field change for subobjects in root class [%s] ',[updatestep.DumpToString()]);
-           end;
-        else
-          raise EFRE_DB_Exception.Create(edb_ERROR,'Invalid Update Type [%s] for id [%s]',[Inttostr(Ord(updatestep.GetType)),FREDB_G2H(updatestep.UID)]);
-        end;
-      end
-    else
-      begin
-        obj_id        := updatestep.UID;
-        CheckDbResult(conn.Fetch(obj_id,target_obj),'could not fetch object for update');
-        case update_type of
-         cev_FieldDeleted:
-           begin
-             if updatestep.GetOldField.FieldType<>fdbft_Object then
-               begin
-                 writeln('SWL GENERIC DELETE SIMPLE FIELD:',updatestep.GetUpdateScheme,' ',updatestep.GetOldFieldName);
-                 target_obj.DeleteField(updatestep.GetOldFieldName);
-                 CheckDBResult(conn.Update(target_obj),'could not update generic object after field delete');
-               end
-             else
-               begin
-                 writeln('SWL GENERIC DELETE OBJECT:',updatestep.DumpToString);
-               end;
-           end;
-         cev_FieldAdded:
-           begin
-             writeln('SWL GENERIC ADD:',updatestep.DumpToString);
-             if updatestep.GetNewField.FieldType<>fdbft_Object then
-               begin
-                 writeln('SWL GENERIC ADD SIMPLE FIELD:',updatestep.GetUpdateScheme,' ',updatestep.GetNewFieldName);
-                 target_obj.Field(updatestep.GetNewFieldName).CloneFromField(updatestep.GetNewField);
-                 CheckDBResult(conn.Update(target_obj),'could not update generic object after field add');
-               end
-             else
-               begin
-                 writeln('SWL GENERIC ADD OBJECT:',updatestep.DumpToString);
-               end;
-           end;
-         cev_FieldChanged:
-           begin
-             if updatestep.GetNewField.FieldType<>fdbft_Object then
-               begin
-                 res := conn.Fetch(updatestep.UID,target_obj);
-                 if res=edb_NOT_FOUND then
-                   begin
-                     GFRE_DBI.LogWarning(dblc_APPLICATION,'could not fetch object for field update',[FREDB_G2H(updatestep.UID)]);
-                     exit;
-                   end;
-                 writeln('SWL GENERIC UPDATE:',target_obj.SchemeClass,' ',updatestep.GetNewFieldName);
-
-                 target_obj.Field(updatestep.GetNewFieldName).CloneFromField(updatestep.GetNewField);
-                 if (target_obj.Implementor_HC is TFRE_DB_VIRTUALMOSOBJECT) then
-                   _setStatus((target_obj.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT));
-                 CheckDBResult(conn.Update(target_obj),'could not update generic object');
-               end;
-           end
-        else
-          raise EFRE_DB_Exception.Create(edb_ERROR,'Invalid Update Type [%s] for id [%s]',[Inttostr(Ord(updatestep.GetType)),FREDB_G2H(obj_id)]);
-        end;
-      end;
-    end;
+//var
+//  i             : NativeInt;
+//  moscollection : IFRE_DB_COLLECTION;
+//  mos_parent_id : TFRE_DB_GUID;
+//
+//  procedure _processUpdates(const updatestep:TFRE_DB_UPDATE_TRANSPORT);
+//  var update_type : TFRE_DB_ObjCompareEventType;
+//     obj_id       : TFRE_DB_GUID;
+//     target_obj   : IFRE_DB_Object;
+//     res          : TFRE_DB_Errortype;
+//
+//
+//      procedure _setStatus(const db_mos:TFRE_DB_VIRTUALMOSOBJECT);
+//      begin
+//        if db_mos.Field('res_boolean').AsBoolean then
+//          db_mos.SetMOSStatus(fdbstat_ok,nil,nil,nil,conn)
+//        else
+//          db_mos.SetMOSStatus(fdbstat_error,nil,nil,nil,conn);
+//      end;
+//
+//      procedure _updateAddVirtualMos(const mosobj:TFRE_DB_VIRTUALMOSOBJECT);
+//      var key_mos      : TFRE_DB_NameType;
+//          db_mos       : TFRE_DB_VIRTUALMOSOBJECT;
+//          dbo          : IFRE_DB_Object;
+//
+//
+//
+//         procedure __insertmos;
+//         begin
+//           dbo := mosobj.CloneToNewObject();
+//           db_mos  := dbo.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT;
+//           db_mos.Field('mosparentIds').AsObjectLink := mos_parent_id;
+////           db_machine.Field('caption_mos').AsString:=machinename;
+//           CheckDbResult(moscollection.Store(db_mos),'store mos in moscollection');
+//           conn.Fetch(mosobj.UID,dbo);
+//           db_mos  := dbo.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT;
+//           _setStatus(db_mos);
+//           GFRE_DBI.LogInfo(dblc_APPLICATION,'Added Mos Object [%s] uid [%s] to db', [key_mos,mosobj.UID_String]);
+//         end;
+//
+//         procedure __deletemos;
+//         begin
+//           CheckDbResult(conn.Delete(dbo.UID),'could not delete mos uid ['+dbo.UID_String+']');
+//         end;
+//
+//         procedure __updatemos;
+//         begin
+//           db_mos  := dbo.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT;
+//           db_mos.SetAllSimpleObjectFieldsFromObject(mosobj);
+//           _setStatus(db_mos);
+////           CheckDbResult(moscollection.update(db_mos),'update mos in moscollection');
+//         end;
+//
+//      begin
+//        key_mos     := mosobj.GetMOSKey;
+//        if moscollection.GetIndexedObj(key_mos,dbo) then
+//          begin
+//            if dbo.UID<>mosobj.UID then          // delete if UID is not matching
+//              begin
+//                __deletemos;
+//                __insertmos;
+//              end
+//            else
+//              begin
+//                __updatemos;
+//              end;
+//          end
+//        else
+//          begin
+//            __insertmos;
+//          end;
+//      end;
+//
+//
+//  begin
+//    writeln('SWL: UPDATESTEP ',updatestep.DumpToString);
+//    update_type   := updatestep.GetType;
+//    if updatestep.GetIsChild=false then        // root object with machines
+//      begin
+//        case update_type of
+//         cev_FieldDeleted:
+//           begin
+//             raise EFRE_DB_Exception.Create(edb_ERROR,'Unsupported field delete for subobjects in root object [%s] ',[updatestep.DumpToString()]);
+//           end;
+//         cev_FieldAdded:
+//           begin
+//             if updatestep.GetNewField.FieldType<>fdbft_Object then
+//               begin
+//                 raise EFRE_DB_Exception.Create(edb_ERROR,'Unsupported field add for simple fields in root object [%s] ',[updatestep.DumpToString()]);
+//               end
+//             else
+//               begin
+//                 if (updatestep.GetNewField.AsObject.Implementor_HC is TFRE_DB_VIRTUALMOSOBJECT) then
+//                   begin
+//                     _updateAddVirtualMos ((updatestep.GetNewField.AsObject.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT));
+//                   end
+//                 else
+//                   raise EFRE_DB_Exception.Create(edb_ERROR,'Unsupported field add for other subobjects than TFRE_DB_VIRTUALMOSOBJECT [%s] ',[updatestep.DumpToString()]);
+//               end;
+//           end;
+//         cev_FieldChanged:
+//           begin
+//             raise EFRE_DB_Exception.Create(edb_ERROR,'Unsupported field change for subobjects in root class [%s] ',[updatestep.DumpToString()]);
+//           end;
+//        else
+//          raise EFRE_DB_Exception.Create(edb_ERROR,'Invalid Update Type [%s] for id [%s]',[Inttostr(Ord(updatestep.GetType)),FREDB_G2H(updatestep.UID)]);
+//        end;
+//      end
+//    else
+//      begin
+//        obj_id        := updatestep.UID;
+//        CheckDbResult(conn.Fetch(obj_id,target_obj),'could not fetch object for update');
+//        case update_type of
+//         cev_FieldDeleted:
+//           begin
+//             if updatestep.GetOldField.FieldType<>fdbft_Object then
+//               begin
+//                 writeln('SWL GENERIC DELETE SIMPLE FIELD:',updatestep.GetUpdateScheme,' ',updatestep.GetOldFieldName);
+//                 target_obj.DeleteField(updatestep.GetOldFieldName);
+//                 CheckDBResult(conn.Update(target_obj),'could not update generic object after field delete');
+//               end
+//             else
+//               begin
+//                 writeln('SWL GENERIC DELETE OBJECT:',updatestep.DumpToString);
+//               end;
+//           end;
+//         cev_FieldAdded:
+//           begin
+//             writeln('SWL GENERIC ADD:',updatestep.DumpToString);
+//             if updatestep.GetNewField.FieldType<>fdbft_Object then
+//               begin
+//                 writeln('SWL GENERIC ADD SIMPLE FIELD:',updatestep.GetUpdateScheme,' ',updatestep.GetNewFieldName);
+//                 target_obj.Field(updatestep.GetNewFieldName).CloneFromField(updatestep.GetNewField);
+//                 CheckDBResult(conn.Update(target_obj),'could not update generic object after field add');
+//               end
+//             else
+//               begin
+//                 writeln('SWL GENERIC ADD OBJECT:',updatestep.DumpToString);
+//               end;
+//           end;
+//         cev_FieldChanged:
+//           begin
+//             if updatestep.GetNewField.FieldType<>fdbft_Object then
+//               begin
+//                 res := conn.Fetch(updatestep.UID,target_obj);
+//                 if res=edb_NOT_FOUND then
+//                   begin
+//                     GFRE_DBI.LogWarning(dblc_APPLICATION,'could not fetch object for field update',[FREDB_G2H(updatestep.UID)]);
+//                     exit;
+//                   end;
+//                 writeln('SWL GENERIC UPDATE:',target_obj.SchemeClass,' ',updatestep.GetNewFieldName);
+//
+//                 target_obj.Field(updatestep.GetNewFieldName).CloneFromField(updatestep.GetNewField);
+//                 if (target_obj.Implementor_HC is TFRE_DB_VIRTUALMOSOBJECT) then
+//                   _setStatus((target_obj.Implementor_HC as TFRE_DB_VIRTUALMOSOBJECT));
+//                 CheckDBResult(conn.Update(target_obj),'could not update generic object');
+//               end;
+//           end
+//        else
+//          raise EFRE_DB_Exception.Create(edb_ERROR,'Invalid Update Type [%s] for id [%s]',[Inttostr(Ord(updatestep.GetType)),FREDB_G2H(obj_id)]);
+//        end;
+//      end;
+//    end;
 
 begin
-  moscollection:= conn.GetCollection(CFRE_DB_MOS_COLLECTION);
-  if moscollection.GetIndexedUID('RZNORD',mos_parent_id)=false then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'Could not find RZNORD mos object');
-  if input.FieldExists('UPDATE') then
-    begin
-      for i := 0 to input.Field('UPDATE').ValueCount-1 do
-        begin
-          _processUpdates((input.Field('UPDATE').AsObjectItem[i].Implementor_HC as TFRE_DB_UPDATE_TRANSPORT));
-        end;
-    end;
-  result := GFRE_DB_NIL_DESC;
+  abort;
+  //moscollection:= conn.GetCollection(CFRE_DB_MOS_COLLECTION);
+  //if moscollection.GetIndexedUID('RZNORD',mos_parent_id)=false then
+  //  raise EFRE_DB_Exception.Create(edb_ERROR,'Could not find RZNORD mos object');
+  //if input.FieldExists('UPDATE') then
+  //  begin
+  //    for i := 0 to input.Field('UPDATE').ValueCount-1 do
+  //      begin
+  //        _processUpdates((input.Field('UPDATE').AsObjectItem[i].Implementor_HC as TFRE_DB_UPDATE_TRANSPORT));
+  //      end;
+  //  end;
+  //result := GFRE_DB_NIL_DESC;
 end;
 
 end.
