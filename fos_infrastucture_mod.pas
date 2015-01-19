@@ -89,6 +89,7 @@ type
 
     function        WEB_ZoneContentConfiguration        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ZoneContentServices             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreZoneConfiguration          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -740,6 +741,8 @@ begin
     CreateModuleText(conn,'zone_services_tab','Services');
     CreateModuleText(conn,'zone_config_tab','Configuration');
     CreateModuleText(conn,'zone_config_form_caption','Available Services');
+    CreateModuleText(conn,'zone_config_save_error_cap','Error');
+    CreateModuleText(conn,'zone_config_save_error_msg','Error saving zone configuration. Following service(s) are already in use and cannot be disabled: %services_str%');
   end;
 end;
 
@@ -1069,25 +1072,44 @@ end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneContentConfiguration(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  zone    : TFRE_DB_ZONE;
-  template: TFRE_DB_FBZ_TEMPLATE;
-  res     : TFRE_DB_FORM_PANEL_DESC;
-  i       : Integer;
-  exClass : TFRE_DB_ObjectClassEx;
-  conf    : IFRE_DB_Object;
+  zone        : TFRE_DB_ZONE;
+  template    : TFRE_DB_FBZ_TEMPLATE;
+  res         : TFRE_DB_FORM_PANEL_DESC;
+  i           : Integer;
+  exClass     : TFRE_DB_ObjectClassEx;
+  conf        : IFRE_DB_Object;
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  defaultValue: Boolean;
+  disabled    : Boolean;
+  serviceClass: String;
 begin
-  //FIXXME - store config and use it
   CheckClassVisibility4MyDomain(ses);
 
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
   res:=TFRE_DB_FORM_PANEL_DESC.create.Describe(FetchModuleTextShort(ses,'zone_config_form_caption'));
+  res.contentId:='configureZone';
 
   CheckDbResult(conn.FetchAs(zone.Field('templateid').AsObjectLink,TFRE_DB_FBZ_TEMPLATE,template));
 
   for i := 0 to template.Field('serviceclasses').ValueCount -1 do begin
-    exClass:=GFRE_DBI.GetObjectClassEx(template.Field('serviceclasses').AsStringArr[i]);
+    serviceClass:=template.Field('serviceclasses').AsStringArr[i];
+    exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
     conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
-    res.AddBool.Describe(conf.Field('caption').AsString,template.Field('serviceclasses').AsStringArr[i],false,false,false,true);
+
+    defaultValue:=FREDB_StringInArrayIdx(serviceClass,zone.Field('disabledSCs').AsStringArr)=-1;
+    if defaultValue then begin
+      disabled:=false;
+    end else begin
+      disabled:=conn.GetReferencesCount(zone.UID,false,serviceClass,'serviceParent')>0;
+    end;
+
+    res.AddBool.Describe(conf.Field('caption').AsString,serviceClass,false,false,disabled,defaultValue);
+  end;
+
+  if conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_ZONE,zone.DomainID) then begin
+    sf:=CWSF(@WEB_StoreZoneConfiguration);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
   end;
 
   Result:=res;
@@ -1096,6 +1118,7 @@ end;
 function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneContentServices(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   zone: TFRE_DB_ZONE;
+
 begin
   //FIXXME -implement me
   CheckClassVisibility4MyDomain(ses);
@@ -1103,6 +1126,65 @@ begin
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
 
   Result:=TFRE_DB_HTML_DESC.create.Describe('SERVICES');
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_StoreZoneConfiguration(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zone         : TFRE_DB_ZONE;
+  errorClasses : TFRE_DB_StringArray;
+  sf           : TFRE_DB_SERVER_FUNC_DESC;
+  servicesStr  : String;
+  exClass      : TFRE_DB_ObjectClassEx;
+  i            : Integer;
+  conf         : IFRE_DB_Object;
+
+  procedure _handleService(const field: IFRE_DB_Field);
+  var
+    idx     : NativeInt;
+    refCount: NativeInt;
+  begin
+    idx:=FREDB_StringInArrayIdx(field.FieldName,zone.Field('disabledSCs').AsStringArr);
+    if field.AsBoolean then begin
+      if idx<>-1 then begin
+        zone.Field('disabledSCs').RemoveString(idx);
+      end;
+    end else begin
+      if idx=-1 then begin
+        refCount:=conn.GetReferencesCount(zone.UID,false,field.FieldName,'serviceParent');
+        if refCount>0 then begin
+          SetLength(errorClasses,Length(errorClasses)+1);
+          errorClasses[Length(errorClasses)-1]:=field.FieldName;
+        end;
+        zone.Field('disabledSCs').AddString(field.FieldName);
+      end;
+    end;
+  end;
+
+begin
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
+
+  if not conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_ZONE,zone.DomainID) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  SetLength(errorClasses,0);
+  input.Field('data').AsObject.ForAllFields(@_handleService,true,true);
+
+  if Length(errorClasses)=0 then begin
+    CheckDbResult(conn.Update(zone));
+    Result:=GFRE_DB_NIL_DESC;
+  end else begin
+    sf:=CWSF(@WEB_ZoneContentConfiguration);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    servicesStr:='';
+    for i := 0 to high(errorClasses) do begin
+      exClass:=GFRE_DBI.GetObjectClassEx(errorClasses[i]);
+      conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+
+      if i>0 then servicesStr:=servicesStr + ', ';
+      servicesStr:=servicesStr + conf.Field('caption').AsString;
+    end;
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'zone_config_save_error_cap'),StringReplace(FetchModuleTextShort(ses,'zone_config_save_error_msg'),'%services_str%',servicesStr,[rfReplaceAll]),fdbmt_error,sf);
+  end;
 end;
 
 end.
