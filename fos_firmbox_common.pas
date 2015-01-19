@@ -629,7 +629,6 @@ begin
   FRE_DBBASE.Register_DB_Extensions;
   FRE_DBBUSINESS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
-  fre_diff_transport.Register_DB_Extensions;
   FRE_ZFS.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
   fos_firmbox_applianceapp.Register_DB_Extensions;
