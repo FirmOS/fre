@@ -90,6 +90,8 @@ type
     function        WEB_ZoneContentConfiguration        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ZoneContentServices             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreZoneConfiguration          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddService                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreService                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -743,6 +745,12 @@ begin
     CreateModuleText(conn,'zone_config_form_caption','Available Services');
     CreateModuleText(conn,'zone_config_save_error_cap','Error');
     CreateModuleText(conn,'zone_config_save_error_msg','Error saving zone configuration. Following service(s) are already in use and cannot be disabled: %services_str%');
+
+    CreateModuleText(conn,'grid_service_name','Name');
+    CreateModuleText(conn,'tb_add_service','Add');
+    CreateModuleText(conn,'add_service_diag_cap','Add service');
+    CreateModuleText(conn,'service_create_error_exists_cap','Error: Add service');
+    CreateModuleText(conn,'service_create_error_exists_msg','A %service_str% service with the given name already exists!');
   end;
 end;
 
@@ -872,6 +880,23 @@ begin
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_ZFS_DATASET_PARENT.ClassName]);
     end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_service_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('schemeclass','sc','',dt_string,false);
+      AddOneToOnescheme('icon','','',dt_string,false);
+      SetFinalRightTransformFunction(@CalculateIcon,[]);
+    end;
+
+    dc := session.NewDerivedCollection('ZONE_SERVICES_GRID');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[],'',nil,'',nil,nil);
+      SetDefaultOrderField('objname',true);
+    end;
+
   end;
 end;
 
@@ -1117,15 +1142,53 @@ end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneContentServices(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  zone: TFRE_DB_ZONE;
-
+  zone        : TFRE_DB_ZONE;
+  res         : TFRE_DB_VIEW_LIST_DESC;
+  dc          : IFRE_DB_DERIVED_COLLECTION;
+  menu        : TFRE_DB_MENU_DESC;
+  canAdd      : Boolean;
+  template    : TFRE_DB_FBZ_TEMPLATE;
+  i           : Integer;
+  serviceClass: String;
+  exClass     : TFRE_DB_ObjectClassEx;
+  conf        : IFRE_DB_Object;
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  submenu     : TFRE_DB_SUBMENU_DESC;
 begin
-  //FIXXME -implement me
   CheckClassVisibility4MyDomain(ses);
 
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
 
-  Result:=TFRE_DB_HTML_DESC.create.Describe('SERVICES');
+  dc:=ses.FetchDerivedCollection('ZONE_SERVICES_GRID');
+  dc.Filters.RemoveFilter('zone');
+  dc.Filters.AddAutoDependencyFilter('zone',['<SERVICEPARENT'],[zone.UID]);
+  res:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+
+  canAdd:=false;
+  menu:=TFRE_DB_MENU_DESC.create.Describe;
+  submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_add_service'),'');
+
+  CheckDbResult(conn.FetchAs(zone.Field('templateid').AsObjectLink,TFRE_DB_FBZ_TEMPLATE,template));
+
+  for i := 0 to template.Field('serviceclasses').ValueCount -1 do begin
+    serviceClass:=template.Field('serviceclasses').AsStringArr[i];
+    exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
+
+    if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
+      canAdd:=true;
+      conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+      sf:=CWSF(@WEB_AddService);
+      sf.AddParam.Describe('serviceClass',serviceClass);
+      sf.AddParam.Describe('zoneId',zone.UID_String);
+      submenu.AddEntry.Describe(conf.Field('caption').AsString,'',sf,conf.Field('OnlyOneServicePerZone').AsBoolean and (conn.GetReferencesCount(zone.UID,false,serviceClass,'serviceParent')>0),'add_'+serviceClass);
+    end;
+  end;
+
+  if canAdd then begin
+    res.SetMenu(menu);
+  end;
+
+  Result:=res;
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_StoreZoneConfiguration(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -1185,6 +1248,73 @@ begin
     end;
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'zone_config_save_error_cap'),StringReplace(FetchModuleTextShort(ses,'zone_config_save_error_msg'),'%services_str%',servicesStr,[rfReplaceAll]),fdbmt_error,sf);
   end;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_AddService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zone  : TFRE_DB_ZONE;
+  scheme: IFRE_DB_SchemeObject;
+  res   : TFRE_DB_FORM_DIALOG_DESC;
+  sf    : TFRE_DB_SERVER_FUNC_DESC;
+begin
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
+  if not conn.SYS.CheckClassRight4DomainId(sr_STORE,input.Field('serviceClass').AsString,zone.DomainID) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_service_diag_cap'),600);
+  GFRE_DBI.GetSystemSchemeByName(input.Field('serviceClass').AsString,scheme);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+
+  sf:=CWSF(@WEB_StoreService);
+  sf.AddParam.Describe('zoneId',zone.UID_String);
+  sf.AddParam.Describe('serviceClass',input.Field('serviceClass').AsString);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+
+  Result:=res;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_StoreService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme      : IFRE_DB_SchemeObject;
+  zone        : TFRE_DB_ZONE;
+  dbo         : IFRE_DB_Object;
+  coll        : IFRE_DB_COLLECTION;
+  exClass     : TFRE_DB_ObjectClassEx;
+  conf        : IFRE_DB_Object;
+  serviceClass: TFRE_DB_String;
+  idx         : String;
+begin
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
+  if not conn.SYS.CheckClassRight4DomainId(sr_STORE,input.Field('serviceClass').AsString,zone.DomainID) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if not input.FieldPathExists('data.objname') then
+    raise EFRE_DB_Exception.Create('Missing input parameter objname!');
+
+  serviceClass:=input.Field('serviceClass').AsString;
+  exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
+  conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+  idx:=serviceClass + '_' + input.FieldPath('data.objname').AsString + '@' + zone.UID_String;
+  coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
+  if coll.ExistsIndexedText(idx)<>0 then begin
+    Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'service_create_error_exists_cap'),StringReplace(FetchModuleTextShort(ses,'service_create_error_exists_msg'),'%service_str%',conf.Field('caption').AsString,[rfReplaceAll]),fdbmt_error);
+    exit;
+  end;
+
+  GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
+  dbo:=GFRE_DBI.NewObjectSchemeByName(serviceClass);
+  dbo.Field('serviceParent').AsObjectLink:=zone.UID;
+  dbo.Field('uniquephysicalid').AsString:=idx;
+  dbo.SetDomainID(zone.DomainID);
+  scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dbo,true,conn);
+
+  CheckDbResult(coll.Store(dbo));
+
+  if conf.Field('OnlyOneServicePerZone').AsBoolean then begin
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_'+serviceClass,true));
+  end;
+
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
 end.
