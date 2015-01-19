@@ -1740,8 +1740,8 @@ begin
   if hcoll.IndexExists('pmac') then
     begin
       CheckDbResult(hcoll.DropIndex('pmac'));
-      CheckDbResult(hcoll.DefineIndexOnField('provisioningmac',fdbft_String,true,true,'pmac',false));
     end;
+  CheckDbResult(hcoll.DefineIndexOnField('provisioningmac',fdbft_String,true,true,'pmac',false));
 
   tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
   tmpl.ObjectName:='GLOBAL';
@@ -2445,8 +2445,7 @@ begin
   ca.Field(TFRE_DB_ZFS_DATASTORAGE.Classname).asstring      := CFRE_DB_ZFS_VDEV_COLLECTION;
   ca.Field(TFRE_DB_ZFS_VDEV.Classname).asstring             := CFRE_DB_ZFS_VDEV_COLLECTION;
   ca.Field(TFRE_DB_ZFS_UNASSIGNED.Classname).asstring       := CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION;
-  ca.Field(TFRE_DB_JOB.Classname).asstring                  := '$SYSJOBS';
-
+  ca.Field(TFRE_DB_EMBEDDING_GROUP.Classname).asstring      := '';
   transport_dbo := GFRE_DBI.NewObject;
 
 
@@ -2591,22 +2590,6 @@ begin
   GFRE_DB.Initialize_Extension_ObjectsBuild;
 
   ca := GFRE_DBI.NewObject;
-  ca.Field(TFRE_DB_MACHINE.Classname).asstring              := '$SYSMACHINE';
-  ca.Field(TFRE_DB_ZFS_POOL.Classname).asstring             := CFRE_DB_ZFS_POOL_COLLECTION;
-  ca.Field(TFRE_DB_SG_LOGS.Classname).asstring              := CFRE_DB_SG_LOGS_COLLECTION;
-  ca.Field(TFRE_DB_ENCLOSURE.Classname).asstring            := CFRE_DB_ENCLOSURE_COLLECTION;
-  ca.Field(TFRE_DB_DRIVESLOT.ClassName).asstring            := CFRE_DB_DRIVESLOT_COLLECTION;
-  ca.Field(TFRE_DB_SAS_EXPANDER.ClassName).AsString         := CFRE_DB_SAS_EXPANDER_COLLECTION;
-  ca.Field(TFRE_DB_OS_BLOCKDEVICE.ClassName).asstring       := CFRE_DB_DEVICE_COLLECTION;
-  ca.Field(TFRE_DB_ZFS_DISKCONTAINER.Classname).asstring    := CFRE_DB_ZFS_VDEV_COLLECTION;
-  ca.Field(TFRE_DB_ZFS_BLOCKDEVICE.Classname).asstring      := CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION;
-  ca.Field(TFRE_DB_UNDEFINED_BLOCKDEVICE.Classname).asstring:= CFRE_DB_DEVICE_COLLECTION;
-  ca.Field(TFRE_DB_SAS_DISK.Classname).asstring             := CFRE_DB_DEVICE_COLLECTION;
-  ca.Field(TFRE_DB_ZFS_LOG.Classname).asstring              := CFRE_DB_ZFS_VDEV_COLLECTION;
-  ca.Field(TFRE_DB_ZFS_SPARE.Classname).asstring            := CFRE_DB_ZFS_VDEV_COLLECTION;
-  ca.Field(TFRE_DB_ZFS_DATASTORAGE.Classname).asstring      := CFRE_DB_ZFS_VDEV_COLLECTION;
-  ca.Field(TFRE_DB_ZFS_VDEV.Classname).asstring             := CFRE_DB_ZFS_VDEV_COLLECTION;
-  ca.Field(TFRE_DB_ZFS_UNASSIGNED.Classname).asstring       := CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION;
   ca.Field(TFRE_DB_JOB.Classname).asstring                  := '$SYSJOBS';
 
   transport_dbo := GFRE_DBI.NewObject;
