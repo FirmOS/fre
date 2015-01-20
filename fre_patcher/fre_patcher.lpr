@@ -2536,6 +2536,10 @@ var
     lastlog       : string;
     logobj        : IFRE_DB_Object;
 
+    obj4array     : IFRE_DB_Object;
+    testjob_uid   : TFRE_DB_GUID;
+    testjob       : IFRE_DB_Object;
+
   procedure GenerateJobs;
   var ci  : NativeInt;
       job : TFRE_DB_JOB;
@@ -2548,6 +2552,8 @@ var
         job.SetJobState(jobStateImmediateStart);
         job.IMI_Do_the_Job(nil);
         jobs.Field(job.UID.AsHexString).AsObject:=job;
+        if ci=99 then
+          testjob_uid:=job.uid;
       end;
   end;
 
@@ -2639,7 +2645,65 @@ begin
   FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
-  abort;
+  transport_dbo.ClearAllFields;
+
+  writeln('____ ADD OBJECTARRAY');
+
+  odbo := jobs.CloneToNewObject;
+
+  testjob := jobs.Field(testjob_uid.AsHexString).AsObject;
+
+  for ji := 0 to 2 do
+    begin
+     obj4array := GFRE_DBI.NewObject;
+     obj4array.Field('NR').asint32:=ji;
+     testjob.Field('OBJA').AddObject(obj4array);
+    end;
+
+  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+
+  writeln('____ ADD NR 3 TO OBJECTARRAY');
+  transport_dbo.ClearAllFields;
+
+  odbo := jobs.CloneToNewObject;
+
+  testjob := jobs.Field(testjob_uid.AsHexString).AsObject;
+
+  obj4array := GFRE_DBI.NewObject;
+  obj4array.Field('NR').asint32:=3;
+  testjob.Field('OBJA').AddObject(obj4array);
+  testjob.Field('CHECK').ASobject:=GFRE_DBI.NewObject;
+  testjob.Field('CHECK').ASobject.Field('NN').asstring :='OLD ONE';
+
+
+  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+  writeln('____ DEL NR 0,2 FROM OBJECTARRAY, ADD NEW 44');
+  transport_dbo.ClearAllFields;
+
+  odbo := jobs.CloneToNewObject;
+
+  testjob := jobs.Field(testjob_uid.AsHexString).AsObject;
+
+//  writeln('BEFORE REMOVE ',testjob.DumpToString);
+
+  testjob.Field('OBJA').RemoveObject(0);
+  testjob.Field('OBJA').RemoveObject(1);
+  obj4array := GFRE_DBI.NewObject;
+  obj4array.Field('NR').asint32:=44;
+  testjob.Field('OBJA').AddObject(obj4array);
+
+  testjob.Field('CHECK').ASobject:=GFRE_DBI.NewObject;
+  testjob.Field('CHECK').ASobject.Field('NN').asstring :='NEW ONE';
+
+//  writeln('AFTER REMOVE ',testjob.DumpToString);
+
+  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
 
 end;
 
