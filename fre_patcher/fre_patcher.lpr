@@ -2412,6 +2412,9 @@ var ndbo: IFRE_DB_Object;
     ndbo2 : IFRE_DB_Object;
     ndbo3 : IFRE_DB_Object;
     ndbo4 : IFRE_DB_Object;
+    ndbo5 : IFRE_DB_Object;
+    ndbo6 : IFRE_DB_Object;
+
     transport_dbo : IFRE_DB_Object;
     testobj       : IFRE_DB_Object;
 
@@ -2427,8 +2430,8 @@ begin
   FRE_DBBASE.Register_DB_Extensions;
   fre_dbbusiness.Register_DB_Extensions;
   //fos_citycom_base.Register_DB_Extensions;
-  //fre_zfs.Register_DB_Extensions;
-  //fre_scsi.Register_DB_Extensions;
+  fre_zfs.Register_DB_Extensions;
+  fre_scsi.Register_DB_Extensions;
   //fre_hal_schemes.Register_DB_Extensions;
   GFRE_DB.Initialize_Extension_ObjectsBuild;
 
@@ -2471,6 +2474,12 @@ begin
   //testobj2.Field('FAKE REF').AsObjectLink := GFRE_DBI.NewObject.UID;
   //ndbo.Field('DISKS').AsObject.Field(testobj2.UID_String).AsObject:=testobj2;
   //
+
+  ndbo.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_ses6',testobj,'');
+  writeln('SWL: TESTOBJ ',testobj.DumpToString);
+  (testobj.Implementor_HC as TFRE_DB_SAS_EXPANDER).Description := GFRE_DBI.CreateText('DESCKEY','SHORTTEXT','LONGTEXT');
+  writeln('SWL: TESTOBJ ',testobj.DumpToString);
+
 
 //  writeln(ndbo.DumpToString());
   writeln('----- NOW FULL INSERT');
@@ -2517,12 +2526,33 @@ begin
   transport_dbo.ClearAllFields;
   ndbo4:=ndbo3.CloneToNewObject;
   ndbo4.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_slot10',testobj,'');
+  writeln('SWL SLOT 10 ',testobj.UID_String);
   testobj.Field('TESTFIELD').asstring:='NEWFIELDVAL';
   testobj.Field('SUPER').asboolean:=true;
   testobj.Field('INT32').AsInt32 :=1234;
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo4,ndbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
+
+  writeln('----- UPDATE SUB OBJECT');
+  transport_dbo.ClearAllFields;
+  ndbo5:=ndbo4.CloneToNewObject;
+  ndbo5.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_ses6',testobj,'');
+  writeln('SWL SES6 ',testobj.UID_String);
+  testobj.Field('DESC').asobject.Field('TXT').asstring:='NEWTEXT';
+  testobj.Field('DESC').asobject.Field('NEWFIELD').asstring:='MYNEWFIELD';
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo5,ndbo4,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
+
+  writeln('----- UPDATE SUB SUB OBJECT');
+  transport_dbo.ClearAllFields;
+  ndbo6:=ndbo5.CloneToNewObject;
+  ndbo6.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_ses6',testobj,'');
+  writeln('SWL SES6 ',testobj.UID_String);
+  testobj.Field('DESC').asobject.Field('newobj').asobject := GFRE_DBI.NewObject;
+  testobj.Field('DESC').asobject.Field('newobj').asobject.Field('X').AsString:='NEWX';
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo6,ndbo5,ca,transport_dbo);
+  writeln(transport_dbo.DumpToString());
 
 end;
 
@@ -2552,10 +2582,13 @@ var
     for ci := 0 to 99 do
       begin
         job :=TFRE_DB_JOB.create;
+        job.SetDomainID(conn.GetSysDomainUID);
         job.SetJobkeyDescription('TEST'+inttostr(ci),'TEST');
         job.SetJobState(jobStateImmediateStart);
         job.IMI_Do_the_Job(nil);
         jobs.Field(job.UID.AsHexString).AsObject:=job;
+//        writeln('SWL JOB:',job.DumpToString);
+//        abort;
         if ci=99 then
           testjob_uid:=job.uid;
       end;
@@ -2578,7 +2611,10 @@ var
                     job.AddProgressLog(lastlog,random(100));
                   end
                 else
-                  jobs.DeleteField(job.UID.AsHexString);
+                  begin
+                    writeln('SWL DELETE JOB ',job.UID_String);
+                    jobs.DeleteField(job.UID.AsHexString);
+                  end;
               end;
           end;
         inc(i);
@@ -2599,6 +2635,10 @@ begin
   //fre_hal_schemes.Register_DB_Extensions;
   GFRE_DB.Initialize_Extension_ObjectsBuild;
 
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+
+
   ca := GFRE_DBI.NewObject;
   ca.Field(TFRE_DB_JOB.Classname).asstring                  := '$SYSJOBS';
 
@@ -2612,9 +2652,9 @@ begin
 
   GenerateJobs;
 
-  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+//  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
-
   odbo := jobs.CloneToNewObject;
 
   for ji:=0 to 10 do
@@ -2624,7 +2664,7 @@ begin
 
 //  writeln('SWL: JOBS',jobs.DumpToString);
 
-  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
   transport_dbo.ClearAllFields;
@@ -2634,7 +2674,7 @@ begin
   odbo := jobs.CloneToNewObject;
   ChangeJob(False);
 
-  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
   writeln('____ MANIPULATE LOG');
@@ -2646,7 +2686,7 @@ begin
   logobj.Field('TS').AsDateTime  :=GFRE_DT.Now_UTC;
 
   transport_dbo.ClearAllFields;
-  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
   transport_dbo.ClearAllFields;
@@ -2664,9 +2704,10 @@ begin
      testjob.Field('OBJA').AddObject(obj4array);
     end;
 
-  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
+//  abort;
 
   writeln('____ ADD NR 3 TO OBJECTARRAY');
   transport_dbo.ClearAllFields;
@@ -2682,7 +2723,7 @@ begin
   testjob.Field('CHECK').ASobject.Field('NN').asstring :='OLD ONE';
 
 
-  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
   writeln('____ DEL NR 0,2 FROM OBJECTARRAY, ADD NEW 44');
@@ -2705,7 +2746,7 @@ begin
 
 //  writeln('AFTER REMOVE ',testjob.DumpToString);
 
-  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
 
