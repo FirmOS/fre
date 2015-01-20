@@ -2572,6 +2572,7 @@ var
 
     obj4array     : IFRE_DB_Object;
     testjob_uid   : TFRE_DB_GUID;
+    deljob_uid    : TFRE_DB_GUID;
     testjob       : IFRE_DB_Object;
 
   procedure GenerateJobs;
@@ -2591,6 +2592,8 @@ var
 //        abort;
         if ci=99 then
           testjob_uid:=job.uid;
+        if ci=98 then
+          deljob_uid:=job.uid;
       end;
   end;
 
@@ -2608,7 +2611,7 @@ var
                 if logorupdate then
                   begin
                     lastlog := 'NEW TESTLOG '+inttostr(random(1000));
-                    job.AddProgressLog(lastlog,random(100));
+                    job.AddProgressLog(lastlog,random(80));
                   end
                 else
                   begin
@@ -2652,9 +2655,15 @@ begin
 
   GenerateJobs;
 
+  jobs.Field(deljob_uid.AsHexString).AsObject.Field('OBJSTATUS').AsObject:=GFRE_DBI.NewObject;
+  jobs.Field(deljob_uid.AsHexString).AsObject.Field('OBJSTATUS').AsObject.Field('EXTRAFELD').asstring:='SUPER';
+
+//  writeln('SWL DELJOB',jobs.Field(deljob_uid.AsHexString).AsObject.DumpToString);
+
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
 //  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
+
   odbo := jobs.CloneToNewObject;
 
   for ji:=0 to 10 do
@@ -2669,10 +2678,12 @@ begin
 
   transport_dbo.ClearAllFields;
 
-  writeln('____ DELETE JOB');
+  writeln('____ DELETE JOB WITH MARK DELETED OBJSTATUS');
 
   odbo := jobs.CloneToNewObject;
   ChangeJob(False);
+
+  jobs.DeleteField(deljob_uid.AsHexString);
 
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
