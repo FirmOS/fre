@@ -69,6 +69,7 @@ type
     function        _deleteZone                         (const dbo:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _getDetails                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
     function        _getZoneDetails                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
+    function        _canDeleteService                   (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
   protected
     procedure       SetupAppModuleStructure             ; override;
   public
@@ -92,7 +93,11 @@ type
     function        WEB_ZoneContentConfiguration        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ZoneContentServices             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreZoneConfiguration          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ServicesGridMenu                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ServicesGridSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddService                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteService                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteServiceConfirmed          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreService                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
@@ -658,6 +663,17 @@ begin
   Result:=res;
 end;
 
+function TFOS_INFRASTRUCTURE_MOD._canDeleteService(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo: IFRE_DB_Object;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,dbo.Implementor_HC.ClassType,dbo.DomainID) and (conn.GetReferencesCount(dbo.UID,false)=0);
+  end;
+end;
+
 procedure TFOS_INFRASTRUCTURE_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
@@ -752,7 +768,11 @@ begin
 
     CreateModuleText(conn,'grid_service_name','Name');
     CreateModuleText(conn,'tb_add_service','Add');
+    CreateModuleText(conn,'tb_delete_service','Delete');
+    CreateModuleText(conn,'cm_delete_service','Delete');
     CreateModuleText(conn,'add_service_diag_cap','Add %service_str%');
+    CreateModuleText(conn,'delete_service_diag_cap','Remove Service');
+    CreateModuleText(conn,'delete_service_diag_msg','Remove service "%service_str%"?');
     CreateModuleText(conn,'service_create_error_exists_cap','Error: Add service');
     CreateModuleText(conn,'service_create_error_exists_msg','A %service_str% service with the given name already exists!');
   end;
@@ -898,7 +918,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',nil,'',nil,nil);
+      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_ServicesGridMenu),nil,CWSF(@WEB_ServicesGridSC));
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('schemes',TFRE_DB_DATALINK.getAllDataLinkClasses,false);
     end;
@@ -1161,9 +1181,11 @@ var
   conf        : IFRE_DB_Object;
   sf          : TFRE_DB_SERVER_FUNC_DESC;
   submenu     : TFRE_DB_SUBMENU_DESC;
+  canDelete   : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
 
+  ses.GetSessionModuleData(ClassName).DeleteField('selectedService');
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
 
   dc:=ses.FetchDerivedCollection('ZONE_SERVICES_GRID');
@@ -1172,6 +1194,7 @@ begin
   res:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
   canAdd:=false;
+  canDelete:=false;
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_add_service'),'');
 
@@ -1184,6 +1207,9 @@ begin
       conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
       if conf.Field('type').AsString='service' then begin
         canAdd:=true;
+        if conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID) then begin
+          canDelete:=true;
+        end;
         sf:=CWSF(@WEB_AddService);
         sf.AddParam.Describe('serviceClass',serviceClass);
         sf.AddParam.Describe('zoneId',zone.UID_String);
@@ -1192,7 +1218,14 @@ begin
     end;
   end;
 
-  if canAdd then begin
+  if canDelete then begin
+    if not canAdd then begin
+      menu:=TFRE_DB_MENU_DESC.create.Describe;
+    end;
+    menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delete_service'),'',CWSF(@WEB_DeleteService),true,'service_delete');
+  end;
+
+  if canAdd or canDelete then begin
     res.SetMenu(menu);
   end;
 
@@ -1258,6 +1291,35 @@ begin
   end;
 end;
 
+function TFOS_INFRASTRUCTURE_MOD.WEB_ServicesGridMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res: TFRE_DB_MENU_DESC;
+  sf: TFRE_DB_SERVER_FUNC_DESC;
+begin
+  res:=TFRE_DB_MENU_DESC.create.Describe;
+  if _canDeleteService(input,conn) then begin
+    sf:=CWSF(@WEB_DeleteService);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_service'),'',sf);
+  end;
+  Result:=res;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_ServicesGridSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dDisabled: Boolean;
+begin
+  dDisabled:=true;
+  if input.FieldExists('selected') then begin
+    dDisabled:=not _canDeleteService(input,conn);
+    ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringArr:=input.Field('selected').AsStringArr;
+  end else begin
+    ses.GetSessionModuleData(ClassName).DeleteField('selectedService');
+  end;
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('service_delete',dDisabled));
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
 function TFOS_INFRASTRUCTURE_MOD.WEB_AddService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   zone        : TFRE_DB_ZONE;
@@ -1292,6 +1354,53 @@ begin
       Result:=res;
     end;
   end;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_DeleteService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  cap,msg     : String;
+  dbo         : IFRE_DB_Object;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringArr;
+  end;
+  if not _canDeleteService(input,conn) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
+
+  sf:=CWSF(@WEB_DeleteServiceConfirmed);
+  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+  cap:=FetchModuleTextShort(ses,'delete_service_diag_cap');
+
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),dbo));
+  msg:=StringReplace(FetchModuleTextShort(ses,'delete_service_diag_msg'),'%service_str%',dbo.Field('objname').AsString,[rfReplaceAll]);
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_DeleteServiceConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  i           : NativeInt;
+  service     : TFRE_DB_SERVICE;
+  serviceClass: String;
+  oospz       : Boolean;
+begin
+  if not _canDeleteService(input,conn) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsStringArr[i]),TFRE_DB_SERVICE,service));
+      serviceClass:=service.ClassName;
+      oospz:=service.OnlyOneServicePerZone;
+      CheckDbResult(conn.Delete(service.UID));
+      if oospz then begin
+        ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_'+serviceClass,false));
+      end;
+    end;
+  end;
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_StoreService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;

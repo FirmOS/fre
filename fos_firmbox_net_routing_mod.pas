@@ -381,7 +381,7 @@ begin
   if not _canDelete(input,conn) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  if ses.GetSessionModuleData(ClassName).Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
+  if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
 
   sf:=CWSF(@WEB_DeleteConfirmed);
   sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
@@ -394,16 +394,23 @@ end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_DeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  i    : NativeInt;
-  dbo  : IFRE_DB_Object;
-  hcObj: TObject;
+  i           : NativeInt;
+  service     : TFRE_DB_SERVICE;
+  serviceClass: String;
+  oospz       : Boolean;
 begin
   if not _canDelete(input,conn) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
-      CheckDbResult(conn.Delete(FREDB_H2G(input.Field('selected').AsStringArr[i])));
+      CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsStringArr[i]),TFRE_DB_SERVICE,service));
+      serviceClass:=service.ClassName;
+      oospz:=service.OnlyOneServicePerZone;
+      CheckDbResult(conn.Delete(service.UID));
+      if oospz then begin
+        ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_'+serviceClass,false));
+      end;
     end;
   end;
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
