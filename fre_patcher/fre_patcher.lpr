@@ -1752,6 +1752,8 @@ begin
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPMP.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_STUB.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
   gz_template_id := tmpl.UID;
   CheckDBResult(tcoll.Store(tmpl));
@@ -1774,6 +1776,8 @@ begin
   tmpl.Field('serviceclasses').AddString(TFOS_DB_CITYCOM_VOIP_SERVICE.ClassName);
 //  tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_PHPFPM_SERVICE.ClassName);
   template_id := tmpl.UID;
