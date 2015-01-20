@@ -3841,15 +3841,21 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     for (var i in newObj) {
       if (newObj[i] instanceof Array) {
         //object arrays and arrays of arrays not checked!
-        if (newObj[i].length==oldObj[i].length) {
-          var same = true;
-          for (var j=0; j<newObj[i].length; j++) {
-            if (newObj[i][j]!==oldObj[i][j]) {
-              same = false;
-              break;
+        if (oldObj[i] instanceof Array) {
+          if (newObj[i].length==oldObj[i].length) {
+            var same = true;
+            for (var j=0; j<newObj[i].length; j++) {
+              if (newObj[i][j]!==oldObj[i][j]) {
+                same = false;
+                break;
+              }
+            }
+            if (same) {
+              delete newObj[i];
             }
           }
-          if (same) {
+        } else {  //old value not an array => check if new value has length 1 and is the same
+          if ((newObj[i].length==1) && (newObj[i][0]===oldObj[i])) {
             delete newObj[i];
           }
         }
@@ -4479,6 +4485,10 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
   _updateDepGroup: function(form) {
     for (var i in this.depGroup_) {
       this._updateDepField(i,this.depGroup_[i],false,form);
+    }
+    var parent = form.getParent();
+    if (parent && parent.isInstanceOf(FIRMOS.Dialog)) {
+      parent.resize();
     }
   },
   _hideAllDepFields: function(form) {
