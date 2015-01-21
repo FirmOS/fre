@@ -1331,23 +1331,20 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       datalink.Field('objname').asstring := name;
       datalink.Field('uniquephysicalid').asstring := uniquephysicalid;
       datalink.Field('type').asstring := networktype;
+      datalink.Field('serviceParent').AsObjectLink:=zone_id;
+      datalink.Field('datalinkParent').AsObjectLink:=zone_id;
 
       if datalinkparentid<>CFRE_DB_NullGUID then
         begin
-          datalink.Field('parentid').AsObjectLink := datalinkparentid;
-          datalink.Field('serviceParent').AsObjectLink:=datalinkparentid;
-        end
-      else
-        begin
-          datalink.Field('serviceParent').AsObjectLink:=zone_id;
+          datalink.Field('serviceParent').AddObjectLink(datalinkparentid);
+          datalink.Field('datalinkParent').AddObjectLink(datalinkparentid);
         end;
       if ipmpparent<>CFRE_DB_NullGUID then
         begin
          datalink.Field('serviceParent').AddObjectLink(ipmpparent);
-         datalink.Field('ipmpparentid').AsObjectLink:=ipmpparent;
+         datalink.Field('datalinkParent').AddObjectLink(ipmpparent);
         end;
 
-      datalink.Field('zoneid').AsObjectLink := zone_id;
       if mtu<>0 then
         begin
           datalink.Field('mtu').AsUInt16            := mtu;
@@ -1384,7 +1381,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         ip.Field('dhcp').asboolean:=true;
       end;
 
-      ip.Field('parentid').AsObjectLink:=parent_id;
+      ip.Field('datalinkParent').AsObjectLink:=parent_id;
       ip.Field('serviceParent').AsObjectLink:=parent_id;
       ip.SetDomainID(g_domain_id);
       result           := ip.UID;
@@ -1409,7 +1406,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         ip.Field('slaac').asboolean:=true;
       end;
 
-      ip.Field('parentid').AsObjectLink:=parent_id;
+      ip.Field('datalinkParent').AsObjectLink:=parent_id;
       ip.Field('serviceParent').AsObjectLink:=parent_id;
       ip.SetDomainID(g_domain_id);
       result           := ip.UID;
