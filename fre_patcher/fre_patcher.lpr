@@ -2496,8 +2496,8 @@ begin
   writeln('SWL INSERT COUNT ',transport_dbo.Field(CDIFF_INSERT_LIST).ValueCount);
   writeln(transport_dbo.DumpToString());
 
-//  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
-
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
+halt;
 
 
   writeln('----- NOW UPDATE FIELD');
@@ -2647,6 +2647,7 @@ begin
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
 
+  conn.GetJobsCollection.ClearCollection;
 
   ca := GFRE_DBI.NewObject;
   ca.Field(TFRE_DB_JOB.Classname).asstring                  := '$SYSJOBS';
@@ -2668,7 +2669,9 @@ begin
 
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
 //  FREDIFF_GenerateSubobjectDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+  //writeln(transport_dbo.DumpToString());
+
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
   odbo := jobs.CloneToNewObject;
 
@@ -2680,7 +2683,9 @@ begin
 //  writeln('SWL: JOBS',jobs.DumpToString);
 
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+  //writeln(transport_dbo.DumpToString());
+
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
   transport_dbo.ClearAllFields;
 
@@ -2694,6 +2699,8 @@ begin
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
   writeln(transport_dbo.DumpToString());
 
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
+
   writeln('____ MANIPULATE LOG');
 
   odbo := jobs.CloneToNewObject;
@@ -2704,7 +2711,9 @@ begin
 
   transport_dbo.ClearAllFields;
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+  //writeln(transport_dbo.DumpToString());
+
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
   transport_dbo.ClearAllFields;
 
@@ -2722,8 +2731,9 @@ begin
     end;
 
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+  //writeln(transport_dbo.DumpToString());
 
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 //  abort;
 
   writeln('____ ADD NR 3 TO OBJECTARRAY');
@@ -2741,7 +2751,9 @@ begin
 
 
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+  //writeln(transport_dbo.DumpToString());
+
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
   writeln('____ DEL NR 0,2 FROM OBJECTARRAY, ADD NEW 44');
   transport_dbo.ClearAllFields;
@@ -2764,8 +2776,9 @@ begin
 //  writeln('AFTER REMOVE ',testjob.DumpToString);
 
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(jobs,odbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+  //writeln(transport_dbo.DumpToString());
 
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
 end;
 
