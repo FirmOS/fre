@@ -763,10 +763,11 @@ dojo.declare("FIRMOS.uiHandler", null, {
   },
   
   createCSSRule: function(ruleName, rule) {
-    if (!this.createdCSSRules_[ruleName]) {
-      dojox.html.insertCssRule('.'+ruleName,rule);
-      this.createdCSSRules_[ruleName] = rule;
+    if (this.createdCSSRules_[ruleName]) {
+      this.removeCSSRule(ruleName);
     }
+    dojox.html.insertCssRule('.'+ruleName,rule);
+    this.createdCSSRules_[ruleName] = rule;
   },
   
   removeCSSRule: function(ruleName) {
