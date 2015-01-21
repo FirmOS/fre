@@ -1291,7 +1291,18 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       newuid           : TFRE_DB_GUID;
       zds_id           : TFRE_DB_GUID;
     begin
-      zone             := TFRE_DB_ZONE.CreateForDB;
+      if host_id=serviceparent_id then
+        begin
+          // no dataset for global zone
+          zone := TFRE_DB_GLOBAL_ZONE.CreateForDB;
+          zone.Field('serviceParent').AsObjectLink:=serviceparent_id;
+        end
+      else
+        begin
+          zone := TFRE_DB_ZONE.CreateForDB;
+          zds_id := CreateDataSetChild(serviceparent_id,zone.UID.AsHexString);
+          zone.Field('serviceParent').AsObjectLink:=zds_id;
+        end;
       zone.ObjectName  := name;
       if zone_id<>'' then
         begin
@@ -1304,16 +1315,6 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       if template_id<>CFRE_DB_NullGUID then
         zone.Field('templateid').AsObjectLink:=template_id;
       zone.Field('hostid').AsObjectLink:=host_id;
-      if host_id=serviceparent_id then
-        begin
-          // no dataset for global zone
-          zone.Field('serviceParent').AsObjectLink:=serviceparent_id;
-        end
-      else
-        begin
-          zds_id := CreateDataSetChild(serviceparent_id,zone.UID.AsHexString);
-          zone.Field('serviceParent').AsObjectLink:=zds_id;
-        end;
       zone.SetDomainID(g_domain_id);
       zone.Field('uniquephysicalid').AsString:=zone.ObjectName+'@'+idx_postfix;
       result           := zone.UID;
