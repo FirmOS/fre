@@ -105,7 +105,7 @@ begin
 
   dc:=ses.FetchDerivedCollection('DATALINK_GRID');
   dc.Filters.RemoveFilter('zone');
-  dc.Filters.AddRootNodeFilter('zone','uid',[zone.UID],dbnf_OneValueFromFilter);
+  dc.Filters.AddRootNodeFilter('zone','uid',conn.GetReferences(zone.UID,false,'','datalinkparent'),dbnf_OneValueFromFilter);
   res:=dc.GetDisplayDescription.Implementor_HC as TFRE_DB_VIEW_LIST_DESC;
 
   canAdd:=false;
@@ -252,8 +252,8 @@ begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_ZONES_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
-//      SetParentToChildLinkField ('<DATALINKPARENT',[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
-      SetParentToChildLinkField ('<DATALINKPARENT');
+      SetParentToChildLinkField ('<DATALINKPARENT',[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
+      //SetParentToChildLinkField ('<DATALINKPARENT');
       filterClasses:=TFRE_DB_DATALINK.getAllDataLinkClasses;
       hFilterClasses:=TFRE_DB_IP_HOSTNET.getAllHostnetClasses;
       for i := 0 to High(hFilterClasses) do begin
