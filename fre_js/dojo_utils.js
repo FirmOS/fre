@@ -1232,7 +1232,7 @@ dojo.declare("FIRMOS.Store", null, {
     }
 
     if (this.parent) {
-      delete this.parentStore.childStores[this.parentStore.getIdentity(this.parent)];
+      delete this.parentStore.childStores[this.parentStore.getItemIdentity(this.parent)];
       delete this.parent;
       delete this.parentStore;
     } else {
@@ -1321,8 +1321,15 @@ dojo.declare("FIRMOS.Store", null, {
     ret[this.idAttribute]=id;
     return ret;
   },
-  getIdentity: function(object){
+  getItemIdentity: function(object){
     return object[this.idAttribute];
+  },
+  getIdentity: function(object){
+    if (object._expandedId_) {
+      return object._expandedId_;
+    } else {
+      return this.getItemIdentity(object);
+    }
   },
   put: function(object, directives) {
     //FIXXME
@@ -1346,13 +1353,13 @@ dojo.declare("FIRMOS.Store", null, {
         dojo.mixin(params, this.params_);
         params.selected = [];
         for (var i=0; i<items.length; i++) {
-          params.selected.push(this.getIdentity(items[i]));
+          params.selected.push(this.getItemIdentity(items[i]));
         }
         if (args.before) {
           if (args.source) {
-            params.target = args.source.getIdentity(args.before);
+            params.target = args.source.getItemIdentity(args.before);
           } else {
-            params.target = this.getIdentity(args.before);
+            params.target = this.getItemIdentity(args.before);
           }
         }
         if (args.mousePos) {
@@ -1378,11 +1385,11 @@ dojo.declare("FIRMOS.Store", null, {
   },
   getChildren: function(parent) {
     args = dojo.clone(this._orgArgs);
-    args.id = this.id + '_' + this.getIdentity(parent);
+    args.id = this.id + '_' + this.getItemIdentity(parent);
     var childStore = new FIRMOS.Store(args);
     childStore.parent = parent;
     childStore.parentStore = this;
-    this.childStores[this.getIdentity(parent)] = childStore;
+    this.childStores[this.getItemIdentity(parent)] = childStore;
 
     if (parent._childrenfunc_) {
       childStore.getClassname = parent._funcclassname_ || this.getClassname;
@@ -1429,7 +1436,7 @@ dojo.declare("FIRMOS.Store", null, {
     dojo.mixin(params, this.params_);
     
     if (this.parent) {
-      var id = this.getIdentity(this.parent);
+      var id = this.getItemIdentity(this.parent);
       this.queryResults_[query_id].parentId = id;
       params.parentid = id;
     }
@@ -1464,13 +1471,19 @@ dojo.declare("FIRMOS.Store", null, {
           eval(json_result.action);
         } else {
           def.totalLength.resolve(json_result.total);
-          if (this.queryResults_[queryId]) {
-            //store ids of the result
-            if ((options.params.end - options.params.start + 1)<json_result.data.length) {
-              console.error('QUERY ANSWER LENGTH MISMATCH! GOT: ' + json_result.data.length + ' EXPECTED: ' + (options.params.end - options.params.start + 1));
-            }
+          if ((options.params.end - options.params.start + 1)<json_result.data.length) {
+            console.error('QUERY ANSWER LENGTH MISMATCH! GOT: ' + json_result.data.length + ' EXPECTED: ' + (options.params.end - options.params.start + 1));
+          }
+          if (this.parent) {
+            var expParentId = this.getIdentity(this.parent);
             for (var i=0; i<json_result.data.length; i++) {
-              this.queryResults_[queryId].dataIds.push(this.getIdentity(json_result.data[i]));
+              json_result.data[i]._expandedId_ = this.getItemIdentity(json_result.data[i]) + '@' + expParentId;
+            }
+          }
+          //store ids of the result
+          if (this.queryResults_[queryId]) {
+            for (var i=0; i<json_result.data.length; i++) {
+              this.queryResults_[queryId].dataIds.push(this.getItemIdentity(json_result.data[i]));
             }
           }
           def.resolve(json_result.data);
@@ -1547,19 +1560,19 @@ dojo.declare("FIRMOS.Store", null, {
       event.type = 'add';
       event.target = data[i].item;
 
-      var pos = this._checkUpdateInput(data[i].qid,this.getIdentity(data[i].item),'NewItems',true);
+      var pos = this._checkUpdateInput(data[i].qid,this.getItemIdentity(data[i].item),'NewItems',true);
       if (pos!=-1) return;
       if (data[i].revid && data[i].revid!='') {
         var revPos = this._checkUpdateInput(data[i].qid,data[i].revid,'NewItems',false);
         if (revPos==-1) {
           var revPos = this.queryResults_[data[i].qid].dataIds.length;
-          this.queryResults_[data[i].qid].dataIds.push(this.getIdentity(data[i].item));
+          this.queryResults_[data[i].qid].dataIds.push(this.getItemIdentity(data[i].item));
           //return;
         }
-        this.queryResults_[data[i].qid].dataIds.splice(revPos,0,this.getIdentity(data[i].item));
+        this.queryResults_[data[i].qid].dataIds.splice(revPos,0,this.getItemIdentity(data[i].item));
       } else {
         var revPos = this.queryResults_[data[i].qid].dataIds.length;
-        this.queryResults_[data[i].qid].dataIds.push(this.getIdentity(data[i].item));
+        this.queryResults_[data[i].qid].dataIds.push(this.getItemIdentity(data[i].item));
       }
       event.index = revPos;
       this.onAdd(event);
@@ -1587,7 +1600,7 @@ dojo.declare("FIRMOS.Store", null, {
       event.type = 'update';
       event.target = data[i].item;
 
-      var pos = this._checkUpdateInput(data[i].qid,this.getIdentity(data[i].item),'UpdateItems',false);
+      var pos = this._checkUpdateInput(data[i].qid,this.getItemIdentity(data[i].item),'UpdateItems',false);
       if (pos==-1) return;
       if (data[i].revid && data[i].revid!='') {
         var revPos = this._checkUpdateInput(data[i].qid,data[i].revid,'UpdateItems',false);
@@ -1660,7 +1673,7 @@ _GridDnDSource = dojo.declare("FIRMOS.GridDnDSource",dgrid.DnD.GridSource, {
     if (error_objs.length>0) {
       var str='';
       for (var i=0; i<error_objs.length; i++) {
-        str+=', '+this.grid.collection.getIdentity(error_objs[i]);
+        str+=', '+this.grid.collection.getItemIdentity(error_objs[i]);
       }
       str=str.substr(2);
       console.log('Object(s) not dragable ' + str);
@@ -1683,7 +1696,7 @@ _GridDnDSource = dojo.declare("FIRMOS.GridDnDSource",dgrid.DnD.GridSource, {
     }*/
     targetRow = targetRow && grid.row(targetRow);
       
-    dojo.Deferred.when(targetRow && store.get(store.getIdentity(targetRow.data)), function(target){
+    dojo.Deferred.when(targetRow && store.get(store.getItemIdentity(targetRow.data)), function(target){
       // Note: if dropping after the last row, or into an empty grid,
       // target will be undefined.  Thus, it is important for store to place
       // item last in order if options.before is undefined.
@@ -1784,7 +1797,7 @@ _GridDnDSource = dojo.declare("FIRMOS.GridDnDSource",dgrid.DnD.GridSource, {
                 !obj._disabledrop_) {
               var target_in_selection = false;
               for (var i=0; i<m.nodes.length; i++) {
-                if (m.source.grid.collection.getIdentity(m.source.grid.row(m.nodes[i]))==this.grid.collection.getIdentity(obj)) {
+                if (m.source.grid.collection.getItemIdentity(m.source.grid.row(m.nodes[i]))==this.grid.collection.getItemIdentity(obj)) {
                   target_in_selection = true;
                   break;
                 }
@@ -2007,7 +2020,7 @@ dojo.declare("FIRMOS.GridBase", null, {
     var selectedIds = new Array();
     for (var x in this.selection) {
       var row = this.row(x);
-      selectedIds.push(this.collection.getIdentity(row.data));
+      selectedIds.push(this.collection.getItemIdentity(row.data));
     }
     return selectedIds;
   },
@@ -4224,8 +4237,8 @@ dojo.declare("FIRMOS.Menu", dijit.Menu, {
           }
         }
       }
-      if ((menuFunc.uidPath.length>0) || (tree.model.store.getIdentity(item)!=menuFunc.uidPath[0])) {
-        menuParams.selected = [tree.model.store.getIdentity(item)];
+      if ((menuFunc.uidPath.length>0) || (tree.model.store.getItemIdentity(item)!=menuFunc.uidPath[0])) {
+        menuParams.selected = [tree.model.store.getItemIdentity(item)];
       }
     } else {
       var tree = tn;
@@ -6947,6 +6960,36 @@ dojo.declare("FIRMOS.gridDetailsColumn", null, {
     return '';
   }
 });
+
+//gridNotesColumn
+//dojo.declare("FIRMOS.gridNotesColumn", null, {
+//  constructor: function() {
+//    this.label = '';
+//    this.className = 'dgrid-notes';
+//    this.unhidable = true;
+//    this._events = new Array();
+//    return this;
+//  },
+//  destroy: function() {
+//    while (this._events.length>0) {
+//      this._events.pop().remove();
+//    }
+//  },
+//  renderCell: function(object, value, cell, options, header) {
+//    var div = dojo.create('div');
+//    div.className = 'dgrid-notes-notset';
+//    div.innerHTML = 'x';
+//    var row = object && this.grid.row(object);
+//    this._events.push(dojo.connect(div, "onclick", this.showNotes.bind(this,div,row)));
+//    return div;
+//  },
+//  showNotes: function(div,row) {
+//    alert('SHOW NOTES');
+//  },
+//  renderHeaderCell: function(th){
+//    return '';
+//  }
+//});
 
 dojo.declare("FIRMOS.OnDemandGrid", [dgrid.OnDemandGrid,FIRMOS.GridBase,FIRMOS.Selection,FIRMOS.GridFilter,dgrid.Tree,dgrid.Editor,dgrid.ColumnResizer,FIRMOS.ColumnReorder,dgrid.ColumnHider,FIRMOS.GridDnD,dgrid.DijitRegistry]);
 
