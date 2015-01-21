@@ -2467,7 +2467,7 @@ begin
 
 
 
-  odbo:=GFRE_DBI.NewObject;
+  odbo:=GFRE_DBI.CreateFromFile('database_boxconsole.dbo');
   ndbo:=GFRE_DBI.CreateFromFile('current_boxconsole.dbo');
   odbo.Field('UID').AsGUID:=ndbo.UID;
 
@@ -2481,9 +2481,9 @@ begin
   //
 
   ndbo.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_ses6',testobj,'');
-  writeln('SWL: TESTOBJ ',testobj.DumpToString);
+//  writeln('SWL: TESTOBJ ',testobj.DumpToString);
   (testobj.Implementor_HC as TFRE_DB_SAS_EXPANDER).Description := GFRE_DBI.CreateText('DESCKEY','SHORTTEXT','LONGTEXT');
-  writeln('SWL: TESTOBJ ',testobj.DumpToString);
+//  writeln('SWL: TESTOBJ ',testobj.DumpToString);
 
 
 //  writeln(ndbo.DumpToString());
