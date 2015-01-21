@@ -105,7 +105,7 @@ begin
 
   dc:=ses.FetchDerivedCollection('DATALINK_GRID');
   dc.Filters.RemoveFilter('zone');
-  dc.Filters.AddAutoDependencyFilter('zone',['<SERVICEPARENT'],[zone.UID]);
+  dc.Filters.AddRootNodeFilter('zone','uid',[zone.UID],dbnf_OneValueFromFilter);
   res:=dc.GetDisplayDescription.Implementor_HC as TFRE_DB_VIEW_LIST_DESC;
 
   canAdd:=false;
@@ -212,6 +212,9 @@ var
   conn     : IFRE_DB_CONNECTION;
   transform: IFRE_DB_SIMPLE_TRANSFORM;
   dc       : IFRE_DB_DERIVED_COLLECTION;
+  i        : Integer;
+  filterClasses: TFRE_DB_StringArray;
+  hFilterClasses: TFRE_DB_StringArray;
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -231,23 +234,36 @@ begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
-      SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName],[],[TFRE_DB_ZONE.ClassName]);
+      SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName],[],[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
       Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'objname','czone','',true,dt_description);
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
+      AddOneToOnescheme('serviceparent','','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
       SetFinalRightTransformFunction(@CalculateIcon,[]);
     end;
     dc := session.NewDerivedCollection('DATALINK_GRID');
     with dc do begin
-      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveParent(conn.GetCollection(CFOS_DB_ZONES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
-      Filters.AddSchemeObjectFilter('schemes',TFRE_DB_DATALINK.getAllDataLinkClasses);
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
+//      SetParentToChildLinkField ('<DATALINKPARENT',[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
+      SetParentToChildLinkField ('<DATALINKPARENT');
+      filterClasses:=TFRE_DB_DATALINK.getAllDataLinkClasses;
+      hFilterClasses:=TFRE_DB_IP_HOSTNET.getAllHostnetClasses;
+      for i := 0 to High(hFilterClasses) do begin
+        SetLength(filterClasses,Length(filterClasses)+1);
+        filterClasses[Length(filterClasses)-1]:=hFilterClasses[i];
+      end;
+      SetLength(filterClasses,Length(filterClasses)+2);
+      filterClasses[Length(filterClasses)-2]:=TFRE_DB_ZONE.ClassName;
+      filterClasses[Length(filterClasses)-1]:=TFRE_DB_GLOBAL_ZONE.ClassName;
+      Filters.AddSchemeObjectFilter('schemes',filterClasses);
     end;
 
     //GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
