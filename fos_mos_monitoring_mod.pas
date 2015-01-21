@@ -45,6 +45,7 @@ type
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
     class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);override;
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
   published
@@ -60,6 +61,7 @@ type
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure             ; override;
     class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);override;
   public
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
     procedure       CalculateIcon                       (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
@@ -172,6 +174,11 @@ begin
     CreateModuleText(conn,'info_content_no_details','There are no details available for the selected object.');
     CreateModuleText(conn,'info_content_main','Main Information');
   end;
+end;
+
+class procedure TFOS_CITYCOM_MOS_PHYSICAL_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+begin
+  CreateServicesCollections(conn);
 end;
 
 procedure TFOS_CITYCOM_MOS_PHYSICAL_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
@@ -290,6 +297,11 @@ begin
     CreateModuleText(conn,'info_content_select_one','Please select one object to get detailed information about it.');
     CreateModuleText(conn,'info_content_no_details','There are no details available for the selected object.');
   end;
+end;
+
+class procedure TFOS_CITYCOM_MOS_LOGICAL_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+begin
+  CreateMonitoringCollections(conn);
 end;
 
 procedure TFOS_CITYCOM_MOS_LOGICAL_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
