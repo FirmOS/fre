@@ -566,8 +566,9 @@ end;
 var g_disc_delay : integer=0;
 
 procedure TFRE_BOX_FEED_CLIENT.MyConnectionTimer;
-var vmo : IFRE_DB_Object;
-    lio : IFRE_DB_Object;
+var vmo         : IFRE_DB_Object;
+    lio         : IFRE_DB_Object;
+    update_data : IFRE_DB_Object;
 begin
   //if FAPP_Feeding then
   //  begin
@@ -609,10 +610,15 @@ begin
   if FStorage_Feeding then
     begin
       //disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME);
-      writeln('DISK_DATA_FEED NO CALLBACK');
-      SendServerCommand(FADCAdmin_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME),nil);
+      update_data:=disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME);
+      if (update_data.Field(CDIFF_INSERT_LIST).ValueCount>0) or (update_data.Field(CDIFF_UPDATE_LIST).ValueCount>0) or (update_data.Field(CDIFF_DELETE_LIST).ValueCount>0) then
+        begin
+          SendServerCommand(FADCAdmin_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),update_data,nil);
+          writeln('DISK_DATA_FEED SEND');
+        end
+      else
+        update_data.Finalize;
 
-//    disk_hal.ClearStatusSnapshotAndUpdates; //DEBUG force always full state
       liveupdate_lock.Acquire;
       try
         lio:=live_all.CloneToNewObject;
