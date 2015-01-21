@@ -361,7 +361,7 @@ begin
   //create global zone
   zcoll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
 
-  zone:=TFRE_DB_ZONE.CreateForDB;
+  zone:=TFRE_DB_GLOBAL_ZONE.CreateForDB;
   zone.ObjectName:='global';
   zone.Field('templateid').AsObjectLink:=gtemplate.UID;
   zone.Field('hostid').AsObjectLink:=machine.UID;
@@ -812,7 +812,7 @@ begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
       SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_DATASET_FILE.ClassName]);
-      Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZONE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName]);
+      Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName]);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);

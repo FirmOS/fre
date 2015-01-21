@@ -221,18 +221,18 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_nameserver_customer'),true,dt_description,true,true,1,'','',nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
       SetFinalRightTransformFunction(@CalculateIcon,[]);
     end;
-    dc := session.NewDerivedCollection('INTERFACES_GRID');
+    dc := session.NewDerivedCollection('NET_ZONES_GRID');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
-      SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName]);
-      Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZONE.ClassName]);
+      SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName],[],[TFRE_DB_ZONE.ClassName]);
+      Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -284,7 +284,7 @@ begin
 
   ses.GetSessionModuleData(ClassName).DeleteField('selected');
 
-  grid:=ses.FetchDerivedCollection('INTERFACES_GRID').GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+  grid:=ses.FetchDerivedCollection('NET_ZONES_GRID').GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   res:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(grid,_getDetails(input,ses,app,conn),nil,nil,nil,true,1,2);
   Result:=res;
 end;
