@@ -691,7 +691,6 @@ begin
     with pools_grid do begin
       SetDeriveParent           (conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION));
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_Multiselect],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_PoolStructureSC),nil,CWSF(@WEB_TreeDrop));
-      //SetParentToChildLinkField ('<PARENT_IN_ZFS_UID');
       SetParentToChildLinkField ('<PARENT_IN_ZFS_UID',[TFRE_DB_ZFS_POOL.ClassName]);
 
       SetDeriveTransformation   (tr_Grid);
@@ -713,9 +712,7 @@ begin
     with layout_grid do begin
       SetDeriveParent           (conn.GetMachinesCollection);
       SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_Multiselect],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_LayoutSC),nil,CWSF(@WEB_TreeDrop));
-      SetParentToChildLinkField ('<PARENT_IN_ENCLOSURE_UID');
-      //SetParentToChildLinkField ('<PARENT_IN_ENCLOSURE_UID',[TFRE_DB_MACHINE.ClassName]);
-
+      SetParentToChildLinkField ('<PARENT_IN_ENCLOSURE_UID',[TFRE_DB_MACHINE.ClassName]);
       SetDeriveTransformation   (tr_Grid);
       SetDefaultOrderField      ('caption_layout',true);
     end;
@@ -794,7 +791,6 @@ function TFOS_FIRMBOX_POOL_MOD.WEB_Content(const input:IFRE_DB_Object; const ses
 var
   pool_grid  : TFRE_DB_VIEW_LIST_DESC;
   layout_grid: TFRE_DB_VIEW_LIST_DESC;
-  coll       : IFRE_DB_DERIVED_COLLECTION;
   menu       : TFRE_DB_MENU_DESC;
   submenu    : TFRE_DB_SUBMENU_DESC;
   sf         : TFRE_DB_SERVER_FUNC_DESC;
@@ -814,11 +810,11 @@ begin
 
   pDC:=ses.FetchDerivedCollection('POOL_DISKS');
   pDC.Filters.RemoveFilter('pool');
-  pDC.Filters.AddRootNodeFilter('pool','uid',poolDbo.UID,dbnf_OneValueFromFilter,true);
+  pDC.Filters.AddRootNodeFilter('pool','uid',conn.GetReferences(poolDbo.UID,false,'','parent_in_zfs_uid'),dbnf_OneValueFromFilter,true);
   pool_grid:=pDC.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
   eDC:=ses.FetchDerivedCollection('ENCLOSURE_DISKS');
   eDC.Filters.RemoveFilter('machine');
-  eDC.Filters.AddRootNodeFilter('machine','uid',poolDbo.Field('machineid').AsObjectLink,dbnf_OneValueFromFilter);
+  eDC.Filters.AddRootNodeFilter('machine','uid',conn.GetReferences(poolDbo.Field('machineid').AsObjectLink,false,'','parent_in_enclosure_uid'),dbnf_OneValueFromFilter);
   layout_grid:=eDC.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
   if conn.sys.CheckClassRight4MyDomain(sr_UPDATE,TFRE_DB_ZFS_POOL) then begin
