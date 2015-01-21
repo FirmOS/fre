@@ -2472,6 +2472,9 @@ begin
   ndbo:=GFRE_DBI.CreateFromFile('current_boxconsole.dbo');
   odbo.Field('UID').AsGUID:=ndbo.UID;
 
+//  writeln('SWL: DB',odbo.DumpToString);
+//  writeln('SWL: CONSOLE',ndbo.DumpToString);
+
   //testobj  := TFRE_DB_SAS_DISK.Create;
   //testobj.Field('FAKE REF').AsObjectLink := GFRE_DBI.NewObject.UID;
   //ndbo.Field('DISKS').AsObject.Field(testobj.UID_String).AsObject:=testobj;
@@ -2494,11 +2497,9 @@ begin
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo,odbo,ca,transport_dbo);
 
   writeln('SWL INSERT COUNT ',transport_dbo.Field(CDIFF_INSERT_LIST).ValueCount);
-  writeln(transport_dbo.DumpToString());
+//  writeln(transport_dbo.DumpToString());
 
   CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
-halt;
-
 
   writeln('----- NOW UPDATE FIELD');
   transport_dbo.ClearAllFields;
@@ -2506,7 +2507,8 @@ halt;
   ndbo2.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_slot10',testobj,'');
   testobj.Field('TARGETPORT_1').asstring:='TEST';
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo2,ndbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+//  writeln(transport_dbo.DumpToString());
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
   writeln('----- NOW DELETE FIELD');
   transport_dbo.ClearAllFields;
@@ -2514,7 +2516,8 @@ halt;
   ndbo3.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_slot10',testobj,'');
   testobj.DeleteField('TARGETPORT_2');
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo3,ndbo2,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+//  writeln(transport_dbo.DumpToString());
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
   writeln('----- NOW DELETE OBJECT');
   transport_dbo.ClearAllFields;
@@ -2525,40 +2528,47 @@ halt;
   testobj.Field('EXPANDERS').asobject.DeleteField('5003048000CB8A3F_SES6');
 //  writeln('SWL: ENCLOSURE',testobj.DumpToString);
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo2,ndbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+//  writeln(transport_dbo.DumpToString());
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
 
   writeln('----- NOW INSERT,UPDATE,DELETE FIELD');
   transport_dbo.ClearAllFields;
   ndbo4:=ndbo3.CloneToNewObject;
   ndbo4.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_slot10',testobj,'');
-  writeln('SWL SLOT 10 ',testobj.UID_String);
+//  writeln('SWL SLOT 10 ',testobj.UID_String);
   testobj.Field('TESTFIELD').asstring:='NEWFIELDVAL';
   testobj.Field('SUPER').asboolean:=true;
   testobj.Field('INT32').AsInt32 :=1234;
-  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo4,ndbo,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+  FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo4,ndbo3,ca,transport_dbo);
+//  writeln(transport_dbo.DumpToString());
+
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
 
   writeln('----- UPDATE SUB OBJECT');
   transport_dbo.ClearAllFields;
   ndbo5:=ndbo4.CloneToNewObject;
   ndbo5.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_ses6',testobj,'');
-  writeln('SWL SES6 ',testobj.UID_String);
+//  writeln('SWL SES6 ',testobj.UID_String);
   testobj.Field('DESC').asobject.Field('TXT').asstring:='NEWTEXT';
   testobj.Field('DESC').asobject.Field('NEWFIELD').asstring:='MYNEWFIELD';
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo5,ndbo4,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+//  writeln(transport_dbo.DumpToString());
+
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
   writeln('----- UPDATE SUB SUB OBJECT');
   transport_dbo.ClearAllFields;
   ndbo6:=ndbo5.CloneToNewObject;
   ndbo6.FetchObjWithStringFieldValue('DEVICEIDENTIFIER','5003048000cb8a3f_ses6',testobj,'');
-  writeln('SWL SES6 ',testobj.UID_String);
+//  writeln('SWL SES6 ',testobj.UID_String);
   testobj.Field('DESC').asobject.Field('newobj').asobject := GFRE_DBI.NewObject;
   testobj.Field('DESC').asobject.Field('newobj').asobject.Field('X').AsString:='NEWX';
   FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndbo6,ndbo5,ca,transport_dbo);
-  writeln(transport_dbo.DumpToString());
+//  writeln(transport_dbo.DumpToString());
+
+  CheckDbResult(conn.DifferentialBulkUpdate(transport_dbo));
 
 end;
 
