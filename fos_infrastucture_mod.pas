@@ -99,6 +99,8 @@ type
     function        WEB_DeleteService                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DeleteServiceConfirmed          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreService                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StartService                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StopService                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -769,6 +771,8 @@ begin
     CreateModuleText(conn,'grid_service_name','Name');
     CreateModuleText(conn,'tb_add_service','Add');
     CreateModuleText(conn,'tb_delete_service','Delete');
+    CreateModuleText(conn,'tb_start_service','Start');
+    CreateModuleText(conn,'tb_stop_service','Stop');
     CreateModuleText(conn,'cm_delete_service','Delete');
     CreateModuleText(conn,'add_service_diag_cap','Add %service_str%');
     CreateModuleText(conn,'delete_service_diag_cap','Remove Service');
@@ -1182,6 +1186,8 @@ var
   sf          : TFRE_DB_SERVER_FUNC_DESC;
   submenu     : TFRE_DB_SUBMENU_DESC;
   canDelete   : Boolean;
+  canStart    : Boolean;
+  canStop     : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -1195,6 +1201,8 @@ begin
 
   canAdd:=false;
   canDelete:=false;
+  canStart:=false;
+  canStop:=false;
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_add_service'),'');
 
@@ -1203,13 +1211,17 @@ begin
   for i := 0 to template.Field('serviceclasses').ValueCount -1 do begin
     serviceClass:=template.Field('serviceclasses').AsStringArr[i];
     exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
-    if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
-      conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
-      if conf.Field('type').AsString='service' then begin
+    conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+    if conf.Field('type').AsString='service' then begin
+      if conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID) then begin
+        canDelete:=true;
+      end;
+      if conn.SYS.CheckClassRight4DomainId(sr_UPDATE,serviceClass,zone.DomainID) then begin
+        canStart:=true;
+        canStop:=true;
+      end;
+      if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
         canAdd:=true;
-        if conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID) then begin
-          canDelete:=true;
-        end;
         sf:=CWSF(@WEB_AddService);
         sf.AddParam.Describe('serviceClass',serviceClass);
         sf.AddParam.Describe('zoneId',zone.UID_String);
@@ -1218,14 +1230,20 @@ begin
     end;
   end;
 
-  if canDelete then begin
+
+  if canAdd or canDelete or canStart or canStop then begin
     if not canAdd then begin
       menu:=TFRE_DB_MENU_DESC.create.Describe;
     end;
-    menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delete_service'),'',CWSF(@WEB_DeleteService),true,'service_delete');
-  end;
-
-  if canAdd or canDelete then begin
+    if canDelete then begin
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delete_service'),'',CWSF(@WEB_DeleteService),true,'service_delete');
+    end;
+    if canStart then begin
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_start_service'),'',CWSF(@WEB_StartService),true,'service_start');
+    end;
+    if canStop then begin
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_stop_service'),'',CWSF(@WEB_StopService),true,'service_stop');
+    end;
     res.SetMenu(menu);
   end;
 
@@ -1445,6 +1463,16 @@ begin
   end;
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_StartService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=GFRE_DB_NIL_DESC; //FIXXME
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_StopService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=GFRE_DB_NIL_DESC; //FIXXME
 end;
 
 end.

@@ -103,9 +103,13 @@ begin
 
   ses.GetSessionModuleData(ClassName).DeleteField('selected');
 
-  dc:=ses.FetchDerivedCollection('DATALINK_GRID');
+  if zone is TFRE_DB_GLOBAL_ZONE then begin
+    dc:=ses.FetchDerivedCollection('DATALINK_GRID_GZ');
+  end else begin
+    dc:=ses.FetchDerivedCollection('DATALINK_GRID');
+  end;
   dc.Filters.RemoveFilter('zone');
-  dc.Filters.AddRootNodeFilter('zone','uid',conn.GetReferences(zone.UID,false,'','datalinkparent'),dbnf_OneValueFromFilter);
+  dc.Filters.AddRootNodeFilter('zone','uid',conn.GetReferences(zone.UID,false,'','datalinkParent'),dbnf_OneValueFromFilter);
   res:=dc.GetDisplayDescription.Implementor_HC as TFRE_DB_VIEW_LIST_DESC;
 
   canAdd:=false;
@@ -178,14 +182,9 @@ begin
 
     CreateModuleText(conn,'net_routing_description','Networks','Networks','Networks');
 
-    //CreateModuleText(conn,'grid_interfaces_cap','Interfaces');
-    //CreateModuleText(conn,'grid_interface','Interface');
-    //CreateModuleText(conn,'grid_customer','Customer');
-    //CreateModuleText(conn,'grid_customer_default_value','Global - Not Assigned');
-    //
-    //CreateModuleText(conn,'bandwidth_group','Internet Bandwidth [MBit]');
-    //CreateModuleText(conn,'info_if_details_select_one','Please select an Interface object to get detailed information about it.');
     CreateModuleText(conn,'grid_name','Name');
+    CreateModuleText(conn,'grid_delegation_zone','Delegated to');
+
     CreateModuleText(conn,'tb_add','Add');
     CreateModuleText(conn,'tb_delete','Delete');
     CreateModuleText(conn,'cm_delete','Delete');
@@ -238,10 +237,37 @@ begin
       Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
     end;
 
+    filterClasses:=TFRE_DB_DATALINK.getAllDataLinkClasses;
+    hFilterClasses:=TFRE_DB_IP_HOSTNET.getAllHostnetClasses;
+    for i := 0 to High(hFilterClasses) do begin
+      SetLength(filterClasses,Length(filterClasses)+1);
+      filterClasses[Length(filterClasses)-1]:=hFilterClasses[i];
+    end;
+    SetLength(filterClasses,Length(filterClasses)+2);
+    filterClasses[Length(filterClasses)-2]:=TFRE_DB_ZONE.ClassName;
+    filterClasses[Length(filterClasses)-1]:=TFRE_DB_GLOBAL_ZONE.ClassName;
+
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
-      AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'objname','czone','',true,dt_description);
+      AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'objname','czone',FetchModuleTextShort(session,'grid_delegation_zone'),true,dt_string);
+      AddOneToOnescheme('schemeclass','sc','',dt_string,false);
+      AddOneToOnescheme('serviceparent','','',dt_string,false);
+      AddOneToOnescheme('icon','','',dt_string,false);
+      SetFinalRightTransformFunction(@CalculateIcon,[]);
+    end;
+    dc := session.NewDerivedCollection('DATALINK_GRID_GZ');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_ZONES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
+      SetParentToChildLinkField ('<DATALINKPARENT',[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
+      Filters.AddSchemeObjectFilter('schemes',filterClasses);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('serviceparent','','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
@@ -253,35 +279,8 @@ begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
       SetParentToChildLinkField ('<DATALINKPARENT',[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
-      //SetParentToChildLinkField ('<DATALINKPARENT');
-      filterClasses:=TFRE_DB_DATALINK.getAllDataLinkClasses;
-      hFilterClasses:=TFRE_DB_IP_HOSTNET.getAllHostnetClasses;
-      for i := 0 to High(hFilterClasses) do begin
-        SetLength(filterClasses,Length(filterClasses)+1);
-        filterClasses[Length(filterClasses)-1]:=hFilterClasses[i];
-      end;
-      SetLength(filterClasses,Length(filterClasses)+2);
-      filterClasses[Length(filterClasses)-2]:=TFRE_DB_ZONE.ClassName;
-      filterClasses[Length(filterClasses)-1]:=TFRE_DB_GLOBAL_ZONE.ClassName;
       Filters.AddSchemeObjectFilter('schemes',filterClasses);
     end;
-
-    //GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    //with transform do begin
-    //  AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_customer'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
-    //  AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_interface'));
-    //  //AddFulltextFilterOnTransformed(['objname','number']);
-    //end;
-    //
-    //if_grid := session.NewDerivedCollection('INTERFACES_GRID');
-    //with if_grid do begin
-    //  SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
-    //  SetDeriveTransformation(transform);
-    //  SetDisplayType(cdt_Listview,[],FetchModuleTextShort(session,'grid_interfaces_cap'),nil,'',nil,nil,CWSF(@WEB_IFSC));
-    //  Filters.AddSchemeObjectFilter('service',TFRE_DB_DATALINK.getAllDataLinkClasses);
-    //  Orders.AddOrderDef('customer',true,false);
-    //  //Orders.AddOrderDef('objname',true,false);
-    //end;
   end;
 end;
 
