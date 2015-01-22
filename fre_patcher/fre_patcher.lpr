@@ -87,8 +87,8 @@ type
   { TFRE_Testserver }
   TFRE_Testserver = class(TFRE_CLISRV_APP)
   private
-    const realcust:string = '0081000359,0081000752,0081000516,0081000196,81000146,0081000661,0081000737,0081000752,0081000339,0081000695,0081000609,0081000681,0081000723,81000064,SC-PRO,SC-DEMO,0081000168';
-          realdom :string = 'ANKUENDER,BINDER,CITYCOM,CORTI,GRAZETTA,RUBIKON,ZOESCHER,BINDER,DMS,DIAGONALE,EGRAZ,HILFSWERK,PEAN,JOANNEUM,PRO-COMPETENCE,DEMO,ALICONA';
+    const realcust:string = '0081000359,0081000752,0081000516,0081000196,81000146,0081000661,0081000737,0081000752,0081000339,0081000695,0081000609,0081000681,0081000723,81000064,SC-PRO,SC-DEMO,0081000168,FIRMOS';
+          realdom :string = 'ANKUENDER,BINDER,CITYCOM,CORTI,GRAZETTA,RUBIKON,ZOESCHER,BINDER,DMS,DIAGONALE,EGRAZ,HILFSWERK,PEAN,JOANNEUM,PRO-COMPETENCE,DEMO,ALICONA,FIRMOS';
     var
     realdoma   :TFRE_DB_StringArray;
     realdomida :TFRE_DB_GUIDArray;
@@ -1342,28 +1342,32 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       zone             : TFRE_DB_ZONE;
       newuid           : TFRE_DB_GUID;
       zds_id           : TFRE_DB_GUID;
+
+      procedure SetUid;
+      begin
+        if zone_id<>'' then
+          begin
+            newuid.SetFromHexString(zone_id);
+            zone.Field('UID').asGUID := newuid;
+          end;
+      end;
+
     begin
       if host_id=serviceparent_id then
         begin
           // no dataset for global zone
           zone := TFRE_DB_GLOBAL_ZONE.CreateForDB;
+          Setuid;
           zone.Field('serviceParent').AsObjectLink:=serviceparent_id;
         end
       else
         begin
           zone := TFRE_DB_ZONE.CreateForDB;
+          SetUid;
           zds_id := CreateDataSetChild(serviceparent_id,zone.UID.AsHexString);
           zone.Field('serviceParent').AsObjectLink:=zds_id;
         end;
       zone.ObjectName  := name;
-      if zone_id<>'' then
-        begin
-//          writeln('SWL OLD UID :',zone.UID.AsHexString);
-          newuid.SetFromHexString(zone_id);
-//          writeln('SWL NEW UID :',newuid.AsHexString);
-          zone.Field('UID').asGUID := newuid;
-//          writeln('SWL MODIFIED UID :',zone.UID.AsHexString);
-        end;
       if template_id<>CFRE_DB_NullGUID then
         zone.Field('templateid').AsObjectLink:=template_id;
       zone.Field('hostid').AsObjectLink:=host_id;
@@ -1673,6 +1677,9 @@ begin
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
   GFRE_DB.Initialize_Extension_ObjectsBuild;
+
+//  GenerateSearchDomains(true);
+
 
   g_domain_id:=conn.GetSysDomainUID;
 
@@ -2159,18 +2166,16 @@ begin
 
   g_domain_id:=g_def_domain_id;
   dc_id := CreateDC('RZ Test');
-  host_id  := CreateHost('Fosdev',dc_id,'00:0c:29:71:65:fd');
+  host_id  := CreateHost('VMFranz',dc_id,'00:50:56:38:61:33');
   zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
   pool_id  := CreatePool('syspool',host_id,rootds_id);
   domainsds_id  := CreateParentDatasetwithStructure('parentds','syspool',pool_id,rootds_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:0c:29:71:65:fd','generic');
-  AddIPV4('10.1.0.84/24',link_id);
-  AddIPV4('172.22.0.99/24',link_id);
-  AddIPV6('fdd7:f47b:4605:705:3:0:1:1/80',link_id);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:50:56:38:61:33','generic');
+  AddIPV4('10.1.0.85/24',link_id);
   e0_id    := link_id;
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
 
-  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:0c:29:71:65:07','generic');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:50:56:2e:7:af','generic');
   AddIPV4('172.22.0.99/24',link_id);
   e1_id    := link_id;
 
@@ -2178,11 +2183,10 @@ begin
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('demo2',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'15a56c904a7f00248929bfdb576a45c9');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,e1_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a4:c6:7c','cpe','Crypto CPE');
-//  AddIPV6('',link_id);
   AddIPV6('fdd7:f47b:4605:0705:1:0:0:3/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,e0_id,0,1588,CFRE_DB_NullGUID,'02:08:20:e7:40:51','internet','Internet');
-  AddIPV4('91.143.108.194/27',link_id);
-  AddRoutingIPV4('default','91.143.108.193',zone_id,'Default Route');
+  AddIPV4('10.1.0.89/24',link_id);
+  AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:d3:59:df','mgmt','Mgmt Lan');
   AddIPV4('172.24.1.2/16',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,e0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:3a:4c:16','lan','Lan');
@@ -2197,6 +2201,30 @@ begin
   CreateShare(vf_id,pool_id,'syspool/domains/demo/demo/zonedata/vfiler/management','Management',10240,10240);
   vf_id:=CreateCFiler(zone_id,'Test Crypto Fileserver');
   CreateShare(vf_id,pool_id,'syspool/domains/mydomain/newzone0/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
+
+
+  g_domain_id:=g_def_domain_id;
+  dc_id := CreateDC('RZ FirmOS Office');
+  host_id  := CreateHost('Firmbox SSD',dc_id,'0c:c4:7a:14:1c:9a');
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  pool_id  := CreatePool('syspool',host_id,rootds_id);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'0c:c4:7a:14:1c:9a','generic');
+  AddIPV4('10.1.0.119/24',link_id);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'0c:c4:7a:14:1c:9b','generic');
+  AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
+  domainsds_id  := CreateParentDatasetwithStructure('parentds','syspool',pool_id,rootds_id);
+
+  host_id  := CreateHost('Firmbox Office',dc_id,'00:25:90:ea:b5:e6');
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  pool_id  := CreatePool('syspool',host_id,rootds_id);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:ea:b5:e6','generic');
+  AddIPV4('10.1.0.116/24',link_id);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:ea:b5:e7','generic');
+  AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
+  domainsds_id  := CreateParentDatasetwithStructure('parentds','syspool',pool_id,rootds_id);
+
+
+  g_domain_id := CheckFindDomainID('FIRMOS');
 
   g_domain_id:=g_def_domain_id;
   voip_id:=CreateVoIP(43,316,269574,10,0);
