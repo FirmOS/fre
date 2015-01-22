@@ -21,6 +21,8 @@ type
     function        _getDetails                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
     function        _getZoneDetails            (const zone: TFRE_DB_ZONE;const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
     function        _canDelete                 (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _delegateRightsCheck       (const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
   protected
     procedure       SetupAppModuleStructure    ; override;
   public
@@ -39,6 +41,7 @@ type
     function        WEB_GridSC                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DatalinkGridSC         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DatalinkGridMenu       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Delegate               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_IFSC                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_ContentIF              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_SliderChanged          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -98,6 +101,7 @@ var
   sf          : TFRE_DB_SERVER_FUNC_DESC;
   submenu     : TFRE_DB_SUBMENU_DESC;
   canDelete   : Boolean;
+  canDelegate : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -114,6 +118,7 @@ begin
 
   canAdd:=false;
   canDelete:=false;
+  canDelegate:=false;
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_add'),'');
 
@@ -122,13 +127,12 @@ begin
   for i := 0 to template.Field('serviceclasses').ValueCount -1 do begin
     serviceClass:=template.Field('serviceclasses').AsStringArr[i];
     exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
-    if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
-      conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
-      if conf.Field('type').AsString='datalink' then begin
+    conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+    if conf.Field('type').AsString='datalink' then begin
+      canDelete:=canDelete or conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID);
+      canDelegate:=canDelegate or _delegateRightsCheck(zone.DomainID,serviceClass,conn);
+      if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
         canAdd:=true;
-        if conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID) then begin
-          canDelete:=true;
-        end;
         sf:=CWSF(@WEB_Add);
         sf.AddParam.Describe('serviceClass',serviceClass);
         sf.AddParam.Describe('zoneId',zone.UID_String);
@@ -137,14 +141,16 @@ begin
     end;
   end;
 
-  if canDelete then begin
+  if canAdd or canDelete then begin
     if not canAdd then begin
       menu:=TFRE_DB_MENU_DESC.create.Describe;
     end;
-    menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delete'),'',CWSF(@WEB_Delete),true,'net_routing_delete');
-  end;
-
-  if canAdd or canDelete then begin
+    if canDelete then begin
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delete'),'',CWSF(@WEB_Delete),true,'net_routing_delete');
+    end;
+    if canDelegate then begin
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delegate'),'',CWSF(@WEB_Delegate),true,'net_routing_delegate');
+    end;
     res.SetMenu(menu);
   end;
 
@@ -159,6 +165,46 @@ begin
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,dbo.Implementor_HC.ClassType,dbo.DomainID) and (conn.GetReferencesCount(dbo.UID,false)=0);
+  end;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelegate(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo  : IFRE_DB_Object;
+  hcObj: TObject;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    hcObj:=dbo.Implementor_HC;
+    if hcObj is TFRE_DB_DATALINK_PHYS then begin //only if empty
+      if conn.GetReferencesCount(dbo.UID,false,'','datalinkParent')=0 then begin
+        Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_PHYS.ClassName,conn);
+      end;
+    end else
+    if hcObj is TFRE_DB_DATALINK_AGGR then begin
+      Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_AGGR.ClassName,conn);
+    end else
+    if hcObj is TFRE_DB_DATALINK_SIMNET then begin
+      Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_SIMNET.ClassName,conn);
+    end;
+  end;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._delegateRightsCheck(const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  ddomains: TFRE_DB_GUIDArray;
+  i       : Integer;
+begin
+  Result:=false;
+  if conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zDomainId) then begin
+    ddomains:=conn.SYS.GetDomainsForClassRight(sr_STORE,serviceClass);
+    for i := 0 to High(ddomains) do begin
+      if ddomains[i]<>zDomainId then begin
+        Result:=true;
+        break;
+      end;
+    end;
   end;
 end;
 
@@ -187,7 +233,9 @@ begin
 
     CreateModuleText(conn,'tb_add','Add');
     CreateModuleText(conn,'tb_delete','Delete');
+    CreateModuleText(conn,'tb_delegate','Delegate');
     CreateModuleText(conn,'cm_delete','Delete');
+    CreateModuleText(conn,'cm_delegate','Delegate');
     CreateModuleText(conn,'info_details_select_one','Please select an object to get detailed information about it.');
 
     CreateModuleText(conn,'add_datalink_diag_cap','Add %datalink_str%');
@@ -371,6 +419,7 @@ begin
   GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
   dbo:=GFRE_DBI.NewObjectSchemeByName(serviceClass);
   dbo.Field('serviceParent').AsObjectLink:=zone.UID;
+  dbo.Field('datalinkParent').AsObjectLink:=zone.UID;
   dbo.Field('uniquephysicalid').AsString:=idx;
   dbo.SetDomainID(zone.DomainID);
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dbo,true,conn);
@@ -443,16 +492,19 @@ end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_DatalinkGridSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  dDisabled: Boolean;
+  delDisabled     : Boolean;
+  delegateDisabled: Boolean;
 begin
-  dDisabled:=true;
+  delDisabled:=true;
   if input.FieldExists('selected') then begin
-    dDisabled:=not _canDelete(input,conn);
+    delDisabled:=not _canDelete(input,conn);
+    delegateDisabled:=not _canDelegate(input,conn);
     ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr:=input.Field('selected').AsStringArr;
   end else begin
     ses.GetSessionModuleData(ClassName).DeleteField('selected');
   end;
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delete',dDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delete',delDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delegate',delegateDisabled));
   Result:=GFRE_DB_NIL_DESC;
 end;
 
@@ -467,7 +519,17 @@ begin
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete'),'',sf);
   end;
+  if _canDelegate(input,conn) then begin
+    sf:=CWSF(@WEB_Delegate);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delegate'),'',sf);
+  end;
   Result:=res;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_Delegate(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=GFRE_DB_NIL_DESC; //FIXXME
 end;
 
 //function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_IFSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;

@@ -1213,13 +1213,8 @@ begin
     exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
     conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
     if conf.Field('type').AsString='service' then begin
-      if conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID) then begin
-        canDelete:=true;
-      end;
-      if conn.SYS.CheckClassRight4DomainId(sr_UPDATE,serviceClass,zone.DomainID) then begin
-        canStart:=true;
-        canStop:=true;
-      end;
+      canDelete:=canDelete or conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID);
+      canStart:=canStart or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,serviceClass,zone.DomainID);
       if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
         canAdd:=true;
         sf:=CWSF(@WEB_AddService);
@@ -1229,6 +1224,7 @@ begin
       end;
     end;
   end;
+  canStop:=canStart;
 
 
   if canAdd or canDelete or canStart or canStop then begin
