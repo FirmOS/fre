@@ -550,6 +550,7 @@ begin
 
   RegisterSupportedRifClass(TFRE_DB_ZONECREATION_JOB);
   RegisterSupportedRifClass(TFRE_DB_ZONEDESTROY_JOB);
+  RegisterSupportedRifClass(TFRE_DB_ZONE);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;
