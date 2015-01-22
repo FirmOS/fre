@@ -22,6 +22,7 @@ type
     function        _getZoneDetails            (const zone: TFRE_DB_ZONE;const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
     function        _canDelete                 (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _delegateRightsCheck       (const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
   protected
     procedure       SetupAppModuleStructure    ; override;
@@ -31,6 +32,8 @@ type
     class procedure InstallUserDBObjects       (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
     procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
   published
+    procedure       CalcZoneChooserLabel       (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
+    procedure       CalculateGridFields        (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     procedure       CalculateIcon              (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     function        WEB_Add                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -42,6 +45,7 @@ type
     function        WEB_DatalinkGridSC         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DatalinkGridMenu       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Delegate               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreDelegation        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_IFSC                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_ContentIF              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_SliderChanged          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -102,12 +106,14 @@ var
   submenu     : TFRE_DB_SUBMENU_DESC;
   canDelete   : Boolean;
   canDelegate : Boolean;
+  isGlobal    : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
+  isGlobal:=(zone is TFRE_DB_GLOBAL_ZONE);
 
   ses.GetSessionModuleData(ClassName).DeleteField('selected');
 
-  if zone is TFRE_DB_GLOBAL_ZONE then begin
+  if isGlobal then begin
     dc:=ses.FetchDerivedCollection('DATALINK_GRID_GZ');
   end else begin
     dc:=ses.FetchDerivedCollection('DATALINK_GRID');
@@ -130,7 +136,7 @@ begin
     conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
     if conf.Field('type').AsString='datalink' then begin
       canDelete:=canDelete or conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID);
-      canDelegate:=canDelegate or _delegateRightsCheck(zone.DomainID,serviceClass,conn);
+      canDelegate:=isGlobal and (canDelegate or _delegateRightsCheck(zone.DomainID,serviceClass,conn));
       if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
         canAdd:=true;
         sf:=CWSF(@WEB_Add);
@@ -171,6 +177,12 @@ end;
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelegate(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   dbo  : IFRE_DB_Object;
+begin
+  Result:=_canDelegate(input,conn,dbo);
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelegate(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+var
   hcObj: TObject;
 begin
   Result:=false;
@@ -245,6 +257,12 @@ begin
     CreateModuleText(conn,'delete_datalink_diag_cap','Remove Datalink');
     CreateModuleText(conn,'delete_datalink_diag_msg','Remove datalink "%datalink_str%"?');
     CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
+
+    CreateModuleText(conn,'delegate_datalink_diag_cap','Delegate Interface');
+    CreateModuleText(conn,'delegate_datalink_diag_no_zone_msg','There are no zones available for delgation.');
+    CreateModuleText(conn,'delegate_datalink_diag_zone','Zone');
+    CreateModuleText(conn,'delegate_interface_zone_value','%zone_str% (%customer_str%)');
+    CreateModuleText(conn,'delegate_interface_zone_value_no_customer','%zone_str%');
   end;
 end;
 
@@ -271,18 +289,20 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('_sortorder_','','',dt_string,false);
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
-      SetFinalRightTransformFunction(@CalculateIcon,[]);
+      SetFinalRightTransformFunction(@CalculateGridFields,[]);
     end;
     dc := session.NewDerivedCollection('NET_ZONES_GRID');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
       SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName],[],[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
       Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
+      SetDefaultOrderField('_sortorder_',true);
     end;
 
     filterClasses:=TFRE_DB_DATALINK.getAllDataLinkClasses;
@@ -308,7 +328,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_ZONES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
       SetParentToChildLinkField ('<DATALINKPARENT',[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
       Filters.AddSchemeObjectFilter('schemes',filterClasses);
     end;
@@ -325,10 +345,48 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_ZONES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',CWSF(@WEB_DatalinkGridMenu),nil,CWSF(@WEB_DatalinkGridSC));
       SetParentToChildLinkField ('<DATALINKPARENT',[TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName]);
       Filters.AddSchemeObjectFilter('schemes',filterClasses);
     end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddOneToOnescheme('hostid');
+      SetFinalRightTransformFunction(@CalcZoneChooserLabel,[FetchModuleTextShort(session,'delegate_interface_zone_value'),FetchModuleTextShort(session,'delegate_interface_zone_value_no_customer')]);
+    end;
+    dc := session.NewDerivedCollection('ZONE_CHOOSER');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_ZONES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      SetDefaultOrderField('objname',true);
+      Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_GLOBAL_ZONE.ClassName],false);
+    end;
+  end;
+end;
+
+procedure TFRE_FIRMBOX_NET_ROUTING_MOD.CalcZoneChooserLabel(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
+var
+  str: String;
+begin
+  if transformed_object.Field('customer').AsString<>'' then begin
+    str:=StringReplace(langres[0],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+    str:=StringReplace(str,'%customer_str%',transformed_object.Field('customer').AsString,[rfReplaceAll]);
+  end else begin
+    str:=StringReplace(langres[1],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+  end;
+  transformed_object.Field('label').AsString:=str;
+end;
+
+procedure TFRE_FIRMBOX_NET_ROUTING_MOD.CalculateGridFields(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
+begin
+  CalculateIcon(ut,transformed_object,session_data,langres);
+  if transformed_object.Field('sc').AsString='TFRE_DB_GLOBAL_ZONE' then begin
+    transformed_object.Field('_sortorder_').AsString:='A'+transformed_object.Field('objname').AsString;
+  end else begin
+    transformed_object.Field('_sortorder_').AsString:='B'+transformed_object.Field('objname').AsString;
   end;
 end;
 
@@ -528,8 +586,68 @@ begin
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_Delegate(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res      : TFRE_DB_FORM_DIALOG_DESC;
+  dc       : IFRE_DB_DERIVED_COLLECTION;
+  dbo      : IFRE_DB_Object;
+  parentObj: IFRE_DB_Object;
+  parentUid: TFRE_DB_GUID;
+  sf       : TFRE_DB_SERVER_FUNC_DESC;
 begin
-  Result:=GFRE_DB_NIL_DESC; //FIXXME
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canDelegate(input,conn,dbo) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+
+  parentObj:=dbo;
+  repeat
+    parentUid:=parentObj.Field('datalinkParent').AsObjectLink;
+    CheckDbResult(conn.Fetch(parentUid,parentObj));
+  until parentObj.Implementor_HC is TFRE_DB_ZONE;
+
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'delegate_datalink_diag_cap'));
+  dc:=ses.FetchDerivedCollection('ZONE_CHOOSER');
+  dc.Filters.RemoveFilter('machine');
+  dc.Filters.RemoveFilter('rights');
+  //dc.Filters.AddAutoDependencyFilter('machine',['TFRE_DB_MACHINE<HOSTID'],[parentObj.Field('hostid').AsObjectLink]);
+  dc.Filters.AddAutoDependencyFilter('machine',['<HOSTID'],[parentObj.Field('hostid').AsObjectLink]);
+  dc.Filters.AddStdClassRightFilter('rights','domainid','','',dbo.Implementor_HC.ClassName,[sr_STORE],ses.GetDBConnection.SYS.GetCurrentUserTokenClone);
+
+  if dc.ItemCount=0 then begin
+    res.AddDescription.Describe('',FetchModuleTextShort(ses,'delegate_datalink_diag_no_zone_msg'));
+  end else begin
+    res.AddChooser.Describe(FetchModuleTextShort(ses,'delegate_datalink_diag_zone'),'dzone',dc.GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC);
+    sf:=CWSF(@WEB_StoreDelegation);
+    sf.AddParam.Describe('selected',dbo.UID_String);
+    res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  end;
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_StoreDelegation(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zone: TFRE_DB_ZONE;
+  dbo : IFRE_DB_Object;
+begin
+  if not _canDelegate(input,conn,dbo) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if not input.FieldPathExists('data.dzone') then
+    raise EFRE_DB_Exception.Create('Missing input parameter zone!');
+
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.FieldPath('data.dzone').AsString),TFRE_DB_ZONE,zone));
+
+  if dbo.DomainID<>zone.DomainID then begin
+    dbo.SetDomainID(zone.DomainID);
+    dbo.Field('datalinkParent').AddObjectLink(zone.UID);
+    dbo.Field('serviceParent').AddObjectLink(zone.UID);
+  end;
+
+  CheckDbResult(conn.Update(dbo));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
 //function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_IFSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
