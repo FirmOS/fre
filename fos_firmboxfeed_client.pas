@@ -398,19 +398,19 @@ begin
   //readln;
   //fre_destroy_zone(zone);
   //writeln('zone destroyed');
-  obj := GFRE_DBI.CreateFromFile('/opt/local/fre/hal/zone_15a56c904a7f00248929bfdb576a45c9.dbo');
-  writeln('SWL:',obj.DumpToString());
-  fre_create_zonecfg(obj);
-  writeln('zonecfg created');
+//  obj := GFRE_DBI.CreateFromFile('/opt/local/fre/hal/zone_15a56c904a7f00248929bfdb576a45c9.dbo');
+//  writeln('SWL:',obj.DumpToString());
+//  fre_create_zonecfg(obj);
+//  writeln('zonecfg created');
 //  readln;
-  fre_install_zone(obj);
-  writeln('zone installed');
+//  fre_install_zone(obj);
+//  writeln('zone installed');
 //  readln;
 //  fre_set_zonestate(obj.UID.AsHexString,ZONE_STATE_INSTALLED);
 //  writeln('zone set to installed');
 //  readln;
-  fre_boot_zone(obj);
-  writeln('zone booting');
+//  fre_boot_zone(obj);
+//  writeln('zone booting');
 //  readln;
 //  fre_shutdown_zone(obj);
 //  writeln('zone shutdown');
@@ -573,6 +573,7 @@ var vmo         : IFRE_DB_Object;
     lio         : IFRE_DB_Object;
     update_data : IFRE_DB_Object;
 begin
+  inherited;
   //if FAPP_Feeding then
   //  begin
   //    try
