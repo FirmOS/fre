@@ -2642,14 +2642,15 @@ var
 
   procedure GenerateJobs;
   var ci  : NativeInt;
-      job : TFRE_DB_JOB;
+      job : TFRE_DB_TIMERTEST_JOB;
 
   begin
     for ci := 0 to 99 do
       begin
-        job :=TFRE_DB_JOB.create;
+        job :=TFRE_DB_TIMERTEST_JOB.create;
         job.SetDomainID(conn.GetSysDomainUID);
         job.SetJobkeyDescription('TEST'+inttostr(ci),'TEST');
+        job.SetTimeout(0);
         job.SetJobState(jobStateImmediateStart);
         job.IMI_Do_the_Job(nil);
         jobs.Field(job.UID.AsHexString).AsObject:=job;
