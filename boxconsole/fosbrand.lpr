@@ -12,8 +12,7 @@ uses
   {$ENDIF}
   Classes, SysUtils, CustApp, fosillu_libzonecfg,fre_process,
   FRE_SYSTEM,FOS_DEFAULT_IMPLEMENTATION,FOS_TOOL_INTERFACES,FOS_FCOM_TYPES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,
-  FRE_DB_CORE,fre_dbbase, FRE_DB_EMBEDDED_IMPL, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs,fosillu_dladm,fosillu_libdladm,
-  fos_citycom_voip_mod
+  FRE_DB_CORE,fre_dbbase, fre_dbbusiness, FRE_DB_EMBEDDED_IMPL, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs,fosillu_dladm,fosillu_libdladm
   { you can add units after this };
 
 type
@@ -48,9 +47,11 @@ var
 
 begin
   InitMinimal(false);
+  fre_dbbase.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
   fre_zfs.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
-  fos_citycom_voip_mod.Register_DB_Extensions;
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
 
   dlres := dladm_open(@GILLU_DLADM);
   if dlres<>DLADM_STATUS_OK then
