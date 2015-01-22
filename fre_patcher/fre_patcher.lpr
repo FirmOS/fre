@@ -117,6 +117,8 @@ type
     procedure   AddAFeederUser                          (const feederusername:string ; const feederpass:string ; const feederclass :string);
     procedure   AddAuser                                (const userstringencoding : string);
 
+    procedure   AttachDebugPlugin                       (const attach : boolean);
+
   protected
     procedure   AddCommandLineOptions                   ; override;
     function    PreStartupTerminatingCommands: boolean  ; override; { cmd's that should be executed without db(ple), they terminate}
@@ -214,6 +216,8 @@ begin
     'poolconfig'   : PoolConfig;
     'boxconsoledata'     : BoxconsoleData;
     'jobtest'            : jobTest;
+    'attachplug'   : AttachDebugPlugin(true);
+    'detachplug'   : AttachDebugPlugin(false);
   end;
 end;
 
@@ -1149,6 +1153,54 @@ begin
       exit;
     end;
   AddAFeederUser(param[0],param[1],param[2]);
+end;
+
+procedure TFRE_Testserver.AttachDebugPlugin(const attach: boolean);
+var conn : IFRE_DB_CONNECTION;
+   zcoll : IFRE_DB_COLLECTION;
+   i     : integer;
+   k     : TFRE_DB_TIMERTEST_JOB;
+   j     : TFRE_DB_JOB;
+   exc   : TFRE_DB_ObjectClassEx;
+
+   procedure AttachPlugin(const obj : IFRE_DB_Object);
+   var plug     : TFRE_DB_DEBUG_PLUGIN;
+       plugback : TFRE_DB_DEBUG_PLUGIN;
+   begin
+     inc(i);
+     plug := TFRE_DB_DEBUG_PLUGIN.create;
+     plug.SetDebugMode(i mod 5);
+     obj.AttachPlugin(plug);
+     if obj.HasPlugin(TFRE_DB_DEBUG_PLUGIN,plugback) then
+       plugback.SetDebugMode(i mod 6);
+     CheckDbResult(zcoll.Update(obj));
+   end;
+
+   procedure DetachPlugin(const obj : IFRE_DB_Object);
+   begin
+     obj.RemovePlugin(TFRE_DB_DEBUG_PLUGIN);
+     CheckDbResult(zcoll.Update(obj));
+   end;
+
+
+begin
+  FRE_DBBASE.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
+  fos_citycom_base.Register_DB_Extensions;
+  fre_zfs.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  fos_citycom_voip_mod.Register_DB_Extensions;
+
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
+
+  i := 0;
+  zcoll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
+  if attach then
+    zcoll.ForAll(@AttachPlugin)
+  else
+    zcoll.ForAll(@DetachPlugin);
 end;
 
 procedure TFRE_Testserver.GenerateDataCenterData;
