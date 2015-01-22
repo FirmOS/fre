@@ -238,7 +238,7 @@ begin
     with grid do begin
       SetDeriveParent(conn.GetMachinesCollection);
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_ServicesMenu),nil,CWSF(@WEB_ServicesSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',CWSF(@WEB_ServicesMenu),nil,CWSF(@WEB_ServicesSC));
       SetParentToChildLinkField ('<SERVICEPARENT');
       SetDefaultOrderField('displayname',true);
     end;

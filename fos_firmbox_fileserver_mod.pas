@@ -195,7 +195,7 @@ begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       Filters.AddSchemeObjectFilter('service',['TFRE_DB_VIRTUAL_FILESERVER']);
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSMenu),nil,CWSF(@WEB_VFSSC));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_VFSMenu),nil,CWSF(@WEB_VFSSC));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -213,7 +213,7 @@ begin
       Filters.AddSchemeObjectFilter('service',['TFRE_DB_VIRTUAL_FILESHARE']);
       SetUseDependencyAsRefLinkFilter(['TFRE_DB_VIRTUAL_FILESHARE<FILESERVER'],false,'uid');
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_VFSShareMenu),nil,CWSF(@WEB_VFSShareSC));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_VFSShareMenu),nil,CWSF(@WEB_VFSShareSC));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -226,7 +226,7 @@ begin
     with vfs_customers do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_CUSTOMERS_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
       Filters.AddStdClassRightFilter('rights','servicedomain','','','TFRE_DB_VIRTUAL_FILESHARE',[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
     end;

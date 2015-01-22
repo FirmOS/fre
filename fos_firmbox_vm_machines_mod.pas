@@ -219,7 +219,7 @@ begin
     isos:= session.NewDerivedCollection('VM_ISOS_DERIVED');
     with isos do begin
       SetDeriveTransformation(tr_Grid);
-      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDisplayType(cdt_Listview,[],'');
       SetDeriveParent(isosp);
     end;
 
@@ -230,7 +230,7 @@ begin
     disks:= session.NewDerivedCollection('VM_DISKS_DERIVED');
     with disks do begin
       SetDeriveTransformation(tr_Grid);
-      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDisplayType(cdt_Listview,[],'');
       SetDeriveParent(diskp);
     end;
   end;
@@ -408,7 +408,7 @@ begin
       SetDeriveParent(conn.GetCollection('datalink'));
       SetDeriveTransformation(datalink_tr_Grid);
       Filters.AddBooleanFieldFilter('showvirtual','showvirtual',true);
-      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
+      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
       SetParentToChildLinkField ('<PARENTID');
     end;
   end;
@@ -587,7 +587,7 @@ begin
     vmc  := session.NewDerivedCollection('VMC');
     with VMC do begin
       SetDeriveTransformation(tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ColumnResizeable],'',nil,'',nil,nil,CWSF(@WEB_VMSC));
+      SetDisplayType(cdt_Listview,[cdgf_ColumnResizeable],'',nil,nil,CWSF(@WEB_VMSC));
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       Filters.AddSchemeObjectFilter('service',['TFRE_DB_VMACHINE']);
     end;
@@ -599,7 +599,7 @@ begin
     isos:= session.NewDerivedCollection('VM_CH_ISOS_DERIVED');
     with isos do begin
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDisplayType(cdt_Listview,[],'');
       SetDeriveParent(isosp);
     end;
 
@@ -610,7 +610,7 @@ begin
     disks:= session.NewDerivedCollection('VM_CH_DISKS_DERIVED');
     with disks do begin
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDisplayType(cdt_Listview,[],'');
       SetDeriveParent(disksp);
     end;
 
@@ -622,7 +622,7 @@ begin
     with scs do begin
       SetDeriveTransformation(transform);
       SetDefaultOrderField('order',true);
-      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDisplayType(cdt_Listview,[],'');
       SetDeriveParent(scsp);
     end;
 
@@ -634,7 +634,7 @@ begin
     with keyboards do begin
       SetDeriveTransformation(transform);
       SetDefaultOrderField('order',true);
-      SetDisplayType(cdt_Listview,[],'',TFRE_DB_StringArray.create('name'));
+      SetDisplayType(cdt_Listview,[],'');
       SetDeriveParent(keyboardsp);
     end;
 

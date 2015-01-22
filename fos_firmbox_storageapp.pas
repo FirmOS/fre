@@ -230,7 +230,7 @@ begin
       Filters.AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT);
       filters.AddSchemeObjectFilter('SCH',[TFRE_DB_NFS_FILESHARE.ClassName]);
       SetDeriveTransformation(nfs_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NFSMenu),nil,CWSF(@WEB_NFSContent));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_NFSMenu),nil,CWSF(@WEB_NFSContent));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,nfs_access_tr_Grid);
@@ -244,7 +244,7 @@ begin
 //      SetDeriveParent(conn.Collection('fileshare_access'));
       SetDeriveTransformation(nfs_access_tr_Grid);
 //      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_NFS_ACCESS.ClassName));
-      SetDisplayType(cdt_Listview,[],app.FetchAppTextShort(session,'nfs_access'),nil,'',CWSF(@WEB_NFSAccessMenu),nil,nil,nil,nil);
+      SetDisplayType(cdt_Listview,[],app.FetchAppTextShort(session,'nfs_access'),CWSF(@WEB_NFSAccessMenu),nil,nil,nil,nil);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,lun_tr_Grid);
@@ -261,7 +261,7 @@ begin
       Filters.AddUIDFieldFilter('Fileserver','fileserver',TFRE_DB_GUIDArray.Create(fileserverId),dbnf_EXACT);
       Filters.AddSchemeObjectFilter('SCH',[TFRE_DB_LUN.ClassName]);
       SetDeriveTransformation(lun_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_LUNMenu),nil,CWSF(@WEB_LUNContent));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',CWSF(@WEB_LUNMenu),nil,CWSF(@WEB_LUNContent));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,lun_view_tr_Grid);
@@ -275,7 +275,7 @@ begin
 //      SetDeriveParent(conn.Collection('fileshare_access'));
       SetDeriveTransformation(lun_view_tr_Grid);
 //      AddSchemeFilter('SCH',TFRE_DB_StringArray.Create(TFRE_DB_LUN_VIEW.ClassName));
-      SetDisplayType(cdt_Listview,[],app.FetchAppTextShort(session,'lun_view'),nil,'',CWSF(@WEB_LUNViewMenu),nil,nil,nil,nil);
+      SetDisplayType(cdt_Listview,[],app.FetchAppTextShort(session,'lun_view'),CWSF(@WEB_LUNViewMenu),nil,nil,nil,nil);
     end;
 
   end;
@@ -883,7 +883,7 @@ begin
     with snap_dc do begin
       SetDeriveParent(conn.GetCollection('snapshot'));
       SetDeriveTransformation(snap_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_SnapshotMenu),nil,CWSF(@WEB_ContentSnapshot));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_SnapshotMenu),nil,CWSF(@WEB_ContentSnapshot));
     end;
   end;
 end;

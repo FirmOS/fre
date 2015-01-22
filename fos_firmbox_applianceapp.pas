@@ -194,7 +194,7 @@ begin
       SetDeriveTransformation(datalink_tr_Grid);
 //      AddBooleanFieldFilter('zoned','zoned',false);
       Filters.AddBooleanFieldFilter('showglobal','showglobal',true);
-      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
+      SetDisplayType            (cdt_Listview,[cdgf_Children,cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',CWSF(@WEB_DatalinkMenu),nil,CWSF(@WEB_DatalinkContent));
       SetParentToChildLinkField ('<PARENTID');
     end;
 
@@ -207,7 +207,7 @@ begin
     with system_dc do begin
       SetDeriveParent(conn.GetCollection('setting'));
       SetDeriveTransformation(system_tr_Grid);
-      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_SYSTEMMenu),nil,CWSF(@WEB_SYSTEMContent));
+      SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_SYSTEMMenu),nil,CWSF(@WEB_SYSTEMContent));
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,fc_tr_Grid);
@@ -221,7 +221,7 @@ begin
     with fc_dc do begin
       SetDeriveParent(conn.GetCollection('hba'));
       SetDeriveTransformation(fc_tr_Grid);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',nil,'',CWSF(@WEB_FCMenu),nil,CWSF(@WEB_FCContent));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox,cdgf_ColumnDragable,cdgf_ColumnHideable,cdgf_ColumnResizeable],'',CWSF(@WEB_FCMenu),nil,CWSF(@WEB_FCContent));
     end;
 
   end;

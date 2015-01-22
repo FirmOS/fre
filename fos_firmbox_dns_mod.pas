@@ -716,7 +716,7 @@ begin
     with namesever_ch do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('host'));
+      SetDisplayType(cdt_Chooser,[],'');
       Filters.AddStringFieldFilter('TYPE_FILTER','type','NS',dbft_EXACT);
     end;
 
@@ -736,7 +736,7 @@ begin
     with domains_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('service',['TFOS_DB_PROVIDER_NETWORK_DOMAIN']);
     end;
@@ -757,7 +757,7 @@ begin
     with domains_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_NetworkDomainsMenu),nil,CWSF(@WEB_NetworkDomainsSC));
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('service',['TFOS_DB_NETWORK_DOMAIN']);
     end;
@@ -778,7 +778,7 @@ begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetUseDependencyAsRefLinkFilter(['<NETWORK_DOMAIN'],false,'uid');
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,'',CWSF(@WEB_ResourceRecordsMenu),nil,CWSF(@WEB_ResourceRecordsSC));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_ResourceRecordsMenu),nil,CWSF(@WEB_ResourceRecordsSC));
       SetDefaultOrderField('host',true);
       Filters.AddStringFieldFilter('TYPE_FILTER','type_native','NS',dbft_EXACT,false);
       Filters.AddStringFieldFilter('DEFAULT','host','@',dbft_EXACT,false);
@@ -794,7 +794,7 @@ begin
     with dns_customers do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_CUSTOMERS_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
     end;
 
@@ -816,7 +816,7 @@ begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetUseDependencyAsRefLinkFilter(['RECORDS>'],false,'uid');
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_NameserverMenu));
+      SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_NameserverMenu));
       SetDefaultOrderField('host',true);
       Filters.AddStringFieldFilter('TYPE_FILTER','type','NS',dbft_EXACT);
       Filters.AddSchemeObjectFilter('service',[TFOS_DB_PROVIDER_DNS_NAMESERVER_RECORD.ClassName]);
@@ -839,7 +839,7 @@ begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
       SetUseDependencyAsRefLinkFilter(['RECORDS>'],false,'uid');
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_NameserverMenu));
+      SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_NameserverMenu));
       if multidomain then begin
         SetDefaultOrderField('customer',true);
       end else begin

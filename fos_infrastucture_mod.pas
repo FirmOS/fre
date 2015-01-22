@@ -814,7 +814,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
       SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_DATASET_FILE.ClassName]);
       Filters.AddSchemeObjectFilter('schemes',[TFRE_DB_DATACENTER.ClassName,TFRE_DB_MACHINE.ClassName,TFRE_DB_ZFS_POOL.ClassName,TFRE_DB_GLOBAL_ZONE.ClassName,TFRE_DB_ZONE.ClassName,TFRE_DB_ZFS_DATASET_PARENT.ClassName,TFRE_DB_ZFS_DATASET_FILE.ClassName]);
     end;
@@ -828,7 +828,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_CUSTOMERS_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
       Filters.AddStdClassRightFilter('rights','servicedomain','','','TFRE_DB_ZONE',[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
     end;
@@ -843,7 +843,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_TEMPLATE_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
       Filters.AddBooleanFieldFilter('global','global',true,false);
       Filters.AddBooleanFieldFilter('deprecated','deprecated',true,false);
@@ -857,7 +857,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
     end;
 
@@ -872,7 +872,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetMachinesCollection);
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
     end;
 
@@ -888,7 +888,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
     end;
 
@@ -905,7 +905,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'',TFRE_DB_StringArray.create('objname'));
+      SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_ZFS_DATASET_PARENT.ClassName]);
     end;
@@ -922,7 +922,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',nil,'',CWSF(@WEB_ServicesGridMenu),nil,CWSF(@WEB_ServicesGridSC));
+      SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_ServicesGridMenu),nil,CWSF(@WEB_ServicesGridSC));
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('schemes',TFRE_DB_DATALINK.getAllDataLinkClasses,false);
     end;
