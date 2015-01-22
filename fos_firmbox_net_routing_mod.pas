@@ -280,17 +280,13 @@ var
   filterClasses: TFRE_DB_StringArray;
   hFilterClasses: TFRE_DB_StringArray;
 
-  procedure myHack(const input,transformed_object : IFRE_DB_Object);
+  procedure _setSortOrder(const input,transformed_object : IFRE_DB_Object);
   begin
-    if input.IsA(TFRE_DB_GLOBAL_ZONE) then
-      begin
-    //if transformed_object.Field('sc').AsString='TFRE_DB_GLOBAL_ZONE' then begin
-        transformed_object.Field('_sortorder_').AsString:='A'+input.Field('objname').AsString;
-      end
-    else
-      begin
-        transformed_object.Field('_sortorder_').AsString:='B'+input.Field('objname').AsString;
-      end;
+    if input.IsA(TFRE_DB_GLOBAL_ZONE) then begin
+      transformed_object.Field('_sortorder_').AsString:='A'+input.Field('objname').AsString;
+    end else begin
+      transformed_object.Field('_sortorder_').AsString:='B'+input.Field('objname').AsString;
+    end;
   end;
 
 
@@ -307,7 +303,7 @@ begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
-      SetSimpleFuncTransformNested(@MyHack);
+      SetSimpleFuncTransformNested(@_setSortOrder);
       SetFinalRightTransformFunction(@CalculateIcon,[]);
     end;
     dc := session.NewDerivedCollection('NET_ZONES_GRID');
