@@ -1510,6 +1510,7 @@ begin
   writeln('SWL: ZONE EMBEDDED',zone.DumpToString);
 
   job := TFRE_DB_ZONEDESTROY_JOB.create;
+  job.SetDomainID(zone.DomainID);
   job.SetZoneObject(zone);
 
   if ses.InvokeRemoteInterface(machine_uid,@job.RIF_Start,@GotAnswer,nil)=edb_OK then
@@ -1556,6 +1557,7 @@ begin
   writeln('SWL: ZONE EMBEDDED',zone.DumpToString);
 
   job := TFRE_DB_ZONECREATION_JOB.create;
+  job.SetDomainID(zone.DomainID);
   job.SetZoneObject(zone);
 
   if ses.InvokeRemoteInterface(machine_uid,@job.RIF_Start,@GotAnswer,nil)=edb_OK then

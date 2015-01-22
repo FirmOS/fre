@@ -496,6 +496,9 @@ begin
   //statscontroller.StartCacheParser(true);
   //statscontroller.StartZFSParser(true);
 
+  AddJobTransportCollectionAssignment(TFRE_DB_ZONE.ClassName,'');    // skip zones in transfer
+
+
   {$IFDEF SOLARIS}
   InitIllumosLibraryHandles;
   {$ENDIF}
