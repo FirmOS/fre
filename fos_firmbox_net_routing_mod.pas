@@ -24,6 +24,7 @@ type
     function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _delegateRightsCheck       (const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
+    procedure       _updateDatalinkGridTB      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
   protected
     procedure       SetupAppModuleStructure    ; override;
   public
@@ -187,9 +188,12 @@ begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_ZONE','datalinkParent')>0 then begin
+      exit; //already delegated
+    end;
     hcObj:=dbo.Implementor_HC;
     if hcObj is TFRE_DB_DATALINK_PHYS then begin //only if empty
-      if conn.GetReferencesCount(dbo.UID,false,'','datalinkParent')=0 then begin
+      if (conn.GetReferencesCount(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent')=0) and (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) then begin
         Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_PHYS.ClassName,conn);
       end;
     end else
@@ -198,6 +202,9 @@ begin
     end else
     if hcObj is TFRE_DB_DATALINK_SIMNET then begin
       Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_SIMNET.ClassName,conn);
+    end else
+    if hcObj is TFRE_DB_DATALINK_VNIC then begin
+      Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_VNIC.ClassName,conn);
     end;
   end;
 end;
@@ -217,6 +224,21 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TFRE_FIRMBOX_NET_ROUTING_MOD._updateDatalinkGridTB(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
+var
+  delDisabled     : Boolean;
+  delegateDisabled: Boolean;
+begin
+  delDisabled:=true;
+  if ses.GetSessionModuleData(ClassName).FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+    delDisabled:=not _canDelete(input,conn);
+    delegateDisabled:=not _canDelegate(input,conn);
+  end;
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delete',delDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delegate',delegateDisabled));
 end;
 
 class procedure TFRE_FIRMBOX_NET_ROUTING_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -551,20 +573,13 @@ begin
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_DatalinkGridSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  delDisabled     : Boolean;
-  delegateDisabled: Boolean;
 begin
-  delDisabled:=true;
   if input.FieldExists('selected') then begin
-    delDisabled:=not _canDelete(input,conn);
-    delegateDisabled:=not _canDelegate(input,conn);
     ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr:=input.Field('selected').AsStringArr;
   end else begin
     ses.GetSessionModuleData(ClassName).DeleteField('selected');
   end;
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delete',delDisabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delegate',delegateDisabled));
+  _updateDatalinkGridTB(input,ses,app,conn);
   Result:=GFRE_DB_NIL_DESC;
 end;
 
@@ -644,11 +659,12 @@ begin
 
   if dbo.DomainID<>zone.DomainID then begin
     dbo.SetDomainID(zone.DomainID);
-    dbo.Field('datalinkParent').AddObjectLink(zone.UID);
-    dbo.Field('serviceParent').AddObjectLink(zone.UID);
   end;
+  dbo.Field('datalinkParent').AddObjectLink(zone.UID);
+  dbo.Field('serviceParent').AddObjectLink(zone.UID);
 
   CheckDbResult(conn.Update(dbo));
+  _updateDatalinkGridTB(input,ses,app,conn);
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
