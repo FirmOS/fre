@@ -33,7 +33,6 @@ type
     procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
   published
     procedure       CalcZoneChooserLabel       (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
-    procedure       CalculateGridFields        (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     procedure       CalculateIcon              (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     function        WEB_Add                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -280,6 +279,21 @@ var
   i        : Integer;
   filterClasses: TFRE_DB_StringArray;
   hFilterClasses: TFRE_DB_StringArray;
+
+  procedure myHack(const input,transformed_object : IFRE_DB_Object);
+  begin
+    if input.IsA(TFRE_DB_GLOBAL_ZONE) then
+      begin
+    //if transformed_object.Field('sc').AsString='TFRE_DB_GLOBAL_ZONE' then begin
+        transformed_object.Field('_sortorder_').AsString:='A'+input.Field('objname').AsString;
+      end
+    else
+      begin
+        transformed_object.Field('_sortorder_').AsString:='B'+input.Field('objname').AsString;
+      end;
+  end;
+
+
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -293,7 +307,8 @@ begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
-      SetFinalRightTransformFunction(@CalculateGridFields,[]);
+      SetSimpleFuncTransformNested(@MyHack);
+      SetFinalRightTransformFunction(@CalculateIcon,[]);
     end;
     dc := session.NewDerivedCollection('NET_ZONES_GRID');
     with dc do begin
@@ -380,15 +395,6 @@ begin
   transformed_object.Field('label').AsString:=str;
 end;
 
-procedure TFRE_FIRMBOX_NET_ROUTING_MOD.CalculateGridFields(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
-begin
-  CalculateIcon(ut,transformed_object,session_data,langres);
-  if transformed_object.Field('sc').AsString='TFRE_DB_GLOBAL_ZONE' then begin
-    transformed_object.Field('_sortorder_').AsString:='A'+transformed_object.Field('objname').AsString;
-  end else begin
-    transformed_object.Field('_sortorder_').AsString:='B'+transformed_object.Field('objname').AsString;
-  end;
-end;
 
 procedure TFRE_FIRMBOX_NET_ROUTING_MOD.CalculateIcon(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
 begin
