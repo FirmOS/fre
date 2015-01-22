@@ -544,6 +544,9 @@ begin
   fre_ZFS.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
   fre_scsi.Register_DB_Extensions;
+
+  RegisterSupportedRifClass(TFRE_DB_ZONECREATION_JOB);
+  RegisterSupportedRifClass(TFRE_DB_ZONEDESTROY_JOB);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;

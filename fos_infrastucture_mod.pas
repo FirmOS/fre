@@ -101,6 +101,8 @@ type
     function        WEB_StoreService                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StartService                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StopService                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ZoneInstall                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ZoneUninstall                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -1206,6 +1208,13 @@ begin
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_add_service'),'');
 
+  sf:=CWSF(@WEB_ZoneInstall);
+  sf.AddParam.Describe('zoneId',zone.UID_String);
+  menu.AddEntry.Describe(FetchModuleTextShort(ses,'test_install_zone'),'',sf,false,'zone_install');       //FIXXXME only on non global zones, dependend on status planned
+  sf:=CWSF(@WEB_ZoneUninstall);
+  sf.AddParam.Describe('zoneId',zone.UID_String);
+  menu.AddEntry.Describe(FetchModuleTextShort(ses,'test_uninstall_zone'),'',sf,false,'zone_uninstall');       //FIXXXME only on non global zones, dependend on status planned
+
   CheckDbResult(conn.FetchAs(zone.Field('templateid').AsObjectLink,TFRE_DB_FBZ_TEMPLATE,template));
 
   for i := 0 to template.Field('serviceclasses').ValueCount -1 do begin
@@ -1469,6 +1478,98 @@ end;
 function TFOS_INFRASTRUCTURE_MOD.WEB_StopService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   Result:=GFRE_DB_NIL_DESC; //FIXXME
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneUninstall(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zone        : TFRE_DB_ZONE;
+  machine_uid : TFRE_DB_GUID;
+  job         : TFRE_DB_ZONEDESTROY_JOB;
+
+      procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
+      var stat : string;
+      begin
+        case status of
+          cdcs_OK:      stat := 'CMD_OK';
+          cdcs_TIMEOUT: stat := 'CMD_TIMEOUT';
+          cdcs_ERROR:   stat := 'CMD_ERROR';
+        end;
+        writeln('GOT ANSWER DEPLOY ZONE ',status,' ',new_input.DumpToString());
+        if status<>cdcs_OK then
+          begin
+            ses.SendServerClientRequest(TFRE_DB_MESSAGE_DESC.create.Describe('Result',stat+' '+new_input.GetAsJSONString(),fdbmt_info));
+          end;
+      end;
+
+begin
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
+
+  machine_uid := zone.MachineID;
+  zone.Embed(conn);
+
+  writeln('SWL: ZONE EMBEDDED',zone.DumpToString);
+
+  job := TFRE_DB_ZONEDESTROY_JOB.create;
+  job.SetZoneObject(zone);
+
+  if ses.InvokeRemoteInterface(machine_uid,@job.RIF_Start,@GotAnswer,nil)=edb_OK then
+    begin
+      result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+      exit;
+    end
+  else
+    begin
+      result := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','No connected feeder that implements the zone uninstall for '+zone.UID_String+' '+machine_uid.AsHexString,fdbmt_error);
+    end;
+
+//  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'deploy_infrastructure_zone_cap'),zone.UID_String+' '+machine_uid.AsHexString,fdbmt_info);
+
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneInstall(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zone        : TFRE_DB_ZONE;
+  machine_uid : TFRE_DB_GUID;
+  job         : TFRE_DB_ZONECREATION_JOB;
+
+      procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
+      var stat : string;
+      begin
+        case status of
+          cdcs_OK:      stat := 'CMD_OK';
+          cdcs_TIMEOUT: stat := 'CMD_TIMEOUT';
+          cdcs_ERROR:   stat := 'CMD_ERROR';
+        end;
+        writeln('GOT ANSWER INSTALL ZONE ',status,' ',new_input.DumpToString());
+        if status<>cdcs_OK then
+          begin
+            ses.SendServerClientRequest(TFRE_DB_MESSAGE_DESC.create.Describe('Result',stat+' '+new_input.GetAsJSONString(),fdbmt_info));
+          end;
+      end;
+
+begin
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
+
+  machine_uid := zone.MachineID;
+  zone.Embed(conn);
+
+  writeln('SWL: ZONE EMBEDDED',zone.DumpToString);
+
+  job := TFRE_DB_ZONECREATION_JOB.create;
+  job.SetZoneObject(zone);
+
+  if ses.InvokeRemoteInterface(machine_uid,@job.RIF_Start,@GotAnswer,nil)=edb_OK then
+    begin
+      result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+      exit;
+    end
+  else
+    begin
+      result := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','No connected feeder that implements the zone installation for '+zone.UID_String+' '+machine_uid.AsHexString,fdbmt_error);
+    end;
+
+//  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'deploy_infrastructure_zone_cap'),zone.UID_String+' '+machine_uid.AsHexString,fdbmt_info);
+
 end;
 
 end.
