@@ -206,7 +206,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_DATACENTER_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',nil,nil,CWSF(@WEB_MObjSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,nil,CWSF(@WEB_MObjSC));
       SetParentToChildLinkField ('<SERVICEPARENT',[TFRE_DB_ZFS_DATASET_FILE.ClassName]);
     end;
   end;
@@ -324,7 +324,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_MOS_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_Children],'',nil,'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',CWSF(@WEB_GridMenu),nil,CWSF(@WEB_GridSC));
       SetParentToChildLinkField ('<MOSPARENTIDS');
     end;
   end;
