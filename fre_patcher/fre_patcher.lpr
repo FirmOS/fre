@@ -1241,6 +1241,8 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     tel_id_46      : TFRE_DB_GUID;
     tel_id_48      : TFRE_DB_GUID;
     g_def_domain_id : TFRE_DB_GUID;
+    obj            : IFRE_DB_Object;
+    machine        : TFRE_DB_MACHINE;
 
     function       CreateDC(const name:string):TFRE_DB_GUID;
     var
@@ -1342,6 +1344,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       zone             : TFRE_DB_ZONE;
       newuid           : TFRE_DB_GUID;
       zds_id           : TFRE_DB_GUID;
+      zplugin          : TFRE_DB_ZONESTATUS_PLUGIN;
 
       procedure SetUid;
       begin
@@ -1373,8 +1376,12 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       zone.Field('hostid').AsObjectLink:=host_id;
       zone.SetDomainID(g_domain_id);
       zone.Field('uniquephysicalid').AsString:=zone.ObjectName+'@'+idx_postfix;
+
+      zplugin:=TFRE_DB_ZONESTATUS_PLUGIN.Create;
+      zone.AttachPlugin(zplugin);
+
+//      writeln('ZONE:',zone.DumpToString());
       result           := zone.UID;
- //     writeln('ZONE:',zone.DumpToString());
       writeln('SWL Create Zone:',name,' Domain:',zone.DomainID.AsHexString,' UID:',zone.UID.AsHexString);
       CheckDBResult(zcoll.Store(zone));
     end;
@@ -1784,7 +1791,11 @@ begin
   ClearCollectionifExists(CFOS_DB_DNS_RECORDS_COLLECTION);
 
   ClearCollectionifExists(CFOS_DB_SERVICES_COLLECTION,true);
+
+  RemoveObjLinks(conn.GetJobsCollection);
+  RemoveLinksifExists(CFOS_DB_ZONES_COLLECTION);
   zcoll.ClearCollection;
+
   ClearCollectionifExists(CFRE_DB_ZFS_DATASET_COLLECTION,true);
   pcoll.ClearCollection;
   tcoll.ClearCollection;
@@ -2206,10 +2217,15 @@ begin
   vf_id:=CreateCFiler(zone_id,'Test Crypto Fileserver');
   CreateShare(vf_id,pool_id,'syspool/domains/mydomain/newzone0/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
 
+  //CheckDbResult(conn.FetchI(host_id,obj));
+  //if obj.IsA(TFRE_DB_MACHINE,machine) then
+  //  begin
+  //    writeln(machine.WEB_REQUEST_SERVICE_STRUCTURE(nil,nil,nil,conn).DumpToString);
+  //  end;
 
   g_domain_id:=g_def_domain_id;
   dc_id := CreateDC('RZ FirmOS Office');
-  host_id  := CreateHost('Firmbox SSD',dc_id,'0c:c4:7a:14:1c:9a');
+  host_id  := CreateHost('FirmboxSSD',dc_id,'0c:c4:7a:14:1c:9a');
   zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
   pool_id  := CreatePool('syspool',host_id,rootds_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'0c:c4:7a:14:1c:9a','generic');
@@ -2218,7 +2234,16 @@ begin
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   domainsds_id  := CreateParentDatasetwithStructure('parentds','syspool',pool_id,rootds_id);
 
-  host_id  := CreateHost('Firmbox Office',dc_id,'00:25:90:ea:b5:e6');
+  g_domain_id := CheckFindDomainID('DEMO');
+  ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
+  zone_id  := CreateZone('demossd',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'4f9c496301de1573a5ea8d372e97c936');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:d3:59:da','mgmt','Mgmt Lan');
+  AddIPV4('10.1.0.118/24',link_id);
+  AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e1_id,0,1589,CFRE_DB_NullGUID,'02:08:20:52:58:6f','vm','VM 0');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e1_id,0,1589,CFRE_DB_NullGUID,'02:08:20:2d:18:0f','vm','VM 1');
+
+  host_id  := CreateHost('FirmboxOffice',dc_id,'00:25:90:ea:b5:e6');
   zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
   pool_id  := CreatePool('syspool',host_id,rootds_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:ea:b5:e6','generic');
