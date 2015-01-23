@@ -228,7 +228,7 @@ begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
-      Filters.AddStdClassRightFilter('rights','servicedomain','','','TFRE_DB_VIRTUAL_FILESHARE',[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
+      Filters.AddStdClassRightFilter('rights','servicedomain','','','TFRE_DB_VIRTUAL_FILESHARE',[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
     end;
   end;
 end;

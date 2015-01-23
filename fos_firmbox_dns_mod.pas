@@ -609,7 +609,7 @@ begin
       end else begin
         customer_dc:=ses.FetchDerivedCollection(CFOS_DB_DNS_CUSTOMERS_DCOLL);
         customer_dc.Filters.RemoveFilter('rights');
-        customer_dc.Filters.AddStdClassRightFilter('rights','servicedomain','','','TFOS_DB_DNS_NAMESERVER_RECORD',[sr_STORE],ses.GetDBConnection.SYS.GetCurrentUserTokenClone);
+        customer_dc.Filters.AddStdClassRightFilter('rights','servicedomain','','','TFOS_DB_DNS_NAMESERVER_RECORD',[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
         store:=customer_dc.GetStoreDescription as TFRE_DB_STORE_DESC;
 
         group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'nameserver_create_customer_group'));
@@ -1452,11 +1452,11 @@ begin
   customer_dc.Filters.RemoveFilter('rights');
 
   if input.Field(CPARAM_GLOBAL).AsString='true' then begin
-    customer_dc.Filters.AddStdClassRightFilter('rights','servicedomain','','','TFOS_DB_PROVIDER_NETWORK_DOMAIN',[sr_STORE],ses.GetDBConnection.SYS.GetCurrentUserTokenClone);
+    customer_dc.Filters.AddStdClassRightFilter('rights','servicedomain','','','TFOS_DB_PROVIDER_NETWORK_DOMAIN',[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
     Result:=WEB_AddNetworkDomainDetails(input,ses,app,conn);
     exit;
   end;
-  customer_dc.Filters.AddStdClassRightFilter('rights','servicedomain','','','TFOS_DB_NETWORK_DOMAIN',[sr_STORE],ses.GetDBConnection.SYS.GetCurrentUserTokenClone);
+  customer_dc.Filters.AddStdClassRightFilter('rights','servicedomain','','','TFOS_DB_NETWORK_DOMAIN',[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
 
   if (customer_dc.ItemCount=0) then begin
     Result:=WEB_AddNetworkDomainDetails(input,ses,app,conn);
