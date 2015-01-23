@@ -1446,6 +1446,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         ip.ObjectName:='DHCP';
         ip.Field('dhcp').asboolean:=true;
       end;
+      ip.Field('uniquephysicalid').AsString:=TFRE_DB_IPV4_HOSTNET.ClassName + '_' + ip.Field('objname').AsString + '@' + FREDB_G2H(parent_id);
 
       ip.Field('datalinkParent').AsObjectLink:=parent_id;
       ip.Field('serviceParent').AsObjectLink:=parent_id;
@@ -1471,6 +1472,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         ip.ObjectName:='SLAAC';
         ip.Field('slaac').asboolean:=true;
       end;
+      ip.Field('uniquephysicalid').AsString:=TFRE_DB_IPV4_HOSTNET.ClassName + '_' + ip.Field('objname').AsString + '@' + FREDB_G2H(parent_id);
 
       ip.Field('datalinkParent').AsObjectLink:=parent_id;
       ip.Field('serviceParent').AsObjectLink:=parent_id;
@@ -1491,6 +1493,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       r.ObjectName:=ip_mask;
       r.Field('zoneid').AsObjectLink:=zone_id;
       r.Field('serviceParent').AsObjectLink:=zone_id;
+      r.Field('uniquephysicalid').AsString:=TFRE_DB_IPV4_HOSTNET.ClassName + '_' + r.Field('objname').AsString + '@' + FREDB_G2H(zone_id);
       if description<>''  then
         begin
           r.Description:=GFRE_DBI.CreateText('$route',description);
@@ -1675,7 +1678,6 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
    end;
 
 begin
-  GenerateSearchDomains(false);
 
   FRE_DBBASE.Register_DB_Extensions;
   fre_dbbusiness.Register_DB_Extensions;
@@ -1687,11 +1689,6 @@ begin
   conn := GFRE_DB.NewConnection;
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
   GFRE_DB.Initialize_Extension_ObjectsBuild;
-
-//  GenerateSearchDomains(true);
-
-
-  g_domain_id:=conn.GetSysDomainUID;
 
   if not conn.CollectionExists(CFRE_DB_DATACENTER_COLLECTION) then
     begin
@@ -1815,6 +1812,9 @@ begin
       CheckDbResult(hcoll.DropIndex('pmac'));
     end;
   CheckDbResult(hcoll.DefineIndexOnField('provisioningmac',fdbft_String,true,true,'pmac',false));
+
+  //GenerateSearchDomains(false);
+  GenerateSearchDomains(true);
 
   g_domain_id     :=conn.GetSysDomainUID;
   g_def_domain_id :=conn.GetDefaultDomainUID;
