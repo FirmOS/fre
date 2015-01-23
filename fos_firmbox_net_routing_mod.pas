@@ -94,7 +94,7 @@ end;
 function TFRE_FIRMBOX_NET_ROUTING_MOD._getZoneDetails(const zone: TFRE_DB_ZONE; const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): TFRE_DB_CONTENT_DESC;
 var
   res         : TFRE_DB_VIEW_LIST_DESC;
-  dc          : IFRE_DB_DERIVED_COLLECTION;
+  dc,vdc      : IFRE_DB_DERIVED_COLLECTION;
   menu        : TFRE_DB_MENU_DESC;
   canAdd      : Boolean;
   template    : TFRE_DB_FBZ_TEMPLATE;
@@ -113,6 +113,9 @@ begin
 
   ses.GetSessionModuleData(ClassName).DeleteField('selected');
 
+  vdc:=ses.FetchDerivedCollection('VNIC_PARENT_CHOOSER');
+  vdc.Filters.RemoveFilter('zone');
+  vdc.Filters.AddUIDFieldFilter('zone','datalinkParent',zone.UID,dbnf_OneValueFromFilter,true,true);
   if isGlobal then begin
     dc:=ses.FetchDerivedCollection('DATALINK_GRID_GZ');
   end else begin
@@ -142,7 +145,7 @@ begin
         sf:=CWSF(@WEB_Add);
         sf.AddParam.Describe('serviceClass',serviceClass);
         sf.AddParam.Describe('zoneId',zone.UID_String);
-        submenu.AddEntry.Describe(conf.Field('caption').AsString,'',sf,conf.Field('OnlyOneServicePerZone').AsBoolean and (conn.GetReferencesCount(zone.UID,false,serviceClass,'serviceParent')>0),'add_'+serviceClass);
+        submenu.AddEntry.Describe(conf.Field('caption').AsString,'',sf,(serviceClass=TFRE_DB_DATALINK_VNIC.ClassName) and (vdc.ItemCount=0),'add_'+serviceClass);
       end;
     end;
   end;
@@ -272,6 +275,9 @@ begin
     CreateModuleText(conn,'info_details_select_one','Please select an object to get detailed information about it.');
 
     CreateModuleText(conn,'add_datalink_diag_cap','Add %datalink_str%');
+    CreateModuleText(conn,'add_datalink_diag_vnic_parent_group','Parent interface');
+    CreateModuleText(conn,'add_datalink_diag_vnic_parent','Interface');
+
     CreateModuleText(conn,'datalink_create_error_exists_cap','Error: Add datalink');
     CreateModuleText(conn,'datalink_create_error_exists_msg','A %datalink_str% datalink with the given name already exists!');
 
@@ -397,6 +403,22 @@ begin
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_GLOBAL_ZONE.ClassName],false);
     end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddOneToOnescheme('datalinkparent');
+      SetFinalRightTransformFunction(@CalcZoneChooserLabel,[FetchModuleTextShort(session,'delegate_interface_zone_value'),FetchModuleTextShort(session,'delegate_interface_zone_value_no_customer')]);
+    end;
+    dc := session.NewDerivedCollection('VNIC_PARENT_CHOOSER');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      SetDefaultOrderField('objname',true);
+      Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_DATALINK_PHYS.ClassName,TFRE_DB_DATALINK_STUB.ClassName,TFRE_DB_DATALINK_AGGR.ClassName,TFRE_DB_DATALINK_SIMNET.ClassName]);
+      Filters.AddStringFieldFilter('aggr','auid','',dbft_EXACT);
+    end;
   end;
 end;
 
@@ -443,31 +465,31 @@ var
   serviceClass: shortstring;
   exClass     : TFRE_DB_ObjectClassEx;
   conf        : IFRE_DB_Object;
+  group       : TFRE_DB_INPUT_GROUP_DESC;
+  dc          : IFRE_DB_DERIVED_COLLECTION;
 begin
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
   serviceClass:=input.Field('serviceClass').AsString;
   if not conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
+  exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
+  conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'add_datalink_diag_cap'),'%datalink_str%',conf.Field('caption').AsString,[rfReplaceAll]),600);
+  GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
   case serviceClass of
     'TFRE_DB_DATALINK_VNIC' : begin
-                                Result:=TFRE_DB_MESSAGE_DESC.create.Describe('Info','Not implemented yet!',fdbmt_warning);
+                                dc:=ses.FetchDerivedCollection('VNIC_PARENT_CHOOSER');
+                                group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'add_datalink_diag_vnic_parent_group'));
+                                group.AddChooser.Describe(FetchModuleTextShort(ses,'add_datalink_diag_vnic_parent'),'parentId',dc.GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
                               end
-    else begin
-      exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
-      conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
-      res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'add_datalink_diag_cap'),'%datalink_str%',conf.Field('caption').AsString,[rfReplaceAll]),600);
-      GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
-      res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
-
-      sf:=CWSF(@WEB_Store);
-      sf.AddParam.Describe('zoneId',zone.UID_String);
-      sf.AddParam.Describe('serviceClass',serviceClass);
-      res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
-
-      Result:=res;
-    end;
   end;
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  sf:=CWSF(@WEB_Store);
+  sf.AddParam.Describe('zoneId',zone.UID_String);
+  sf.AddParam.Describe('serviceClass',serviceClass);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  Result:=res;
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_Store(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -480,6 +502,7 @@ var
   conf        : IFRE_DB_Object;
   serviceClass: TFRE_DB_String;
   idx         : String;
+  vdc         : IFRE_DB_DERIVED_COLLECTION;
 begin
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
   if not conn.SYS.CheckClassRight4DomainId(sr_STORE,input.Field('serviceClass').AsString,zone.DomainID) then
@@ -501,15 +524,24 @@ begin
   GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
   dbo:=GFRE_DBI.NewObjectSchemeByName(serviceClass);
   dbo.Field('serviceParent').AsObjectLink:=zone.UID;
-  dbo.Field('datalinkParent').AsObjectLink:=zone.UID;
+  if serviceClass=TFRE_DB_DATALINK_VNIC.ClassName then begin
+    if not input.FieldPathExists('data.parentId') then
+      raise EFRE_DB_Exception.Create('Missing input parameter parentId!');
+    dbo.Field('datalinkParent').AsObjectLink:=FREDB_H2G(input.FieldPath('data.parentId').AsString);
+  end else begin
+    dbo.Field('datalinkParent').AsObjectLink:=zone.UID;
+  end;
   dbo.Field('uniquephysicalid').AsString:=idx;
   dbo.SetDomainID(zone.DomainID);
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dbo,true,conn);
 
   CheckDbResult(coll.Store(dbo));
 
-  if conf.Field('OnlyOneServicePerZone').AsBoolean then begin
-    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_'+serviceClass,true));
+  if serviceClass<>TFRE_DB_DATALINK_VNIC.ClassName then begin
+    vdc:=ses.FetchDerivedCollection('VNIC_PARENT_CHOOSER');
+    if (vdc.ItemCount>0) then begin
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_'+TFRE_DB_DATALINK_VNIC.ClassName,false));
+    end;
   end;
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
