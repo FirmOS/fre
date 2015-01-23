@@ -82,13 +82,17 @@ type
     servicedata           : IFRE_DB_Object;
     live_all              : IFRE_DB_Object;
     liveupdate_lock       : IFOS_LOCK;
+    service_coll_assign   : IFRE_DB_Object;
+
 
   private
     procedure  CCB_RequestDiskEncPoolData  (const DATA : IFRE_DB_Object ; const status:TFRE_DB_COMMAND_STATUS ; const error_txt:string);
     procedure  CCB_RequestServiceStructure (const DATA : IFRE_DB_Object ; const status:TFRE_DB_COMMAND_STATUS ; const error_txt:string);
+    procedure  CCB_SendStructureUpdate     (const DATA : IFRE_DB_Object ; const status:TFRE_DB_COMMAND_STATUS ; const error_txt:string);
     function   _VoipEntryCmd               (const cmd     : string; const input : IFRE_DB_Object) : IFRE_DB_Object;
     procedure  _MatchLinkStats             (const data : IFRE_DB_Object);
-    procedure  TestzoneCreation;
+    procedure  UpdateandSendZoneData;
+    procedure  TestzoneEnum;
   public
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  MySessionDisconnected   (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
@@ -137,6 +141,7 @@ begin
   GFRE_DBI.LogNotice(dblc_FLEXCOM,'CCB_RequestServiceStructure '+ inttostr(Ord(status)));
   case status of
     cdcs_OK: begin
+//      writeln('SWL SERVICE DATA STRUCTURE', data.DumpToString);
       servicedata_lock.Acquire;
       try
         servicedata := data.CloneToNewObject();
@@ -149,6 +154,17 @@ begin
        GFRE_BT.CriticalAbort('RequestServiceStructure Error - Server Returned Error: '+error_txt);
     end;
   end;
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.CCB_SendStructureUpdate(const DATA: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS;const error_txt: string);
+var machineUIDS:TFRE_DB_GUIDArray;
+begin
+  if status<>cdcs_OK then
+    begin
+      writeln('CCB STRUCTURE UPDATE STATUS',data.DumpToString(),' STATUS:',status,' ERROR:',error_txt);
+      machineUIDS:=GetMyMachineUIDs;
+      SendServerCommand('TFRE_DB_MACHINE','REQUEST_SERVICE_STRUCTURE',TFRE_DB_GUIDArray.Create(machineUIDS[0]),nil,@CCB_RequestServiceStructure);
+    end;
 end;
 
 function TFRE_BOX_FEED_CLIENT._VoipEntryCmd(const cmd: string; const input: IFRE_DB_Object): IFRE_DB_Object;
@@ -375,54 +391,94 @@ begin
   end;
 end;
 
-procedure TFRE_BOX_FEED_CLIENT.TestzoneCreation;
-var //zone : TFRE_DB_ZONE;
-    //uid : TFRE_DB_GUID;
-    obj   : IFRE_DB_Object;
+procedure TFRE_BOX_FEED_CLIENT.UpdateandSendZoneData;
+var ndata          : IFRE_DB_Object;
+    zdata          : IFRE_DB_Object;
+    zoneguid       : TFRE_DB_GUID;
+    transport_list : IFRE_DB_Object;
+
+    procedure UpdateZones(const obj:IFRE_DB_Object);
+    var structzone: TFRE_DB_ZONE;
+        sobj      : IFRE_DB_Object;
+        zname     : string;
+        zplugin   : TFRE_DB_ZONESTATUS_PLUGIN;
+    begin
+      zname := obj.Field('zname').asstring;
+      if zname='global' then
+        begin
+          //FIXXME handle global
+          exit;
+        end
+      else
+        begin
+          try
+            zoneguid.SetFromHexString(zname);
+            if ndata.FetchObjByUID(zoneguid,sobj)=false then
+              raise Exception.Create('ZONE '+zname+' NOT IN SERVICE STRUCTURE');
+          except
+            writeln('SKIP UNDEFINED ZONE ',zname);
+            exit;
+          end;
+        end;
+      if sobj.IsA(TFRE_DB_ZONE,structzone) then
+        begin
+          Writeln('SWL ZONE FOUND '+structzone.UID_String);
+          // update zonestatus plugin
+          if not structzone.HasPlugin(TFRE_DB_ZONESTATUS_PLUGIN,zplugin) then
+            begin
+              zplugin := TFRE_DB_ZONESTATUS_PLUGIN.Create;
+              structzone.AttachPlugin(zplugin);
+            end;
+          zplugin.SetZoneID(obj.Field('zid').AsInt64);
+          zplugin.SetZoneState(obj.Field('zstate').asstring,obj.Field('zstate_num').AsUInt32);
+          // error, valid, brand
+          structzone.Field('error').AsString  := obj.Field('error').asstring;
+          structzone.Field('valid').AsBoolean := obj.Field('valid').asboolean;
+          structzone.Field('zbrand').AsString := obj.Field('zbrand').asstring;
+          structzone.Field('zuuid').AsString  := obj.Field('zuuid').asstring;
+//          writeln('SWL ZONE UPDATED ',structzone.DumpToString);
+        end
+      else
+        raise Exception.Create('UID '+zoneguid.AsHexString+' IS NOT A ZONE IN THE SERVICE STRUCTURE');
+    end;
+
+begin
+{$IFDEF SOLARIS}
+  servicedata_lock.Acquire;
+  try
+
+    transport_list := GFRE_DBI.NewObject;
+    ndata          := servicedata.CloneToNewObject;
+
+    zdata := fre_list_all_zones;
+    zdata.ForAllObjects(@UpdateZones);
+
+    FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndata,servicedata,service_coll_assign,transport_list);
+
+    writeln('SWL ZONE TRANSPORT',transport_list.DumpToString);
+
+    if FREDIFF_ChangesGenerated(transport_list) then
+      SendServerCommand(FADCAdmin_FeedAppClass,'DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),transport_list,@CCB_SendStructureUpdate)
+    else
+      transport_list.Finalize;
+
+    servicedata.Finalize;
+    servicedata:=ndata;
+  finally
+    servicedata_lock.Release;
+  end;
+{$ENDIF}
+end;
+
+procedure TFRE_BOX_FEED_CLIENT.TestzoneEnum;
+var obj   : IFRE_DB_Object;
 begin
   {$IFDEF SOLARIS}
-  //zone := TFRE_DB_ZONE.CreateForDB;
-  //uid.SetFromHexString('da3589f766d26339955efa03278f865a');
-  //zone.SetDomainID(uid);
-  //uid.SetFromHexString('845116bce7d853cc75fbc08741dea522');
-  //zone.Field('UID').AsGUID:=uid;
-  //zone.ObjectName:='testzone';
-  //zone.Field('domainname').asstring        := 'testdomain';
-  //zone.Field('masterdatasetpath').asstring := '/syspool';
-  //zone.Field('masterdataset').asstring     := 'syspool';
-  //zone.Field('zonepath').asstring          := zone.Field('masterdatasetpath').asstring+'/domains/'+zone.DomainID.AsHexString+'/'+zone.UID.AsHexString;
-  //zone.Field('zonedataset').asstring       := zone.Field('masterdataset').asstring+'/domains/'+zone.DomainID.AsHexString+'/'+zone.UID.AsHexString;
-  //zone.Field('templatedataset').asstring   := 'syspool/template/fbz093';
-  //fre_create_zone(zone);
-  //writeln('zone created');
-  //readln;
-  //fre_destroy_zone(zone);
-  //writeln('zone destroyed');
-//  obj := GFRE_DBI.CreateFromFile('/opt/local/fre/hal/zone_15a56c904a7f00248929bfdb576a45c9.dbo');
-//  writeln('SWL:',obj.DumpToString());
-//  fre_create_zonecfg(obj);
-//  writeln('zonecfg created');
-//  readln;
-//  fre_install_zone(obj);
-//  writeln('zone installed');
-//  readln;
-//  fre_set_zonestate(obj.UID.AsHexString,ZONE_STATE_INSTALLED);
-//  writeln('zone set to installed');
-//  readln;
-//  fre_boot_zone(obj);
-//  writeln('zone booting');
-//  readln;
-//  fre_shutdown_zone(obj);
-//  writeln('zone shutdown');
-//  readln;
-//  fre_halt_zone(obj);
-//  writeln('zone halting');
-//  readln;
-//  fre_destroy_zone(obj);
-//  writeln('zone destroyed');
+  obj := fre_list_all_zones;
+  writeln('SWL ZONE LIST',obj.DumpToString);
   {$ENDIF}
 
-//  abort;
+  abort;
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
@@ -449,7 +505,7 @@ begin
     for i:=0 to high(machineUIDS) do begin
       GFRE_DBI.LogNotice(dblc_FLEXCOM,'SENDING REQUEST FOR MACHINE REQUEST_DISK_ENC_POOL_DATA '+FREDB_G2H(machineUIDS[i]));
       SendServerCommand('TFRE_DB_MACHINE','REQUEST_DISK_ENC_POOL_DATA',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestDiskEncPoolData);
-//      SendServerCommand('TFRE_DB_MACHINE','REQUEST_SERVICE_STRUCTURE',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestServiceStructure);
+      SendServerCommand('TFRE_DB_MACHINE','REQUEST_SERVICE_STRUCTURE',TFRE_DB_GUIDArray.Create(machineUIDS[i]),nil,@CCB_RequestServiceStructure);
     end;
   end else begin
     GFRE_DBI.LogError(dblc_FLEXCOM,'FEEDING NOT POSSIBLE, TFRE_FIRMBOX_STORAGE_APP APP NOT FOUND!');
@@ -502,11 +558,17 @@ begin
   {$IFDEF SOLARIS}
   InitIllumosLibraryHandles;
   {$ENDIF}
+
+//  TestzoneEnum;
+
+
   GFRE_TF.Get_Lock(liveupdate_lock);
   live_all := GFRE_DBI.NewObject;
   GFRE_TF.Get_Lock(servicedata_lock);
   servicedata:=GFRE_DBI.NewObject;
 
+  service_coll_assign:=GFRE_DBI.NewObject;
+  service_coll_assign.Field(TFRE_DB_ZONE.ClassName).asstring:=CFOS_DB_ZONES_COLLECTION;
 
   disk_hal   := TFRE_HAL_DISK_ENCLOSURE_POOL_MANAGEMENT.Create;
 
@@ -559,6 +621,8 @@ begin
 //  FEED_Timer.FinalizeIt;
 //  FEED_Timer30.FinalizeIt;
   //vmc.Finalize ;
+
+  service_coll_assign.Finalize;
 
   liveupdate_lock.Finalize;
   servicedata_lock.Finalize;
@@ -617,15 +681,16 @@ begin
   //
   if FStorage_Feeding then
     begin
-      //disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME);
       update_data:=disk_hal.GetUpdateDataAndTakeStatusSnaphot(cFRE_MACHINE_NAME);
-      if (update_data.Field(CDIFF_INSERT_LIST).ValueCount>0) or (update_data.Field(CDIFF_UPDATE_LIST).ValueCount>0) or (update_data.Field(CDIFF_DELETE_LIST).ValueCount>0) then
+      if  FREDIFF_ChangesGenerated(update_data) then
         begin
-          SendServerCommand(FADCAdmin_FeedAppClass,'DISK_DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),update_data,nil);
-          writeln('DISK_DATA_FEED SEND');
+          SendServerCommand(FADCAdmin_FeedAppClass,'DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),update_data,nil);
+          writeln('DISK DATA_FEED SEND');
         end
       else
         update_data.Finalize;
+
+      UpdateandSendZoneData;
 
       liveupdate_lock.Acquire;
       try
