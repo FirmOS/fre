@@ -109,7 +109,7 @@ type
     procedure   GenerateAutomaticWFSteps                ;
     procedure   MoveDomainCollecions                    ;
     procedure   GenerateDeviceData                      ;
-    procedure   GenerateDataCenterData                  ;
+    procedure   GenerateDataCenterData                  (const clearOnly: Boolean=false);
     procedure   ExportEmbeddedZones                     ;
     procedure   PoolConfig                              ;
     procedure   BoxconsoleData                          ;
@@ -201,23 +201,24 @@ begin
   _CheckAdminUserSupplied;
   _CheckAdminPassSupplied;
   case option of
-    'city1'        : PatchCity1;                //DONE (28.8)
-    'cityaddons'   : PatchCityAddons;           //DONE (28.8)
-    'cityobjs'     : PatchCityObjs;             //DONE (28.8)
-    'resetversions': PatchVersions;             //DONE (28.8)
+    'city1'          : PatchCity1;                //DONE (28.8)
+    'cityaddons'     : PatchCityAddons;           //DONE (28.8)
+    'cityobjs'       : PatchCityObjs;             //DONE (28.8)
+    'resetversions'  : PatchVersions;             //DONE (28.8)
     {$IFDEF FREMYSQL}
-    'importacc'    : ImportCitycomAccounts;     //DONE (28.8)
+    'importacc'      : ImportCitycomAccounts;     //DONE (28.8)
     {$ENDIF}
-    'genauto'      : GenerateAutomaticWFSteps;  //DONE (28.8)
-    'movedc'       : MoveDomainCollecions;
-    'devicedata'   : GenerateDeviceData;
-    'exportzones'  : ExportEmbeddedZones;
-    'gendatacenter': GenerateDatacenterData;
-    'poolconfig'   : PoolConfig;
-    'boxconsoledata'     : BoxconsoleData;
-    'jobtest'            : jobTest;
-    'attachplug'   : AttachDebugPlugin(true);
-    'detachplug'   : AttachDebugPlugin(false);
+    'genauto'        : GenerateAutomaticWFSteps;  //DONE (28.8)
+    'movedc'         : MoveDomainCollecions;
+    'devicedata'     : GenerateDeviceData;
+    'exportzones'    : ExportEmbeddedZones;
+    'gendatacenter'  : GenerateDatacenterData;
+    'cleardatacenter': GenerateDatacenterData(true);
+    'poolconfig'     : PoolConfig;
+    'boxconsoledata' : BoxconsoleData;
+    'jobtest'        : jobTest;
+    'attachplug'     : AttachDebugPlugin(true);
+    'detachplug'     : AttachDebugPlugin(false);
   end;
 end;
 
@@ -1203,7 +1204,7 @@ begin
     zcoll.ForAll(@DetachPlugin);
 end;
 
-procedure TFRE_Testserver.GenerateDataCenterData;
+procedure TFRE_Testserver.GenerateDataCenterData(const clearOnly: Boolean);
 var coll,dccoll    : IFRE_DB_COLLECTION;
     hcoll          : IFRE_DB_COLLECTION;
     tcoll          : IFRE_DB_COLLECTION;
@@ -1732,8 +1733,6 @@ begin
   else
     zcoll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
 
-  svc_coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);  { services per domain }
-
   if not conn.CollectionExists(CFRE_DB_IP_COLLECTION) then    { ip per domain }
     begin
      ipcoll:=conn.CreateCollection(CFRE_DB_IP_COLLECTION);
@@ -1769,12 +1768,7 @@ begin
   ClearCollectionifExists(CFRE_DB_ZFS_BLOCKDEVICE_COLLECTION);
   ClearCollectionifExists(CFRE_DB_ZFS_VDEV_COLLECTION,true);
 
-  extColl:=conn.GetCollection(CFOS_DB_VOIP_EXTENSIONS_COLLECTION);
-  hwColl:=conn.GetCollection(CFOS_DB_VOIP_HARDWARE_COLLECTION);
-
   sharecoll.ClearCollection;
-  extColl.ClearCollection;
-  hwColl.ClearCollection;
   rcoll.ClearCollection;
   ipcoll.ClearCollection;
 
@@ -1784,6 +1778,7 @@ begin
   ClearCollectionifExists(CFOS_DB_VOIP_EXT_EXP_REL_COLLECTION);
   ClearCollectionifExists(CFOS_DB_VOIP_EXTENSIONS_COLLECTION);
   ClearCollectionifExists(CFOS_DB_VOIP_PHONEBOOK_COLLECTION);
+  ClearCollectionifExists(CFOS_DB_VOIP_HARDWARE_COLLECTION);
 
   ClearCollectionifExists(CFOS_DB_DNS_RECORDS_COLLECTION);
 
@@ -1812,6 +1807,9 @@ begin
       CheckDbResult(hcoll.DropIndex('pmac'));
     end;
   CheckDbResult(hcoll.DefineIndexOnField('provisioningmac',fdbft_String,true,true,'pmac',false));
+
+  if clearOnly then exit;
+  svc_coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);  { services per domain }
 
   //GenerateSearchDomains(false);
   GenerateSearchDomains(true);
