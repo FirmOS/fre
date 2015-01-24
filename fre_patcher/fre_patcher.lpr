@@ -110,6 +110,8 @@ type
     procedure   MoveDomainCollecions                    ;
     procedure   GenerateDeviceData                      ;
     procedure   GenerateDataCenterData                  (const clearOnly: Boolean=false);
+    procedure   GenTemplates                            ;
+    procedure   GenTemplatesInt                         (const conn: IFRE_DB_CONNECTION; out global_tmpl_uid,fbz_tmpl_uid,root_tmpl_uid:TFRE_DB_GUID);
     procedure   ExportEmbeddedZones                     ;
     procedure   PoolConfig                              ;
     procedure   BoxconsoleData                          ;
@@ -213,6 +215,7 @@ begin
     'devicedata'     : GenerateDeviceData;
     'exportzones'    : ExportEmbeddedZones;
     'gendatacenter'  : GenerateDatacenterData;
+    'gentemplates'   : GenTemplates;
     'cleardatacenter': GenerateDatacenterData(true);
     'poolconfig'     : PoolConfig;
     'boxconsoledata' : BoxconsoleData;
@@ -1212,11 +1215,8 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     tcoll          : IFRE_DB_COLLECTION;
     conn           : TFRE_DB_CONNECTION;
     cc_cust        : TFOS_DB_CITYCOM_CUSTOMER;
-    tmpl           : TFRE_DB_FBZ_TEMPLATE;
     dc_id          : TFRE_DB_GUID;
     host_id        : TFRE_DB_GUID;
-    template_id    : TFRE_DB_GUID;
-    gz_template_id : TFRE_DB_GUID;
     zcoll          : IFRE_DB_COLLECTION;
     pcoll          : IFRE_DB_COLLECTION;
     pool_id        : TFRE_DB_GUID;
@@ -1244,8 +1244,11 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     tel_id_46      : TFRE_DB_GUID;
     tel_id_48      : TFRE_DB_GUID;
     g_def_domain_id : TFRE_DB_GUID;
-    obj            : IFRE_DB_Object;
-    machine        : TFRE_DB_MACHINE;
+    obj             : IFRE_DB_Object;
+    machine         : TFRE_DB_MACHINE;
+    global_tmpl_uid : TFRE_DB_GUID;
+    fbz_tmpl_uid    : TFRE_DB_GUID;
+    root_tmpl_uid   : TFRE_DB_GUID;
 
     function       CreateDC(const name:string):TFRE_DB_GUID;
     var
@@ -1825,54 +1828,14 @@ begin
   g_domain_id     :=conn.GetSysDomainUID;
   g_def_domain_id :=conn.GetDefaultDomainUID;
 
-  tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
-  tmpl.ObjectName:='GLOBAL';
-  tmpl.global:=true;
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_GLOBAL_FILESERVER.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_AGGR.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPMP.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_STUB.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
-  gz_template_id := tmpl.UID;
-  tmpl.SetDomainID(g_def_domain_id);
-  CheckDBResult(tcoll.Store(tmpl));
-
-
-  tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
-  tmpl.ObjectName:='FBZ095';
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_LDAP_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_VMACHINE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_SSH_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_VIRTUAL_FILESERVER.Classname);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DNS.Classname);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DHCP.Classname);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_VPN.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_IMAP_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_MTA_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_POSTGRES_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_MYSQL_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_HTTP_SERVICE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFOS_DB_CITYCOM_VOIP_SERVICE.ClassName);
-//  tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_PHPFPM_SERVICE.ClassName);
-  template_id := tmpl.UID;
-  tmpl.SetDomainID(g_def_domain_id);
-  CheckDBResult(tcoll.Store(tmpl));
+  GenTemplatesInt(conn,global_tmpl_uid,fbz_tmpl_uid,root_tmpl_uid);
 
   dc_id    := CreateDC('RZ Nord');
   host_id  := CreateHost('SNB02',dc_id,'00:25:90:f9:5a:0e');
 
   host_id  := CreateHost('ANord01',dc_id,'00:25:90:82:bf:ae');
   g_domain_id:=g_def_domain_id;
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'anord01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.102/25',ipmp_nfs);
   ipmp_drs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'drs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'anord01_ipmp_drs','mgmt');
@@ -1906,38 +1869,38 @@ begin
 
   g_domain_id := g_def_domain_id;
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('boot1',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('boot1',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:50:4c:9c','cpe','Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::20/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:85:d9:ab','internet','Internet');
   AddIPV4('109.73.158.185/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
-  zone_id  := CreateZone('rzfiler',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'5ba8438d4d1f166f7348fcfa00129b52');
+  zone_id  := CreateZone('rzfiler',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'5ba8438d4d1f166f7348fcfa00129b52');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,ixgbe_id,0,0,CFRE_DB_NullGUID,'02:08:20:bc:85:cc','mgmt','Mgmt LAN');
   AddIPV4('10.54.3.239/24',link_id);
   AddRoutingIPV4('default','10.54.3.252',zone_id,'Default Route');
   vf_id:=CreateVFiler(zone_id,'Virtual Fileserver');
   CreateShare(vf_id,pool_id,'anord01disk/anord01ds/domains/'+g_domain_id.AsHexString+'/'+zone_id.AsHexString+'/zonedata/vfiler/rzintern','rzintern',0,0);
 
-  zone_id  := CreateZone('dbnord',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('dbnord',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,ixgbe_id,0,0,CFRE_DB_NullGUID,'02:08:20:3a:62:ce','mgmt','Mgmt LAN');
   AddIPV4('10.54.3.230/24',link_id);
   AddRoutingIPV4('default','10.54.3.252',zone_id,'Default Route');
 
-  zone_id  := CreateZone('guitest',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('guitest',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:e7:99:7d','internet','Internet');
   AddIPV4('109.73.158.188/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
-  zone_id  := CreateZone('ns1',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('ns1',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:15:83:8f','cpe','Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::11/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:a9:32:69','internet','Internet');
   AddIPV4('109.73.158.187/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
-  zone_id  := CreateZone('mysqlnord',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'06816a0017b9521f150fc53e9a3d4dc5');
+  zone_id  := CreateZone('mysqlnord',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'06816a0017b9521f150fc53e9a3d4dc5');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'int0',zone_id,oce0_id,0,448,CFRE_DB_NullGUID,'02:08:20:f5:ef:d0','int','Internal');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,oce0_id,0,0,CFRE_DB_NullGUID,'02:08:20:08:3a:fc','mgmt','Mgmt LAN');
   AddIPV4('10.54.3.220',link_id);
@@ -1945,13 +1908,13 @@ begin
 
   g_domain_id := CheckFindDomainID('GRAZETTA');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('grazetta',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('grazetta',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,363,CFRE_DB_NullGUID,'02:08:20:96:f2:03','lan','Lan');
   AddIPV4('192.168.50.5/24',link_id);
 
   g_domain_id := CheckFindDomainID('PRO-COMPETENCE');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('kmurz_a',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('kmurz_a',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:84:b2:0d','cpe','Crypto CPE');
   AddIPV6('',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:28:5d:11','internet','Internet');
@@ -1970,13 +1933,13 @@ begin
 
   g_domain_id := CheckFindDomainID('ZOESCHER');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('zoescher',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('zoescher',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1745,CFRE_DB_NullGUID,'02:08:20:c4:58:31','lan','Lan');
   AddIPV4('192.168.0.144/24',link_id);
 
   g_domain_id := CheckFindDomainID('DEMO');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('demo',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('demo',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a:8:9c','cpe','Crypto CPE');
   AddIPV6('',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1588,CFRE_DB_NullGUID,'02:08:20:2f:3b:3c','internet','Internet');
@@ -2004,20 +1967,20 @@ begin
 
   g_domain_id:=g_def_domain_id;
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('rsync0',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'23014325c44ae24f7d06939cab6c6de5');
+  zone_id  := CreateZone('rsync0',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'23014325c44ae24f7d06939cab6c6de5');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicrsync0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:bc:85:c9','internet','Internet');
   AddIPV4('109.73.158.190/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
 
   g_domain_id := CheckFindDomainID('CORTI');  //f1289bf93586c97f8a505b6ef801e89f
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('corti',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'f10d590ee94e7540e881dffb8f714fbc');
+  zone_id  := CreateZone('corti',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'f10d590ee94e7540e881dffb8f714fbc');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:4b:eb:3a','lan','Lan');
   AddIPV4('192.168.0.18/24',link_id);
 
   g_domain_id := CheckFindDomainID('ALICONA');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('alicona',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'ac3d29b3cd1b2daf213449c08b209426');
+  zone_id  := CreateZone('alicona',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'ac3d29b3cd1b2daf213449c08b209426');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1772,CFRE_DB_NullGUID,'02:08:20:c4:58:FF','lan','Lan');
   AddIPV4('10.10.10.10/24',link_id);
   vf_id:=CreateVFiler(zone_id,'Virtual Fileserver');
@@ -2025,7 +1988,7 @@ begin
 
   g_domain_id:=g_def_domain_id;
   host_id  := CreateHost('SNord01',dc_id,'00:25:90:82:c0:0c');
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:c0:0c','mgmt');
   AddIPV4('',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:c0:0d','mgmt');
@@ -2033,7 +1996,7 @@ begin
 
   host_id  := CreateHost('FSNord01',dc_id,'00:25:90:8a:c7:c0');
   pool_id  := CreatePool('nordp',host_id,rootds_id);
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'fsnord01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.100/25',ipmp_nfs);
   AddIPV4('10.54.250.200/25',ipmp_nfs);
@@ -2072,7 +2035,7 @@ begin
   host_id  := CreateHost('ASued01',dc_id,'00:25:90:8a:cb:e2');
   pool_id  := CreatePool('asued01disk',host_id,rootds_id);
   domainsds_id    := CreateParentDatasetwithStructure('asued01ds','asued01disk',pool_id,rootds_id);
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'asued01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.112/25',ipmp_nfs);
   ipmp_drs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'drs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'asued01_ipmp_drs','mgmt');
@@ -2101,25 +2064,25 @@ begin
 
   g_domain_id:=g_def_domain_id;
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('ns2',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('ns2',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:bf:8c:ae','cpe','Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705::12/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:16:a3:b3','internet','Internet');
   AddIPV4('109.73.158.189/28',link_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
-  zone_id  := CreateZone('mysqlsued',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'330d67552799157633cd894b1c835b1b');
+  zone_id  := CreateZone('mysqlsued',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'330d67552799157633cd894b1c835b1b');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'int0',zone_id,oce0_id,0,448,CFRE_DB_NullGUID,'02:08:20:c9:5c:00','int','Internal');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,oce0_id,0,0,CFRE_DB_NullGUID,'02:8:20:63:c6:32','mgmt','Mgmt LAN');
   AddIPV4('10.54.3.221',link_id);
   AddRoutingIPV4('default','10.54.3.252',zone_id,'Default Route');
 
-  zone_id  := CreateZone('test',ds_id,host_id,FREDB_G2H(g_domain_id),template_id);
+  zone_id  := CreateZone('test',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1758,CFRE_DB_NullGUID,'02:08:20:c9:f3:6a','lan');
   domainsds_id := CreateParentDatasetwithStructure('nas02ds','asued01disk',pool_id,rootds_id);
 
   g_domain_id:=g_def_domain_id;
   host_id  := CreateHost('SSued01',dc_id,'00:25:90:82:c0:04');
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:c0:04','mgmt');
   AddIPV4('',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:c0:05','mgmt');
@@ -2127,7 +2090,7 @@ begin
 
   g_domain_id:=g_def_domain_id;
   host_id  := CreateHost('FSSued01',dc_id,'00:25:90:8a:c7:d8');
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   pool_id  := CreatePool('suedp',host_id,rootds_id);
   ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'fssued01_ipmp_nfs','mgmt');
   AddIPV4('10.54.250.110/25',ipmp_nfs);
@@ -2165,7 +2128,7 @@ begin
   host_id  := CreateHost('DRS',dc_id,'00:25:90:8a:c3:2e');
   pool_id  := CreatePool('drsdisk',host_id,rootds_id);
   pool_id  := CreatePool('rpool',host_id,rootds_id);
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   ipmp_drs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'drs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'drs_ipmp_drs','mgmt');
   AddIPV4('10.54.240.198/24',ipmp_drs);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:34:e2:7a','generic');
@@ -2189,7 +2152,7 @@ begin
   g_domain_id:=g_def_domain_id;
   dc_id := CreateDC('RZ Test');
   host_id  := CreateHost('VMFranz',dc_id,'00:50:56:38:61:33');
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   pool_id  := CreatePool('syspool',host_id,rootds_id);
   domainsds_id  := CreateParentDatasetwithStructure('parentds','syspool',pool_id,rootds_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'e1000g0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:50:56:38:61:33','generic');
@@ -2203,7 +2166,7 @@ begin
 
   g_domain_id := CheckFindDomainID('DEMO');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('demo2',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'15a56c904a7f00248929bfdb576a45c9');
+  zone_id  := CreateZone('demo2',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'15a56c904a7f00248929bfdb576a45c9');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,e1_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a4:c6:7c','cpe','Crypto CPE');
   AddIPV6('fdd7:f47b:4605:0705:1:0:0:3/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,e0_id,0,1588,CFRE_DB_NullGUID,'02:08:20:e7:40:51','internet','Internet');
@@ -2232,7 +2195,7 @@ begin
   g_domain_id:=g_def_domain_id;
   dc_id := CreateDC('RZ FirmOS Office');
   host_id  := CreateHost('FirmboxSSD',dc_id,'0c:c4:7a:14:1c:9a');
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   pool_id  := CreatePool('syspool',host_id,rootds_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'0c:c4:7a:14:1c:9a','generic');
   AddIPV4('10.1.0.119/24',link_id);
@@ -2243,21 +2206,21 @@ begin
 
   g_domain_id := CheckFindDomainID('DEMO');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('demossd_a',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'4f9c496301de1573a5ea8d372e97c936');
+  zone_id  := CreateZone('demossd_a',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'4f9c496301de1573a5ea8d372e97c936');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'f0:e6:ad:72:5b:9c','mgmt','Mgmt Lan');
   AddIPV4('10.1.0.210/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'6c:e6:b1:19:0f:f7','vm','VM 0');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a8:a6:ab:2b:35:5b','vm','VM 1');
 
-  zone_id  := CreateZone('demossd_b',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'f59e0f209de79729e05c4e877bc4fc90');
+  zone_id  := CreateZone('demossd_b',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'f59e0f209de79729e05c4e877bc4fc90');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'20:bf:50:9a:5c:52','mgmt','Mgmt Lan');
   AddIPV4('10.1.0.211/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'90:09:6f:a1:fc:f4','vm','VM 0');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'18:a6:35:a1:29:fd','vm','VM 1');
 
-  zone_id  := CreateZone('demossd_c',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'461fe5b2d584f7a8a2a7c9b6ec10f8d0');
+  zone_id  := CreateZone('demossd_c',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'461fe5b2d584f7a8a2a7c9b6ec10f8d0');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a4:94:40:69:76:79','mgmt','Mgmt Lan');
   AddIPV4('10.1.0.212/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
@@ -2266,7 +2229,7 @@ begin
 
 
   host_id  := CreateHost('FirmboxOffice',dc_id,'00:25:90:ea:b5:e6');
-  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),gz_template_id);
+  zone_id  := CreateZone('global',host_id,host_id,FREDB_G2H(host_id),global_tmpl_uid);
   pool_id  := CreatePool('syspool',host_id,rootds_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:ea:b5:e6','generic');
   e0_id    := link_id;
@@ -2277,7 +2240,7 @@ begin
 
   g_domain_id := CheckFindDomainID('FIRMOS');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
-  zone_id  := CreateZone('officefiler',ds_id,host_id,FREDB_G2H(g_domain_id),template_id,'17694dfb5c317ebcb4aa1a9b9bdd93fd');
+  zone_id  := CreateZone('officefiler',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'17694dfb5c317ebcb4aa1a9b9bdd93fd');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:d3:59:ff','lan','Lan');
   AddIPV4('10.1.0.132/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
@@ -2297,6 +2260,94 @@ begin
   CreateExtension(voip_id,tel_id_22,'DW-40',40,'10.55.0.66','00:15:65:38:39:68','12345');
 
   conn.Free;
+end;
+
+procedure TFRE_Testserver.GenTemplates;
+var
+  conn            : IFRE_DB_CONNECTION;
+  global_tmpl_uid : TFRE_DB_GUID;
+  fbz_tmpl_uid    : TFRE_DB_GUID;
+  root_tmpl_uid   : TFRE_DB_GUID;
+
+begin
+  FRE_DBBASE.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
+  fos_citycom_base.Register_DB_Extensions;
+  fre_zfs.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  fos_citycom_voip_mod.Register_DB_Extensions;
+
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
+
+  GenTemplatesInt(conn,global_tmpl_uid,fbz_tmpl_uid,root_tmpl_uid);
+
+  conn.Finalize;
+end;
+
+procedure TFRE_Testserver.GenTemplatesInt(const conn: IFRE_DB_CONNECTION; out global_tmpl_uid, fbz_tmpl_uid, root_tmpl_uid: TFRE_DB_GUID);
+var tcoll :IFRE_DB_COLLECTION;
+    tmpl  : TFRE_DB_FBZ_TEMPLATE;
+    g_def_domain_id : TFRE_DB_GUID;
+begin
+  tcoll:=conn.GetCollection(CFRE_DB_TEMPLATE_COLLECTION);
+
+  g_def_domain_id := conn.GetDefaultDomainUID;
+
+  tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
+  tmpl.ObjectName:='GLOBAL';
+  tmpl.global:=true;
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_GLOBAL_FILESERVER.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_Routing.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_AGGR.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPMP.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_STUB.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
+  global_tmpl_uid := tmpl.UID;
+  tmpl.SetDomainID(g_def_domain_id);
+  CheckDBResult(tcoll.Store(tmpl));
+
+
+  tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
+  tmpl.ObjectName:='FBZ095ROOT';
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_VROOTSERVER.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_SSH_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
+  root_tmpl_uid := tmpl.UID;
+  tmpl.SetDomainID(g_def_domain_id);
+  CheckDBResult(tcoll.Store(tmpl));
+
+  tmpl := TFRE_DB_FBZ_TEMPLATE.CreateForDB;
+  tmpl.ObjectName:='FBZ095';
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_LDAP_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_VMACHINE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_SSH_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_VIRTUAL_FILESERVER.Classname);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DNS.Classname);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DHCP.Classname);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_VPN.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_IMAP_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_MTA_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_POSTGRES_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_MYSQL_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_HTTP_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFOS_DB_CITYCOM_VOIP_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_PHPFPM_SERVICE.ClassName);
+  fbz_tmpl_uid := tmpl.UID;
+  tmpl.SetDomainID(g_def_domain_id);
+  CheckDBResult(tcoll.Store(tmpl));
+
 end;
 
 procedure TFRE_Testserver.ExportEmbeddedZones;
