@@ -1226,6 +1226,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     domainsds_id   : TFRE_DB_GUID;
     zone_id        : TFRE_DB_GUID;
     svc_coll       : IFRE_DB_COLLECTION;
+    vmcomp_coll    : IFRE_DB_COLLECTION;
     link_id        : TFRE_DB_GUID;
     ipcoll         : IFRE_DB_COLLECTION;
     oce0_id        : TFRE_DB_GUID;
@@ -1249,6 +1250,8 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     global_tmpl_uid : TFRE_DB_GUID;
     fbz_tmpl_uid    : TFRE_DB_GUID;
     root_tmpl_uid   : TFRE_DB_GUID;
+    g_vmdisk_id     : TFRE_DB_GUID;
+    zone            : TFRE_DB_ZONE;
 
     function       CreateDC(const name:string):TFRE_DB_GUID;
     var
@@ -1297,7 +1300,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       ds.Field('uniquephysicalid').AsString:=ds.Field('mountpoint').AsString+'@'+FREDB_G2H(pool_id);
       ds.SetDomainID(g_domain_id);
       result           := ds.UID;
-      writeln('DATASET:',ds.DumpToString());
+//      writeln('DATASET:',ds.DumpToString());
       CheckDBResult(dscoll.Store(ds));
       writeln('SWL Created DataSet:',name,' ',path);
     end;
@@ -1345,6 +1348,33 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         raise Exception.Create('serviceparent for domain dataset is not a dataset');
     end;
 
+    function CreateZVol(const serviceparent_id:TFRE_DB_GUID;const dsname:string;const size_mb:integer):TFRE_DB_GUID;
+    var parentobj  : IFRE_DB_Object;
+        zvol       : TFRE_DB_ZFS_DATASET_ZVOL;
+        dataset    : TFRE_DB_ZFS_DATASET;
+    begin
+      if dscoll.Fetch(serviceparent_id,parentobj)=false then
+        raise Exception.Create('could not fetch vmdisk ds');
+      if parentobj.IsA(TFRE_DB_ZFS_DATASET,dataset) then
+        begin
+          zvol             := TFRE_DB_ZFS_DATASET_ZVOL.CreateForDB;
+          zvol.ObjectName  := zvol.UID_String;
+          zvol.Field('poolid').AsObjectLink := pool_id;
+          zvol.Field('serviceParent').AsObjectLink:=serviceparent_id;
+          zvol.Field('size_mb').AsUint32:=size_mb;
+          zvol.SetDesc(GFRE_DBI.CreateText('',dsname));
+          zvol.Field('uniquephysicalid').AsString:=dataset.Field('mountpoint').asstring+'/'+zvol.UID_String+'@'+FREDB_G2H(pool_id);
+          zvol.SetDomainID(g_domain_id);
+          result           := zvol.UID;
+          writeln('ZVOL:',zvol.DumpToString());
+          CheckDBResult(dscoll.Store(zvol));
+          writeln('SWL Created DataSet:',dsname);
+        end
+      else
+        raise Exception.Create('serviceparent for dataset is not a dataset');
+    end;
+
+
     function       CreateZone(const name:string; const serviceparent_id:TFRE_DB_GUID; const host_id:TFRE_DB_GUID; const idx_postfix: String; const template_id:TFRE_DB_GUID; const zone_id:string=''):TFRE_DB_GUID;
     var
       zone             : TFRE_DB_ZONE;
@@ -1374,6 +1404,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
           zone := TFRE_DB_ZONE.CreateForDB;
           SetUid;
           zds_id := CreateDataSetChild(serviceparent_id,zone.UID.AsHexString);
+          g_vmdisk_id := CreateDataSetChild(zds_id,'vmdisk');
           zone.Field('serviceParent').AsObjectLink:=zds_id;
         end;
       zone.ObjectName  := name;
@@ -1390,6 +1421,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       result           := zone.UID;
       writeln('SWL Create Zone:',name,' Domain:',zone.DomainID.AsHexString,' UID:',zone.UID.AsHexString);
       CheckDBResult(zcoll.Store(zone));
+
     end;
 
     function AddDatalink(const clname:string; const name: string; const zoneid:TFRE_DB_GUID; const datalinkparentid:TFRE_DB_GUID; const mtu:integer;const vlan:integer;const ipmpparent:TFRE_DB_GUID; uniquephysicalid:TFRE_DB_String;const networktype:TFRE_DB_String;const description:TFRE_DB_String=''): TFRE_DB_GUID;
@@ -1540,21 +1572,71 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     end;
 
 
-   procedure CreateVM(const zone_id:TFRE_DB_GUID; const name:string; const mgmt_ip:string; const port:integer);
-   var vm:TFRE_DB_VMACHINE;
+   procedure CreateVM(const zone_id:TFRE_DB_GUID; const name:string; const mgmt_ip:string; const port:integer; const vnic_id:TFRE_DB_GUID);
+   var vm     :TFRE_DB_VMACHINE;
+       vol1_id :TFRE_DB_GUID;
+       vol2_id :TFRE_DB_GUID;
+
+       vm_uid  :TFRE_DB_GUID;
+
+       disk    :TFRE_DB_VMACHINE_DISK;
+       net     :TFRE_DB_VMACHINE_NIC_VIRTIO;
+
    begin
+     vol1_id := CreateZVol(g_vmdisk_id,'Disk1',40960);
+     vol2_id := CreateZVol(g_vmdisk_id,'Disk2',61440);
+
      vm:=TFRE_DB_VMACHINE.CreateForDB;
      vm.SetDomainID(g_domain_id);
      vm.ObjectName:=name;
      vm.key:=name;
      vm.vncHost:=mgmt_ip;
      vm.vncPort:=port;
-     vm.state:='RUNNING';
-     vm.mtype:='KVM';
+     vm.MemoryMB:=4096;
+     vm.CpuCores:=4;
+     vm.CpuSockets:=2;
      vm.Field('serviceParent').AsObjectLink:=zone_id;
      vm.Field('zoneid').AsObjectLink:=zone_id;
      vm.Field('uniquephysicalid').asstring := zone_id.AsHexString+'_'+name;
+     vm_uid:=vm.UID;
+     writeln('CreateVM ',vm.DumpToString);
      CheckDbResult(svc_coll.Store(vm));
+
+     disk := TFRE_DB_VMACHINE_DISK_VIRTIO.CreateForDB;
+     disk.SetDomainID(g_domain_id);
+     disk.Field('index').AsInt16:=0;
+     disk.Field('zvol').AsObjectLink:=vol1_id;
+     disk.Field('serviceparent').AsObjectLink:=vm_uid;
+     disk.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'Disk1';
+     writeln('CreateVM DISK ',disk.DumpToString);
+     CheckDbResult(vmcomp_coll.Store(disk));
+
+     disk := TFRE_DB_VMACHINE_DISK_IDE.CreateForDB;
+     disk.Field('index').AsInt16:=1;
+     disk.SetDomainID(g_domain_id);
+     disk.Field('zvol').AsObjectLink:=vol2_id;
+     disk.Field('serviceparent').AsObjectLink:=vm_uid;
+     disk.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'Disk2';
+     writeln('CreateVM DISK ',disk.DumpToString);
+     CheckDbResult(vmcomp_coll.Store(disk));
+
+     disk := TFRE_DB_VMACHINE_DISK_ISO.CreateForDB;
+     disk.Field('index').AsInt16:=2;
+     disk.SetDomainID(g_domain_id);
+//     disk.Field('zvol').AsObjectLink:=vol1_id;
+     disk.Field('serviceparent').AsObjectLink:=vm_uid;
+     disk.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'ISO1';
+     writeln('CreateVM DISK ',disk.DumpToString);
+     CheckDbResult(vmcomp_coll.Store(disk));
+
+     net := TFRE_DB_VMACHINE_NIC_VIRTIO.CreateForDB;
+     net.SetDomainID(g_domain_id);
+     net.Field('vm_vlan').AsInt16:=0;
+     net.Field('serviceparent').AsObjectLink:=vm_uid;
+     net.Field('nic').AsObjectLink:=vnic_id;
+     net.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'Net1';
+     writeln('CreateVM NET ',net.DumpToString);
+     CheckDbResult(vmcomp_coll.Store(net));
    end;
 
    procedure CreateShare(const fileserver_id:TFRE_DB_GUID; const pool_id:TFRE_DB_GUID;const ds:string; const sharename:string;const quota,rquota:integer);
@@ -1769,6 +1851,16 @@ begin
     sharecoll.DefineIndexOnField('objname',fdbft_String,true,true,'def',false);
   end;
 
+  if not conn.CollectionExists(CFRE_DB_VM_COMPONENTS_COLLECTION) then
+    begin
+     vmcomp_coll  := conn.CreateCollection(CFRE_DB_VM_COMPONENTS_COLLECTION);
+     vmcomp_coll.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false);
+    end
+  else
+    begin
+      vmcomp_coll  := conn.getCollection(CFRE_DB_VM_COMPONENTS_COLLECTION);
+    end;
+
   ClearCollectionifExists(CFRE_DB_SG_LOGS_COLLECTION);
   ClearCollectionifExists(CFRE_DB_DEVICE_IOSTAT_COLLECTION);
   ClearCollectionifExists(CFRE_DB_DEVICE_COLLECTION);
@@ -1793,7 +1885,9 @@ begin
 
   ClearCollectionifExists(CFOS_DB_DNS_RECORDS_COLLECTION);
 
+  ClearCollectionifExists(CFRE_DB_VM_COMPONENTS_COLLECTION,true);
   ClearCollectionifExists(CFOS_DB_SERVICES_COLLECTION,true);
+
 
   RemoveObjLinks(conn.GetJobsCollection);
   RemoveLinksifExists(CFOS_DB_ZONES_COLLECTION);
@@ -1925,11 +2019,11 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1591,CFRE_DB_NullGUID,'02:08:20:86:21:dd','lan','LAN');
   AddIPV4('192.168.2.1/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,oce0_id,0,1591,CFRE_DB_NullGUID,'02:08:20:44:dd:13','vm','VM 0');
+  CreateVM(zone_id,'qemuwin2','172.24.1.1',5900,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,oce0_id,0,1591,CFRE_DB_NullGUID,'02:08:20:e4:c9:7e','vm','VM 1');
+  CreateVM(zone_id,'qemulin1','172.24.1.1',5901,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,oce0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:45:87:d1','mgmt','Global NFS');
   AddIPV4('172.22.1.1/16',link_id);
-  CreateVM(zone_id,'qemuwin2','172.24.1.1',5900);
-  CreateVM(zone_id,'qemulin1','172.24.1.1',5901);
 
   g_domain_id := CheckFindDomainID('ZOESCHER');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
@@ -1950,11 +2044,11 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:79:55:84','lan','LAN');
   AddIPV4('192.168.3.1/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,oce0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:dd:68:d3','vm','VM 0');
+  CreateVM(zone_id,'qemuwin2','172.24.1.2',5900,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,oce0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:7d:3:42','vm','VM 1');
+  CreateVM(zone_id,'qemulin1','172.24.1.2',5901,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,oce0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:23:54:62','Global NFS');
   AddIPV4('172.22.1.2/16',link_id);
-  CreateVM(zone_id,'qemuwin2','172.24.1.2',5900);
-  CreateVM(zone_id,'qemulin1','172.24.1.2',5901);
   vf_id:=CreateVFiler(zone_id,'Demo Virtual Fileserver');
   CreateShare(vf_id,pool_id,'anord01disk/anord01ds/domains/demo/demo/zonedata/vfiler/sales','Sales',10240,10240);
   CreateShare(vf_id,pool_id,'anord01disk/anord01ds/domains/demo/demo/zonedata/vfiler/development','Development',10240,10240);
@@ -2173,10 +2267,10 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:d3:59:df','mgmt','Mgmt Lan');
   AddIPV4('10.1.0.89/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:52:58:69','vm','VM 0');
+  CreateVM(zone_id,'qemutest1','10.1.0.89',5900,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,e0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:3a:4c:16','lan','Lan');
   AddIPV4('192.168.3.1/24',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e1_id,0,1589,CFRE_DB_NullGUID,'02:08:20:52:58:69','vm','VM 0');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e1_id,0,1589,CFRE_DB_NullGUID,'02:08:20:2d:18:0a','vm','VM 1');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,e0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:a7:7b:de','mgmt','Global NFS');
   AddIPV4('172.22.1.2/16',link_id);
   vf_id:=CreateVFiler(zone_id,'Test Virtual Fileserver');
@@ -2185,6 +2279,14 @@ begin
   CreateShare(vf_id,pool_id,'syspool/domains/demo/demo/zonedata/vfiler/management','Management',10240,10240);
   vf_id:=CreateCFiler(zone_id,'Test Crypto Fileserver');
   CreateShare(vf_id,pool_id,'syspool/domains/mydomain/newzone0/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
+
+  //CheckDbResult(conn.FetchI(zone_id,obj));
+  //if obj.IsA(TFRE_DB_ZONE,zone) then
+  //  begin
+  //    zone.Embed(conn);
+  //    writeln('SWL EMBEDDED ZONE ',zone.DumpToString);
+  //    abort;
+  //  end;
 
   //CheckDbResult(conn.FetchI(host_id,obj));
   //if obj.IsA(TFRE_DB_MACHINE,machine) then
@@ -2211,7 +2313,9 @@ begin
   AddIPV4('10.1.0.210/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'6c:e6:b1:19:0f:f7','vm','VM 0');
+  CreateVM(zone_id,'qemulin1','10.1.0.210',5900,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a8:a6:ab:2b:35:5b','vm','VM 1');
+  CreateVM(zone_id,'qemulin2','10.1.0.220',5900,link_id);
 
   zone_id  := CreateZone('demossd_b',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'f59e0f209de79729e05c4e877bc4fc90');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'20:bf:50:9a:5c:52','mgmt','Mgmt Lan');
