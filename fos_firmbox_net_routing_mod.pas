@@ -21,6 +21,7 @@ type
     function        _getDetails                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
     function        _getZoneDetails            (const zone: TFRE_DB_ZONE; const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
     function        _canDelete                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canModify                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _canAddVNIC                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION):Boolean;
@@ -35,6 +36,7 @@ type
     function        _getZone                   (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; const preferGlobal: Boolean): TFRE_DB_ZONE;
     function        _isDelegated               (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
     procedure       _updateDatalinkGridTB      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
+    function        _getHostnetObjname         (const data: IFRE_DB_Object):String;
   protected
     procedure       SetupAppModuleStructure    ; override;
   public
@@ -50,6 +52,8 @@ type
     function        WEB_Store                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Delete                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DeleteConfirmed        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Modify                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreModify            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_GridMenu               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_GridSC                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DatalinkGridSC         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -128,6 +132,7 @@ var
   canAddVNIC       : Boolean;
   canMoveToAggr    : Boolean;
   canRemoveFromAggr:Boolean;
+  canModify        : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
   isGlobal:=(zone is TFRE_DB_GLOBAL_ZONE);
@@ -146,6 +151,7 @@ begin
 
   canAdd:=false;
   canDelete:=false;
+  canModify:=false;
   canDelegate:=false;
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_add'),'');
@@ -159,6 +165,7 @@ begin
     conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
     if conf.Field('type').AsString='datalink' then begin
       canDelete:=canDelete or conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID);
+      canModify:=canModify or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,serviceClass,zone.DomainID);
       canDelegate:=isGlobal and (canDelegate or _delegateRightsCheck(zone.DomainID,serviceClass,conn));
       if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
         canAdd:=true;
@@ -183,9 +190,12 @@ begin
     canRemoveFromAggr:=false;
   end;
 
-  if canAdd or canDelete or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr then begin
+  if canAdd or canDelete or canModify or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr then begin
     if not canAdd then begin
       menu:=TFRE_DB_MENU_DESC.create.Describe;
+    end;
+    if canModify then begin
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_modify'),'',CWSF(@WEB_Modify),true,'net_routing_modify');
     end;
     if canDelete then begin
       menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delete'),'',CWSF(@WEB_Delete),true,'net_routing_delete');
@@ -230,15 +240,25 @@ end;
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelete(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   dbo: IFRE_DB_Object;
-  zone: TFRE_DB_ZONE;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,dbo.Implementor_HC.ClassType,dbo.DomainID) and                                              //check rights
-            (conn.GetReferencesCount(dbo.UID,false)=0) and                                                                                          //no children
-            (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) and                                                  //not within aggregation
-            (ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean or not _isDelegated(dbo,conn));                                    //delegated obj not deletable in client zone
+    Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,dbo.Implementor_HC.ClassType,dbo.DomainID) and             //check rights
+            (conn.GetReferencesCount(dbo.UID,false)=0) and                                                         //no children
+            (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) and                 //not within aggregation
+            (ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean or not _isDelegated(dbo,conn));   //delegated obj not deletable in client zone
+  end;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canModify(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo: IFRE_DB_Object;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    Result:=conn.sys.CheckClassRight4DomainId(sr_UPDATE,dbo.Implementor_HC.ClassType,dbo.DomainID);                //check rights
   end;
 end;
 
@@ -506,10 +526,12 @@ var
   moveToAggrDisabled     : Boolean;
   removeFromAggrDisabled : Boolean;
   isGlobal               : Boolean;
+  modifyDisabled         : Boolean;
 begin
   isGlobal:=ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean;
 
   delDisabled:=true;
+  modifyDisabled:=true;
   delegateDisabled:=true;
   vnicDisabled:=true;
   ipv4Enabled:=false;
@@ -519,6 +541,7 @@ begin
   if ses.GetSessionModuleData(ClassName).FieldExists('selected') then begin
     input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
     delDisabled:=not _canDelete(input,ses,conn);
+    modifyDisabled:=not _canModify(input,ses,conn);
     vnicDisabled:=not _canAddVNIC(input,ses,conn);
     _canAddHostnet(input,conn,ipv4Enabled,ipv6Enabled);
     if isGlobal then begin
@@ -532,10 +555,25 @@ begin
     ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_move_to_aggr',moveToAggrDisabled));
     ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_remove_from_aggr',removeFromAggrDisabled));
   end;
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_modify',modifyDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delete',delDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_vnic',vnicDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_ipv4',not ipv4Enabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_ipv6',not ipv6Enabled));
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._getHostnetObjname(const data: IFRE_DB_Object): String;
+begin
+  Result:='';
+  if data.FieldExists('dhcp') and data.Field('dhcp').AsBoolean then begin
+    Result:='DHCP';
+  end else
+  if data.FieldExists('slaac') and data.Field('slaac').AsBoolean then begin
+    Result:='SLAAC';
+  end else
+  if data.FieldExists('ip_net') then begin
+    Result:=data.Field('ip_net').AsString;
+  end;
 end;
 
 class procedure TFRE_FIRMBOX_NET_ROUTING_MOD.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -566,6 +604,8 @@ begin
     CreateModuleText(conn,'tb_delegate','Delegate');
     CreateModuleText(conn,'cm_delete','Delete');
     CreateModuleText(conn,'cm_delegate','Delegate');
+    CreateModuleText(conn,'tb_modify','Modify');
+    CreateModuleText(conn,'cm_modify','Modify');
     CreateModuleText(conn,'tb_add_vnic','Add VNIC');
     CreateModuleText(conn,'cm_add_vnic','Add VNIC');
     CreateModuleText(conn,'tb_add_hostnet','Add Hostnet');
@@ -604,6 +644,13 @@ begin
 
     CreateModuleText(conn,'move_to_aggregation_diag_cap','Move to Aggregation');
     CreateModuleText(conn,'move_to_aggregation_chooser_cap','Aggregation');
+
+    CreateModuleText(conn,'datalink_modify_error_exists_cap','Error: Modify datalink');
+    CreateModuleText(conn,'datalink_modify_error_exists_msg','A %datalink_str% datalink with the given name already exists!');
+    CreateModuleText(conn,'vnic_modify_error_exists_cap','Error: Modify VNIC');
+    CreateModuleText(conn,'vnic_modify_error_exists_msg','A VNIC with the given name already exists within this zone!');
+    CreateModuleText(conn,'hostnet_modify_error_exists_cap','Error: Modify Hostnet');
+    CreateModuleText(conn,'hostnet_modify_error_exists_msg','A hostnet with the given properties already exists!');
   end;
 end;
 
@@ -885,9 +932,98 @@ begin
         ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_'+serviceClass,false));
       end;
     end;
+    ses.GetSessionModuleData(ClassName).DeleteField('selected');
   end;
-  ses.GetSessionModuleData(ClassName).DeleteField('selected');
   _updateDatalinkGridTB(input,ses,app,conn);
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_Modify(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo    : IFRE_DB_Object;
+  cap    : String;
+  res    : TFRE_DB_FORM_DIALOG_DESC;
+  scheme : IFRE_DB_SchemeObject;
+  sf     : TFRE_DB_SERVER_FUNC_DESC;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canModify(input,ses,conn) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+  if dbo.Implementor_HC is TFRE_DB_DATALINK then begin
+    cap:=StringReplace(FetchModuleTextShort(ses,'modify_datalink_diag_cap'),'%datalink_str%',(dbo.Implementor_HC as TFRE_DB_DATALINK).GetCaption(conn),[rfReplaceAll]);
+  end else begin
+    cap:=FetchModuleTextShort(ses,'modify_diag_cap');
+  end;
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(cap,600);
+  GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  res.FillWithObjectValues(dbo,ses);
+  sf:=CWSF(@WEB_StoreModify);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_StoreModify(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo      : IFRE_DB_Object;
+  scheme   : IFRE_DB_SchemeObject;
+  zone     : TFRE_DB_ZONE;
+  hcObj    : TObject;
+  idx      : String;
+  coll     : IFRE_DB_COLLECTION;
+  parentDbo: IFRE_DB_Object;
+  hnObjname: String;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canModify(input,ses,conn) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+  if input.FieldPathExists('data.objname') and (input.FieldPath('data.objname').AsString<>dbo.Field('objname').AsString) then begin
+    hcObj:=dbo.Implementor_HC;
+    zone:=_getZone(dbo,conn,true);
+    if hcObj is TFRE_DB_DATALINK_VNIC then begin
+      idx:=TFRE_DB_DATALINK_VNIC.ClassName + '_' + input.FieldPath('data.objname').AsString + '@' + zone.UID_String;
+      coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
+      if coll.ExistsIndexedText(idx)<>0 then begin
+        Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vnic_create_error_exists_cap'),FetchModuleTextShort(ses,'vnic_create_error_exists_msg'),fdbmt_error);
+        exit;
+      end;
+    end else
+    if hcObj is TFRE_DB_DATALINK then begin
+      idx:=hcObj.ClassName + '_' + input.FieldPath('data.objname').AsString + '@' + zone.UID_String;
+      coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
+      if coll.ExistsIndexedText(idx)<>0 then begin
+        Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'datalink_modify_error_exists_cap'),StringReplace(FetchModuleTextShort(ses,'datalink_modify_error_exists_msg'),'%datalink_str%',(hcObj as TFRE_DB_DATALINK).GetCaption(conn),[rfReplaceAll]),fdbmt_error);
+        exit;
+      end;
+    end;
+  end;
+  if (hcObj is TFRE_DB_IPV4_HOSTNET) or (hcObj is TFRE_DB_IPV6_HOSTNET) then begin
+    hnObjname:=_getHostnetObjname(input.Field('data').AsObject);
+    if (hnObjname<>dbo.Field('objname').AsString) then begin
+      dbo.Field('objname').AsString:=hnObjname;
+      CheckDbResult(conn.Fetch(dbo.UID,parentDbo));
+
+      idx:=hcObj.ClassName + '_' + dbo.Field('objname').AsString + '@' + parentDbo.UID_String;
+      coll:=conn.GetCollection(CFRE_DB_IP_COLLECTION);
+      if coll.ExistsIndexedText(idx)<>0 then begin
+        Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'hostnet_modify_error_exists_cap'),FetchModuleTextShort(ses,'hostnet_modify_error_exists_msg'),fdbmt_error);
+        exit;
+      end;
+    end;
+  end;
+
+  GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
+  scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dbo,false,conn);
+  CheckDbResult(conn.update(dbo));
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
@@ -922,6 +1058,11 @@ var
 begin
   isGlobal:=ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean;
   res:=TFRE_DB_MENU_DESC.create.Describe;
+  if _canModify(input,ses,conn) then begin
+    sf:=CWSF(@WEB_Modify);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify'),'',sf);
+  end;
   if _canDelete(input,ses,conn) then begin
     sf:=CWSF(@WEB_Delete);
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
@@ -1164,15 +1305,7 @@ begin
   serviceClass:=input.Field('serviceClass').AsString;
   GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
   hostnet:=GFRE_DBI.NewObjectSchemeByName(serviceClass);
-  if input.FieldPathExists('data.dhcp') and input.FieldPath('data.dhcp').AsBoolean then begin
-    hostnet.Field('objname').AsString:='DHCP';
-  end else
-  if input.FieldPathExists('data.slaac') and input.FieldPath('data.slaac').AsBoolean then begin
-    hostnet.Field('objname').AsString:='SLAAC';
-  end else
-  if input.FieldPathExists('data.ip_net') then begin
-    hostnet.Field('objname').AsString:=input.FieldPath('data.ip_net').AsString;
-  end;
+  hostnet.Field('objname').AsString:=_getHostnetObjname(input.Field('data').AsObject);
 
   if hostnet.Field('objname').AsString='' then
     raise EFRE_DB_Exception.Create('Missing input parameters (dhcp=true or slaac=true or ip_net<>'') to create objname!');
