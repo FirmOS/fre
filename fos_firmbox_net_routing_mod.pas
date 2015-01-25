@@ -32,7 +32,8 @@ type
     function        _canRemoveFromAggr         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canRemoveFromAggr         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _delegateRightsCheck       (const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
-    function        _getZone                   (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): TFRE_DB_ZONE;
+    function        _getZone                   (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; const preferGlobal: Boolean): TFRE_DB_ZONE;
+    function        _isDelegated               (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
     procedure       _updateDatalinkGridTB      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
   protected
     procedure       SetupAppModuleStructure    ; override;
@@ -132,7 +133,6 @@ begin
   isGlobal:=(zone is TFRE_DB_GLOBAL_ZONE);
 
   ses.GetSessionModuleData(ClassName).DeleteField('selected');
-  ses.GetSessionModuleData(ClassName).Field('selectedZoneId').AsString:=zone.UID_String;
   ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean:=isGlobal;
 
   if isGlobal then begin
@@ -230,6 +230,7 @@ end;
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelete(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   dbo: IFRE_DB_Object;
+  zone: TFRE_DB_ZONE;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
@@ -237,7 +238,7 @@ begin
     Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,dbo.Implementor_HC.ClassType,dbo.DomainID) and                                              //check rights
             (conn.GetReferencesCount(dbo.UID,false)=0) and                                                                                          //no children
             (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) and                                                  //not within aggregation
-            (conn.GetReferencesCount(dbo.UID,true,'','datalinkParent')>1) and ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean;  //delegated and client zone view
+            (ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean or not _isDelegated(dbo,conn));                                    //delegated obj not deletable in client zone
   end;
 end;
 
@@ -251,12 +252,14 @@ end;
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelegate(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
 var
   hcObj: TObject;
+  zone : TFRE_DB_ZONE;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_ZONE','datalinkParent')>0 then begin
-      exit; //already delegated
+    zone:=_getZone(dbo,conn,false);
+    if _isDelegated(dbo,conn) then begin //already delegated
+      exit;
     end;
     hcObj:=dbo.Implementor_HC;
     if (hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET) then begin //only if empty
@@ -284,9 +287,6 @@ begin
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canAddVNIC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
-var
-  zone     : TFRE_DB_ZONE;
-  parentDbo: IFRE_DB_Object;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
@@ -297,13 +297,11 @@ begin
       exit; //vinc can not be added to a vinc
     end;
 
-    CheckDbResult(conn.Fetch(dbo.Field('datalinkParent').AsObjectLinkArray[0],parentDbo));
-    if parentDbo.Implementor_HC is TFRE_DB_DATALINK_AGGR then begin
+    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
       exit; //vnic has to be added on the aggregation
     end;
 
-    CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedZoneId').AsString),TFRE_DB_ZONE,zone));
-    if (zone is TFRE_DB_GLOBAL_ZONE) and (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_ZONE','datalinkParent')>0) then begin
+    if _isDelegated(dbo,conn) then begin
       exit; //delegated interface - vnic has to be added there
     end;
   end;
@@ -318,15 +316,12 @@ begin
 end;
 
 procedure TFRE_FIRMBOX_NET_ROUTING_MOD._canAddHostnet(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var ipv4, ipv6: Boolean; var dbo: IFRE_DB_Object);
-var
-  parentDbo: IFRE_DB_Object;
 begin
   ipv4:=false;
   ipv6:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    CheckDbResult(conn.Fetch(dbo.Field('datalinkParent').AsObjectLinkArray[0],parentDbo));
-    if parentDbo.Implementor_HC is TFRE_DB_DATALINK_AGGR then begin
+    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
       exit; //hostnet has to be added on the aggregation
     end;
 
@@ -353,6 +348,7 @@ var
   dc   : IFRE_DB_DERIVED_COLLECTION;
   refs : TFRE_DB_GUIDArray;
   i    : Integer;
+  vnic : IFRE_DB_Object;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
@@ -363,13 +359,14 @@ begin
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_VNIC.ClassName,dbo.DomainID) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID) then begin
-      if conn.GetReferencesCount(dbo.UID,true,'','datalinkParent')>1 then begin
+      if _isDelegated(dbo,conn) then begin
         exit; //delegated
       end;
 
       refs:=conn.GetReferences(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent');
       for i := 0 to High(refs) do begin
-        if conn.GetReferencesCount(refs[i],true,'TFRE_DB_ZONE','datalinkParent')>0 then begin //at least on vnic is delegated
+        CheckDbResult(conn.Fetch(refs[i],vnic));
+        if _isDelegated(vnic,conn) then begin //at least on vnic is delegated
           exit;
         end;
       end;
@@ -411,7 +408,10 @@ begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     hcObj:=dbo.Implementor_HC;
     if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET)) then begin
-      zone:=_getZone(dbo,conn);
+      if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0 then begin
+        exit; //object is not within an aggregation
+      end;
+      zone:=_getZone(dbo,conn,true);
       if zone.DomainID=dbo.DomainID then begin
         Result:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID);
       end else begin
@@ -438,20 +438,62 @@ begin
   end;
 end;
 
-function TFRE_FIRMBOX_NET_ROUTING_MOD._getZone(const dbo: IFRE_DB_Object; const conn:IFRE_DB_CONNECTION): TFRE_DB_ZONE;
-var
-  parentObj : IFRE_DB_Object;
-  parentUids: TFRE_DB_ObjLinkArray;
-begin
-  parentObj:=dbo;
-  repeat
-    parentUids:=parentObj.Field('datalinkParent').AsObjectLinkArray;
-    CheckDbResult(conn.Fetch(parentUids[0],parentObj));
-    if (parentObj.Implementor_HC is TFRE_DB_GLOBAL_ZONE) and (Length(parentUids)>1) then begin //in case of 2 parents the other one should be a client zone
-      CheckDbResult(conn.Fetch(parentUids[1],parentObj));
+function TFRE_FIRMBOX_NET_ROUTING_MOD._getZone(const dbo: IFRE_DB_Object; const conn:IFRE_DB_CONNECTION; const preferGlobal: Boolean): TFRE_DB_ZONE;
+
+  function _checkParents(const dbo: IFRE_DB_Object): IFRE_DB_Object;
+  var
+    parentObj : IFRE_DB_Object;
+    parentUids: TFRE_DB_ObjLinkArray;
+    i         : Integer;
+  begin
+    parentUids:=dbo.Field('datalinkParent').AsObjectLinkArray;
+    for i := 0 to High(parentUids) do begin
+      CheckDbResult(conn.Fetch(parentUids[i],parentObj));
+      if parentObj.Implementor_HC is TFRE_DB_DATALINK_IPMP then continue; //skip IPMP paths
+      if not (parentObj.Implementor_HC is TFRE_DB_ZONE) then begin
+        Result:=_checkParents(parentObj);
+      end else begin
+        Result:=parentObj;
+      end;
+      if Result.Implementor_HC is TFRE_DB_GLOBAL_ZONE and preferGlobal then begin
+        exit; //global zone prefered and found
+      end;
+      if not (Result.Implementor_HC is TFRE_DB_GLOBAL_ZONE) and not preferGlobal then begin
+        exit; //client zone preferd and found
+      end;
     end;
-  until parentObj.Implementor_HC is TFRE_DB_ZONE;
-  Result:=parentObj.Implementor_HC as TFRE_DB_ZONE;
+  end;
+
+begin
+  Result:=_checkParents(dbo).Implementor_HC as TFRE_DB_ZONE;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._isDelegated(const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  zoneCount: Integer;
+
+  procedure _checkParents(const dbo: IFRE_DB_Object);
+  var
+    parentObj : IFRE_DB_Object;
+    parentUids: TFRE_DB_ObjLinkArray;
+    i         : Integer;
+  begin
+    parentUids:=dbo.Field('datalinkParent').AsObjectLinkArray;
+    for i := 0 to High(parentUids) do begin
+      CheckDbResult(conn.Fetch(parentUids[i],parentObj));
+      if parentObj.Implementor_HC is TFRE_DB_DATALINK_IPMP then continue; //skip IPMP paths
+      if (parentObj.Implementor_HC is TFRE_DB_ZONE) then begin
+        zoneCount:=zoneCount+1;
+      end else begin
+        _checkParents(parentObj);
+      end;
+    end;
+  end;
+
+begin
+  zoneCount:=0;
+  _checkParents(dbo);
+  Result:=zoneCount>1;
 end;
 
 procedure TFRE_FIRMBOX_NET_ROUTING_MOD._updateDatalinkGridTB(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
@@ -935,7 +977,7 @@ begin
   if not _canDelegate(input,conn,dbo) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  zone:=_getZone(dbo,conn);
+  _getZone(dbo,conn,true);
 
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'delegate_datalink_diag_cap'));
   dc:=ses.FetchDerivedCollection('ZONE_CHOOSER');
@@ -1051,7 +1093,7 @@ begin
   if not input.FieldPathExists('data.objname') then
     raise EFRE_DB_Exception.Create('Missing input parameter objname!');
 
-  zone:=_getZone(dbo,conn);
+  zone:=_getZone(dbo,conn,false);
   idx:=TFRE_DB_DATALINK_VNIC.ClassName + '_' + input.FieldPath('data.objname').AsString + '@' + zone.UID_String;
   coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   if coll.ExistsIndexedText(idx)<>0 then begin
@@ -1190,7 +1232,7 @@ begin
 
   aggrUid:=FREDB_H2G(input.FieldPath('data.aggr').AsString);
 
-  zone:=_getZone(dbo,conn);
+  zone:=_getZone(dbo,conn,true);
   dbo.Field('datalinkParent').RemoveObjectLinkByUID(zone.UID);
   dbo.Field('datalinkParent').AddObjectLink(aggrUid);
   dbo.Field('serviceParent').RemoveObjectLinkByUID(zone.UID);
@@ -1222,7 +1264,7 @@ begin
   if not _canRemoveFromAggr(input,conn,dbo) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  zone:=_getZone(dbo,conn);
+  zone:=_getZone(dbo,conn,true);
   refs:=conn.GetReferences(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent');
 
   if Length(refs)=0 then
