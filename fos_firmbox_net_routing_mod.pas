@@ -36,6 +36,10 @@ type
     function        _canMoveToBridge           (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _canRemoveFromBridge       (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canRemoveFromBridge       (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
+    function        _canLinkToIPMP             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canLinkToIPMP             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
+    function        _canUnlinkFromIPMP         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canUnlinkFromIPMP         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _delegateRightsCheck       (const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
     function        _getZone                   (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; const preferGlobal: Boolean): TFRE_DB_ZONE;
     function        _isDelegated               (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
@@ -74,6 +78,9 @@ type
     function        WEB_MoveToBridge           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreMoveToBridge      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_RemoveFromBridge       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_LinkToIPMP             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreLinkToIPMP        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_UnlinkFromIPMP         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_IFSC                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_ContentIF              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_SliderChanged          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -142,6 +149,8 @@ var
   canModify          : Boolean;
   canMoveToBridge    : Boolean;
   canRemoveFromBridge: Boolean;
+  canLinkToIPMP      : Boolean;
+  canUnlinkFromIPMP  : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
   isGlobal:=(zone is TFRE_DB_GLOBAL_ZONE);
@@ -162,6 +171,9 @@ begin
   dc.Filters.RemoveFilter('zone');
   dc.Filters.AddUIDFieldFilter('zone','zid',[zone.UID],dbnf_OneValueFromFilter);
   dc:=ses.FetchDerivedCollection('BRIDGE_CHOOSER');
+  dc.Filters.RemoveFilter('zone');
+  dc.Filters.AddUIDFieldFilter('zone','zid',[zone.UID],dbnf_OneValueFromFilter);
+  dc:=ses.FetchDerivedCollection('IPMP_CHOOSER');
   dc.Filters.RemoveFilter('zone');
   dc.Filters.AddUIDFieldFilter('zone','zid',[zone.UID],dbnf_OneValueFromFilter);
 
@@ -211,7 +223,13 @@ begin
 
   canRemoveFromBridge:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
 
-  if canAdd or canDelete or canModify or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr or canMoveToBridge or canRemoveFromBridge then begin
+  canLinkToIPMP:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
+                 conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
+  canLinkToIPMP:=canLinkToIPMP and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+
+  canUnlinkFromIPMP:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+
+  if canAdd or canDelete or canModify or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr or canMoveToBridge or canRemoveFromBridge or canLinkToIPMP or canUnlinkFromIPMP then begin
     if not canAdd then begin
       menu:=TFRE_DB_MENU_DESC.create.Describe;
     end;
@@ -260,6 +278,17 @@ begin
       if canRemoveFromAggr then begin
         sf:=CWSF(@WEB_RemoveFromBridge);
         submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_bridge_remove_from'),'',sf,true,'net_routing_remove_from_bridge');
+      end;
+    end;
+    if canLinkToIPMP or canUnlinkFromIPMP then begin
+      submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_ipmp'),'');
+      if canLinkToIPMP then begin
+        sf:=CWSF(@WEB_LinkToIPMP);
+        submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_ipmp_link_to'),'',sf,true,'net_routing_link_to_ipmp');
+      end;
+      if canUnlinkFromIPMP then begin
+        sf:=CWSF(@WEB_UnlinkFromIPMP);
+        submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_ipmp_unlink_from'),'',sf,true,'net_routing_unlink_from_ipmp');
       end;
     end;
     res.SetMenu(menu);
@@ -542,6 +571,59 @@ begin
   end;
 end;
 
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canLinkToIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo: IFRE_DB_Object;
+begin
+  Result:=_canLinkToIPMP(input,ses,conn,dbo);
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canLinkToIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+var
+  hcObj    : TObject;
+  dc       : IFRE_DB_DERIVED_COLLECTION;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    hcObj:=dbo.Implementor_HC;
+    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET)) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID) then begin
+
+      if conn.GetReferencesCount(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent')>0 then begin //only datalinks without vnics allowed
+        exit;
+      end;
+      if _isDelegated(dbo,conn) then begin //delegated datalinks can not be used
+        exit;
+      end;
+
+      dc:=ses.FetchDerivedCollection('IPMP_CHOOSER');
+      Result:=dc.ItemCount>0;
+    end;
+  end;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canUnlinkFromIPMP(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo: IFRE_DB_Object;
+begin
+  Result:=_canUnlinkFromIPMP(input,conn,dbo);
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canUnlinkFromIPMP(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_IPMP','datalinkParent')=0 then begin
+      exit; //object is not within an IPMP
+    end;
+    Result:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,dbo.Implementor_HC.ClassName,dbo.DomainID);
+  end;
+end;
+
 function TFRE_FIRMBOX_NET_ROUTING_MOD._delegateRightsCheck(const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   ddomains: TFRE_DB_GUIDArray;
@@ -628,6 +710,8 @@ var
   removeFromAggrDisabled    : Boolean;
   moveToBridgeDisabled      : Boolean;
   removeFromBridgeDisabled  : Boolean;
+  linkToIPMPDisabled        : Boolean;
+  unlinkFromIPMPDisabled    : Boolean;
   isGlobal                  : Boolean;
   modifyDisabled            : Boolean;
 begin
@@ -643,6 +727,8 @@ begin
   removeFromAggrDisabled:=true;
   moveToBridgeDisabled:=true;
   removeFromBridgeDisabled:=true;
+  linkToIPMPDisabled:=true;
+  unlinkFromIPMPDisabled:=true;
   if ses.GetSessionModuleData(ClassName).FieldExists('selected') then begin
     input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
     delDisabled:=not _canDelete(input,ses,conn);
@@ -651,6 +737,8 @@ begin
     _canAddHostnet(input,conn,ipv4Enabled,ipv6Enabled);
     moveToBridgeDisabled:=not _canMoveToBridge(input,ses,conn);
     removeFromBridgeDisabled:=not _canRemoveFromBridge(input,conn);
+    linkToIPMPDisabled:=not _canLinkToIPMP(input,ses,conn);
+    unlinkFromIPMPDisabled:=not _canUnlinkFromIPMP(input,conn);
     if isGlobal then begin
       moveToAggrDisabled:=not _canMoveToAggr(input,ses,conn);
       removeFromAggrDisabled:=not _canRemoveFromAggr(input,conn);
@@ -669,6 +757,8 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_ipv6',not ipv6Enabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_move_to_bridge',moveToBridgeDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_remove_from_bridge',removeFromBridgeDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_link_to_ipmp',linkToIPMPDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_unlink_from_ipmp',unlinkFromIPMPDisabled));
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._getHostnetObjname(const data: IFRE_DB_Object): String;
@@ -732,6 +822,11 @@ begin
     CreateModuleText(conn,'tb_bridge_remove_from','Remove from');
     CreateModuleText(conn,'cm_bridge_move_to','Move to bridge');
     CreateModuleText(conn,'cm_bridge_remove_from','Remove from bridge');
+    CreateModuleText(conn,'tb_ipmp','IPMP');
+    CreateModuleText(conn,'tb_ipmp_link_to','Link to');
+    CreateModuleText(conn,'tb_ipmp_unlink_from','Unlink from');
+    CreateModuleText(conn,'cm_ipmp_link_to','Link to IPMP');
+    CreateModuleText(conn,'cm_ipmp_unlink_from','Unlink from IPMP');
 
     CreateModuleText(conn,'info_details_select_one','Please select an object to get detailed information about it.');
 
@@ -761,6 +856,9 @@ begin
 
     CreateModuleText(conn,'move_to_bridge_diag_cap','Move to Bridge');
     CreateModuleText(conn,'move_to_bridge_chooser_cap','Bridge');
+
+    CreateModuleText(conn,'link_to_ipmp_diag_cap','Link to IPMP');
+    CreateModuleText(conn,'link_to_ipmp_chooser_cap','IPMP');
 
     CreateModuleText(conn,'datalink_modify_error_exists_cap','Error: Modify datalink');
     CreateModuleText(conn,'datalink_modify_error_exists_msg','A %datalink_str% datalink with the given name already exists!');
@@ -913,6 +1011,20 @@ begin
       SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_DATALINK_BRIDGE.ClassName]);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddMatchingReferencedField(['DATALINKPARENT>'],'uid','zid');
+    end;
+    dc := session.NewDerivedCollection('IPMP_CHOOSER');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      SetDefaultOrderField('objname',true);
+      Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_DATALINK_IPMP.ClassName]);
     end;
   end;
 end;
@@ -1239,6 +1351,16 @@ begin
     sf:=CWSF(@WEB_RemoveFromBridge);
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_bridge_remove_from'),'',sf);
+  end;
+  if _canLinkToIPMP(input,ses,conn) then begin
+    sf:=CWSF(@WEB_LinkToIPMP);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_ipmp_link_to'),'',sf);
+  end;
+  if _canUnlinkFromIPMP(input,conn) then begin
+    sf:=CWSF(@WEB_UnlinkFromIPMP);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_ipmp_unlink_from'),'',sf);
   end;
   Result:=res;
 end;
@@ -1634,6 +1756,71 @@ begin
   dbo.Field('serviceParent').RemoveObjectLinkByUID(bridgeDbo.UID);
   dbo.Field('datalinkParent').AddObjectLink(zone.UID);
   dbo.Field('serviceParent').AddObjectLink(zone.UID);
+
+  CheckDbResult(conn.Update(dbo));
+
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_LinkToIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  res         : TFRE_DB_FORM_DIALOG_DESC;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canLinkToIPMP(input,ses,conn) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'link_to_ipmp_diag_cap'),600,true,true,false);
+  res.AddChooser.Describe(FetchModuleTextShort(ses,'link_to_ipmp_chooser_cap'),'ipmp',ses.FetchDerivedCollection('IPMP_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
+  sf:=CWSF(@WEB_StoreLinkToIPMP);
+  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_StoreLinkToIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo       : IFRE_DB_Object;
+  ipmpUid   : TFRE_DB_GUID;
+begin
+  if not _canLinkToIPMP(input,ses,conn,dbo) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if not input.FieldPathExists('data.ipmp') then
+    raise EFRE_DB_Exception.Create('Missing input parameter ipmp!');
+
+  ipmpUid:=FREDB_H2G(input.FieldPath('data.ipmp').AsString);
+
+  dbo.Field('datalinkParent').AddObjectLink(ipmpUid);
+  dbo.Field('serviceParent').AddObjectLink(ipmpUid);
+
+  CheckDbResult(conn.Update(dbo));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_UnlinkFromIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo      : IFRE_DB_Object;
+  refs     : TFRE_DB_GUIDArray;
+  ipmpDbo  : IFRE_DB_Object;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canUnlinkFromIPMP(input,conn,dbo) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  refs:=conn.GetReferences(dbo.UID,true,'TFRE_DB_DATALINK_IPMP','datalinkParent');
+  if Length(refs)=0 then
+    raise EFRE_DB_Exception.Create('No ipmp datlink found for given object!');
+  CheckDbResult(conn.Fetch(refs[0],ipmpDbo));
+
+  dbo.Field('datalinkParent').RemoveObjectLinkByUID(ipmpDbo.UID);
+  dbo.Field('serviceParent').RemoveObjectLinkByUID(ipmpDbo.UID);
 
   CheckDbResult(conn.Update(dbo));
 
