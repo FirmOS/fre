@@ -223,21 +223,21 @@ begin
       exit; //already delegated
     end;
     hcObj:=dbo.Implementor_HC;
-    if hcObj is TFRE_DB_DATALINK_PHYS then begin //only if empty
+    if (hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET) then begin //only if empty
       if (conn.GetReferencesCount(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent')=0) and (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) then begin
-        Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_PHYS.ClassName,conn);
+        Result:=_delegateRightsCheck(dbo.DomainID,hcObj.ClassName,conn);
       end;
     end else
     if hcObj is TFRE_DB_DATALINK_AGGR then begin
-      Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_AGGR.ClassName,conn);
-    end else
-    if hcObj is TFRE_DB_DATALINK_SIMNET then begin
-      Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_SIMNET.ClassName,conn);
+      Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_AGGR.ClassName,conn) and
+              _delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_PHYS.ClassName,conn) and
+              _delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_SIMNET.ClassName,conn);
     end else
     if hcObj is TFRE_DB_DATALINK_VNIC then begin
       Result:=_delegateRightsCheck(dbo.DomainID,TFRE_DB_DATALINK_VNIC.ClassName,conn);
     end;
   end;
+  Result:=Result and _delegateRightsCheck(dbo.DomainID,TFRE_DB_IPV4_HOSTNET.ClassName,conn) and _delegateRightsCheck(dbo.DomainID,TFRE_DB_IPV6_HOSTNET.ClassName,conn);
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canAddVNIC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
@@ -534,6 +534,8 @@ begin
       SetDisplayType(cdt_Chooser,[],'');
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_GLOBAL_ZONE.ClassName],false);
+      Filters.AddStdClassRightFilter('rightsip4','domainid','','',TFRE_DB_IPV4_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+      Filters.AddStdClassRightFilter('rightsip6','domainid','','',TFRE_DB_IPV4_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
     end;
 
   end;
@@ -685,6 +687,8 @@ begin
       end;
     end;
   end;
+  ses.GetSessionModuleData(ClassName).DeleteField('selected');
+  _updateDatalinkGridTB(input,ses,app,conn);
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
@@ -768,9 +772,14 @@ begin
   dc:=ses.FetchDerivedCollection('ZONE_CHOOSER');
   dc.Filters.RemoveFilter('machine');
   dc.Filters.RemoveFilter('rights');
-  //dc.Filters.AddAutoDependencyFilter('machine',['TFRE_DB_MACHINE<HOSTID'],[parentObj.Field('hostid').AsObjectLink]);
+  dc.Filters.RemoveFilter('rightsPH');
+  dc.Filters.RemoveFilter('rightsSIM');
   dc.Filters.AddAutoDependencyFilter('machine',['<HOSTID'],[zone.Field('hostid').AsObjectLink]);
   dc.Filters.AddStdClassRightFilter('rights','domainid','','',dbo.Implementor_HC.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+  if dbo.Implementor_HC is TFRE_DB_DATALINK_AGGR then begin
+    dc.Filters.AddStdClassRightFilter('rightsPH','domainid','','',TFRE_DB_DATALINK_PHYS.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+    dc.Filters.AddStdClassRightFilter('rightsSIM','domainid','','',TFRE_DB_DATALINK_SIMNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+  end;
 
   if dc.ItemCount=0 then begin
     res.AddDescription.Describe('',FetchModuleTextShort(ses,'delegate_datalink_diag_no_zone_msg'));
@@ -785,8 +794,26 @@ end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_StoreDelegation(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  zone: TFRE_DB_ZONE;
-  dbo : IFRE_DB_Object;
+  zone    : TFRE_DB_ZONE;
+  dbo     : IFRE_DB_Object;
+  refs    : TFRE_DB_GUIDArray;
+  i       : Integer;
+  datalink: IFRE_DB_Object;
+
+  procedure _handleHostnets(const parentDbo: IFRE_DB_Object; const newDomainId: TFRE_DB_GUID);
+  var
+    i      : Integer;
+    hostnet: IFRE_DB_Object;
+    refs   : TFRE_DB_GUIDArray;
+  begin
+    refs:=conn.GetReferences(parentDbo.UID,false,'','datalinkParent');
+    for i := 0 to High(refs) do begin
+      CheckDbResult(conn.Fetch(refs[i],hostnet));
+      hostnet.SetDomainID(newDomainId);
+      CheckDbResult(conn.Update(hostnet));
+    end;
+  end;
+
 begin
   if not _canDelegate(input,conn,dbo) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
@@ -798,6 +825,17 @@ begin
 
   if dbo.DomainID<>zone.DomainID then begin
     dbo.SetDomainID(zone.DomainID);
+    if dbo.Implementor_HC is TFRE_DB_DATALINK_AGGR then begin
+      refs:=conn.GetReferences(dbo.UID,false,'','datalinkParent');
+      for i := 0 to High(refs) do begin //handle datalinks of the aggregation
+        CheckDbResult(conn.Fetch(refs[i],datalink));
+        datalink.SetDomainID(zone.DomainID);
+        CheckDbResult(conn.Update(datalink.CloneToNewObject()));
+        _handleHostnets(datalink,zone.DomainID);
+      end;
+    end else begin
+      _handleHostnets(dbo,zone.DomainID);
+    end;
   end;
   dbo.Field('datalinkParent').AddObjectLink(zone.UID);
   dbo.Field('serviceParent').AddObjectLink(zone.UID);
@@ -862,6 +900,7 @@ begin
 
   CheckDbResult(coll.Store(vnic));
 
+  _updateDatalinkGridTB(input,ses,app,conn);
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_AddHostnet(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -941,6 +980,7 @@ begin
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,hostnet,true,conn);
 
   CheckDbResult(coll.Store(hostnet));
+  _updateDatalinkGridTB(input,ses,app,conn);
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
