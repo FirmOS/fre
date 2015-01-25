@@ -19,14 +19,18 @@ type
   TFRE_FIRMBOX_NET_ROUTING_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     function        _getDetails                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
-    function        _getZoneDetails            (const zone: TFRE_DB_ZONE;const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
-    function        _canDelete                 (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _getZoneDetails            (const zone: TFRE_DB_ZONE; const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
+    function        _canDelete                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canDelegate               (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _canAddVNIC                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canAddVNIC                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     procedure       _canAddHostnet             (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var ipv4,ipv6: Boolean);
     procedure       _canAddHostnet             (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var ipv4,ipv6: Boolean; var dbo: IFRE_DB_Object);
+    function        _canMoveToAggr             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canMoveToAggr             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
+    function        _canRemoveFromAggr         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canRemoveFromAggr         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _delegateRightsCheck       (const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
     function        _getZone                   (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): TFRE_DB_ZONE;
     procedure       _updateDatalinkGridTB      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
@@ -55,6 +59,9 @@ type
     function        WEB_StoreVNIC              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddHostnet             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreHostnet           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_MoveToAggr             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreMoveToAggr        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RemoveFromAggr         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_IFSC                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_ContentIF              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_SliderChanged          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -102,28 +109,31 @@ end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._getZoneDetails(const zone: TFRE_DB_ZONE; const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): TFRE_DB_CONTENT_DESC;
 var
-  res          : TFRE_DB_VIEW_LIST_DESC;
-  dc           : IFRE_DB_DERIVED_COLLECTION;
-  menu         : TFRE_DB_MENU_DESC;
-  canAdd       : Boolean;
-  template     : TFRE_DB_FBZ_TEMPLATE;
-  i            : Integer;
-  serviceClass : String;
-  exClass      : TFRE_DB_ObjectClassEx;
-  conf         : IFRE_DB_Object;
-  sf           : TFRE_DB_SERVER_FUNC_DESC;
-  submenu      : TFRE_DB_SUBMENU_DESC;
-  canDelete    : Boolean;
-  canDelegate  : Boolean;
-  isGlobal     : Boolean;
-  canAddHostnet: Boolean;
-  canAddVNIC   : Boolean;
+  res              : TFRE_DB_VIEW_LIST_DESC;
+  dc               : IFRE_DB_DERIVED_COLLECTION;
+  menu             : TFRE_DB_MENU_DESC;
+  canAdd           : Boolean;
+  template         : TFRE_DB_FBZ_TEMPLATE;
+  i                : Integer;
+  serviceClass     : String;
+  exClass          : TFRE_DB_ObjectClassEx;
+  conf             : IFRE_DB_Object;
+  sf               : TFRE_DB_SERVER_FUNC_DESC;
+  submenu          : TFRE_DB_SUBMENU_DESC;
+  canDelete        : Boolean;
+  canDelegate      : Boolean;
+  isGlobal         : Boolean;
+  canAddHostnet    : Boolean;
+  canAddVNIC       : Boolean;
+  canMoveToAggr    : Boolean;
+  canRemoveFromAggr:Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
   isGlobal:=(zone is TFRE_DB_GLOBAL_ZONE);
 
   ses.GetSessionModuleData(ClassName).DeleteField('selected');
   ses.GetSessionModuleData(ClassName).Field('selectedZoneId').AsString:=zone.UID_String;
+  ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean:=isGlobal;
 
   if isGlobal then begin
     dc:=ses.FetchDerivedCollection('DATALINK_GRID_GZ');
@@ -159,10 +169,21 @@ begin
       end;
     end;
   end;
-  canAddHostnet:=conn.SYS.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_IPV4_HOSTNET) or conn.SYS.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_IPV6_HOSTNET);
+  canAddHostnet:=conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
   canAddVNIC:=conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DATALINK_VNIC,zone.DomainID);
+  if isGlobal then begin
+    canMoveToAggr:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_VNIC,zone.DomainID) and
+                   conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
+                   conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
+    canMoveToAggr:=canMoveToAggr and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
 
-  if canAdd or canDelete or canDelegate or canAddVNIC or canAddHostnet then begin
+    canRemoveFromAggr:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+  end else begin
+    canMoveToAggr:=false;
+    canRemoveFromAggr:=false;
+  end;
+
+  if canAdd or canDelete or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr then begin
     if not canAdd then begin
       menu:=TFRE_DB_MENU_DESC.create.Describe;
     end;
@@ -188,20 +209,35 @@ begin
         submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_add_hostnet_ipv6'),'',sf,true,'net_routing_add_ipv6');
       end;
     end;
+
+    if canMoveToAggr or canRemoveFromAggr then begin
+      submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_aggregation'),'');
+      if canMoveToAggr then begin
+        sf:=CWSF(@WEB_MoveToAggr);
+        submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_aggregation_move_to'),'',sf,true,'net_routing_move_to_aggr');
+      end;
+      if canRemoveFromAggr then begin
+        sf:=CWSF(@WEB_RemoveFromAggr);
+        submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_aggregation_remove_from'),'',sf,true,'net_routing_remove_from_aggr');
+      end;
+    end;
     res.SetMenu(menu);
   end;
 
   Result:=res;
 end;
 
-function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelete(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelete(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   dbo: IFRE_DB_Object;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,dbo.Implementor_HC.ClassType,dbo.DomainID) and (conn.GetReferencesCount(dbo.UID,false)=0);
+    Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,dbo.Implementor_HC.ClassType,dbo.DomainID) and                                              //check rights
+            (conn.GetReferencesCount(dbo.UID,false)=0) and                                                                                          //no children
+            (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) and                                                  //not within aggregation
+            (conn.GetReferencesCount(dbo.UID,true,'','datalinkParent')>1) and ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean;  //delegated and client zone view
   end;
 end;
 
@@ -304,6 +340,87 @@ begin
   end;
 end;
 
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canMoveToAggr(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo : IFRE_DB_Object;
+begin
+  _canMoveToAggr(input,ses,conn,dbo);
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canMoveToAggr(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+var
+  hcObj: TObject;
+  dc   : IFRE_DB_DERIVED_COLLECTION;
+  refs : TFRE_DB_GUIDArray;
+  i    : Integer;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    hcObj:=dbo.Implementor_HC;
+    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET)) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_VNIC.ClassName,dbo.DomainID) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID) then begin
+      if conn.GetReferencesCount(dbo.UID,true,'','datalinkParent')>1 then begin
+        exit; //delegated
+      end;
+
+      refs:=conn.GetReferences(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent');
+      for i := 0 to High(refs) do begin
+        if conn.GetReferencesCount(refs[i],true,'TFRE_DB_ZONE','datalinkParent')>0 then begin //at least on vnic is delegated
+          exit;
+        end;
+      end;
+
+      if (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) then begin //not already in an aggregation
+        //check possible aggregations count
+        dc:=ses.FetchDerivedCollection('AGGREGATION_CHOOSER');
+        dc.Filters.RemoveFilter('rights');
+        dc.Filters.RemoveFilter('domain');
+        dc.Filters.AddStdClassRightFilter('rights','domainid','','',hcObj.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+
+        if not (conn.SYS.CheckClassRight4DomainId(sr_DELETE,hcObj.ClassName,dbo.DomainID) and
+                conn.SYS.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DATALINK_VNIC.ClassName,dbo.DomainID) and
+                conn.SYS.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
+                conn.SYS.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID)) then begin //can not delete => only aggregations in own domain editable
+          dc.Filters.AddUIDFieldFilter('domain','domainid',[dbo.DomainID],dbnf_OneValueFromFilter);
+        end;
+
+        Result:=dc.ItemCount>0;
+      end;
+    end;
+  end;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canRemoveFromAggr(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo : IFRE_DB_Object;
+begin
+  _canRemoveFromAggr(input,conn,dbo);
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canRemoveFromAggr(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+var
+  hcObj: TObject;
+  zone : TFRE_DB_ZONE;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    hcObj:=dbo.Implementor_HC;
+    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET)) then begin
+      zone:=_getZone(dbo,conn);
+      if zone.DomainID=dbo.DomainID then begin
+        Result:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID);
+      end else begin
+        Result:=conn.SYS.CheckClassRight4DomainId(sr_DELETE,hcObj.ClassName,dbo.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,hcObj.ClassName,zone.DomainID);
+      end;
+    end;
+  end;
+end;
+
 function TFRE_FIRMBOX_NET_ROUTING_MOD._delegateRightsCheck(const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
 var
   ddomains: TFRE_DB_GUIDArray;
@@ -339,26 +456,41 @@ end;
 
 procedure TFRE_FIRMBOX_NET_ROUTING_MOD._updateDatalinkGridTB(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
 var
-  delDisabled     : Boolean;
-  delegateDisabled: Boolean;
-  vnicDisabled    : Boolean;
-  ipv4Enabled     : Boolean;
-  ipv6Enabled     : Boolean;
+  delDisabled            : Boolean;
+  delegateDisabled       : Boolean;
+  vnicDisabled           : Boolean;
+  ipv4Enabled            : Boolean;
+  ipv6Enabled            : Boolean;
+  moveToAggrDisabled     : Boolean;
+  removeFromAggrDisabled : Boolean;
+  isGlobal               : Boolean;
 begin
+  isGlobal:=ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean;
+
   delDisabled:=true;
   delegateDisabled:=true;
   vnicDisabled:=true;
   ipv4Enabled:=false;
   ipv6Enabled:=false;
+  moveToAggrDisabled:=true;
+  removeFromAggrDisabled:=true;
   if ses.GetSessionModuleData(ClassName).FieldExists('selected') then begin
     input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
-    delDisabled:=not _canDelete(input,conn);
-    delegateDisabled:=not _canDelegate(input,conn);
+    delDisabled:=not _canDelete(input,ses,conn);
     vnicDisabled:=not _canAddVNIC(input,ses,conn);
     _canAddHostnet(input,conn,ipv4Enabled,ipv6Enabled);
+    if isGlobal then begin
+      moveToAggrDisabled:=not _canMoveToAggr(input,ses,conn);
+      removeFromAggrDisabled:=not _canRemoveFromAggr(input,conn);
+      delegateDisabled:=not _canDelegate(input,conn);
+    end;
+  end;
+  if isGlobal then begin;
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delegate',delegateDisabled));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_move_to_aggr',moveToAggrDisabled));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_remove_from_aggr',removeFromAggrDisabled));
   end;
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delete',delDisabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_delegate',delegateDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_vnic',vnicDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_ipv4',not ipv4Enabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_ipv6',not ipv6Enabled));
@@ -399,6 +531,11 @@ begin
     CreateModuleText(conn,'tb_add_hostnet_ipv6','IPv6');
     CreateModuleText(conn,'cm_add_hostnet_ipv4','Add IPv4');
     CreateModuleText(conn,'cm_add_hostnet_ipv6','Add IPv6');
+    CreateModuleText(conn,'tb_aggregation','Aggregation');
+    CreateModuleText(conn,'tb_aggregation_move_to','Move to');
+    CreateModuleText(conn,'tb_aggregation_remove_from','Remove from');
+    CreateModuleText(conn,'cm_aggregation_move_to','Move to aggregation');
+    CreateModuleText(conn,'cm_aggregation_remove_from','Remove from aggregation');
 
     CreateModuleText(conn,'info_details_select_one','Please select an object to get detailed information about it.');
 
@@ -422,6 +559,9 @@ begin
     CreateModuleText(conn,'delegate_datalink_diag_zone','Zone');
     CreateModuleText(conn,'delegate_interface_zone_value','%zone_str% (%customer_str%)');
     CreateModuleText(conn,'delegate_interface_zone_value_no_customer','%zone_str%');
+
+    CreateModuleText(conn,'move_to_aggregation_diag_cap','Move to Aggregation');
+    CreateModuleText(conn,'move_to_aggregation_chooser_cap','Aggregation');
   end;
 end;
 
@@ -535,9 +675,25 @@ begin
       SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_GLOBAL_ZONE.ClassName],false);
       Filters.AddStdClassRightFilter('rightsip4','domainid','','',TFRE_DB_IPV4_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
-      Filters.AddStdClassRightFilter('rightsip6','domainid','','',TFRE_DB_IPV4_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+      Filters.AddStdClassRightFilter('rightsip6','domainid','','',TFRE_DB_IPV6_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
     end;
 
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddOneToOnescheme('hostid');
+    end;
+    dc := session.NewDerivedCollection('AGGREGATION_CHOOSER');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      SetDefaultOrderField('objname',true);
+      Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_DATALINK_AGGR.ClassName]);
+      Filters.AddStdClassRightFilter('rightsvnic','domainid','','',TFRE_DB_DATALINK_VNIC.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+      Filters.AddStdClassRightFilter('rightsip4','domainid','','',TFRE_DB_IPV4_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+      Filters.AddStdClassRightFilter('rightsip6','domainid','','',TFRE_DB_IPV6_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+    end;
   end;
 end;
 
@@ -640,6 +796,7 @@ begin
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dbo,true,conn);
 
   CheckDbResult(coll.Store(dbo));
+  _updateDatalinkGridTB(input,ses,app,conn);
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
@@ -652,7 +809,7 @@ begin
   if not input.FieldExists('selected') then begin
     input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
   end;
-  if not _canDelete(input,conn) then
+  if not _canDelete(input,ses,conn) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
@@ -673,7 +830,7 @@ var
   serviceClass: String;
   oospz       : Boolean;
 begin
-  if not _canDelete(input,conn) then
+  if not _canDelete(input,ses,conn) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   if input.field('confirmed').AsBoolean then begin
@@ -719,14 +876,16 @@ var
   sf         : TFRE_DB_SERVER_FUNC_DESC;
   ipv4Enabled: Boolean;
   ipv6Enabled: Boolean;
+  isGlobal   : Boolean;
 begin
+  isGlobal:=ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean;
   res:=TFRE_DB_MENU_DESC.create.Describe;
-  if _canDelete(input,conn) then begin
+  if _canDelete(input,ses,conn) then begin
     sf:=CWSF(@WEB_Delete);
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete'),'',sf);
   end;
-  if _canDelegate(input,conn) then begin
+  if isGlobal and _canDelegate(input,conn) then begin
     sf:=CWSF(@WEB_Delegate);
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delegate'),'',sf);
@@ -748,6 +907,16 @@ begin
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     sf.AddParam.Describe('seviceClass',TFRE_DB_IPV6_HOSTNET.ClassName);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_add_hostnet_ipv6'),'',sf);
+  end;
+  if isGlobal and _canMoveToAggr(input,ses,conn) then begin
+    sf:=CWSF(@WEB_MoveToAggr);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_aggregation_move_to'),'',sf);
+  end;
+  if isGlobal and _canRemoveFromAggr(input,conn) then begin
+    sf:=CWSF(@WEB_RemoveFromAggr);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_aggregation_remove_from'),'',sf);
   end;
   Result:=res;
 end;
@@ -982,6 +1151,91 @@ begin
   CheckDbResult(coll.Store(hostnet));
   _updateDatalinkGridTB(input,ses,app,conn);
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_MoveToAggr(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  res         : TFRE_DB_FORM_DIALOG_DESC;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canMoveToAggr(input,ses,conn) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'move_to_aggregation_diag_cap'),600,true,true,false);
+  res.AddChooser.Describe(FetchModuleTextShort(ses,'move_to_aggregation_chooser_cap'),'aggr',ses.FetchDerivedCollection('AGGREGATION_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
+  sf:=CWSF(@WEB_StoreMoveToAggr);
+  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_StoreMoveToAggr(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo     : IFRE_DB_Object;
+  zone    : TFRE_DB_ZONE;
+  aggrUid : TFRE_DB_GUID;
+  refs    : TFRE_DB_GUIDArray;
+  i       : Integer;
+  childDbo: IFRE_DB_Object;
+begin
+  if not _canMoveToAggr(input,ses,conn,dbo) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if not input.FieldPathExists('data.aggr') then
+    raise EFRE_DB_Exception.Create('Missing input parameter aggr!');
+
+  aggrUid:=FREDB_H2G(input.FieldPath('data.aggr').AsString);
+
+  zone:=_getZone(dbo,conn);
+  dbo.Field('datalinkParent').RemoveObjectLinkByUID(zone.UID);
+  dbo.Field('datalinkParent').AddObjectLink(aggrUid);
+  dbo.Field('serviceParent').RemoveObjectLinkByUID(zone.UID);
+  dbo.Field('serviceParent').AddObjectLink(aggrUid);
+
+  refs:=conn.GetReferences(dbo.UID,false,'','datalinkParent');
+  for i := 0 to High(refs) do begin //move vnics and hostnets to aggregation
+    CheckDbResult(conn.Fetch(refs[i],childDbo));
+    childDbo.Field('datalinkParent').RemoveObjectLinkByUID(dbo.UID);
+    childDbo.Field('datalinkParent').AddObjectLink(aggrUid);
+    childDbo.Field('serviceParent').RemoveObjectLinkByUID(dbo.UID);
+    childDbo.Field('serviceParent').AddObjectLink(aggrUid);
+    CheckDbResult(conn.Update(childDbo));
+  end;
+
+  CheckDbResult(conn.Update(dbo));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_RemoveFromAggr(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo : IFRE_DB_Object;
+  zone: TFRE_DB_ZONE;
+  refs: TFRE_DB_GUIDArray;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canRemoveFromAggr(input,conn,dbo) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  zone:=_getZone(dbo,conn);
+  refs:=conn.GetReferences(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent');
+
+  if Length(refs)=0 then
+    raise EFRE_DB_Exception.Create('No aggregation found for given object!');
+
+  dbo.Field('datalinkParent').RemoveObjectLinkByUID(refs[0]);
+  dbo.Field('serviceParent').RemoveObjectLinkByUID(refs[0]);
+  dbo.Field('datalinkParent').AddObjectLink(zone.UID);
+  dbo.Field('serviceParent').AddObjectLink(zone.UID);
+
+  CheckDbResult(conn.Update(dbo));
+
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 //function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_IFSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
