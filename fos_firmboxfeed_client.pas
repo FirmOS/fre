@@ -455,10 +455,12 @@ begin
 
     FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndata,servicedata,service_coll_assign,transport_list);
 
-    writeln('SWL ZONE TRANSPORT',transport_list.DumpToString);
 
     if FREDIFF_ChangesGenerated(transport_list) then
-      SendServerCommand(FADCAdmin_FeedAppClass,'DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),transport_list,@CCB_SendStructureUpdate)
+      begin
+        writeln('SWL ZONE TRANSPORT',transport_list.DumpToString);
+        SendServerCommand(FADCAdmin_FeedAppClass,'DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),transport_list,@CCB_SendStructureUpdate);
+      end
     else
       transport_list.Finalize;
 
