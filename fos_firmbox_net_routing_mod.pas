@@ -32,6 +32,10 @@ type
     function        _canMoveToAggr             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _canRemoveFromAggr         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canRemoveFromAggr         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
+    function        _canMoveToBridge           (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canMoveToBridge           (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
+    function        _canRemoveFromBridge       (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
+    function        _canRemoveFromBridge       (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _delegateRightsCheck       (const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
     function        _getZone                   (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; const preferGlobal: Boolean): TFRE_DB_ZONE;
     function        _isDelegated               (const dbo: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
@@ -67,6 +71,9 @@ type
     function        WEB_MoveToAggr             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreMoveToAggr        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_RemoveFromAggr         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_MoveToBridge           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreMoveToBridge      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RemoveFromBridge       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_IFSC                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_ContentIF              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     //function        WEB_SliderChanged          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -114,25 +121,27 @@ end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._getZoneDetails(const zone: TFRE_DB_ZONE; const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): TFRE_DB_CONTENT_DESC;
 var
-  res              : TFRE_DB_VIEW_LIST_DESC;
-  dc               : IFRE_DB_DERIVED_COLLECTION;
-  menu             : TFRE_DB_MENU_DESC;
-  canAdd           : Boolean;
-  template         : TFRE_DB_FBZ_TEMPLATE;
-  i                : Integer;
-  serviceClass     : String;
-  exClass          : TFRE_DB_ObjectClassEx;
-  conf             : IFRE_DB_Object;
-  sf               : TFRE_DB_SERVER_FUNC_DESC;
-  submenu          : TFRE_DB_SUBMENU_DESC;
-  canDelete        : Boolean;
-  canDelegate      : Boolean;
-  isGlobal         : Boolean;
-  canAddHostnet    : Boolean;
-  canAddVNIC       : Boolean;
-  canMoveToAggr    : Boolean;
-  canRemoveFromAggr:Boolean;
-  canModify        : Boolean;
+  res                : TFRE_DB_VIEW_LIST_DESC;
+  dc                 : IFRE_DB_DERIVED_COLLECTION;
+  menu               : TFRE_DB_MENU_DESC;
+  canAdd             : Boolean;
+  template           : TFRE_DB_FBZ_TEMPLATE;
+  i                  : Integer;
+  serviceClass       : String;
+  exClass            : TFRE_DB_ObjectClassEx;
+  conf               : IFRE_DB_Object;
+  sf                 : TFRE_DB_SERVER_FUNC_DESC;
+  submenu            : TFRE_DB_SUBMENU_DESC;
+  canDelete          : Boolean;
+  canDelegate        : Boolean;
+  isGlobal           : Boolean;
+  canAddHostnet      : Boolean;
+  canAddVNIC         : Boolean;
+  canMoveToAggr      : Boolean;
+  canRemoveFromAggr  : Boolean;
+  canModify          : Boolean;
+  canMoveToBridge    : Boolean;
+  canRemoveFromBridge: Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
   isGlobal:=(zone is TFRE_DB_GLOBAL_ZONE);
@@ -148,6 +157,13 @@ begin
   dc.Filters.RemoveFilter('zone');
   dc.Filters.AddRootNodeFilter('zone','uid',conn.GetReferences(zone.UID,false,'','datalinkParent'),dbnf_OneValueFromFilter);
   res:=dc.GetDisplayDescription.Implementor_HC as TFRE_DB_VIEW_LIST_DESC;
+
+  dc:=ses.FetchDerivedCollection('AGGREGATION_CHOOSER');
+  dc.Filters.RemoveFilter('zone');
+  dc.Filters.AddUIDFieldFilter('zone','zid',[zone.UID],dbnf_OneValueFromFilter);
+  dc:=ses.FetchDerivedCollection('BRIDGE_CHOOSER');
+  dc.Filters.RemoveFilter('zone');
+  dc.Filters.AddUIDFieldFilter('zone','zid',[zone.UID],dbnf_OneValueFromFilter);
 
   canAdd:=false;
   canDelete:=false;
@@ -189,8 +205,13 @@ begin
     canMoveToAggr:=false;
     canRemoveFromAggr:=false;
   end;
+  canMoveToAggr:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
+                 conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
+  canMoveToAggr:=canMoveToAggr and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
 
-  if canAdd or canDelete or canModify or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr then begin
+  canRemoveFromAggr:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+
+  if canAdd or canDelete or canModify or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr or canMoveToBridge or canRemoveFromBridge then begin
     if not canAdd then begin
       menu:=TFRE_DB_MENU_DESC.create.Describe;
     end;
@@ -219,7 +240,6 @@ begin
         submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_add_hostnet_ipv6'),'',sf,true,'net_routing_add_ipv6');
       end;
     end;
-
     if canMoveToAggr or canRemoveFromAggr then begin
       submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_aggregation'),'');
       if canMoveToAggr then begin
@@ -229,6 +249,17 @@ begin
       if canRemoveFromAggr then begin
         sf:=CWSF(@WEB_RemoveFromAggr);
         submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_aggregation_remove_from'),'',sf,true,'net_routing_remove_from_aggr');
+      end;
+    end;
+    if canMoveToBridge or canRemoveFromBridge then begin
+      submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_bridge'),'');
+      if canMoveToAggr then begin
+        sf:=CWSF(@WEB_MoveToBridge);
+        submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_bridge_move_to'),'',sf,true,'net_routing_move_to_bridge');
+      end;
+      if canRemoveFromAggr then begin
+        sf:=CWSF(@WEB_RemoveFromBridge);
+        submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_bridge_remove_from'),'',sf,true,'net_routing_remove_from_bridge');
       end;
     end;
     res.SetMenu(menu);
@@ -359,16 +390,17 @@ function TFRE_FIRMBOX_NET_ROUTING_MOD._canMoveToAggr(const input: IFRE_DB_Object
 var
   dbo : IFRE_DB_Object;
 begin
-  _canMoveToAggr(input,ses,conn,dbo);
+  Result:=_canMoveToAggr(input,ses,conn,dbo);
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canMoveToAggr(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
 var
-  hcObj: TObject;
-  dc   : IFRE_DB_DERIVED_COLLECTION;
-  refs : TFRE_DB_GUIDArray;
-  i    : Integer;
-  vnic : IFRE_DB_Object;
+  hcObj    : TObject;
+  dc       : IFRE_DB_DERIVED_COLLECTION;
+  refs     : TFRE_DB_GUIDArray;
+  i        : Integer;
+  vnic     : IFRE_DB_Object;
+  parentDbo: IFRE_DB_Object;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
@@ -382,6 +414,14 @@ begin
       if _isDelegated(dbo,conn) then begin
         exit; //delegated
       end;
+
+     refs:=conn.GetReferences(dbo.UID,true,'','datalinkParent');
+     for i := 0 to High(refs) do begin
+       CheckDbResult(conn.Fetch(refs[i],parentDbo));
+       if (parentDbo.Implementor_HC is TFRE_DB_DATALINK_AGGR) or (parentDbo.Implementor_HC is TFRE_DB_DATALINK_BRIDGE) then begin //already within an aggregation or bridge
+         exit;
+       end;
+     end;
 
       refs:=conn.GetReferences(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent');
       for i := 0 to High(refs) do begin
@@ -415,7 +455,7 @@ function TFRE_FIRMBOX_NET_ROUTING_MOD._canRemoveFromAggr(const input: IFRE_DB_Ob
 var
   dbo : IFRE_DB_Object;
 begin
-  _canRemoveFromAggr(input,conn,dbo);
+  Result:=_canRemoveFromAggr(input,conn,dbo);
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canRemoveFromAggr(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
@@ -427,17 +467,78 @@ begin
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     hcObj:=dbo.Implementor_HC;
-    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET)) then begin
-      if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0 then begin
-        exit; //object is not within an aggregation
-      end;
-      zone:=_getZone(dbo,conn,true);
-      if zone.DomainID=dbo.DomainID then begin
-        Result:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID);
-      end else begin
-        Result:=conn.SYS.CheckClassRight4DomainId(sr_DELETE,hcObj.ClassName,dbo.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,hcObj.ClassName,zone.DomainID);
-      end;
+    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0 then begin
+      exit; //object is not within an aggregation
     end;
+    zone:=_getZone(dbo,conn,true);
+    if zone.DomainID=dbo.DomainID then begin
+      Result:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID);
+    end else begin
+      Result:=conn.SYS.CheckClassRight4DomainId(sr_DELETE,hcObj.ClassName,dbo.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,hcObj.ClassName,zone.DomainID);
+    end;
+  end;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canMoveToBridge(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo: IFRE_DB_Object;
+begin
+  Result:=_canMoveToBridge(input,ses,conn,dbo);
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canMoveToBridge(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+var
+  hcObj    : TObject;
+  dc       : IFRE_DB_DERIVED_COLLECTION;
+  refs     : TFRE_DB_GUIDArray;
+  parentDbo: IFRE_DB_Object;
+  i        : Integer;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    hcObj:=dbo.Implementor_HC;
+    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET)) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
+         conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID) then begin
+
+      refs:=conn.GetReferences(dbo.UID,true,'','datalinkParent');
+      for i := 0 to High(refs) do begin
+        CheckDbResult(conn.Fetch(refs[i],parentDbo));
+        if (parentDbo.Implementor_HC is TFRE_DB_DATALINK_AGGR) or (parentDbo.Implementor_HC is TFRE_DB_DATALINK_BRIDGE) then begin //already within an aggregation or bridge
+          exit;
+        end;
+      end;
+      if conn.GetReferencesCount(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent')>0 then begin //only datalinks without vnics allowed
+        exit;
+      end;
+      if _isDelegated(dbo,conn) then begin //delegated datalinks can not be used
+        exit;
+      end;
+
+      dc:=ses.FetchDerivedCollection('BRIDGE_CHOOSER');
+      Result:=dc.ItemCount>0;
+    end;
+  end;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canRemoveFromBridge(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION): Boolean;
+var
+  dbo: IFRE_DB_Object;
+begin
+  Result:=_canRemoveFromBridge(input,conn,dbo);
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canRemoveFromBridge(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+begin
+  Result:=false;
+  if (input.Field('selected').ValueCount=1) then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_BRIDGE','datalinkParent')=0 then begin
+      exit; //object is not within an bridge
+    end;
+    Result:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,dbo.Implementor_HC.ClassName,dbo.DomainID);
   end;
 end;
 
@@ -518,15 +619,17 @@ end;
 
 procedure TFRE_FIRMBOX_NET_ROUTING_MOD._updateDatalinkGridTB(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
 var
-  delDisabled            : Boolean;
-  delegateDisabled       : Boolean;
-  vnicDisabled           : Boolean;
-  ipv4Enabled            : Boolean;
-  ipv6Enabled            : Boolean;
-  moveToAggrDisabled     : Boolean;
-  removeFromAggrDisabled : Boolean;
-  isGlobal               : Boolean;
-  modifyDisabled         : Boolean;
+  delDisabled               : Boolean;
+  delegateDisabled          : Boolean;
+  vnicDisabled              : Boolean;
+  ipv4Enabled               : Boolean;
+  ipv6Enabled               : Boolean;
+  moveToAggrDisabled        : Boolean;
+  removeFromAggrDisabled    : Boolean;
+  moveToBridgeDisabled      : Boolean;
+  removeFromBridgeDisabled  : Boolean;
+  isGlobal                  : Boolean;
+  modifyDisabled            : Boolean;
 begin
   isGlobal:=ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean;
 
@@ -538,12 +641,16 @@ begin
   ipv6Enabled:=false;
   moveToAggrDisabled:=true;
   removeFromAggrDisabled:=true;
+  moveToBridgeDisabled:=true;
+  removeFromBridgeDisabled:=true;
   if ses.GetSessionModuleData(ClassName).FieldExists('selected') then begin
     input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
     delDisabled:=not _canDelete(input,ses,conn);
     modifyDisabled:=not _canModify(input,ses,conn);
     vnicDisabled:=not _canAddVNIC(input,ses,conn);
     _canAddHostnet(input,conn,ipv4Enabled,ipv6Enabled);
+    moveToBridgeDisabled:=not _canMoveToBridge(input,ses,conn);
+    removeFromBridgeDisabled:=not _canRemoveFromBridge(input,conn);
     if isGlobal then begin
       moveToAggrDisabled:=not _canMoveToAggr(input,ses,conn);
       removeFromAggrDisabled:=not _canRemoveFromAggr(input,conn);
@@ -560,6 +667,8 @@ begin
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_vnic',vnicDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_ipv4',not ipv4Enabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_add_ipv6',not ipv6Enabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_move_to_bridge',moveToBridgeDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('net_routing_remove_from_bridge',removeFromBridgeDisabled));
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._getHostnetObjname(const data: IFRE_DB_Object): String;
@@ -618,6 +727,11 @@ begin
     CreateModuleText(conn,'tb_aggregation_remove_from','Remove from');
     CreateModuleText(conn,'cm_aggregation_move_to','Move to aggregation');
     CreateModuleText(conn,'cm_aggregation_remove_from','Remove from aggregation');
+    CreateModuleText(conn,'tb_bridge','Bridge');
+    CreateModuleText(conn,'tb_bridge_move_to','Move to');
+    CreateModuleText(conn,'tb_bridge_remove_from','Remove from');
+    CreateModuleText(conn,'cm_bridge_move_to','Move to bridge');
+    CreateModuleText(conn,'cm_bridge_remove_from','Remove from bridge');
 
     CreateModuleText(conn,'info_details_select_one','Please select an object to get detailed information about it.');
 
@@ -644,6 +758,9 @@ begin
 
     CreateModuleText(conn,'move_to_aggregation_diag_cap','Move to Aggregation');
     CreateModuleText(conn,'move_to_aggregation_chooser_cap','Aggregation');
+
+    CreateModuleText(conn,'move_to_bridge_diag_cap','Move to Bridge');
+    CreateModuleText(conn,'move_to_bridge_chooser_cap','Bridge');
 
     CreateModuleText(conn,'datalink_modify_error_exists_cap','Error: Modify datalink');
     CreateModuleText(conn,'datalink_modify_error_exists_msg','A %datalink_str% datalink with the given name already exists!');
@@ -770,7 +887,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname');
-      AddOneToOnescheme('hostid');
+      AddMatchingReferencedField(['DATALINKPARENT>'],'uid','zid');
     end;
     dc := session.NewDerivedCollection('AGGREGATION_CHOOSER');
     with dc do begin
@@ -782,6 +899,20 @@ begin
       Filters.AddStdClassRightFilter('rightsvnic','domainid','','',TFRE_DB_DATALINK_VNIC.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
       Filters.AddStdClassRightFilter('rightsip4','domainid','','',TFRE_DB_IPV4_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
       Filters.AddStdClassRightFilter('rightsip6','domainid','','',TFRE_DB_IPV6_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddMatchingReferencedField(['DATALINKPARENT>'],'uid','zid');
+    end;
+    dc := session.NewDerivedCollection('BRIDGE_CHOOSER');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      SetDefaultOrderField('objname',true);
+      Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_DATALINK_BRIDGE.ClassName]);
     end;
   end;
 end;
@@ -836,7 +967,7 @@ begin
 
   exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
   conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'add_datalink_diag_cap'),'%datalink_str%',conf.Field('caption').AsString,[rfReplaceAll]),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(StringReplace(FetchModuleTextShort(ses,'add_datalink_diag_cap'),'%datalink_str%',conf.Field('caption').AsString,[rfReplaceAll]),600,true,true,false);
   GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   sf:=CWSF(@WEB_Store);
@@ -856,8 +987,6 @@ var
   conf        : IFRE_DB_Object;
   serviceClass: TFRE_DB_String;
   idx         : String;
-  vdc         : IFRE_DB_DERIVED_COLLECTION;
-  parentObj: IFRE_DB_Object;
 begin
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
   if not conn.SYS.CheckClassRight4DomainId(sr_STORE,input.Field('serviceClass').AsString,zone.DomainID) then
@@ -959,7 +1088,7 @@ begin
     cap:=FetchModuleTextShort(ses,'modify_diag_cap');
   end;
 
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(cap,600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(cap,600,true,true,false);
   GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.FillWithObjectValues(dbo,ses);
@@ -1101,6 +1230,16 @@ begin
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_aggregation_remove_from'),'',sf);
   end;
+  if _canMoveToBridge(input,ses,conn) then begin
+    sf:=CWSF(@WEB_MoveToBridge);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_bridge_move_to'),'',sf);
+  end;
+  if _canRemoveFromBridge(input,conn) then begin
+    sf:=CWSF(@WEB_RemoveFromBridge);
+    sf.AddParam.Describe('selected',input.Field('selected').AsString);
+    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_bridge_remove_from'),'',sf);
+  end;
   Result:=res;
 end;
 
@@ -1210,7 +1349,7 @@ begin
   if not _canAddVNIC(input,ses,conn,dbo) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_vnic_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_vnic_diag_cap'),600,true,true,false);
   GFRE_DBI.GetSystemSchemeByName(TFRE_DB_DATALINK_VNIC.ClassName,scheme);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   sf:=CWSF(@WEB_StoreVNIC);
@@ -1275,7 +1414,7 @@ begin
   if not ((ipv4Enabled and (serviceClass=TFRE_DB_IPV4_HOSTNET.ClassName)) or (ipv6Enabled and (serviceClass=TFRE_DB_IPV6_HOSTNET.ClassName))) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_hostnet_diag_cap'),600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_hostnet_diag_cap'),600,true,true,false);
   GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   sf:=CWSF(@WEB_StoreHostnet);
@@ -1405,6 +1544,94 @@ begin
 
   dbo.Field('datalinkParent').RemoveObjectLinkByUID(refs[0]);
   dbo.Field('serviceParent').RemoveObjectLinkByUID(refs[0]);
+  dbo.Field('datalinkParent').AddObjectLink(zone.UID);
+  dbo.Field('serviceParent').AddObjectLink(zone.UID);
+
+  CheckDbResult(conn.Update(dbo));
+
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_MoveToBridge(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  res         : TFRE_DB_FORM_DIALOG_DESC;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canMoveToBridge(input,ses,conn) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'move_to_bridge_diag_cap'),600,true,true,false);
+  res.AddChooser.Describe(FetchModuleTextShort(ses,'move_to_bridge_chooser_cap'),'bridge',ses.FetchDerivedCollection('BRIDGE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
+  sf:=CWSF(@WEB_StoreMoveToBridge);
+  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_StoreMoveToBridge(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo       : IFRE_DB_Object;
+  zone      : TFRE_DB_ZONE;
+  bridgeUid : TFRE_DB_GUID;
+  refs      : TFRE_DB_GUIDArray;
+  i         : Integer;
+  childDbo  : IFRE_DB_Object;
+begin
+  if not _canMoveToBridge(input,ses,conn,dbo) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if not input.FieldPathExists('data.bridge') then
+    raise EFRE_DB_Exception.Create('Missing input parameter bridge!');
+
+  bridgeUid:=FREDB_H2G(input.FieldPath('data.bridge').AsString);
+
+  zone:=_getZone(dbo,conn,true);
+  dbo.Field('datalinkParent').RemoveObjectLinkByUID(zone.UID);
+  dbo.Field('datalinkParent').AddObjectLink(bridgeUid);
+  dbo.Field('serviceParent').RemoveObjectLinkByUID(zone.UID);
+  dbo.Field('serviceParent').AddObjectLink(bridgeUid);
+
+  refs:=conn.GetReferences(dbo.UID,false,'','datalinkParent');
+  for i := 0 to High(refs) do begin //move hostnets to aggregation
+    CheckDbResult(conn.Fetch(refs[i],childDbo));
+    childDbo.Field('datalinkParent').RemoveObjectLinkByUID(dbo.UID);
+    childDbo.Field('datalinkParent').AddObjectLink(bridgeUid);
+    childDbo.Field('serviceParent').RemoveObjectLinkByUID(dbo.UID);
+    childDbo.Field('serviceParent').AddObjectLink(bridgeUid);
+    CheckDbResult(conn.Update(childDbo));
+  end;
+
+  CheckDbResult(conn.Update(dbo));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_RemoveFromBridge(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo      : IFRE_DB_Object;
+  zone     : TFRE_DB_ZONE;
+  refs     : TFRE_DB_GUIDArray;
+  bridgeDbo: IFRE_DB_Object;
+begin
+  if not input.FieldExists('selected') then begin
+    input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
+  end;
+  if not _canRemoveFromBridge(input,conn,dbo) then
+     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  refs:=conn.GetReferences(dbo.UID,true,'TFRE_DB_DATALINK_BRIDGE','datalinkParent');
+  if Length(refs)=0 then
+    raise EFRE_DB_Exception.Create('No bridge found for given object!');
+  CheckDbResult(conn.Fetch(refs[0],bridgeDbo));
+
+  zone:=_getZone(bridgeDbo,conn,true);
+
+
+  dbo.Field('datalinkParent').RemoveObjectLinkByUID(bridgeDbo.UID);
+  dbo.Field('serviceParent').RemoveObjectLinkByUID(bridgeDbo.UID);
   dbo.Field('datalinkParent').AddObjectLink(zone.UID);
   dbo.Field('serviceParent').AddObjectLink(zone.UID);
 
