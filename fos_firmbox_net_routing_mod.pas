@@ -62,6 +62,8 @@ type
     function        WEB_DeleteConfirmed        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_Modify                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreModify            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddRoute               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreRoute             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_GridMenu               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_GridSC                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DatalinkGridSC         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -151,6 +153,7 @@ var
   canRemoveFromBridge: Boolean;
   canLinkToIPMP      : Boolean;
   canUnlinkFromIPMP  : Boolean;
+  canAddRoute        : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
   isGlobal:=(zone is TFRE_DB_GLOBAL_ZONE);
@@ -205,6 +208,8 @@ begin
     end;
   end;
   canAddHostnet:=conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
+  canAddRoute:=canAddHostnet;
+
   canAddVNIC:=conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DATALINK_VNIC,zone.DomainID);
   if isGlobal then begin
     canMoveToAggr:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_VNIC,zone.DomainID) and
@@ -229,6 +234,12 @@ begin
 
   canUnlinkFromIPMP:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
 
+  if canAddRoute then begin
+    canAdd:=true;
+    sf:=CWSF(@WEB_AddRoute);
+    sf.AddParam.Describe('zoneId',zone.UID_String);
+    submenu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_add_route'),'',sf,false,'add_route');
+  end;
   if canAdd or canDelete or canModify or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr or canMoveToBridge or canRemoveFromBridge or canLinkToIPMP or canUnlinkFromIPMP then begin
     if not canAdd then begin
       menu:=TFRE_DB_MENU_DESC.create.Describe;
@@ -805,6 +816,7 @@ begin
     CreateModuleText(conn,'cm_delegate','Delegate');
     CreateModuleText(conn,'tb_modify','Modify');
     CreateModuleText(conn,'cm_modify','Modify');
+    CreateModuleText(conn,'tb_add_route','Add Route');
     CreateModuleText(conn,'tb_add_vnic','Add VNIC');
     CreateModuleText(conn,'cm_add_vnic','Add VNIC');
     CreateModuleText(conn,'tb_add_hostnet','Add Hostnet');
@@ -859,6 +871,11 @@ begin
 
     CreateModuleText(conn,'link_to_ipmp_diag_cap','Link to IPMP');
     CreateModuleText(conn,'link_to_ipmp_chooser_cap','IPMP');
+
+    CreateModuleText(conn,'add_route_diag_cap','Add Route');
+    CreateModuleText(conn,'add_route_diag_type','Type');
+    CreateModuleText(conn,'add_route_diag_type_ipv4','IPv4');
+    CreateModuleText(conn,'add_route_diag_type_ipv6','IPv6');
 
     CreateModuleText(conn,'datalink_modify_error_exists_cap','Error: Modify datalink');
     CreateModuleText(conn,'datalink_modify_error_exists_msg','A %datalink_str% datalink with the given name already exists!');
@@ -1202,7 +1219,12 @@ begin
 
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(cap,600,true,true,false);
   GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  if (dbo.Implementor_HC is TFRE_DB_IP_HOSTNET) and (dbo.FieldExists('gateway')) then begin //route
+    res.AddSchemeFormGroup(scheme.GetInputGroup('route'),ses);
+    res.SetElementRequired('gateway');
+  end else begin
+    res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  end;
   res.FillWithObjectValues(dbo,ses);
   sf:=CWSF(@WEB_StoreModify);
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
@@ -1227,8 +1249,8 @@ begin
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+  hcObj:=dbo.Implementor_HC;
   if input.FieldPathExists('data.objname') and (input.FieldPath('data.objname').AsString<>dbo.Field('objname').AsString) then begin
-    hcObj:=dbo.Implementor_HC;
     zone:=_getZone(dbo,conn,true);
     if hcObj is TFRE_DB_DATALINK_VNIC then begin
       idx:=TFRE_DB_DATALINK_VNIC.ClassName + '_' + input.FieldPath('data.objname').AsString + '@' + zone.UID_String;
@@ -1265,6 +1287,103 @@ begin
   GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dbo,false,conn);
   CheckDbResult(conn.update(dbo));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_AddRoute(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme      : IFRE_DB_SchemeObject;
+  res         : TFRE_DB_FORM_DIALOG_DESC;
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  zone        : IFRE_DB_Object;
+  store       : TFRE_DB_STORE_DESC;
+  ch          : TFRE_DB_INPUT_CHOOSER_DESC;
+  group       : TFRE_DB_INPUT_GROUP_DESC;
+begin
+  conn.Fetch(FREDB_H2G(input.Field('zoneId').AsString),zone);
+
+  if not (conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_HOSTNET,zone.DomainID)) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_route_diag_cap'),600,true,true,false);
+  store:=TFRE_DB_STORE_DESC.create.Describe('id');
+  ch:=res.AddChooser.Describe(FetchModuleTextShort(ses,'add_route_diag_type'),'type',store,dh_chooser_combo,true);
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) then begin
+    store.AddEntry.Describe(FetchModuleTextShort(ses,'add_route_diag_type_ipv4'),'ipv4');
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV4_HOSTNET.ClassName,scheme);
+    group:=res.AddSchemeFormGroup(scheme.GetInputGroup('route'),ses,false,false,'ipv4',true,true);
+    ch.addDependentInputGroup(group,'ipv4',fdv_visible);
+    res.SetElementRequired('ipv4.gateway');
+  end;
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) then begin
+    store.AddEntry.Describe(FetchModuleTextShort(ses,'add_route_diag_type_ipv6'),'ipv6');
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV6_HOSTNET.ClassName,scheme);
+    group:=res.AddSchemeFormGroup(scheme.GetInputGroup('route'),ses,false,false,'ipv6',true,true);
+    ch.addDependentInputGroup(group,'ipv6',fdv_visible);
+    res.SetElementRequired('ipv6.gateway');
+  end;
+  sf:=CWSF(@WEB_StoreRoute);
+  sf.AddParam.Describe('zoneId',input.Field('zoneId').AsString);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_StoreRoute(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme      : IFRE_DB_SchemeObject;
+  zone        : IFRE_DB_Object;
+  dbo         : IFRE_DB_Object;
+  coll        : IFRE_DB_COLLECTION;
+  exClass     : TFRE_DB_ObjectClassEx;
+  conf        : IFRE_DB_Object;
+
+  idx         : String;
+  ipv4: Boolean;
+  route: TFRE_DB_IP_HOSTNET;
+begin
+  conn.Fetch(FREDB_H2G(input.Field('zoneId').AsString),zone);
+
+  if not input.FieldPathExists('data.type') then
+    raise EFRE_DB_Exception.Create('Missing input parameter type!');
+
+  ipv4:=(input.FieldPath('data.type').AsString='ipv4');
+
+  if ipv4 and  not conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+  if not ipv4 and  not conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_HOSTNET,zone.DomainID) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  if ipv4 then begin
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV4_HOSTNET.ClassName,scheme);
+    route:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+    route.Field('objname').AsString:=_getHostnetObjname(input.FieldPath('data.ipv4').AsObject);
+  end else begin
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV6_HOSTNET.ClassName,scheme);
+    route:=TFRE_DB_IPV6_HOSTNET.CreateForDB;
+    route.Field('objname').AsString:=_getHostnetObjname(input.FieldPath('data.ipv6').AsObject);
+  end;
+
+  if route.Field('objname').AsString='' then
+    raise EFRE_DB_Exception.Create('Missing input parameters (dhcp=true or slaac=true or ip_net<>'') to create objname!');
+
+  idx:=route.ClassName + '_' + route.Field('objname').AsString + '@' + zone.UID_String;
+  coll:=conn.GetCollection(CFRE_DB_IP_COLLECTION);
+  if coll.ExistsIndexedText(idx)<>0 then begin
+    Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'hostnet_create_error_exists_cap'),FetchModuleTextShort(ses,'hostnet_create_error_exists_msg'),fdbmt_error);
+    exit;
+  end;
+
+  route.Field('serviceParent').AsObjectLink:=zone.UID;
+  route.Field('datalinkParent').AsObjectLink:=zone.UID;
+  route.Field('uniquephysicalid').AsString:=idx;
+  route.SetDomainID(zone.DomainID);
+  if ipv4 then begin
+    scheme.SetObjectFieldsWithScheme(input.FieldPath('data.ipv4').AsObject,route,true,conn);
+  end else begin
+    scheme.SetObjectFieldsWithScheme(input.FieldPath('data.ipv4').AsObject,route,true,conn);
+  end;
+
+  CheckDbResult(coll.Store(route));
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
