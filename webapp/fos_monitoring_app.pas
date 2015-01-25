@@ -185,8 +185,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         id       := obj.UID;
         obj.Field('machine').AsObjectLink     := machine_id;
         tc       := TFRE_DB_JOB(obj.Implementor_HC);
-        //periodic := tc.GetPeriodic;
-        abort;
         writeln(obj.DumpToString);
         CheckDbResult(coll_testcase.Store(obj),'Add Testcase');
         AddTestCaseStatus(id,periodic);
@@ -294,7 +292,7 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          //  everyHour:   periodic :='15 * * * *';
          //  everyMinute: periodic :='* * * * * ';
          //end;
-         abort;
+         periodic :='* * * * * ';
          line := periodic+'      fre_safejob '+jobkey;
          cronl.Add(line);
         end;
@@ -349,8 +347,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         z   :=TFRE_DB_ZFSJob.CreateForDB;
         z.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         z.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
-        //z.SetPeriodic(everyHour);
-        abort;
         z.SetPoolStatus('zones',7,14);
         Troubleshooting(z,'Check Disks ! ');
         StoreAndAddToMachine(z);
@@ -388,8 +384,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         z.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
 //             z.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         z.SetURL(url,header,responsematch);
-        //z.SetPeriodic(everyHour);
-        abort;
         Troubleshooting(z,'Delete data or extend the device !');
         StoreAndAddToMachine(z);
       end;
@@ -402,8 +396,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
         t.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
         t.SetRemoteSSH(cremoteuser, server, Getremotekeyfilename);
         t.SetLimits(warning_load,error_load);
-        //t.SetPeriodic(everyHour);
-        abort;
         Troubleshooting(t,'Check for slow processes or hangs !');
         StoreAndAddToMachine(t);
       end;
@@ -432,8 +424,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
          zf.SetSSHReplicate(sourceds,destds,snapshotkey,desthost,'zfsback',GetbackupKeyFileName,'/zones/firmos/zfsback/.ssh/id_rsa');
-         abort;
-         //zf.SetPeriodic(everyDay);
          Troubleshooting(zf,'Check Replication ! ');
          StoreAndAddToMachine(zf);
 
@@ -441,8 +431,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey+'_CHECK',desc);
          zf.SetRemoteSSH(cremoteuser, desthost, Getremotekeyfilename);
          zf.SetSnapshotCheck(destds,'AUTO',checkperiod_sec*2,checkperiod_sec*4);
-         abort;
-         //zf.SetPeriodic(everyHour);
          Troubleshooting(zf,'Check Snapshot ! ');
          StoreAndAddToMachine(zf);
       end;
@@ -454,8 +442,8 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf    :=TFRE_DB_ZFSJob.CreateForDB;
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetTCPReplicate(sourceds,destds,snapshotkey,desthost,CFRE_FOSCMD_PORT);
-         abort;
-         //zf.SetPeriodic(everyDay);
+         zf.SetJobState(jobStateToRun);
+         zf.SaveJobToFile;
          Troubleshooting(zf,'Check Replication ! ');
          StoreAndAddToMachine(zf);
 
@@ -476,8 +464,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey,desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
          zf.SetSnapshot(sourceds,snapshotkey);
-         abort;
-         //zf.SetPeriodic(everyDay);
          Troubleshooting(zf,'Check Do Snapshot! ');
          StoreAndAddToMachine(zf);
 
@@ -485,8 +471,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          zf.SetJobkeyDescription(mon_key+'_'+jobkey+'_CHECK',desc);
          zf.SetRemoteSSH(cremoteuser, sourcehost, Getremotekeyfilename);
          zf.SetSnapshotCheck(sourceds,'AUTO',checkperiod_sec*2,checkperiod_sec*4);
-         abort;
-         //zf.SetPeriodic(everyHour);
          Troubleshooting(zf,'Check Snapshot ! ');
          StoreAndAddToMachine(zf);
       end;
@@ -505,8 +489,6 @@ procedure CreateMonitoringDB(const dbname: string; const user, pass: string);
          job.SetJobkeyDescription(mon_key+'_'+'INTERNETTESTCASE_HOUSING','Internetverbindung FirmOS Housing');
          job.PrepareTest('10.220.251.1','80.120.208.113',TFRE_DB_StringArray.Create ('8.8.8.8'));
         end;
-        abort;
-         //job.SetPeriodic(everyHour);
         Troubleshooting(job,'Restart Modem !');
         StoreAndAddToMachine(job);
       end;
@@ -680,12 +662,16 @@ begin
       AddMachine('snord01','10.54.3.11',tmFOSServ);
       AddTCPZFSReplication('ZFS_REPL_NORDPOOL_01','Replication RZ nordp','10.54.240.198','nordp',
                         'drsdisk/drssnapshots/s01_nordp',86400);
-      AddTCPZFSReplication('ZFS_REPL_NORDDISK_TEST','Replication RZ norddisk test','10.54.240.198','norddisk/test',
-                        'drsdisk/drssnapshots/norddisktest',86400);
+      AddMachine('fsnord02','10.54.3.19',tmFOSServ);
+      AddTCPZFSReplication('ZFS_REPL_NORDPOOL_02','Replication RZ nordp02','10.54.240.198','nordp02',
+                        'drsdisk/drssnapshots/s02_nordp02',86400);
     AddService('suedpool');
       AddMachine('ssued01','10.54.3.12',tmFOSServ);
       AddTCPZFSReplication('ZFS_REPL_SUEDPOOL_01','Replication RZ suedp','10.54.240.198','suedp',
                         'drsdisk/drssnapshots/s01_suedp',86400);
+      AddMachine('fssued02','10.54.3.20',tmFOSServ);
+      AddTCPZFSReplication('ZFS_REPL_SUEDPOOL_02','Replication RZ suedp02','10.54.240.198','suedp02',
+                        'drsdisk/drssnapshots/s02_suedp02',86400);
     AddService('anord01');
         AddMachine('anord01','10.54.3.13',tmFOSServ);
         AddTCPZFSReplication('ZFS_DRS_ANORD_01','Replication RZ anord','10.54.240.198','anord01disk/anord01ds',
@@ -865,6 +851,8 @@ begin
 
    jobdbo.SaveToFile(cFRE_HAL_CFG_DIR+'jobs.dbo');
    writeln(jobdbo.DumpToString);
+
+   writeln('SWL JOBS SAVED');
    //abort;
  end;
 
