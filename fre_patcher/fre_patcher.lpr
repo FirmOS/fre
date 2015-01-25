@@ -1623,6 +1623,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      disk := TFRE_DB_VMACHINE_DISK_ISO.CreateForDB;
      disk.Field('index').AsInt16:=2;
      disk.SetDomainID(g_domain_id);
+     disk.Field('filename').asstring:='/shared/ubuntu-14.04.1-desktop-amd64.iso';
 //     disk.Field('zvol').AsObjectLink:=vol1_id;
      disk.Field('serviceparent').AsObjectLink:=vm_uid;
      disk.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'ISO1';
