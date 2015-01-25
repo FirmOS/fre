@@ -205,11 +205,11 @@ begin
     canMoveToAggr:=false;
     canRemoveFromAggr:=false;
   end;
-  canMoveToAggr:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
+  canMoveToBridge:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
                  conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
-  canMoveToAggr:=canMoveToAggr and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+  canMoveToBridge:=canMoveToBridge and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
 
-  canRemoveFromAggr:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+  canRemoveFromBridge:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
 
   if canAdd or canDelete or canModify or canDelegate or canAddVNIC or canAddHostnet or canMoveToAggr or canRemoveFromAggr or canMoveToBridge or canRemoveFromBridge then begin
     if not canAdd then begin
