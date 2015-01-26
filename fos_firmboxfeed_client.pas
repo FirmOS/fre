@@ -443,6 +443,26 @@ var ndata          : IFRE_DB_Object;
         raise Exception.Create('UID '+zoneguid.AsHexString+' IS NOT A ZONE IN THE SERVICE STRUCTURE');
     end;
 
+    procedure ResetZoneState(const obj:IFRE_DB_Object;var haltit:boolean);
+    var structzone: TFRE_DB_ZONE;
+        zplugin   : TFRE_DB_ZONESTATUS_PLUGIN;
+    begin
+      haltit :=false;
+      if obj.isa(TFRE_DB_GLOBAL_ZONE) then
+        exit;
+      if obj.IsA(TFRE_DB_ZONE,structzone) then
+        begin
+          writeln('SWL RESET ZONESTATE',structzone.UID_String);
+          if not structzone.HasPlugin(TFRE_DB_ZONESTATUS_PLUGIN,zplugin) then
+            begin
+              zplugin := TFRE_DB_ZONESTATUS_PLUGIN.Create;
+              structzone.AttachPlugin(zplugin);
+            end;
+          zplugin.SetZoneID(-1);
+          zplugin.SetZoneState('planned',-1);
+        end;
+    end;
+
 begin
 {$IFDEF SOLARIS}
   servicedata_lock.Acquire;
@@ -451,15 +471,21 @@ begin
     transport_list := GFRE_DBI.NewObject;
     ndata          := servicedata.CloneToNewObject;
 
+
     zdata := fre_list_all_zones;
+
+    ndata.ForAllObjectsBreakHierarchic(@ResetZoneState);
+
     zdata.ForAllObjects(@UpdateZones);
 
-    FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndata,servicedata,service_coll_assign,transport_list);
+    FREDIFF_GenerateRelationalDiffContainersandAddToBulkObject(ndata,servicedata,service_coll_assign,transport_list,true);
 
 
     if FREDIFF_ChangesGenerated(transport_list) then
       begin
         writeln('SWL ZONE TRANSPORT',transport_list.DumpToString);
+        //writeln('SWL SDATA',servicedata.DumpToString());
+        //writeln('SWL NDATA',ndata.DumpToString());
         SendServerCommand(FADCAdmin_FeedAppClass,'DATA_FEED',TFRE_DB_GUIDArray.Create(FADCAdmin_FeedAppUid),transport_list,@CCB_SendStructureUpdate);
       end
     else
