@@ -61,7 +61,7 @@ var
 //        ip.Field('datalinkname').asstring :='e1000g0';  //DEBUG
 //        if obj.isA(TFRE_DB_IPV4_HOSTNET,ip4) then       //DEBUG
 //          ip.Field('dhcp').asboolean := true;           //DEBUG
-        resdbo := ip.RIF_StartService;
+        resdbo := ip.StartService;
         result := resdbo.Field('started').asboolean;
       end;
   end;
@@ -78,7 +78,7 @@ var
         if ip.Parent.IsA(TFRE_DB_DATALINK,dl) then
           ip.Field('datalinkname').asstring := dl.ObjectName;
         //ip.Field('datalinkname').asstring :='e1000g0';  //DEBUG
-        resdbo := ip.RIF_StopService;
+        resdbo := ip.StopService;
         result := resdbo.Field('stopped').asboolean;
       end;
   end;

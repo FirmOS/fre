@@ -50,7 +50,7 @@ uses
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
   fre_diff_transport,fre_process,fre_mysql_ll,sqldb
   {$IFDEF SOLARIS}
-  ,fosillu_hal_zonectrl,fosillu_hal_dbo_common,fosillu_libzonecfg
+  ,fosillu_hal_zonectrl,fosillu_hal_dbo_common,fosillu_libzonecfg,fosillu_hal_svcctrl
   {$ENDIF}
   ;
 
@@ -93,6 +93,7 @@ type
     procedure  _MatchLinkStats             (const data : IFRE_DB_Object);
     procedure  UpdateandSendZoneData;
     procedure  TestzoneEnum;
+    procedure  TestSvcZone;
   public
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  MySessionDisconnected   (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
@@ -483,6 +484,14 @@ begin
   abort;
 end;
 
+procedure TFRE_BOX_FEED_CLIENT.TestSvcZone;
+begin
+  {$IFDEF SOLARIS}
+  fre_enable_or_disable_service('fos/fos_vm_bc82f561c6bbda065fb4216850f29e3f',true,'15a56c904a7f00248929bfdb576a45c9');
+  {$ENDIF}
+  abort;
+end;
+
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 var i           : integer;
     machineUIDS : TFRE_DB_GUIDArray;
@@ -562,7 +571,7 @@ begin
   {$ENDIF}
 
 //  TestzoneEnum;
-
+//  TestSvcZone;
 
   GFRE_TF.Get_Lock(liveupdate_lock);
   live_all := GFRE_DBI.NewObject;
@@ -615,6 +624,8 @@ begin
   RegisterSupportedRifClass(TFRE_DB_ZONECREATION_JOB);
   RegisterSupportedRifClass(TFRE_DB_ZONEDESTROY_JOB);
   RegisterSupportedRifClass(TFRE_DB_ZONE);
+  RegisterSupportedRifClass(TFRE_DB_SERVICE);
+  RegisterSupportedRifClass(TFRE_DB_VMACHINE);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;
