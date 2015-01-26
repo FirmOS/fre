@@ -660,12 +660,12 @@ var
   sf : TFRE_DB_SERVER_FUNC_DESC;
 begin
   res:=TFRE_DB_SUBSECTIONS_DESC.create.Describe();
-  sf:=CWSF(@WEB_ZoneContentServices);
-  sf.AddParam.Describe('selected',input.Field('selected').AsString);
-  res.AddSection.Describe(sf,FetchModuleTextShort(ses,'zone_services_tab'),1);
   sf:=CWSF(@WEB_ZoneContentConfiguration);
   sf.AddParam.Describe('selected',input.Field('selected').AsString);
-  res.AddSection.Describe(sf,FetchModuleTextShort(ses,'zone_config_tab'),2);
+  res.AddSection.Describe(sf,FetchModuleTextShort(ses,'zone_config_tab'),1);
+  sf:=CWSF(@WEB_ZoneContentServices);
+  sf.AddParam.Describe('selected',input.Field('selected').AsString);
+  res.AddSection.Describe(sf,FetchModuleTextShort(ses,'zone_services_tab'),2);
   Result:=res;
 end;
 
@@ -767,7 +767,7 @@ begin
     CreateModuleText(conn,'info_details_select_one','Please select an object to get detailed information about it.');
 
     CreateModuleText(conn,'zone_services_tab','Services');
-    CreateModuleText(conn,'zone_config_tab','Configuration');
+    CreateModuleText(conn,'zone_config_tab','Zone');
     CreateModuleText(conn,'zone_config_form_caption','Available Services');
     CreateModuleText(conn,'zone_config_save_error_cap','Error');
     CreateModuleText(conn,'zone_config_save_error_msg','Error saving zone configuration. Following service(s) are already in use and cannot be disabled: %services_str%');
@@ -1156,7 +1156,7 @@ begin
     conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
     if conf.Field('type').AsString='service' then begin
       defaultValue:=FREDB_StringInArrayIdx(serviceClass,zone.Field('disabledSCs').AsStringArr)=-1;
-      if defaultValue then begin
+      if not defaultValue then begin
         disabled:=false;
       end else begin
         disabled:=conn.GetReferencesCount(zone.UID,false,serviceClass,'serviceParent')>0;
@@ -1192,6 +1192,7 @@ var
   canDelete   : Boolean;
   canStart    : Boolean;
   canStop     : Boolean;
+  disabledSCs : TFRE_DB_StringArray;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -1223,11 +1224,13 @@ begin
   sf.AddParam.Describe('zoneId',zone.UID_String);
   menu.AddEntry.Describe(FetchModuleTextShort(ses,'test_halt_zone'),'',sf,false,'zone_halt');       //FIXXXME only on non global zones, dependend on status planned
 
+  disabledSCs:=zone.Field('disabledSCs').AsStringArr;
 
   CheckDbResult(conn.FetchAs(zone.Field('templateid').AsObjectLink,TFRE_DB_FBZ_TEMPLATE,template));
 
   for i := 0 to template.Field('serviceclasses').ValueCount -1 do begin
     serviceClass:=template.Field('serviceclasses').AsStringArr[i];
+    if FREDB_StringInArrayIdx(serviceClass,disabledSCs)<>-1 then continue; //skip disabled services
     exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
     conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
     if conf.Field('type').AsString='service' then begin
