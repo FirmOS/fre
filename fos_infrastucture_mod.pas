@@ -756,6 +756,9 @@ begin
     CreateModuleText(conn,'add_infrastructure_error_exists_message_dataset','A dataset with the given name already exists on the chosen pool. Please choose another name.');
     CreateModuleText(conn,'add_infrastructure_error_exists_message_zone','A zone with the given name already exists for the given domain. Please choose another name.');
 
+    CreateModuleText(conn,'modify_infrastructure_error_exists_cap','Error');
+    CreateModuleText(conn,'modify_infrastructure_error_exists_message_zone','A zone with the given name already exists for the given domain. Please choose another name.');
+
     CreateModuleText(conn,'delete_diag_cap','Remove Infrastructure');
     CreateModuleText(conn,'delete_diag_msg','Remove infrastructure object "%object_str%"?');
     CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
@@ -764,9 +767,10 @@ begin
 
     CreateModuleText(conn,'zone_services_tab','Services');
     CreateModuleText(conn,'zone_config_tab','Zone');
-    CreateModuleText(conn,'zone_config_form_caption','Available Services');
     CreateModuleText(conn,'zone_config_save_error_cap','Error');
     CreateModuleText(conn,'zone_config_save_error_msg','Error saving zone configuration. Following service(s) are already in use and cannot be disabled: %services_str%');
+
+    CreateModuleText(conn,'zone_config_form_avail_services_group','Available Services');
 
     CreateModuleText(conn,'grid_service_name','Name');
     CreateModuleText(conn,'tb_add_service','Add');
@@ -1143,14 +1147,22 @@ var
   disabled    : Boolean;
   serviceClass: String;
   menu        : TFRE_DB_MENU_DESC;
+  scheme      : IFRE_DB_SchemeObject;
+  group       : TFRE_DB_INPUT_GROUP_DESC;
 begin
   CheckClassVisibility4MyDomain(ses);
 
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
-  res:=TFRE_DB_FORM_PANEL_DESC.create.Describe(FetchModuleTextShort(ses,'zone_config_form_caption'));
-  res.contentId:='configureZone';
+  res:=TFRE_DB_FORM_PANEL_DESC.create.Describe('');
+
+  GFRE_DBI.GetSystemSchemeByName(zone.ClassName,scheme);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'zone');
+
+  res.FillWithObjectValues(zone,ses,'zone');
 
   CheckDbResult(conn.FetchAs(zone.Field('templateid').AsObjectLink,TFRE_DB_FBZ_TEMPLATE,template));
+
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'zone_config_form_avail_services_group'),true,false);
 
   for i := 0 to template.Field('serviceclasses').ValueCount -1 do begin
     serviceClass:=template.Field('serviceclasses').AsStringArr[i];
@@ -1164,7 +1176,7 @@ begin
         disabled:=conn.GetReferencesCount(zone.UID,false,serviceClass,'serviceParent')>0;
       end;
 
-      res.AddBool.Describe(conf.Field('caption').AsString,serviceClass,false,false,disabled,defaultValue);
+      group.AddBool.Describe(conf.Field('caption').AsString,'config.'+serviceClass,false,false,disabled,defaultValue);
     end;
   end;
 
@@ -1191,6 +1203,7 @@ begin
     end;
   end;
 
+  res.contentId:='configureZone';
   Result:=res;
 end;
 
@@ -1281,6 +1294,9 @@ var
   exClass      : TFRE_DB_ObjectClassEx;
   i            : Integer;
   conf         : IFRE_DB_Object;
+  schemeObject : IFRE_DB_SchemeObject;
+  idx          : String;
+  coll: IFRE_DB_COLLECTION;
 
   procedure _handleService(const field: IFRE_DB_Field);
   var
@@ -1305,29 +1321,49 @@ var
   end;
 
 begin
+  Result:=GFRE_DB_NIL_DESC;
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
 
   if not conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_ZONE,zone.DomainID) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  SetLength(errorClasses,0);
-  input.Field('data').AsObject.ForAllFields(@_handleService,true,true);
+  if input.FieldPathExists('data.zone') then begin //update the zone
+    if not GFRE_DBI.GetSystemScheme(zone.ClassType,schemeObject) then
+      raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[zone.ClassName]);
 
-  if Length(errorClasses)=0 then begin
-    CheckDbResult(conn.Update(zone));
-    Result:=GFRE_DB_NIL_DESC;
-  end else begin
-    sf:=CWSF(@WEB_ZoneContentConfiguration);
-    sf.AddParam.Describe('selected',input.Field('selected').AsString);
-    servicesStr:='';
-    for i := 0 to high(errorClasses) do begin
-      exClass:=GFRE_DBI.GetObjectClassEx(errorClasses[i]);
-      conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+    if input.FieldPathExists('data.zone.objname') and (input.FieldPath('data.zone.objname').AsString<>zone.ObjectName) then begin
+      idx:=input.FieldPath('data.zone.objname').AsString + '@' + FREDB_G2H(zone.DomainID);
 
-      if i>0 then servicesStr:=servicesStr + ', ';
-      servicesStr:=servicesStr + conf.Field('caption').AsString;
+      coll:=conn.GetCollection(CFOS_DB_ZONES_COLLECTION);
+      if coll.ExistsIndexedText(idx,false,'upid')<>0 then begin
+        Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'modify_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'modify_infrastructure_error_exists_message_zone'),fdbmt_error);
+        exit;
+      end;
+      zone.Field('uniquephysicalid').AsString:=idx;
     end;
-    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'zone_config_save_error_cap'),StringReplace(FetchModuleTextShort(ses,'zone_config_save_error_msg'),'%services_str%',servicesStr,[rfReplaceAll]),fdbmt_error,sf);
+    schemeObject.SetObjectFieldsWithScheme(input.FieldPath('data.zone').AsObject,zone,false,conn);
+    CheckDBResult(conn.Update(zone));
+  end;
+
+  if input.FieldPathExists('data.config') then begin
+    SetLength(errorClasses,0);
+    input.Field('data.config').AsObject.ForAllFields(@_handleService,true,true);
+
+    if Length(errorClasses)=0 then begin
+      CheckDbResult(conn.Update(zone));
+    end else begin
+      sf:=CWSF(@WEB_ZoneContentConfiguration);
+      sf.AddParam.Describe('selected',input.Field('selected').AsString);
+      servicesStr:='';
+      for i := 0 to high(errorClasses) do begin
+        exClass:=GFRE_DBI.GetObjectClassEx(errorClasses[i]);
+        conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
+
+        if i>0 then servicesStr:=servicesStr + ', ';
+        servicesStr:=servicesStr + conf.Field('caption').AsString;
+      end;
+      Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'zone_config_save_error_cap'),StringReplace(FetchModuleTextShort(ses,'zone_config_save_error_msg'),'%services_str%',servicesStr,[rfReplaceAll]),fdbmt_error,sf);
+    end;
   end;
 end;
 
