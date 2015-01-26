@@ -1417,7 +1417,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       zplugin:=TFRE_DB_ZONESTATUS_PLUGIN.Create;
       zplugin.SetZoneID(-1);
       if zone.IsA(TFRE_DB_GLOBAL_ZONE) then
-        zplugin.SetZoneState('',-1) //simulated
+        zplugin.SetZoneState('running',4) //simulated
       else
         zplugin.SetZoneState('planned',-1); //faked state num
 
