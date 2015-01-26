@@ -780,19 +780,21 @@ var
   vmkey              : string;
   vmcc               : IFRE_DB_COLLECTION;
   obj                : IFRE_DB_Object;
-  vmObj              : TFRE_DB_VMACHINE;
+  vhObj              : TFRE_DB_VHOST;
   urlSep             : TFOSStringArray;
   prot,host,port,path: String;
   tmp                : String;
   i                  : Integer;
+  vmObj              : TFRE_DB_VMACHINE;
 begin
-  CheckClassVisibility4MyDomain(ses);
+  CheckClassVisibility4MyDomain(ses);       //FIXXME
   vmkey  := input.Field('uniquephysicalid').AsString;
   VMCC := conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   if vmcc.GetIndexedObj(vmkey,obj) then begin
-    vmObj:=obj.Implementor_HC as TFRE_DB_VMACHINE;
-    if UpperCase(vmObj.state)='RUNNING' then begin
-      if vmObj.mtype='KVM' then begin
+    vhObj:=obj.Implementor_HC as TFRE_DB_VHOST;
+    if true then begin //UpperCase(vmObj.state)='RUNNING' then begin
+      if vhObj is TFRE_DB_VMACHINE then begin
+        vmObj:=vhObj as TFRE_DB_VMACHINE;
         result := TFRE_DB_VNC_DESC.create.Describe(vmObj.vncHost,vmObj.vncPort);
       end else begin
         tmp:=vmObj.Field('SHELL').AsString;
