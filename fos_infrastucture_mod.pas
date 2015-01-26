@@ -479,6 +479,7 @@ var
   dbo         : IFRE_DB_Object;
   idx         : String;
   zoneDS      : TFRE_DB_ZFS_DATASET_FILE;
+  zplugin     : TFRE_DB_ZONESTATUS_PLUGIN;
 begin
   if not _canAddZone(ses,conn) then raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
@@ -544,6 +545,11 @@ begin
   CheckDBResult(dcoll.Store(zoneDS.CloneToNewObject()));
 
   zone.Field('serviceParent').AsObjectLink:=zoneDS.UID;
+
+  zplugin := TFRE_DB_ZONESTATUS_PLUGIN.Create;
+  zplugin.SetZoneID(-1);
+  zplugin.SetZoneState('planned',-1);
+  zone.AttachPlugin(zplugin);
 
   CheckDBResult(coll.Store(zone));
 
@@ -1554,6 +1560,7 @@ begin
           CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringItem[i]),TFRE_DB_SERVICE,service));
           CheckDbResult(conn.FetchAs(service.Field('serviceparent').asGUID,TFRE_DB_ZONE,zone));
           machine_uid := zone.MachineID;
+          service.Field('zone').AsString:=zone.UID_String;
           if ses.InvokeRemoteInterface(machine_uid,@service.RIF_EnableService,@GotAnswer,nil)=edb_OK then
             begin
               result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
@@ -1600,6 +1607,7 @@ begin
           CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringItem[i]),TFRE_DB_SERVICE,service));
           CheckDbResult(conn.FetchAs(service.Field('serviceparent').asGUID,TFRE_DB_ZONE,zone));
           machine_uid := zone.MachineID;
+          service.Field('zone').AsString:=zone.UID_String;
           if ses.InvokeRemoteInterface(machine_uid,@service.RIF_DisableService,@GotAnswer,nil)=edb_OK then
             begin
               result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
