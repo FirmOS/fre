@@ -695,7 +695,7 @@ begin
     -1: installDis:=false;
      0: ;
      1: uninstallDis:=false;
-     2: uninstallDis:=false;
+     2: begin uninstallDis:=false; bootDis:=false; end;
      3: ;
      4: begin uninstallDis:=false; haltDis:=false; end;
      5: ;
@@ -1789,13 +1789,17 @@ var
   bootDis     : Boolean;
   haltDis     : Boolean;
 begin
-  conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone);
-  zone.HasPlugin(TFRE_DB_ZONESTATUS_PLUGIN,plugin);
-  _getZoneButtonStates(plugin,installDis,uninstallDis,bootDis,haltDis);
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_install',installDis));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_uninstall',uninstallDis));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_boot',bootDis));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_halt',haltDis));
+  writeln('SWL ZONEOBJCHANGED ',input.DumpToString);
+  //conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone);
+  if input.isa(TFRE_DB_ZONE,zone) then
+    begin
+      zone.HasPlugin(TFRE_DB_ZONESTATUS_PLUGIN,plugin);
+      _getZoneButtonStates(plugin,installDis,uninstallDis,bootDis,haltDis);
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_install',installDis));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_uninstall',uninstallDis));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_boot',bootDis));
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_halt',haltDis));
+    end;
   Result:=GFRE_DB_NIL_DESC;
 end;
 
