@@ -1498,7 +1498,7 @@ begin
   if not _canDelegate(input,conn,dbo) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  _getZone(dbo,conn,true);
+  zone:=_getZone(dbo,conn,true);
 
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'delegate_datalink_diag_cap'));
   dc:=ses.FetchDerivedCollection('ZONE_CHOOSER');
