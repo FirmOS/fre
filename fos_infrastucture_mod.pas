@@ -271,8 +271,8 @@ var
   idx: String;
 begin
   dsObj.Field('poolid').AsObjectLink:=poolId;
-  dsObj.Field('dataset').AsString:=parentPath + '/' + dsObj.ObjectName;
-  idx:=dsObj.Field('dataset').AsString + '@' + FREDB_G2H(poolId);
+  dsObj.Field('mountpoint').AsString:=parentPath + '/' + dsObj.ObjectName;
+  idx:=dsObj.Field('mountpoint').AsString + '@' + FREDB_G2H(poolId);
 
   if Assigned(coll) then begin
     if coll.ExistsIndexedText(idx,false,'upid')<>0 then begin
@@ -282,6 +282,7 @@ begin
   end;
   dsObj.Field('serviceParent').AsObjectLink:=serviceParent;
   dsObj.Field('uniquephysicalid').AsString:=idx;
+
   Result:=true;
 end;
 
@@ -459,7 +460,7 @@ begin
 
   ds:=TFRE_DB_ZFS_DATASET_PARENT.CreateForDB;
   schemeObject.SetObjectFieldsWithScheme(input,ds,true,conn);
-  if not _fillDSObj(ds,pool.UID,rootDS.Field('dataset').AsString,rootDS.UID,coll) then begin
+  if not _fillDSObj(ds,pool.UID,rootDS.Field('mountpoint').AsString,rootDS.UID,coll) then begin
     Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'add_infrastructure_error_exists_cap'),FetchModuleTextShort(ses,'add_infrastructure_error_exists_message_dataset'),fdbmt_error);
     exit;
   end;
@@ -516,19 +517,19 @@ begin
   CheckDbResult(conn.FetchAs(ds.Field('poolid').AsObjectLink,TFRE_DB_ZFS_POOL,pool));
   zone.Field('hostid').AsObjectLink:=pool.Field('serviceParent').AsObjectLink;
 
-  if dcoll.GetIndexedObjText(ds.Field('dataset').AsString + '/domains@' + pool.UID_String,dbo,false,'upid')=0 then begin //domains DS
+  if dcoll.GetIndexedObjText(ds.Field('mountpoint').AsString + '/domains@' + pool.UID_String,dbo,false,'upid')=0 then begin //domains DS
     domainsDS:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
     domainsDS.ObjectName:='domains';
-    _fillDSObj(domainsDS,pool.UID,ds.Field('dataset').AsString,ds.UID);
+    _fillDSObj(domainsDS,pool.UID,ds.Field('mountpoint').AsString,ds.UID);
     CheckDBResult(dcoll.Store(domainsDS.CloneToNewObject()));
   end else begin
     domainsDS:=dbo.Implementor_HC as TFRE_DB_ZFS_DATASET_FILE;
   end;
 
-  if dcoll.GetIndexedObjText(domainsDS.Field('dataset').AsString + '/' + FREDB_G2H(sdomain)+'@' + pool.UID_String,dbo,false,'upid')=0 then begin //service domain DS
+  if dcoll.GetIndexedObjText(domainsDS.Field('mountpoint').AsString + '/' + FREDB_G2H(sdomain)+'@' + pool.UID_String,dbo,false,'upid')=0 then begin //service domain DS
     sdomainDS:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
     sdomainDS.ObjectName:=FREDB_G2H(sdomain);
-    _fillDSObj(sdomainDS,pool.UID,domainsDS.Field('dataset').AsString,domainsDS.UID);
+    _fillDSObj(sdomainDS,pool.UID,domainsDS.Field('mountpoint').AsString,domainsDS.UID);
     CheckDBResult(dcoll.Store(sdomainDS.CloneToNewObject()));
   end else begin
     sdomainDS:=dbo.Implementor_HC as TFRE_DB_ZFS_DATASET_FILE;
@@ -543,8 +544,8 @@ begin
   zone.Field('uniquephysicalid').AsString:=idx;
 
   zoneDS:=TFRE_DB_ZFS_DATASET_FILE.CreateForDB;
-  zoneDS.ObjectName:=zone.ObjectName;
-  _fillDSObj(zoneDS,pool.UID,sdomainDS.Field('dataset').AsString,sdomainDS.UID);
+  zoneDS.ObjectName:=zone.UID.AsHexString;
+  _fillDSObj(zoneDS,pool.UID,sdomainDS.Field('mountpoint').AsString,sdomainDS.UID);
   CheckDBResult(dcoll.Store(zoneDS.CloneToNewObject()));
 
   zone.Field('serviceParent').AsObjectLink:=zoneDS.UID;
