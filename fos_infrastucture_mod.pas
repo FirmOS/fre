@@ -70,6 +70,7 @@ type
     function        _getDetails                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
     function        _getZoneDetails                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_CONTENT_DESC;
     function        _canDeleteService                   (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
+    procedure       _getZoneButtonStates                (const status: TFRE_DB_ZONESTATUS_PLUGIN; var installDis,uninstallDis,bootDis,haltDis: Boolean);
   protected
     procedure       SetupAppModuleStructure             ; override;
   public
@@ -682,6 +683,26 @@ begin
   end;
 end;
 
+procedure TFOS_INFRASTRUCTURE_MOD._getZoneButtonStates(const status: TFRE_DB_ZONESTATUS_PLUGIN; var installDis, uninstallDis, bootDis, haltDis: Boolean);
+begin
+  installDis:=true; uninstallDis:=true; bootDis:=true; haltDis:=true;
+  if not Assigned(status) then begin
+    installDis:=false;
+    exit;
+  end;
+  case status.field('zstate_num').AsInt32 of
+    -1: installDis:=false;
+     0: ;
+     1: uninstallDis:=false;
+     2: uninstallDis:=false;
+     3: ;
+     4: begin uninstallDis:=false; haltDis:=false; end;
+     5: ;
+     6: uninstallDis:=false;
+     7: begin uninstallDis:=false; haltDis:=false; end;
+  end;
+end;
+
 procedure TFOS_INFRASTRUCTURE_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
@@ -777,6 +798,7 @@ begin
     CreateModuleText(conn,'zone_config_save_error_msg','Error saving zone configuration. Following service(s) are already in use and cannot be disabled: %services_str%');
 
     CreateModuleText(conn,'zone_config_form_avail_services_group','Available Services');
+    CreateModuleText(conn,'zone_config_form_status','Status');
 
     CreateModuleText(conn,'grid_service_name','Name');
     CreateModuleText(conn,'tb_add_service','Add');
@@ -1155,6 +1177,11 @@ var
   menu        : TFRE_DB_MENU_DESC;
   scheme      : IFRE_DB_SchemeObject;
   group       : TFRE_DB_INPUT_GROUP_DESC;
+  plugin      : TFRE_DB_ZONESTATUS_PLUGIN;
+  installDis  : Boolean;
+  uninstallDis: Boolean;
+  bootDis     : Boolean;
+  haltDis     : Boolean;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -1163,6 +1190,12 @@ begin
 
   GFRE_DBI.GetSystemSchemeByName(zone.ClassName,scheme);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'zone');
+
+  if zone.HasPlugin(TFRE_DB_ZONESTATUS_PLUGIN,plugin) then begin
+    res.AddInput.Describe(FetchModuleTextShort(ses,'zone_config_form_status'),'zone.'+ plugin.Field('zstate').GetFieldPathAsString,false,false,true,false);
+  end else begin
+    plugin:=nil;
+  end;
 
   res.FillWithObjectValues(zone,ses,'zone');
 
@@ -1192,19 +1225,21 @@ begin
     res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
     if not (zone is TFRE_DB_GLOBAL_ZONE) then begin
+
+      _getZoneButtonStates(plugin,installDis,uninstallDis,bootDis,haltDis);
       menu:=TFRE_DB_MENU_DESC.create.Describe();
       sf:=CWSF(@WEB_ZoneInstall);
       sf.AddParam.Describe('zoneId',zone.UID_String);
-      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_install'),'',sf,false,'zone_install');
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_install'),'',sf,installDis,'zone_install');
       sf:=CWSF(@WEB_ZoneUninstall);
       sf.AddParam.Describe('zoneId',zone.UID_String);
-      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_uninstall'),'',sf,false,'zone_uninstall');
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_uninstall'),'',sf,uninstallDis,'zone_uninstall');
       sf:=CWSF(@WEB_ZoneBoot);
       sf.AddParam.Describe('zoneId',zone.UID_String);
-      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_boot'),'',sf,false,'zone_boot');
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_boot'),'',sf,bootDis,'zone_boot');
       sf:=CWSF(@WEB_ZoneHalt);
       sf.AddParam.Describe('zoneId',zone.UID_String);
-      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_halt'),'',sf,false,'zone_halt');
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_halt'),'',sf,haltDis,'zone_halt');
       res.SetMenu(menu);
     end;
   end;
