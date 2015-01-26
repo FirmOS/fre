@@ -106,6 +106,7 @@ type
     function        WEB_ZoneUninstall                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ZoneBoot                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ZoneHalt                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ZoneObjChanged                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 
@@ -1187,6 +1188,7 @@ begin
 
   CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_ZONE,zone));
   res:=TFRE_DB_FORM_PANEL_DESC.create.Describe('');
+  res.contentId:='configureZone';
 
   GFRE_DBI.GetSystemSchemeByName(zone.ClassName,scheme);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'zone');
@@ -1226,6 +1228,8 @@ begin
 
     if not (zone is TFRE_DB_GLOBAL_ZONE) then begin
 
+      sf.AddParam.Describe('zoneId',zone.UID_String);
+      ses.RegisterDBOChangeCB(zone.UID,CWSF(@WEB_ZoneObjChanged),res.contentId);
       _getZoneButtonStates(plugin,installDis,uninstallDis,bootDis,haltDis);
       menu:=TFRE_DB_MENU_DESC.create.Describe();
       sf:=CWSF(@WEB_ZoneInstall);
@@ -1244,7 +1248,6 @@ begin
     end;
   end;
 
-  res.contentId:='configureZone';
   Result:=res;
 end;
 
@@ -1775,6 +1778,25 @@ begin
     begin
       result := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','No connected feeder that implements the zone boot for '+zone.UID_String+' '+machine_uid.AsHexString,fdbmt_error);
     end;
+end;
+
+function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneObjChanged(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zone        : TFRE_DB_ZONE;
+  plugin      : TFRE_DB_ZONESTATUS_PLUGIN;
+  installDis  : Boolean;
+  uninstallDis: Boolean;
+  bootDis     : Boolean;
+  haltDis     : Boolean;
+begin
+  conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone);
+  zone.HasPlugin(TFRE_DB_ZONESTATUS_PLUGIN,plugin);
+  _getZoneButtonStates(plugin,installDis,uninstallDis,bootDis,haltDis);
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_install',installDis));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_uninstall',uninstallDis));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_boot',bootDis));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('zone_halt',haltDis));
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneInstall(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
