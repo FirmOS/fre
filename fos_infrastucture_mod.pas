@@ -1253,7 +1253,6 @@ begin
   end;
   canStop:=canStart;
 
-
   if canAdd or canDelete or canStart or canStop then begin
     if not canAdd then begin
       menu:=TFRE_DB_MENU_DESC.create.Describe;
@@ -1262,10 +1261,10 @@ begin
       menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delete_service'),'',CWSF(@WEB_DeleteService),true,'service_delete');
     end;
     if canStart then begin
-      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_start_service'),'',CWSF(@WEB_StartService),true,'service_start');
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_start_service'),'',CWSF(@WEB_StartService),false,'service_start');   //FIXXME, set disable, update GUI
     end;
     if canStop then begin
-      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_stop_service'),'',CWSF(@WEB_StopService),true,'service_stop');
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_stop_service'),'',CWSF(@WEB_StopService),false,'service_stop');      //FIXXME, set disable, update GUI
     end;
     res.SetMenu(menu);
   end;
@@ -1489,13 +1488,95 @@ begin
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_StartService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  service     : TFRE_DB_SERVICE;
+  zone        : TFRE_DB_ZONE;
+  machine_uid : TFRE_DB_GUID;
+  i           : integer;
+
+
+      procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
+      var stat : string;
+      begin
+        case status of
+          cdcs_OK:      stat := 'CMD_OK';
+          cdcs_TIMEOUT: stat := 'CMD_TIMEOUT';
+          cdcs_ERROR:   stat := 'CMD_ERROR';
+        end;
+        writeln('GOT ANSWER START SERVICE ',status,' ',new_input.DumpToString());
+        if status<>cdcs_OK then
+          begin
+            ses.SendServerClientRequest(TFRE_DB_MESSAGE_DESC.create.Describe('Result',stat+' '+new_input.GetAsJSONString(),fdbmt_info));
+          end;
+      end;
+
 begin
-  Result:=GFRE_DB_NIL_DESC; //FIXXME
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedService') then
+    begin
+      for i:=0 to ses.GetSessionModuleData(ClassName).Field('selectedService').ValueCount-1 do
+        begin
+          CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringItem[i]),TFRE_DB_SERVICE,service));
+          CheckDbResult(conn.FetchAs(service.Field('serviceparent').asGUID,TFRE_DB_ZONE,zone));
+          machine_uid := zone.MachineID;
+          if ses.InvokeRemoteInterface(machine_uid,@service.RIF_StartService,@GotAnswer,nil)=edb_OK then
+            begin
+              result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+              exit;
+            end
+          else
+            begin
+              result := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','No connected feeder that implements the service start for '+service.UID_String+' '+machine_uid.AsHexString,fdbmt_error);
+            end;
+        end;
+    end
+  else
+    Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_StopService(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  service     : TFRE_DB_SERVICE;
+  zone        : TFRE_DB_ZONE;
+  machine_uid : TFRE_DB_GUID;
+  i           : integer;
+
+
+      procedure GotAnswer(const ses: IFRE_DB_UserSession; const new_input: IFRE_DB_Object; const status: TFRE_DB_COMMAND_STATUS; const ocid: Qword; const opaquedata: IFRE_DB_Object);
+      var stat : string;
+      begin
+        case status of
+          cdcs_OK:      stat := 'CMD_OK';
+          cdcs_TIMEOUT: stat := 'CMD_TIMEOUT';
+          cdcs_ERROR:   stat := 'CMD_ERROR';
+        end;
+        writeln('GOT ANSWER STOP SERVICE ',status,' ',new_input.DumpToString());
+        if status<>cdcs_OK then
+          begin
+            ses.SendServerClientRequest(TFRE_DB_MESSAGE_DESC.create.Describe('Result',stat+' '+new_input.GetAsJSONString(),fdbmt_info));
+          end;
+      end;
+
 begin
-  Result:=GFRE_DB_NIL_DESC; //FIXXME
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedService') then
+    begin
+      for i:=0 to ses.GetSessionModuleData(ClassName).Field('selectedService').ValueCount-1 do
+        begin
+          CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringItem[i]),TFRE_DB_SERVICE,service));
+          CheckDbResult(conn.FetchAs(service.Field('serviceparent').asGUID,TFRE_DB_ZONE,zone));
+          machine_uid := zone.MachineID;
+          if ses.InvokeRemoteInterface(machine_uid,@service.RIF_StopService,@GotAnswer,nil)=edb_OK then
+            begin
+              result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
+              exit;
+            end
+          else
+            begin
+              result := TFRE_DB_MESSAGE_DESC.create.Describe('ERROR','No connected feeder that implements the service stop for '+service.UID_String+' '+machine_uid.AsHexString,fdbmt_error);
+            end;
+        end;
+    end
+  else
+    Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneUninstall(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
