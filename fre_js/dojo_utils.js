@@ -541,8 +541,9 @@ dojo.declare("FIRMOS.uiHandler", null, {
   updateFormDBO: function(obj) {
     for (var x in this.formDBOs_) {
       for (var i=0; i<this.formDBOs_[x].ids.length; i++) {
-        if (this.formDBOs_[x].ids[i]==obj.uid) {
-          this.formDBOs_[x].form.updateValues(obj);
+        var dbo_info = this.formDBOs_[x].ids[i].split('@');
+        if (dbo_info[0]==obj.uid) {
+          this.formDBOs_[x].form.updateValues(obj,dbo_info[1]);
           break;
         }
       }
@@ -1248,7 +1249,7 @@ dojo.declare("FIRMOS.Store", null, {
 
   //dStore Collection/Store API
   filter: function(query) {
-    return this;
+    return this; //FIXXME
   },
   sort: function(property, descending) {
     if (property instanceof Array) {
@@ -4072,8 +4073,12 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     this._updateValues(this.initialData,'',this.initialData);
   },
 
-  updateValues: function(obj) {
-    this._updateValues(obj,'',this.initialData);
+  updateValues: function(obj,prefix) {
+    var path='';
+    if (prefix && prefix!='') {
+      path=prefix + '.';
+    }
+    this._updateValues(obj,path,this.initialData);
   },
   
   getInputById: function(id) {
