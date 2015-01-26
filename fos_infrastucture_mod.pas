@@ -209,11 +209,9 @@ end;
 function TFOS_INFRASTRUCTURE_MOD._canDelete(const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; const id: String): Boolean;
 var
   dbo   : IFRE_DB_Object;
-  rcount: NativeInt;
   hcObj : TObject;
   dcoll : IFRE_DB_COLLECTION;
   dsObj : IFRE_DB_Object;
-  pObj  : IFRE_DB_Object;
 begin
   Result:=false;
   CheckDbResult(conn.Fetch(FREDB_H2G(id),dbo));
@@ -222,16 +220,14 @@ begin
 
   if hcObj is TFRE_DB_DATACENTER then begin
     if _canDeleteDC(conn,dbo.DomainID) then begin
-      rcount:=conn.GetReferencesCount(dbo.UID,false);
-      if rcount=0 then begin
+      if conn.GetReferencesCount(dbo.UID,false)=0 then begin
         Result:=true;
       end;
     end;
   end else
   if hcObj is TFRE_DB_MACHINE then begin
     if _canDeleteDC(conn,dbo.DomainID) then begin
-      rcount:=conn.GetReferencesCount(dbo.UID,false,TFRE_DB_ZFS_POOL.ClassName,'seviceParent');
-      if rcount=0 then begin
+      if conn.GetReferencesCount(dbo.UID,false,TFRE_DB_ZFS_POOL.ClassName,'seviceParent')=0 then begin
         Result:=true;
       end;
     end;
@@ -241,8 +237,7 @@ begin
       if (hcObj as TFRE_DB_ZFS_POOL).getIsNew then begin
         dcoll:=conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION);
         dcoll.GetIndexedObjText('/'+dbo.Field('objname').AsString + '@' + dbo.UID_String,dsObj,false,'upid');
-        rcount:=conn.GetReferencesCount(dsObj.UID,false);
-        if rcount=0 then begin
+        if conn.GetReferencesCount(dsObj.UID,false)=0 then begin
           Result:=true;
         end;
       end;
@@ -250,17 +245,17 @@ begin
   end else
   if hcObj is TFRE_DB_ZFS_DATASET_PARENT then begin
     if _canDeletePDataset(ses,conn,dbo.DomainID) then begin
-      rcount:=conn.GetReferencesCount(dbo.UID,false);
-      if rcount=0 then begin
+      if conn.GetReferencesCount(dbo.UID,false)=0 then begin
         Result:=true;
       end;
     end;
   end else
   if hcObj is TFRE_DB_ZONE then begin
-    CheckDbResult(conn.Fetch(dbo.Field('serviceParent').AsObjectLink,pObj));
-    if not (pObj.Implementor_HC is TFRE_DB_MACHINE) then begin //global zone
+    if not (hcObj is TFRE_DB_GLOBAL_ZONE) then begin //global zone
       if _canDeleteZone(ses,conn,dbo.DomainID) then begin
-        Result:=true;
+        if conn.GetReferencesCount(dbo.UID,false)=0 then begin
+          Result:=true;
+        end;
       end;
     end;
   end;
@@ -784,6 +779,11 @@ begin
     CreateModuleText(conn,'delete_service_diag_msg','Remove service "%service_str%"?');
     CreateModuleText(conn,'service_create_error_exists_cap','Error: Add service');
     CreateModuleText(conn,'service_create_error_exists_msg','A %service_str% service with the given name already exists!');
+
+    CreateModuleText(conn,'tb_zone_install','Install');
+    CreateModuleText(conn,'tb_zone_uninstall','Uninstall');
+    CreateModuleText(conn,'tb_zone_boot','Boot');
+    CreateModuleText(conn,'tb_zone_halt','Halt');
   end;
 end;
 
@@ -1142,6 +1142,7 @@ var
   defaultValue: Boolean;
   disabled    : Boolean;
   serviceClass: String;
+  menu        : TFRE_DB_MENU_DESC;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -1171,6 +1172,23 @@ begin
     sf:=CWSF(@WEB_StoreZoneConfiguration);
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+
+    if not (zone is TFRE_DB_GLOBAL_ZONE) then begin
+      menu:=TFRE_DB_MENU_DESC.create.Describe();
+      sf:=CWSF(@WEB_ZoneInstall);
+      sf.AddParam.Describe('zoneId',zone.UID_String);
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_install'),'',sf,false,'zone_install');
+      sf:=CWSF(@WEB_ZoneUninstall);
+      sf.AddParam.Describe('zoneId',zone.UID_String);
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_uninstall'),'',sf,false,'zone_uninstall');
+      sf:=CWSF(@WEB_ZoneBoot);
+      sf.AddParam.Describe('zoneId',zone.UID_String);
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_boot'),'',sf,false,'zone_boot');
+      sf:=CWSF(@WEB_ZoneHalt);
+      sf.AddParam.Describe('zoneId',zone.UID_String);
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_zone_halt'),'',sf,false,'zone_halt');
+      res.SetMenu(menu);
+    end;
   end;
 
   Result:=res;
@@ -1211,19 +1229,6 @@ begin
   canStop:=false;
   menu:=TFRE_DB_MENU_DESC.create.Describe;
   submenu:=menu.AddMenu.Describe(FetchModuleTextShort(ses,'tb_add_service'),'');
-
-  sf:=CWSF(@WEB_ZoneInstall);
-  sf.AddParam.Describe('zoneId',zone.UID_String);
-  menu.AddEntry.Describe(FetchModuleTextShort(ses,'test_install_zone'),'',sf,false,'zone_install');       //FIXXXME only on non global zones, dependend on status planned
-  sf:=CWSF(@WEB_ZoneUninstall);
-  sf.AddParam.Describe('zoneId',zone.UID_String);
-  menu.AddEntry.Describe(FetchModuleTextShort(ses,'test_uninstall_zone'),'',sf,false,'zone_uninstall');       //FIXXXME only on non global zones, dependend on status planned
-  sf:=CWSF(@WEB_ZoneBoot);
-  sf.AddParam.Describe('zoneId',zone.UID_String);
-  menu.AddEntry.Describe(FetchModuleTextShort(ses,'test_boot_zone'),'',sf,false,'zone_boot');       //FIXXXME only on non global zones, dependend on status planned
-  sf:=CWSF(@WEB_ZoneHalt);
-  sf.AddParam.Describe('zoneId',zone.UID_String);
-  menu.AddEntry.Describe(FetchModuleTextShort(ses,'test_halt_zone'),'',sf,false,'zone_halt');       //FIXXXME only on non global zones, dependend on status planned
 
   disabledSCs:=zone.Field('disabledSCs').AsStringArr;
 
