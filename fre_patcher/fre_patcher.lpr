@@ -1415,6 +1415,8 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       zone.Field('uniquephysicalid').AsString:=zone.ObjectName+'@'+idx_postfix;
 
       zplugin:=TFRE_DB_ZONESTATUS_PLUGIN.Create;
+      zplugin.SetZoneID(-1);
+      zplugin.SetZoneState('planned',-1); //faked state num
       zone.AttachPlugin(zplugin);
 
 //      writeln('ZONE:',zone.DumpToString());
