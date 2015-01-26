@@ -636,19 +636,11 @@ begin
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._delegateRightsCheck(const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
-var
-  ddomains: TFRE_DB_GUIDArray;
-  i       : Integer;
 begin
-  Result:=false;
-  if conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zDomainId) then begin
-    ddomains:=conn.SYS.GetDomainsForClassRight(sr_STORE,serviceClass);
-    for i := 0 to High(ddomains) do begin
-      if ddomains[i]<>zDomainId then begin
-        Result:=true;
-        break;
-      end;
-    end;
+  if conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zDomainId) and conn.SYS.CheckClassRight4AnyDomain(sr_STORE,serviceClass) then begin
+    Result:=true;
+  end else begin
+    Result:=false;
   end;
 end;
 
