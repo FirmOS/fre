@@ -531,7 +531,12 @@ dojo.declare("FIRMOS.uiHandler", null, {
   
   unregisterFormDBOs: function(formid, dboids) {
     if (this.formDBOs_[formid]) {
-      G_SERVER_COM.callServerFunction("FIRMOS","unregisterDBO",null, {ids: dboids});
+      var uids = [];
+      for (var i=0; i<dboids.length; i++) {
+        var dbo_info = dboids[i].split('@');
+        uids.push(dbo_info[0]);
+      }
+      G_SERVER_COM.callServerFunction("FIRMOS","unregisterDBO",null, {ids: uids});
       delete this.formDBOs_[formid];
     } else {
       console.error('Form ' + formid + ' not registered');
