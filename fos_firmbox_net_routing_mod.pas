@@ -36,8 +36,8 @@ type
     function        _canMoveToBridge           (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _canRemoveFromBridge       (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canRemoveFromBridge       (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
-    function        _canLinkToIPMP             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION):Boolean;
-    function        _canLinkToIPMP             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
+    function        _canLinkToIPMP             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; const isGlobal:Boolean):Boolean;
+    function        _canLinkToIPMP             (const input:IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; const isGlobal:Boolean; var dbo: IFRE_DB_Object):Boolean;
     function        _canUnlinkFromIPMP         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION):Boolean;
     function        _canUnlinkFromIPMP         (const input:IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object):Boolean;
     function        _delegateRightsCheck       (const zDomainId: TFRE_DB_GUID; const serviceClass: ShortString; const conn: IFRE_DB_CONNECTION): Boolean;
@@ -588,17 +588,20 @@ begin
   end;
 end;
 
-function TFRE_FIRMBOX_NET_ROUTING_MOD._canLinkToIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION): Boolean;
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canLinkToIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; const isGlobal:Boolean): Boolean;
 var
   dbo: IFRE_DB_Object;
 begin
-  Result:=_canLinkToIPMP(input,ses,conn,dbo);
+  Result:=_canLinkToIPMP(input,ses,conn,isGlobal,dbo);
 end;
 
-function TFRE_FIRMBOX_NET_ROUTING_MOD._canLinkToIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+function TFRE_FIRMBOX_NET_ROUTING_MOD._canLinkToIPMP(const input: IFRE_DB_Object; const ses: IFRE_DB_UserSession; const conn: IFRE_DB_CONNECTION; const isGlobal:Boolean; var dbo: IFRE_DB_Object): Boolean;
 var
   hcObj    : TObject;
   dc       : IFRE_DB_DERIVED_COLLECTION;
+  i        : Integer;
+  parentDbo: IFRE_DB_Object;
+  refs: TFRE_DB_GUIDArray;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
@@ -616,8 +619,13 @@ begin
         exit;
       end;
       if (hcObj is TFRE_DB_DATALINK_VNIC) then begin
-        if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_IPMP','datalinkParent')>0 then begin
-          exit; //object is already within an IPMP
+        refs:=conn.GetReferences(dbo.UID,true,'','datalinkParent');
+        for i := 0 to High(refs) - 1 do begin
+          CheckDbResult(conn.Fetch(refs[i],parentDbo));
+          if parentDbo.Implementor_HC is TFRE_DB_DATALINK_IPMP then
+            exit; //object is already within an IPMP
+          if isGlobal and _isDelegated(parentDbo,conn) then
+            exit; //parent is already delgated
         end;
       end;
 
@@ -751,7 +759,7 @@ begin
     _canAddHostnet(input,conn,ipv4Enabled,ipv6Enabled);
     moveToBridgeDisabled:=not _canMoveToBridge(input,ses,conn);
     removeFromBridgeDisabled:=not _canRemoveFromBridge(input,conn);
-    linkToIPMPDisabled:=not _canLinkToIPMP(input,ses,conn);
+    linkToIPMPDisabled:=not _canLinkToIPMP(input,ses,conn,isGlobal);
     unlinkFromIPMPDisabled:=not _canUnlinkFromIPMP(input,conn);
     if isGlobal then begin
       moveToAggrDisabled:=not _canMoveToAggr(input,ses,conn);
@@ -1474,7 +1482,7 @@ begin
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_bridge_remove_from'),'',sf);
   end;
-  if _canLinkToIPMP(input,ses,conn) then begin
+  if _canLinkToIPMP(input,ses,conn,isGlobal) then begin
     sf:=CWSF(@WEB_LinkToIPMP);
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_ipmp_link_to'),'',sf);
@@ -1892,7 +1900,7 @@ begin
   if not input.FieldExists('selected') then begin
     input.Field('selected').AsStringArr:=ses.GetSessionModuleData(ClassName).Field('selected').AsStringArr;
   end;
-  if not _canLinkToIPMP(input,ses,conn) then
+  if not _canLinkToIPMP(input,ses,conn,ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'link_to_ipmp_diag_cap'),600,true,true,false);
@@ -1909,7 +1917,7 @@ var
   dbo       : IFRE_DB_Object;
   ipmpUid   : TFRE_DB_GUID;
 begin
-  if not _canLinkToIPMP(input,ses,conn,dbo) then
+  if not _canLinkToIPMP(input,ses,conn,ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean,dbo) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   if not input.FieldPathExists('data.ipmp') then
