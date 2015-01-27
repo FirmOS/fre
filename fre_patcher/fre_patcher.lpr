@@ -2026,9 +2026,9 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1591,CFRE_DB_NullGUID,'02:08:20:86:21:dd','lan','LAN');
   AddIPV4('192.168.2.1/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,oce0_id,0,1591,CFRE_DB_NullGUID,'02:08:20:44:dd:13','vm','VM 0');
-  CreateVM(zone_id,'qemuwin2','172.24.1.1',5900,link_id);
+  CreateVM(zone_id,'Pro Competence qemuwin2','172.24.1.1',5900,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,oce0_id,0,1591,CFRE_DB_NullGUID,'02:08:20:e4:c9:7e','vm','VM 1');
-  CreateVM(zone_id,'qemulin1','172.24.1.1',5901,link_id);
+  CreateVM(zone_id,'Pro Competence qemulin1','172.24.1.1',5901,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,oce0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:45:87:d1','mgmt','Global NFS');
   AddIPV4('172.22.1.1/16',link_id);
 
@@ -2051,9 +2051,9 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,oce0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:79:55:84','lan','LAN');
   AddIPV4('192.168.3.1/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,oce0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:dd:68:d3','vm','VM 0');
-  CreateVM(zone_id,'qemuwin2','172.24.1.2',5900,link_id);
+  CreateVM(zone_id,'CMG qemuwin2','172.24.1.2',5900,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,oce0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:7d:3:42','vm','VM 1');
-  CreateVM(zone_id,'qemulin1','172.24.1.2',5901,link_id);
+  CreateVM(zone_id,'CMG qemulin1','172.24.1.2',5901,link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,oce0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:23:54:62','Global NFS');
   AddIPV4('172.22.1.2/16',link_id);
   vf_id:=CreateVFiler(zone_id,'Demo Virtual Fileserver');
@@ -2275,7 +2275,7 @@ begin
   AddIPV4('10.1.0.89/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:52:58:69','vm','VM 0');
-  CreateVM(zone_id,'qemutest1','10.1.0.89',5900,link_id,512,512);
+  CreateVM(zone_id,'Fusion qemutest1','10.1.0.89',5900,link_id,512,512);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,e0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:3a:4c:16','lan','Lan');
   AddIPV4('192.168.3.1/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,e0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:a7:7b:de','mgmt','Global NFS');
@@ -2320,27 +2320,27 @@ begin
   AddIPV4('10.1.0.210/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'6c:e6:b1:19:0f:f7','vm','VM 0');
-  CreateVM(zone_id,'qemulin1','10.1.0.210',5900,link_id,40960,4096);
+  CreateVM(zone_id,'SSDA qemulin1','10.1.0.210',5900,link_id,40960,4096);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a8:a6:ab:2b:35:5b','vm','VM 1');
-  CreateVM(zone_id,'qemulin2','10.1.0.210',5901,link_id,40960,4096);
+  CreateVM(zone_id,'SSDA qemulin2','10.1.0.210',5901,link_id,40960,4096);
 
   zone_id  := CreateZone('demossd_b',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'f59e0f209de79729e05c4e877bc4fc90');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'20:bf:50:9a:5c:52','mgmt','Mgmt Lan');
   AddIPV4('10.1.0.211/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'90:09:6f:a1:fc:f4','vm','VM 0');
-  CreateVM(zone_id,'qemulin1','10.1.0.211',5900,link_id,40960,4096);
+  CreateVM(zone_id,'SSDB qemulin1','10.1.0.211',5900,link_id,40960,4096);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'18:a6:35:a1:29:fd','vm','VM 1');
-  CreateVM(zone_id,'qemulin2','10.1.0.211',5901,link_id,40960,4096);
+  CreateVM(zone_id,'SSDB qemulin2','10.1.0.211',5901,link_id,40960,4096);
 
   zone_id  := CreateZone('demossd_c',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'461fe5b2d584f7a8a2a7c9b6ec10f8d0');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a4:94:40:69:76:79','mgmt','Mgmt Lan');
   AddIPV4('10.1.0.212/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'3c:9e:28:56:1c:ac','vm','VM 0');
-  CreateVM(zone_id,'qemulin1','10.1.0.212',5900,link_id,40960,4096);
+  CreateVM(zone_id,'SSDC qemulin1','10.1.0.212',5900,link_id,40960,4096);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a4:50:23:c6:32:f2','vm','VM 1');
-  CreateVM(zone_id,'qemulin2','10.1.0.212',5901,link_id,40960,4096);
+  CreateVM(zone_id,'SSDC qemulin2','10.1.0.212',5901,link_id,40960,4096);
 
 
   host_id  := CreateHost('FirmboxOffice',dc_id,'00:25:90:ea:b5:e6');
