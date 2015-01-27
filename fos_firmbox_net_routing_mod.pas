@@ -343,14 +343,15 @@ end;
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelegate(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
 var
   hcObj: TObject;
-  zone : TFRE_DB_ZONE;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    zone:=_getZone(dbo,conn,false);
     if _isDelegated(dbo,conn) then begin //already delegated
       exit;
+    end;
+    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_IPMP','datalinkParent')>0 then begin
+      exit; //object is within an IPMP
     end;
     hcObj:=dbo.Implementor_HC;
     if (hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET) then begin //only if empty
@@ -422,7 +423,6 @@ begin
       exit; //hostnet can not be added to a hostnet
     end;
 
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,dbo.DomainID) then begin
       ipv4:=true;
     end;
@@ -604,7 +604,7 @@ begin
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     hcObj:=dbo.Implementor_HC;
-    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET)) and
+    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET) or (hcObj is TFRE_DB_DATALINK_VNIC)) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID) then begin
@@ -614,6 +614,11 @@ begin
       end;
       if _isDelegated(dbo,conn) then begin //delegated datalinks can not be used
         exit;
+      end;
+      if (hcObj is TFRE_DB_DATALINK_VNIC) then begin
+        if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_IPMP','datalinkParent')>0 then begin
+          exit; //object is already within an IPMP
+        end;
       end;
 
       dc:=ses.FetchDerivedCollection('IPMP_CHOOSER');
@@ -1440,13 +1445,13 @@ begin
   if ipv4Enabled then begin
     sf:=CWSF(@WEB_AddHostnet);
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
-    sf.AddParam.Describe('seviceClass',TFRE_DB_IPV4_HOSTNET.ClassName);
+    sf.AddParam.Describe('serviceClass',TFRE_DB_IPV4_HOSTNET.ClassName);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_add_hostnet_ipv4'),'',sf);
   end;
   if ipv6Enabled then begin
     sf:=CWSF(@WEB_AddHostnet);
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
-    sf.AddParam.Describe('seviceClass',TFRE_DB_IPV6_HOSTNET.ClassName);
+    sf.AddParam.Describe('serviceClass',TFRE_DB_IPV6_HOSTNET.ClassName);
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_add_hostnet_ipv6'),'',sf);
   end;
   if isGlobal and _canMoveToAggr(input,ses,conn) then begin
