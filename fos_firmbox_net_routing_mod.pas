@@ -387,6 +387,9 @@ begin
     if dbo.Implementor_HC is TFRE_DB_DATALINK_VNIC then begin
       exit; //vinc can not be added to a vinc
     end;
+    if dbo.Implementor_HC is TFRE_DB_IP_HOSTNET then begin
+      exit; //vinc can not be added to a vinc
+    end;
 
     if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
       exit; //vnic has to be added on the aggregation
@@ -414,6 +417,9 @@ begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
       exit; //hostnet has to be added on the aggregation
+    end;
+    if dbo.Implementor_HC is TFRE_DB_IP_HOSTNET then begin
+      exit; //hostnet can not be added to a hostnet
     end;
 
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
