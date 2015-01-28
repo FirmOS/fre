@@ -1210,8 +1210,8 @@ dojo.declare("FIRMOS.Message", FIRMOS.Dialog, {
 //Store
 dojo.declare("FIRMOS.Store", null, {
 
-  idAttribute: 'uid',
-  tracked    : false,
+  idAttribute  : 'uid',
+  tracked      : false,
 
   constructor: function(args) {
     this._orgArgs = args;
@@ -1230,6 +1230,7 @@ dojo.declare("FIRMOS.Store", null, {
     this.queryId_ = 0;
     this.queryResults_ = new Object();
     this.childStores = new Object();
+    this._sortSettings = new Array();
     G_UI_COM.registerStore(this);
   },
   destroy: function() {
@@ -1257,17 +1258,20 @@ dojo.declare("FIRMOS.Store", null, {
     return this; //FIXXME
   },
   sort: function(property, descending) {
+    this._sortSettings = new Array();
     if (property instanceof Array) {
       for (var i=property.length-1;i>=0;i--) {
-        this._sort(property[i].property,property[i].descending);
+        this._sortSettings.push({property: property[i].property, ascending: !property[i].descending});
       }
     } else {
-      this._sort(property, descending);
+      this._sortSettings.push({property: property, ascending: !descending});
+    }
+    if (this.sortAndFilterClassname) {
+      var params = dojo.clone(this.sortAndFilterParams);
+      params.sort = this._sortSettings;
+      G_SERVER_COM.callServerFunction(this.sortAndFilterClassname, this.sortAndFilterFunctionname, this.sortAndFilterUidPath, params);
     }
     return this;
-  },
-  _sort: function(property, descending) {
-    //FIXXME
   },
   _forEachCallback: function(callback,thisObject,results) {
     for (var i=0;i<results.length;i++) {
