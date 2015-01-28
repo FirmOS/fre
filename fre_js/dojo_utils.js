@@ -716,17 +716,11 @@ dojo.declare("FIRMOS.uiHandler", null, {
     this.storeDepData[id] = depObj;
   },
   
-  setStoreDependency: function(storeId, depField, depType, depValues, numDepType, strDepType) {
+  setStoreDependency: function(storeId, depField, depType, depValues) {
     var depObj = new Object();
     depObj.filterfieldname = depField;
     depObj.filtervalues = depValues;
     depObj.filtertype = depType;
-    if (numDepType) {
-      depObj.numfiltertype = numDepType;
-    }
-    if (strDepType) {
-      depObj.strfiltertype = strDepType;
-    }
     var store = this.getStoreById(storeId);
     if (store) {
       store.store.params_.dependency[depField + '_ref'] = depObj;
@@ -1231,6 +1225,7 @@ dojo.declare("FIRMOS.Store", null, {
     this.queryResults_ = new Object();
     this.childStores = new Object();
     this._sortSettings = new Array();
+    this._filterSettings = new Object();
     G_UI_COM.registerStore(this);
   },
   destroy: function() {
@@ -1255,7 +1250,21 @@ dojo.declare("FIRMOS.Store", null, {
 
   //dStore Collection/Store API
   filter: function(query) {
-    return this; //FIXXME
+    if (query.filterfieldname) {
+      if (query.filtertype) { //set filter
+        this._filterSettings[query.filterfieldname + '_ref'] = query;
+      } else { //remove filter
+        if (this._filterSettings[query.filterfieldname + '_ref']) {
+          delete this._filterSettings[query.filterfieldname + '_ref'];
+        }
+      }
+    }
+    if (this.sortAndFilterClassname) {
+      var params = dojo.clone(this.sortAndFilterParams);
+      params.filter = this._filterSettings;
+      G_SERVER_COM.callServerFunction(this.sortAndFilterClassname, this.sortAndFilterFunctionname, this.sortAndFilterUidPath, params);
+    }
+    return this;
   },
   sort: function(property, descending) {
     this._sortSettings = new Array();
@@ -1582,8 +1591,9 @@ dojo.declare("FIRMOS.Store", null, {
         }
         this.queryResults_[data[i].qid].dataIds.splice(revPos,0,this.getItemIdentity(data[i].item));
       } else {
-        var revPos = this.queryResults_[data[i].qid].dataIds.length;
-        this.queryResults_[data[i].qid].dataIds.push(this.getItemIdentity(data[i].item));
+//        var revPos = this.queryResults_[data[i].qid].dataIds.length;
+        var revPos = data[i].pos;
+        //this.queryResults_[data[i].qid].dataIds.push(this.getItemIdentity(data[i].item));
       }
       event.index = revPos;
       this.onAdd(event);
@@ -1594,14 +1604,7 @@ dojo.declare("FIRMOS.Store", null, {
       var event = new Object();
       event.type = 'delete';
       event.id = data[i].itemid;
-
-      var pos = this._checkUpdateInput(data[i].qid,data[i].itemid,'DeleteItems',false);
-      if (pos==-1) return;
-      event.previousIndex = pos;
-
-      this._removeChildrenQuerys(data[i].itemid);
-      this.queryResults_[data[i].qid].dataIds.splice(pos,1);
-
+      event.previousIndex = data[i].pos;
       this.onDelete(event);
     }
   },
@@ -1611,16 +1614,18 @@ dojo.declare("FIRMOS.Store", null, {
       event.type = 'update';
       event.target = data[i].item;
 
-      var pos = this._checkUpdateInput(data[i].qid,this.getItemIdentity(data[i].item),'UpdateItems',false);
-      if (pos==-1) return;
-      if (data[i].revid && data[i].revid!='') {
-        var revPos = this._checkUpdateInput(data[i].qid,data[i].revid,'UpdateItems',false);
-        if (revPos==-1) return;
-      } else {
-        var revPos = pos;
-      }
-      event.index = revPos;
-      event.previousIndex = pos;
+//      var pos = this._checkUpdateInput(data[i].qid,this.getItemIdentity(data[i].item),'UpdateItems',false);
+//      if (pos==-1) return;
+//      if (data[i].revid && data[i].revid!='') {
+//        var revPos = this._checkUpdateInput(data[i].qid,data[i].revid,'UpdateItems',false);
+//        if (revPos==-1) return;
+//      } else {
+//        var revPos = pos;
+//      }
+//      event.index = revPos;
+      event.index = data[i].pos;
+//      event.previousIndex = pos;
+//      event.previousIndex = data[i].pos;
 
       this.onUpdate(event);
     }
@@ -5157,7 +5162,7 @@ dojo.declare("FIRMOS.GridFilter",null, {
                                 '<table style="width:100%">'+
                                 filter_dialog_content +
                                 '<tr><td colspan="2" class="firmosGridFilterDialogButtons">' +
-                                '<button data-dojo-type="dijit.form.Button" type="button" '+
+                                '<button data-dojo-type="dijit.form.Button" type="submit" '+
                                          'onClick="var ttd=this.getParent().getParent(); '+
                                          'ttd.formValues=ttd.getChildren()[0].get(\'value\'); '+ //FIXXME set on grid
                                          'ttd.grid.'+set_function+'(\''+colId+'\',ttd.formValues); '+
@@ -5195,7 +5200,7 @@ dojo.declare("FIRMOS.GridFilter",null, {
     }
   },
   clearFilter: function(columnId) {
-    G_UI_COM.deleteStoreDependency(this.collection.id,columnId);
+    this.collection.filter({filterfieldname: columnId});
     var ddbutton = dojo.query('.firmosGridFilter', this.column(columnId).headerNode);
     dojo.removeClass(ddbutton[0],'firmosGridFilterSet');
     this.refresh();
@@ -5206,9 +5211,9 @@ dojo.declare("FIRMOS.GridFilter",null, {
       return;
     }
     if (this.column(columnId).filterValues) {
-      G_UI_COM.setStoreDependency(this.collection.id,columnId,'T',[filter.filter],null,'EX');
+      this.collection.filter({filtertype: 'T', strfiltertype: 'EX', filterfieldname: columnId, filtervalues: [filter.filter]});
     } else {
-      G_UI_COM.setStoreDependency(this.collection.id,columnId,'T',[filter.filter]);
+      this.collection.filter({filtertype: 'T', filterfieldname: columnId, filtervalues: [filter.filter]});
     }
     this.filterSet(columnId);
   },
@@ -5231,16 +5236,16 @@ dojo.declare("FIRMOS.GridFilter",null, {
     }
     switch (filter.type) {
       case this.texts.numberOptions.eq:
-        G_UI_COM.setStoreDependency(this.collection.id,columnId,depType,[filter.value],'EX');
+        this.collection.filter({filtertype: depType, numfiltertype: 'EX', filterfieldname: columnId, filtervalues: [filter.value]});
         break;
       case this.texts.numberOptions.lt:
-        G_UI_COM.setStoreDependency(this.collection.id,columnId,depType,[filter.value],'LE');
+        this.collection.filter({filtertype: depType, numfiltertype: 'LE', filterfieldname: columnId, filtervalues: [filter.value]});
         break;
       case this.texts.numberOptions.gt:
-        G_UI_COM.setStoreDependency(this.collection.id,columnId,depType,[filter.value],'GT');
+        this.collection.filter({filtertype: depType, numfiltertype: 'GT', filterfieldname: columnId, filtervalues: [filter.value]});
         break;
       case this.texts.numberOptions.gtlt:
-        G_UI_COM.setStoreDependency(this.collection.id,columnId,depType,[filter.value1,filter.value2],'REXB');
+        this.collection.filter({filtertype: depType, numfiltertype: 'REXB', filterfieldname: columnId, filtervalues: [filter.value1,filter.value2]});
         break;
     }
     this.filterSet(columnId);
@@ -5263,20 +5268,20 @@ dojo.declare("FIRMOS.GridFilter",null, {
             dayrange_start.setHours(0,0,0,0);
         var dayrange_end=new Date(filter.value.getTime());
             dayrange_end.setHours(23,59,59,999);           
-        G_UI_COM.setStoreDependency(this.collection.id,columnId,'D',[dayrange_start.getTime(),dayrange_end.getTime()],'RWIB');
+        this.collection.filter({filtertype: 'D', numfiltertype: 'RWIB', filterfieldname: columnId, filtervalues: [dayrange_start.getTime(),dayrange_end.getTime()]});
         break;
       case this.texts.dateOptions.lt:
-        G_UI_COM.setStoreDependency(this.collection.id,columnId,'D',[filter.value.getTime()],'LE');
+        this.collection.filter({filtertype: 'D', numfiltertype: 'LE', filterfieldname: columnId, filtervalues: [filter.value.getTime()]});
         break;
       case this.texts.dateOptions.gt:
-        G_UI_COM.setStoreDependency(this.collection.id,columnId,'D',[filter.value.getTime()],'GT');
+        this.collection.filter({filtertype: 'D', numfiltertype: 'GT', filterfieldname: columnId, filtervalues: [filter.value.getTime()]});
         break;
       case this.texts.dateOptions.gtlt:
         var fv1=new Date(filter.value1);
             fv1.setHours(0,0,0,0);
         var fv2=new Date(filter.value2);
             fv2.setHours(23,59,59,999);
-        G_UI_COM.setStoreDependency(this.collection.id,columnId,'D',[fv1.getTime(),fv2.getTime()],'RWIB');
+        this.collection.filter({filtertype: 'D', numfiltertype: 'RWIB', filterfieldname: columnId, filtervalues: [fv1.getTime(),fv2.getTime()]});
         break;
     }
     this.filterSet(columnId);
@@ -5285,7 +5290,7 @@ dojo.declare("FIRMOS.GridFilter",null, {
     this.filterSet(columnId);
   },
   setBooleanFilter: function(columnId, filter) {
-    G_UI_COM.setStoreDependency(this.collection.id,columnId,'B',[filter.filter]);
+    this.collection.filter({filtertype: 'B', filterfieldname: columnId, filtervalues: [filter.filter]});
     this.filterSet(columnId);
   },
   filterSet: function(columnId) {
