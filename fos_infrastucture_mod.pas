@@ -692,6 +692,7 @@ begin
     installDis:=false;
     exit;
   end;
+  if status.isLocked then exit;
   case status.field('zstate_num').AsInt32 of
     -1: installDis:=false;
      0: ;
