@@ -1108,10 +1108,12 @@ end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_GridSC(const input: IFRE_DB_Object;const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  dDisabled: Boolean;
+  deleteDisabled : Boolean;
+  enableDisabled : Boolean;
+  disableDisabled: Boolean;
 begin
-  dDisabled:=not (input.FieldExists('selected') and _canDelete(ses,conn,input.Field('selected').AsString));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('tb_delete',dDisabled));
+  deleteDisabled:=not (input.FieldExists('selected') and _canDelete(ses,conn,input.Field('selected').AsString));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('tb_delete',deleteDisabled));
   Result:=_getDetails(input,ses,app,conn);
 end;
 
@@ -1323,10 +1325,10 @@ begin
       menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_delete_service'),'',CWSF(@WEB_DeleteService),true,'service_delete');
     end;
     if canStart then begin
-      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_enable_service'),'',CWSF(@WEB_EnableService),false,'service_enable');   //FIXXME, set disable, update GUI
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_enable_service'),'',CWSF(@WEB_EnableService),true,'service_enable');
     end;
     if canStop then begin
-      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_disable_service'),'',CWSF(@WEB_DisableService),false,'service_disable');      //FIXXME, set disable, update GUI
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_disable_service'),'',CWSF(@WEB_DisableService),true,'service_disable');
     end;
     res.SetMenu(menu);
   end;
@@ -1432,16 +1434,22 @@ end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_ServicesGridSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  dDisabled: Boolean;
+  deleteDisabled : Boolean;
+  enableDisabled : Boolean;
+  disableDisabled: Boolean;
 begin
-  dDisabled:=true;
+  deleteDisabled:=true;
   if input.FieldExists('selected') then begin
-    dDisabled:=not _canDeleteService(input,conn);
+    deleteDisabled:=not _canDeleteService(input,conn);
     ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringArr:=input.Field('selected').AsStringArr;
+    enableDisabled:=input.Field('selected').ValueCount=1; //FIXXMME - check if service is enabled
+    disableDisabled:=input.Field('selected').ValueCount=1; //FIXXMME - check if service is disabled
   end else begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedService');
   end;
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('service_delete',dDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('service_delete',deleteDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('service_enable',enableDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('service_disable',disableDisabled));
   Result:=GFRE_DB_NIL_DESC;
 end;
 
