@@ -629,6 +629,8 @@ var st : TStringStream;
     diskiostat.Field('err_hw').AsUint32  := StrToInt(Fline[11]);
     diskiostat.Field('err_trn').AsUint32  := StrToInt(Fline[12]);
     diskiostat.Field('err_tot').AsUint32  := StrToInt(Fline[13]);
+    devicename := StringReplace(devicename,'.','_',[rfReplaceAll]);
+    devicename := StringReplace(devicename,':','_',[rfReplaceAll]);
     diskiostat.Field('iodevicename').AsString := devicename;
     FData.Field(devicename).AsObject          := diskiostat;
   end;
