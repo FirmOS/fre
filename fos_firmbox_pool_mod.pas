@@ -468,14 +468,17 @@ var
     if (obj.Implementor_HC is TFRE_DB_ZFS_BLOCKDEVICE) then begin
       bd:=obj.Implementor_HC as TFRE_DB_ZFS_BLOCKDEVICE;
       writeln('SWL: DUMP BD',bd.DumpToString());
-      if (bd.getPool(conn).Implementor_HC is TFRE_DB_ZFS_POOL) then begin
-        sf:=CWSF(@WEB_Replace);
-        sf.AddParam.Describe('old',bd.getId);
-        if newId<>'' then begin
-          sf.AddParam.Describe('new',newId);
+      if bd.poolId<>CFRE_DB_NullGUID then
+        begin
+          if (bd.getPool(conn).Implementor_HC is TFRE_DB_ZFS_POOL) then begin
+            sf:=CWSF(@WEB_Replace);
+            sf.AddParam.Describe('old',bd.getId);
+            if newId<>'' then begin
+              sf.AddParam.Describe('new',newId);
+            end;
+            menu.AddEntry.Describe(bd.caption,'',sf);
+          end;
         end;
-        menu.AddEntry.Describe(bd.caption,'',sf);
-      end;
     end;
   end;
 
