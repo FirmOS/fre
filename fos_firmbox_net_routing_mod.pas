@@ -53,7 +53,6 @@ type
     class procedure InstallUserDBObjects       (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
     procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
   published
-    procedure       CalcZoneChooserLabel       (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     procedure       CalculateIcon              (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     function        WEB_Add                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -912,7 +911,7 @@ var
   filterClasses: TFRE_DB_StringArray;
   hFilterClasses: TFRE_DB_StringArray;
 
-  procedure _setSortOrder(const input,transformed_object : IFRE_DB_Object);
+  procedure _setSortOrder(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
   begin
     if input.IsA(TFRE_DB_GLOBAL_ZONE) then begin
       transformed_object.Field('_sortorder_').AsString:='A'+input.Field('objname').AsString;
@@ -920,6 +919,20 @@ var
       transformed_object.Field('_sortorder_').AsString:='B'+input.Field('objname').AsString;
     end;
   end;
+
+  procedure _calcZoneChooserLabel(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    str: String;
+  begin
+    if transformed_object.Field('customer').AsString<>'' then begin
+      str:=StringReplace(langres[0],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+      str:=StringReplace(str,'%customer_str%',transformed_object.Field('customer').AsString,[rfReplaceAll]);
+    end else begin
+      str:=StringReplace(langres[1],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+    end;
+    transformed_object.Field('label').AsString:=str;
+  end;
+
 
 
 begin
@@ -935,7 +948,7 @@ begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
-      SetSimpleFuncTransformNested(@_setSortOrder);
+      SetSimpleFuncTransformNested(@_setSortOrder,[]);
       SetFinalRightTransformFunction(@CalculateIcon,[]);
     end;
     dc := session.NewDerivedCollection('NET_ZONES_GRID');
@@ -961,6 +974,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_DATALINK_IPMP'],'objname','ipmp','',true,dt_description);
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'objname','czone',FetchModuleTextShort(session,'grid_delegation_zone'),true,dt_string);
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('serviceparent','','',dt_string,false);
@@ -979,6 +993,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_DATALINK_IPMP'],'objname','ipmp','',true,dt_description);
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('serviceparent','','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
@@ -995,16 +1010,18 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
+      AddOneToOnescheme('label');
       AddOneToOnescheme('objname');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_string,true,true,1,'','',nil,false,'domainid');
       AddOneToOnescheme('hostid');
-      SetFinalRightTransformFunction(@CalcZoneChooserLabel,[FetchModuleTextShort(session,'delegate_interface_zone_value'),FetchModuleTextShort(session,'delegate_interface_zone_value_no_customer')]);
+      SetSimpleFuncTransformNested(@_calcZoneChooserLabel,[FetchModuleTextShort(session,'delegate_interface_zone_value'),FetchModuleTextShort(session,'delegate_interface_zone_value_no_customer')]);
     end;
     dc := session.NewDerivedCollection('ZONE_CHOOSER');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_ZONES_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'');
-      SetDefaultOrderField('objname',true);
+      SetDefaultOrderField('label',true);
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_GLOBAL_ZONE.ClassName],false);
       Filters.AddStdClassRightFilter('rightsip4','domainid','','',TFRE_DB_IPV4_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
       Filters.AddStdClassRightFilter('rightsip6','domainid','','',TFRE_DB_IPV6_HOSTNET.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
@@ -1055,19 +1072,6 @@ begin
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_DATALINK_IPMP.ClassName]);
     end;
   end;
-end;
-
-procedure TFRE_FIRMBOX_NET_ROUTING_MOD.CalcZoneChooserLabel(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
-var
-  str: String;
-begin
-  if transformed_object.Field('customer').AsString<>'' then begin
-    str:=StringReplace(langres[0],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
-    str:=StringReplace(str,'%customer_str%',transformed_object.Field('customer').AsString,[rfReplaceAll]);
-  end else begin
-    str:=StringReplace(langres[1],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
-  end;
-  transformed_object.Field('label').AsString:=str;
 end;
 
 procedure TFRE_FIRMBOX_NET_ROUTING_MOD.CalculateIcon(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);

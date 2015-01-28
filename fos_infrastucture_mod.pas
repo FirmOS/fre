@@ -27,6 +27,7 @@ uses
   //fre_scsi,
   fre_hal_schemes,
   fos_citycom_voip_mod,
+  fos_firmbox_vm_machines_mod,
   fos_firmbox_pool_mod;
   //fre_diff_transport;
 
@@ -38,6 +39,7 @@ type
   private
     fStoragePoolsMod                                    : TFOS_FIRMBOX_POOL_MOD;
     fVoIPMod                                            : TFOS_CITYCOM_VOIP_SERVICE_MOD;
+    fVMMod                                              : TFRE_FIRMBOX_VM_MACHINES_MOD;
     function        _canAddDC                           (const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canDeleteDC                        (const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canDeleteDC                        (const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
@@ -75,9 +77,6 @@ type
     procedure       SetupAppModuleStructure             ; override;
   public
     procedure       CalculateIcon                       (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
-    procedure       CalcMachineChooserLabel             (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object; const langres: array of TFRE_DB_String);
-    procedure       CalcPoolChooserLabel                (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object; const langres: array of TFRE_DB_String);
-    procedure       CalcDatasetChooserLabel             (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object; const langres: array of TFRE_DB_String);
     class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
@@ -120,6 +119,8 @@ begin
   fre_hal_schemes.Register_DB_Extensions;
   fre_zfs.Register_DB_Extensions;
   //fre_scsi.Register_DB_Extensions;
+  fos_firmbox_pool_mod.Register_DB_Extensions;
+  fos_firmbox_vm_machines_mod.Register_DB_Extensions;
   fos_firmbox_pool_mod.Register_DB_Extensions;
 
   GFRE_DBI.RegisterObjectClassEx(TFOS_INFRASTRUCTURE_MOD);
@@ -506,7 +507,7 @@ begin
     if input.FieldExists('domainId') then begin
       sdomain:=FREDB_H2G(input.Field('domainId').AsString);
     end else begin
-      raise EFRE_DB_Exception.Create(edb_ERROR,'No domain id given for the new zone!');
+      sdomain:=ses.GetDomainUID;
     end;
   end;
   zone.SetDomainID(sdomain);
@@ -711,37 +712,9 @@ begin
   AddApplicationModule(fStoragePoolsMod);
   fVoIPMod:=TFOS_CITYCOM_VOIP_SERVICE_MOD.create;
   AddApplicationModule(fVoIPMod);
+  fVMMod:=TFRE_FIRMBOX_VM_MACHINES_MOD.create;
+  AddApplicationModule(fVMMod);
   InitModuleDesc('infrastructure_description')
-end;
-
-procedure TFOS_INFRASTRUCTURE_MOD.CalcMachineChooserLabel(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
-var
-  str: String;
-begin
-  str:=StringReplace(langres[0],'%datacenter_str%',transformed_object.Field('dc').AsString,[rfReplaceAll]);
-  str:=StringReplace(str,'%machine_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
-  transformed_object.Field('label').AsString:=str;
-end;
-
-procedure TFOS_INFRASTRUCTURE_MOD.CalcPoolChooserLabel(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
-var
-  str: String;
-begin
-  str:=StringReplace(langres[0],'%datacenter_str%',transformed_object.Field('dc').AsString,[rfReplaceAll]);
-  str:=StringReplace(str,'%machine_str%',transformed_object.Field('machine').AsString,[rfReplaceAll]);
-  str:=StringReplace(str,'%pool_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
-  transformed_object.Field('label').AsString:=str;
-end;
-
-procedure TFOS_INFRASTRUCTURE_MOD.CalcDatasetChooserLabel(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object; const langres: array of TFRE_DB_String);
-var
-  str: String;
-begin
-  str:=StringReplace(langres[0],'%datacenter_str%',transformed_object.Field('dc').AsString,[rfReplaceAll]);
-  str:=StringReplace(str,'%machine_str%',transformed_object.Field('machine').AsString,[rfReplaceAll]);
-  str:=StringReplace(str,'%pool_str%',transformed_object.Field('pool').AsString,[rfReplaceAll]);
-  str:=StringReplace(str,'%dataset_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
-  transformed_object.Field('label').AsString:=str;
 end;
 
 class procedure TFOS_INFRASTRUCTURE_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -835,6 +808,37 @@ var
   conn      : IFRE_DB_CONNECTION;
   transform : IFRE_DB_SIMPLE_TRANSFORM;
   dc        : IFRE_DB_DERIVED_COLLECTION;
+
+  procedure _calcDatasetChooserLabel(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    str: String;
+  begin
+    str:=StringReplace(langres[0],'%datacenter_str%',transformed_object.Field('dc').AsString,[rfReplaceAll]);
+    str:=StringReplace(str,'%machine_str%',transformed_object.Field('machine').AsString,[rfReplaceAll]);
+    str:=StringReplace(str,'%pool_str%',transformed_object.Field('pool').AsString,[rfReplaceAll]);
+    str:=StringReplace(str,'%dataset_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+    transformed_object.Field('label').AsString:=str;
+  end;
+
+  procedure _calcPoolChooserLabel(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    str: String;
+  begin
+    str:=StringReplace(langres[0],'%datacenter_str%',transformed_object.Field('dc').AsString,[rfReplaceAll]);
+    str:=StringReplace(str,'%machine_str%',transformed_object.Field('machine').AsString,[rfReplaceAll]);
+    str:=StringReplace(str,'%pool_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+    transformed_object.Field('label').AsString:=str;
+  end;
+
+  procedure _calcMachineChooserLabel(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    str: String;
+  begin
+    str:=StringReplace(langres[0],'%datacenter_str%',transformed_object.Field('dc').AsString,[rfReplaceAll]);
+    str:=StringReplace(str,'%machine_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+    transformed_object.Field('label').AsString:=str;
+  end;
+
 begin
   inherited MySessionInitializeModule(session);
   app  := GetEmbeddingApp;
@@ -904,14 +908,14 @@ begin
       AddOneToOnescheme('objname');
       AddMatchingReferencedField(['SERVICEPARENT>TFRE_DB_DATACENTER'],'objname','dc');
       AddOneToOnescheme('label','label');
-      SetFinalRightTransformFunction(@CalcMachineChooserLabel,[FetchModuleTextShort(session,'add_infrastructure_parent_machine_value')]);
+      SetSimpleFuncTransformNested(@_calcMachineChooserLabel,[FetchModuleTextShort(session,'add_infrastructure_parent_machine_value')]);
     end;
     dc := session.NewDerivedCollection('MACHINE_CHOOSER');
     with dc do begin
       SetDeriveParent(conn.GetMachinesCollection);
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'');
-      SetDefaultOrderField('objname',true);
+      SetDefaultOrderField('label',true);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -920,14 +924,14 @@ begin
       AddMatchingReferencedField(['SERVICEPARENT>TFRE_DB_MACHINE','SERVICEPARENT>TFRE_DB_DATACENTER'],'objname','dc');
       AddMatchingReferencedField(['SERVICEPARENT>TFRE_DB_MACHINE'],'objname','machine');
       AddOneToOnescheme('label','label');
-      SetFinalRightTransformFunction(@CalcPoolChooserLabel,[FetchModuleTextShort(session,'add_infrastructure_parent_pool_value')]);
+      SetSimpleFuncTransformNested(@_calcPoolChooserLabel,[FetchModuleTextShort(session,'add_infrastructure_parent_pool_value')]);
     end;
     dc := session.NewDerivedCollection('POOL_CHOOSER');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_ZFS_POOL_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'');
-      SetDefaultOrderField('objname',true);
+      SetDefaultOrderField('label',true);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -937,14 +941,14 @@ begin
       AddMatchingReferencedField(['SERVICEPARENT>TFRE_DB_ZFS_DATASET','SERVICEPARENT>TFRE_DB_ZFS_POOL','SERVICEPARENT>TFRE_DB_MACHINE'],'objname','machine');
       AddMatchingReferencedField(['SERVICEPARENT>TFRE_DB_ZFS_DATASET','SERVICEPARENT>TFRE_DB_ZFS_POOL'],'objname','pool');
       AddOneToOnescheme('label','label');
-      SetFinalRightTransformFunction(@CalcDatasetChooserLabel,[FetchModuleTextShort(session,'add_infrastructure_parent_dataset_value')]);
+      SetSimpleFuncTransformNested(@_calcDatasetChooserLabel,[FetchModuleTextShort(session,'add_infrastructure_parent_dataset_value')]);
     end;
     dc := session.NewDerivedCollection('DATASET_CHOOSER');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'');
-      SetDefaultOrderField('objname',true);
+      SetDefaultOrderField('label',true);
       Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_ZFS_DATASET_PARENT.ClassName]);
     end;
 
@@ -1042,7 +1046,7 @@ begin
   if _canAddZone(ses,conn) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_infrastructure_type_zone'),'Z');
     GFRE_DBI.GetSystemSchemeByName(TFRE_DB_ZONE.ClassName,scheme);
-    res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_customer'),'z.customer',ses.FetchDerivedCollection('ZONE_CUSTOMER_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true,false,true);
+    res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_customer'),'z.customer',ses.FetchDerivedCollection('ZONE_CUSTOMER_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,false,false,true);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_parent_dataset'),'z.ds',ses.FetchDerivedCollection('DATASET_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'z',true,true);
     res.AddChooser.Describe(FetchModuleTextShort(ses,'add_infrastructure_zone_template'),'z.templateid',ses.FetchDerivedCollection('TEMPLATE_CHOOSER').GetStoreDescription as TFRE_DB_STORE_DESC,dh_chooser_combo,true,true,true);
@@ -1391,7 +1395,7 @@ begin
 
   if input.FieldPathExists('data.config') then begin
     SetLength(errorClasses,0);
-    input.Field('data.config').AsObject.ForAllFields(@_handleService,true,true);
+    input.FieldPath('data.config').AsObject.ForAllFields(@_handleService,true,true);
 
     if Length(errorClasses)=0 then begin
       CheckDbResult(conn.Update(zone));
@@ -1458,7 +1462,10 @@ begin
   case serviceClass of
     'TFOS_DB_CITYCOM_VOIP_SERVICE' : begin
                                        Result:=fVoIPMod.WEB_AddService(input,ses,app,conn);
-                                     end
+                                     end;
+    'TFRE_DB_VMACHINE' : begin
+                           Result:=fVMMod.WEB_AddVM(input,ses,app,conn);
+                         end
     else begin
       exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
       conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);

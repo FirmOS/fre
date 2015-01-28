@@ -397,7 +397,7 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   input.Field('zoneId').AsString:=ses.GetSessionModuleData(ClassName).Field('selectedService').AsString;
-  Result:=VM.WEB_NewVM(input,ses,app,conn);
+  Result:=VM.WEB_AddVM(input,ses,app,conn);
 end;
 
 function TFOS_FIRMBOX_MANAGED_SERVICES_MOD.WEB_AddNAS(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
