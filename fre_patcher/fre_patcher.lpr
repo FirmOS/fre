@@ -87,11 +87,15 @@ type
   { TFRE_Testserver }
   TFRE_Testserver = class(TFRE_CLISRV_APP)
   private
-    const realcust:string = '0081000359,0081000752,0081000516,0081000196,81000146,0081000661,0081000737,0081000752,0081000339,0081000695,0081000609,0081000681,0081000723,81000064,SC-PRO,SC-DEMO,0081000168,FIRMOS';
-          realdom :string = 'ANKUENDER,BINDER,CITYCOM,CORTI,GRAZETTA,RUBIKON,ZOESCHER,BINDER,DMS,DIAGONALE,EGRAZ,HILFSWERK,PEAN,JOANNEUM,PRO-COMPETENCE,DEMO,ALICONA,FIRMOS';
+    const realcust:string = '0081000359,0081000752,0081000516,0081000196,81000146,0081000661,0081000737,0081000339,0081000695,0081000609,0081000681,0081000723,81000064,SC-PRO,SC-DEMO,0081000168,FIRMOS';
+          realdom :string = 'ANKUENDER,BINDER,CITYCOM,CORTI,GRAZETTA,RUBIKON,ZOESCHER,DMS,DIAGONALE,EGRAZ,HILFSWERK,PEAN,JOANNEUM,PRO-COMPETENCE,DEMO,ALICONA,FIRMOS';
+          realguid:string = 'c200829d646f6b9435308dddfb8a912e,20ef0ca6ecf6037cb7c48229ba268444,5f769a1c6fe25d1c867c795318534c2,f1289bf93586c97f8a505b6ef801e89f,5c5f36321222705a0e830303bb366515,34f2fcd3c8aaf3f5ac6f6af052ca40a5,d22c738c2bcb0dff6eec13d8b29d59fd,'+
+                            'e0f3d7af7b20b1bedbf91b0f1c94c360,27fbd2958ab30705845176efd656231a,2e5812834f87bcf11603df44d8f9785a,191e5d7041d34e58398a6e719a066719,b9645bcaad8f8f93cb76e2dae91c79e4,31684d52564a2eb676934eb556eec043,550f7a86fe34a0934985e8aa5b5470dd,'+
+                            'be866bbf47fe770522885cf5e884bf0d,e54401a713603afcdcaa4527d3037c1a,3da81a8fd819c9ccd5314d4a35c36b97';
     var
     realdoma   :TFRE_DB_StringArray;
     realdomida :TFRE_DB_GUIDArray;
+    realdomids :TFRE_DB_StringArray;
     realcusta  :TFRE_DB_StringArray;
     procedure  GenerateSearchDomains      (const generate:boolean);
     function   CheckFindDebitorNumber     (const debnr : string ; out domainname : TFRE_DB_String ; out domainuid:TFRE_DB_GUID):boolean;
@@ -246,15 +250,20 @@ begin
 end;
 
 procedure TFRE_Testserver.GenerateSearchDomains(const generate: boolean);
-var conn         : IFRE_DB_CONNECTION;
+var conn         : TFRE_DB_CONNECTION;
     i            : NativeInt;
+    pdguid       : PFRE_DB_GUID;
+    dguid        : TFRE_DB_GUID;
 begin
+  pdguid := nil;
   FREDB_SeperateString(realcust,',',realcusta);
   FREDB_SeperateString(realdom,',',realdoma);
+  FREDB_SeperateString(realguid,',',realdomids);
+
   if Length(realcusta)<>Length(realdoma) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'doms must be customers COUNT');
   begin
-    conn := GFRE_DBI.NewConnection;
+    conn := GFRE_DB.NewConnection;
     CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
     SetLength(realdomida,Length(realdoma));
     for i:=0 to high(realdoma) do
@@ -264,7 +273,9 @@ begin
             if generate then
               begin
                  writeln('>> ADDING DOMAIN ',realdoma[i]);
-                 CheckDbResult(conn.AddDomain(realdoma[i],'',''));
+                 dguid.SetFromHexString(realdomids[i]);
+                 pdguid:=@dguid;
+                 CheckDbResult(conn.AddDomainExt(realdoma[i],'','',pdguid));
                  writeln('>> ADDING DOMAIN ',realdoma[i],' DONE');
               end
             else
@@ -274,8 +285,9 @@ begin
               end;
           end;
         realdomida[i] := conn.SYS.DomainID(realdoma[i]);
+        writeln('DOMAIN ',realdoma[i],' GUID ',realdomida[i].AsHexString);
       end;
-    conn.Finalize;
+    conn.Free;
   end;
 end;
 
@@ -2359,6 +2371,8 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:d3:59:ff','lan','Lan');
   AddIPV4('10.1.0.132/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
+  vf_id    := CreateVFiler(zone_id,'Office Virtual Fileserver');
+
 
 
 
