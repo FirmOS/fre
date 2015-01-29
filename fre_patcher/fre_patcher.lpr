@@ -105,6 +105,7 @@ type
     procedure   PatchCity1;
     procedure   PatchCityAddons                         (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='x');
     procedure   PatchCityObjs                           (domainname:string='citycom' ; domainuser:string='ckoch@citycom' ; domainpass:string='x');
+    procedure   PatchOEAndProdMods                      ;
     procedure   PatchDeleteVersions                     ;
     procedure   PatchVersions;
     {$IFDEF FREMYSQL}
@@ -226,6 +227,7 @@ begin
     'jobtest'        : jobTest;
     'attachplug'     : AttachDebugPlugin(true);
     'detachplug'     : AttachDebugPlugin(false);
+    'oeprodmodobjs'  : PatchOEAndProdMods;
    else
      writeln('What shell I do with this patch name ?');
   end;
@@ -504,6 +506,39 @@ begin
   writeln('----');
   conn.ForAllDatabaseObjectsDo(@ObjectPatch);
   writeln('DONE');
+end;
+
+procedure TFRE_Testserver.PatchOEAndProdMods;
+var
+  conn : IFRE_DB_CONNECTION;
+
+    procedure ObjectPatch(const obj:IFRE_DB_Object; var halt:boolean ; const current,max : NativeInt);
+    var
+      status : TFOS_DB_CITYCOM_OE_STATUS_PLUGIN;
+    begin
+      //writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
+      if (obj.SchemeClass='TFOS_DB_CITYCOM_ORDER_ENTRY') then begin
+        status:=TFOS_DB_CITYCOM_OE_STATUS_PLUGIN.create;
+        status.setAsPreorder;
+        obj.AttachPlugin(status);
+        obj.DeleteField('status');
+        CheckDbResult(conn.Update(obj));
+      end;
+    end;
+
+begin
+  FRE_DBBASE.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
+  fos_citycom_base.Register_DB_Extensions;
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
+
+  conn := GFRE_DB.NewConnection;
+  CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
+  writeln('PATCHING BASE DB ',FDBName);
+  writeln('----');
+  conn.ForAllDatabaseObjectsDo(@ObjectPatch);
+  writeln('DONE');
+  conn.Finalize;
 end;
 
 procedure TFRE_Testserver.PatchVersions;
