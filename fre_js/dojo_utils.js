@@ -1221,8 +1221,6 @@ dojo.declare("FIRMOS.Store", null, {
       this[i] = args[i];
     }
 
-    this.queryId_ = 0;
-    this.queryResults_ = new Object();
     this.childStores = new Object();
     this._sortSettings = new Array();
     this._filterSettings = new Object();
@@ -1433,57 +1431,37 @@ dojo.declare("FIRMOS.Store", null, {
       return false;
     }
   },
-  getRootCollection: function() {
-    if (this.parentStore) {
-      return this.parentStore.getRootCollection();
-    } else {
-      return this;
-    }
-  },
   _doQuery: function(args) {
     var def=new dojo.Deferred();
 
-    var rc = this.getRootCollection(); //FIXXME
-    var query_id = rc.queryId_++;
-    //var query_id = this.queryId_++;
-    this.queryResults_[query_id] = new Object();
-    this.queryResults_[query_id].query = args.query;
-    this.queryResults_[query_id].queryArgs = args;
-    this.queryResults_[query_id].dataIds = new Array();
-    this.queryResults_[query_id].parentId = '';
-
     var params = dojo.clone(this.getParams);
     dojo.mixin(params, this.params_);
-    
     if (this.parent) {
-      var id = this.getItemIdentity(this.parent);
-      this.queryResults_[query_id].parentId = id;
-      params.parentid = id;
+      params.parentid = this.getItemIdentity(this.parent);
     }
 
-    params.queryid = query_id;
-    if (args.query) {
-      params.query = args.query;
-    }
-    if (typeof args.count!="undefined") params.count = args.count;
+    //if (args.query) {
+    //  params.query = args.query;
+    //}
+    //if (typeof args.count!="undefined") params.count = args.count;
     if (typeof args.start!="undefined") {
       params.start = args.start;
       if (typeof args.end!="undefined") {
-        params.count = args.end - args.start + 1;
+        //params.count = args.end - args.start + 1;
         params.end = args.end;
       }
     }
-    if (args.sort) {
-      params.sort = new Array();
-      for (var i=0;i<args.sort.length;i++) {
-        params.sort[i] = new Object();
-        params.sort[i].property = args.sort[i].attribute;
-        params.sort[i].ascending = !args.sort[i].descending;
-      }
-    }
+    //if (args.sort) {
+    //  params.sort = new Array();
+    //  for (var i=0;i<args.sort.length;i++) {
+    //    params.sort[i] = new Object();
+    //    params.sort[i].property = args.sort[i].attribute;
+    //    params.sort[i].ascending = !args.sort[i].descending;
+    //  }
+    //}
 
     def.totalLength = new dojo.Deferred();
-    var serverFuncCallback = function(queryId, options, success, response) {
+    var serverFuncCallback = function(options, success, response) {
       if (success) {
         var json_result = dojo.fromJson(response.output);
         if (json_result.actiontype && (json_result.actiontype=='jsexecute')) {
@@ -1500,12 +1478,6 @@ dojo.declare("FIRMOS.Store", null, {
               json_result.data[i]._expandedId_ = this.getItemIdentity(json_result.data[i]) + '@' + expParentId;
             }
           }
-          //store ids of the result
-          if (this.queryResults_[queryId]) {
-            for (var i=0; i<json_result.data.length; i++) {
-              this.queryResults_[queryId].dataIds.push(this.getItemIdentity(json_result.data[i]));
-            }
-          }
           def.resolve(json_result.data);
         }
       } else {
@@ -1517,7 +1489,7 @@ dojo.declare("FIRMOS.Store", null, {
           }
         }
       }
-    }.bind(this, query_id);
+    }.bind(this);
     G_SERVER_COM.callServerFunction(this.getClassname, this.getFunctionname, this.getUidPath, params, serverFuncCallback);
 
     return def;
@@ -1529,73 +1501,13 @@ dojo.declare("FIRMOS.Store", null, {
   onUpdate: function(event) {
   },
 //FIRMOS update API
-  _getItemQueryPos: function(itemId, qid) {
-    var res = [];
-    for (var c=0; c<this.queryResults_[qid].dataIds.length; c++) {
-      if (this.queryResults_[qid].dataIds[c]==itemId) {
-        return c;
-      }
-    }
-    return -1;
-  },
-  _findChildrenCallResultSets: function(parentId) {
-    var res = [];
-    for (var q in this.queryResults_) {
-      if (this.queryResults_[q].parentId==parentId) {
-        res.push({queryId: q});
-      }
-    }
-    return res;
-  },
-  _removeChildrenQuerys: function(itemId) {
-    for (var q in this.queryResults_) {
-      if (this.queryResults_[q].parentId==itemId) {
-        for (var i=0; i<this.queryResults_[q].dataIds.length; i++) {
-          this._removeChildrenQuerys(this.queryResults_[q].dataIds[i]);
-        }
-        delete this.queryResults_[q];
-      }
-    }
-  },
-  _checkUpdateInput: function(qid,itemId,funcName,checkNotIn) {
-    if (!this.queryResults_[qid]) {
-      console.warn(funcName+': Query "' + qid + '" not found for item "' + itemId + '" in store "' + this.id + '"');
-      return -1;
-    }
-    var pos = this._getItemQueryPos(itemId,qid);
-    if (pos == -1) {
-      if (!checkNotIn) {
-        console.warn(funcName+': Item "' + itemId + '" not found in query "' + qid + '" for store "' + this.id + '"');
-      }
-    } else {
-      if (checkNotIn) {
-        console.warn(funcName+': Item "' + itemId + '" already found in query "' + qid + '" for store "' + this.id + '"');
-      }
-    }
-    return pos;
-  },
   newItems: function(data) {
     for (var i=0;i<data.length;i++) {
       var event = new Object();
       event.type = 'add';
       event.target = data[i].item;
+      event.index = data[i].pos;
 
-      var pos = this._checkUpdateInput(data[i].qid,this.getItemIdentity(data[i].item),'NewItems',true);
-      if (pos!=-1) return;
-      if (data[i].revid && data[i].revid!='') {
-        var revPos = this._checkUpdateInput(data[i].qid,data[i].revid,'NewItems',false);
-        if (revPos==-1) {
-          var revPos = this.queryResults_[data[i].qid].dataIds.length;
-          this.queryResults_[data[i].qid].dataIds.push(this.getItemIdentity(data[i].item));
-          //return;
-        }
-        this.queryResults_[data[i].qid].dataIds.splice(revPos,0,this.getItemIdentity(data[i].item));
-      } else {
-//        var revPos = this.queryResults_[data[i].qid].dataIds.length;
-        var revPos = data[i].pos;
-        //this.queryResults_[data[i].qid].dataIds.push(this.getItemIdentity(data[i].item));
-      }
-      event.index = revPos;
       this.onAdd(event);
     }
   },
@@ -1605,6 +1517,7 @@ dojo.declare("FIRMOS.Store", null, {
       event.type = 'delete';
       event.id = data[i].itemid;
       event.previousIndex = data[i].pos;
+
       this.onDelete(event);
     }
   },
@@ -1613,19 +1526,7 @@ dojo.declare("FIRMOS.Store", null, {
       var event = new Object();
       event.type = 'update';
       event.target = data[i].item;
-
-//      var pos = this._checkUpdateInput(data[i].qid,this.getItemIdentity(data[i].item),'UpdateItems',false);
-//      if (pos==-1) return;
-//      if (data[i].revid && data[i].revid!='') {
-//        var revPos = this._checkUpdateInput(data[i].qid,data[i].revid,'UpdateItems',false);
-//        if (revPos==-1) return;
-//      } else {
-//        var revPos = pos;
-//      }
-//      event.index = revPos;
       event.index = data[i].pos;
-//      event.previousIndex = pos;
-//      event.previousIndex = data[i].pos;
 
       this.onUpdate(event);
     }
@@ -5164,13 +5065,13 @@ dojo.declare("FIRMOS.GridFilter",null, {
                                 '<tr><td colspan="2" class="firmosGridFilterDialogButtons">' +
                                 '<button data-dojo-type="dijit.form.Button" type="submit" '+
                                          'onClick="var ttd=this.getParent().getParent(); '+
-                                         'ttd.formValues=ttd.getChildren()[0].get(\'value\'); '+ //FIXXME set on grid
+                                         'ttd.formValues=ttd.getChildren()[0].get(\'value\'); '+
                                          'ttd.grid.'+set_function+'(\''+colId+'\',ttd.formValues); '+
                                          'ttd.ddbutton.closeDropDown();">'+this.texts.setButton+'</button>'+
                                 '<button data-dojo-type="dijit.form.Button" type="button" '+
                                          'onClick="var ttd=this.getParent().getParent(); '+
                                          'ttd.formValues=ttd.getChildren()[0].reset(); '+
-                                         'ttd.formValues=ttd.getChildren()[0].get(\'value\'); '+  //FIXXME set on grid
+                                         'ttd.formValues=ttd.getChildren()[0].get(\'value\'); '+
                                          'ttd.grid.clearFilter(\''+colId+'\'); '+
                                          'ttd.ddbutton.closeDropDown();">'+this.texts.clearButton+'</button>'+
                                 '</td></tr>'+
@@ -5181,7 +5082,7 @@ dojo.declare("FIRMOS.GridFilter",null, {
                                                      class: "firmosGridFilterDialog"+this.columns[colId].dataType,
                                                      content: filter_dialog_content,
                                                      onShow: function(event) {this.formValues = this.getChildren()[0].get('value');},
-                                                     onOpen: function(event) {this.getChildren()[0].set('value',this.formValues);}, // FIXXME get from grid
+                                                     onOpen: function(event) {this.getChildren()[0].set('value',this.formValues);},
                                                      grid: this});
 
         this._filterDialogs.push(filter_dialog);
@@ -7108,7 +7009,7 @@ dojo.declare("FIRMOS.Editor", dijit.layout.BorderContainer, {
   startEditor: function() {
     if (this.readOnly) {
       this.readOnlyContent = dojo.byId(this.id+'_container');
-      dojo.addClass(this.readOnlyContent,"aloha-editable"); //FIXXME - handle codemirrot
+      dojo.addClass(this.readOnlyContent,"aloha-editable"); //FIXXME - handle codemirror
     } else {
       switch (this.editorType) {
         case 'aloha':
