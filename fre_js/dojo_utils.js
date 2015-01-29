@@ -2509,6 +2509,9 @@ dojo.declare("FIRMOS.FormButton", dijit.form.Button, {
       }
     }
     if (this.actionClassname) {
+      if (this.isDialog) {
+        G_UI_COM.isDialogAction();
+      }
       G_SERVER_COM.callServerFunction(this.actionClassname,this.actionFunctionname,this.actionUidPath,this.actionParams,this.sfCallback.bind(this));
     }
     if (this.downloadId) {
