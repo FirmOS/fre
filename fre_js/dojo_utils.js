@@ -4423,9 +4423,17 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
     for (var i in this.depGroup_) {
       this._updateDepField(i,this.depGroup_[i],false,form);
     }
-    var parent = form.getParent();
-    if (parent && parent.isInstanceOf(FIRMOS.Dialog)) {
-      parent.resize();
+    var parent = form;
+    while (parent) {
+      if (parent.isInstanceOf(FIRMOS.Dialog)) {
+        parent.resize();
+        break;
+      }
+      if (parent.isInstanceOf(dijit.layout.BorderContainer)) {
+        parent.resize();
+        break;
+      }
+      parent = parent.getParent();
     }
   },
   _hideAllDepFields: function(form) {
