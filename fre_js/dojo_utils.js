@@ -1507,7 +1507,7 @@ dojo.declare("FIRMOS.Store", null, {
       event.type = 'add';
       event.target = data[i].item;
       event.index = data[i].pos;
-
+      event.totalLength = data[i].total;
       this.onAdd(event);
     }
   },
@@ -1517,7 +1517,7 @@ dojo.declare("FIRMOS.Store", null, {
       event.type = 'delete';
       event.id = data[i].itemid;
       event.previousIndex = data[i].pos;
-
+      event.totalLength = data[i].total;
       this.onDelete(event);
     }
   },
@@ -1527,7 +1527,7 @@ dojo.declare("FIRMOS.Store", null, {
       event.type = 'update';
       event.target = data[i].item;
       event.index = data[i].pos;
-
+      event.totalLength = data[i].total;
       this.onUpdate(event);
     }
   }
