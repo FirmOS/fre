@@ -1301,6 +1301,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     pool_id        : TFRE_DB_GUID;
     rootds_id      : TFRE_DB_GUID;
     dscoll         : IFRE_DB_COLLECTION;
+    imgcoll        : IFRE_DB_COLLECTION;
     ds_id          : TFRE_DB_GUID;
     domainsds_id   : TFRE_DB_GUID;
     zone_id        : TFRE_DB_GUID;
@@ -1661,15 +1662,25 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
    var vm     :TFRE_DB_VMACHINE;
        vol1_id :TFRE_DB_GUID;
        vol2_id :TFRE_DB_GUID;
+       iso_id  :TFRE_DB_GUID;
+       iso     :IFRE_DB_Object;
 
        vm_uid  :TFRE_DB_GUID;
 
        disk    :TFRE_DB_VMACHINE_DISK;
-       net     :TFRE_DB_VMACHINE_NIC_VIRTIO;
+       net     :TFRE_DB_VMACHINE_NIC;
 
    begin
      vol1_id := CreateZVol(g_vmdisk_id,'Disk1',disksize_mb);
      vol2_id := CreateZVol(g_vmdisk_id,'Disk2',disksize_mb);
+
+     iso  := TFRE_DB_IMAGE_FILE.CreateForDB;
+     iso.Field('filename').asstring:='ubuntu-14.04.1-desktop-amd64.iso';
+     iso.SetDomainID(g_domain_id);
+     iso.Field('zoneid').AsObjectLink:=zone_id;
+     iso_id :=iso.UID;
+     writeln('CreateISO ',iso.DumpToString);
+     CheckDbResult(imgcoll.Store(iso));
 
      vm:=TFRE_DB_VMACHINE.CreateForDB;
      vm.SetDomainID(g_domain_id);
@@ -1687,35 +1698,40 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      writeln('CreateVM ',vm.DumpToString);
      CheckDbResult(svc_coll.Store(vm));
 
-     disk := TFRE_DB_VMACHINE_DISK_VIRTIO.CreateForDB;
+     disk := TFRE_DB_VMACHINE_DISK.CreateForDB;
      disk.SetDomainID(g_domain_id);
+     disk.Field('drive_if').asstring:='virtio';
+     disk.Field('media').asstring:='disk';
      disk.Field('index').AsInt16:=0;
-     disk.Field('zvol').AsObjectLink:=vol1_id;
+     disk.Field('file').AsObjectLink:=vol1_id;
      disk.Field('serviceparent').AsObjectLink:=vm_uid;
      disk.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'Disk1';
      writeln('CreateVM DISK ',disk.DumpToString);
      CheckDbResult(vmcomp_coll.Store(disk));
 
-     disk := TFRE_DB_VMACHINE_DISK_IDE.CreateForDB;
+     disk := TFRE_DB_VMACHINE_DISK.CreateForDB;
+     disk.Field('drive_if').asstring:='virtio';
+     disk.Field('media').asstring:='disk';
      disk.Field('index').AsInt16:=1;
      disk.SetDomainID(g_domain_id);
-     disk.Field('zvol').AsObjectLink:=vol2_id;
+     disk.Field('file').AsObjectLink:=vol2_id;
      disk.Field('serviceparent').AsObjectLink:=vm_uid;
      disk.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'Disk2';
      writeln('CreateVM DISK ',disk.DumpToString);
      CheckDbResult(vmcomp_coll.Store(disk));
 
-     disk := TFRE_DB_VMACHINE_DISK_ISO.CreateForDB;
+     disk := TFRE_DB_VMACHINE_DISK.CreateForDB;
+     disk.Field('drive_if').asstring:='ide';
+     disk.Field('media').asstring:='cdrom';
      disk.Field('index').AsInt16:=2;
      disk.SetDomainID(g_domain_id);
-     disk.Field('filename').asstring:='/shared/ubuntu-14.04.1-desktop-amd64.iso';
-//     disk.Field('zvol').AsObjectLink:=vol1_id;
+     disk.Field('file').AsObjectLink:=iso_id;
      disk.Field('serviceparent').AsObjectLink:=vm_uid;
      disk.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'ISO1';
      writeln('CreateVM DISK ',disk.DumpToString);
      CheckDbResult(vmcomp_coll.Store(disk));
 
-     net := TFRE_DB_VMACHINE_NIC_VIRTIO.CreateForDB;
+     net := TFRE_DB_VMACHINE_NIC.CreateForDB;
      net.SetDomainID(g_domain_id);
      net.Field('vm_vlan').AsInt16:=0;
      net.Field('serviceparent').AsObjectLink:=vm_uid;
@@ -1723,6 +1739,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      net.Field('uniquephysicalid').asstring := vm_uid.AsHexString+'_'+'Net1';
      writeln('CreateVM NET ',net.DumpToString);
      CheckDbResult(vmcomp_coll.Store(net));
+
    end;
 
    procedure CreateShare(const fileserver_id:TFRE_DB_GUID; const pool_id:TFRE_DB_GUID;const ds:string; const sharename:string;const quota,rquota:integer);
@@ -1904,6 +1921,14 @@ begin
   else
     dscoll:=conn.GetCollection(  CFRE_DB_ZFS_DATASET_COLLECTION);
 
+  if not conn.CollectionExists(CFRE_DB_IMAGEFILE_COLLECTION) then
+    begin
+     imgcoll:=conn.CreateCollection(CFRE_DB_IMAGEFILE_COLLECTION);
+//     dscoll.DefineIndexOnField('objname',fdbft_String,true);
+    end
+  else
+    imgcoll:=conn.GetCollection(  CFRE_DB_IMAGEFILE_COLLECTION);
+
   if not conn.CollectionExists(CFOS_DB_ZONES_COLLECTION) then { zones per domain }
     begin
      zcoll:=conn.CreateCollection(CFOS_DB_ZONES_COLLECTION);
@@ -1971,7 +1996,9 @@ begin
 
   ClearCollectionifExists(CFOS_DB_DNS_RECORDS_COLLECTION);
 
+  RemoveLinksifExists(CFRE_DB_IMAGEFILE_COLLECTION);
   ClearCollectionifExists(CFRE_DB_VM_COMPONENTS_COLLECTION,true);
+  ClearCollectionifExists(CFRE_DB_IMAGEFILE_COLLECTION,true);
   ClearCollectionifExists(CFOS_DB_SERVICES_COLLECTION,true);
 
 
