@@ -7005,12 +7005,18 @@ dojo.declare("FIRMOS.Editor", dijit.layout.BorderContainer, {
                                           ,disabled:true
                                           ,onClick:this.save.bind(this)
                                           ,style: button_style});
-    this.toolbar.addChild(this.saveButton);
     this.resetButton=new dijit.form.Button({label:this.texts.resetButton
                                            ,disabled: true
                                            ,onClick:this.load.bind(this)
                                            ,style: button_style});
-    this.toolbar.addChild(this.resetButton);
+
+    if (this.tbBottom) {
+      this.toolbar.addChild(this.saveButton);
+      this.toolbar.addChild(this.resetButton);
+    } else {
+      this.toolbar.addChild(this.resetButton);
+      this.toolbar.addChild(this.saveButton);
+    }
 
     this.addChild(this.toolbar);
     this.addChild(this.editorCP);
