@@ -510,19 +510,45 @@ end;
 
 procedure TFRE_Testserver.PatchOEAndProdMods;
 var
-  conn : IFRE_DB_CONNECTION;
+  conn    : IFRE_DB_CONNECTION;
+  ncoll   : IFRE_DB_COLLECTION;
+  pncoll  : IFRE_DB_COLLECTION;
+  noteObjs: TFRE_DB_GUIDArray;
+  i       : Integer;
 
     procedure ObjectPatch(const obj:IFRE_DB_Object; var halt:boolean ; const current,max : NativeInt);
     var
       status : TFOS_DB_CITYCOM_OE_STATUS_PLUGIN;
+      noteobj: IFRE_DB_Object;
+      pnote  : TFOS_DB_CITYCOM_PRODUCT_NOTE;
     begin
       //writeln('Processing ',current,'/',max,' ',obj.SchemeClass);
       if (obj.SchemeClass='TFOS_DB_CITYCOM_ORDER_ENTRY') then begin
-        status:=TFOS_DB_CITYCOM_OE_STATUS_PLUGIN.create;
-        status.setAsPreorder;
-        obj.AttachPlugin(status);
-        obj.DeleteField('status');
-        CheckDbResult(conn.Update(obj));
+        if not obj.HasPlugin(TFOS_DB_CITYCOM_OE_STATUS_PLUGIN) then begin
+          status:=TFOS_DB_CITYCOM_OE_STATUS_PLUGIN.create;
+          status.setAsPreorder;
+          obj.AttachPlugin(status);
+          obj.DeleteField('status');
+          CheckDbResult(conn.Update(obj.CloneToNewObject()));
+        end;
+      end;
+      if (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_GROUP') or
+         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT') or
+         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_VARIATION') or
+         (obj.SchemeClass='TFOS_DB_CITYCOM_PRODUCT_MODULE') then begin
+
+        if ncoll.GetIndexedObj(obj.UID_String,noteobj) then begin
+          pnote:=TFOS_DB_CITYCOM_PRODUCT_NOTE.CreateForDB;
+          pnote.SetDomainID(obj.DomainID);
+          pnote.Field('content').AsString:=noteobj.Field('note').AsString;
+          pnote.Field('type').AsString:='SPEC';
+          pnote.Field('valid_from').AsDateTime:=GFRE_DT.Now_UTC;
+          pnote.Field('dbo').AsObjectLink:=obj.UID;
+
+          CheckDbResult(pncoll.Store(pnote));
+          SetLength(noteObjs,Length(noteObjs)+1);
+          noteObjs[Length(noteObjs)-1]:=noteobj.UID;
+        end;
       end;
     end;
 
@@ -536,7 +562,13 @@ begin
   CheckDbResult(conn.Connect(FDBName,cFRE_ADMIN_USER,cFRE_ADMIN_PASS));
   writeln('PATCHING BASE DB ',FDBName);
   writeln('----');
+  ncoll:=conn.GetNotesCollection;
+  pncoll:=conn.GetCollection(CFOS_DB_PRODUCT_NOTES_COLLECTION);
   conn.ForAllDatabaseObjectsDo(@ObjectPatch);
+  for i := 0 to High(noteObjs) do begin
+   CheckDbResult(ncoll.Remove(noteObjs[i]));
+  end;
+
   writeln('DONE');
   conn.Finalize;
 end;
