@@ -815,11 +815,12 @@ dojo.declare("FIRMOS.uiHandler", null, {
       dojo.addClass(tl,"firmosFormGroupShowLeft");
       dojo.addClass(tr,"firmosFormGroupShowRight");
     }
-    var form = dojo.byId(formId);
-    var trs=dojo.query('tr[firmosGroup~="'+gId+'"]',form);
+    var form = dijit.byId(formId);
+    var trs=dojo.query('tr[firmosGroup~="'+gId+'"]',form.domeNode);
     for (var i=0; i<trs.length; i++) {
       dojo.style(trs[i],'display',displayStyle);
     }
+    form.handleContentChange();
   },
   
   addMenuEntries: function(menu,entries,disabled) {
@@ -3950,6 +3951,21 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     }
   },
   
+  handleContentChange: function() {
+    var parent = this;
+    while (parent) {
+      if (parent.isInstanceOf(FIRMOS.Dialog)) {
+        parent.resize();
+        break;
+      }
+      if (parent.isInstanceOf(dijit.layout.BorderContainer)) {
+        parent.resize();
+        break;
+      }
+      parent = parent.getParent();
+    }
+  },
+
   _updateValues: function(obj,path,initialData) {
     for (var x in obj) {
       if (x=='uid') continue;
@@ -4423,18 +4439,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
     for (var i in this.depGroup_) {
       this._updateDepField(i,this.depGroup_[i],false,form);
     }
-    var parent = form;
-    while (parent) {
-      if (parent.isInstanceOf(FIRMOS.Dialog)) {
-        parent.resize();
-        break;
-      }
-      if (parent.isInstanceOf(dijit.layout.BorderContainer)) {
-        parent.resize();
-        break;
-      }
-      parent = parent.getParent();
-    }
+    form.handleContentChange();
   },
   _hideAllDepFields: function(form) {
     for (var i in this.depGroup_) {
