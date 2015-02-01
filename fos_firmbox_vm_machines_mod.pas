@@ -18,8 +18,8 @@ uses
 const
 
   //CFRE_DB_VM_COLLECTION            = 'VIRTUAL_MACHINES';
-  CFRE_DB_VM_SC_COLLECTION         = 'VM_SOUND_CARDS';
-  CFRE_DB_VM_KB_COLLECTION         = 'VM_KEYBOARDS';
+  //CFRE_DB_VM_SC_COLLECTION         = 'VM_SOUND_CARDS';
+  //CFRE_DB_VM_KB_COLLECTION         = 'VM_KEYBOARDS';
 
   CFRE_DB_VM_DISKS_COLLECTION      = 'VM_DISKS';
   CFRE_DB_VM_ISOS_COLLECTION       = 'VM_ISOS';
@@ -636,28 +636,6 @@ begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_VM_DISKS_COLLECTION));
     end;
 
-    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    transform.AddOneToOnescheme('name');
-
-    dc:= session.NewDerivedCollection('VM_CH_SCS_DERIVED');
-    with dc do begin
-      SetDeriveTransformation(transform);
-      SetDefaultOrderField('order',true);
-      SetDisplayType(cdt_Listview,[],'');
-      SetDeriveParent(conn.GetCollection(CFRE_DB_VM_SC_COLLECTION));
-    end;
-
-    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    transform.AddOneToOnescheme('name');
-
-    dc:= session.NewDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
-    with dc do begin
-      SetDeriveTransformation(transform);
-      SetDefaultOrderField('order',true);
-      SetDisplayType(cdt_Listview,[],'');
-      SetDeriveParent(conn.GetCollection(CFRE_DB_VM_KB_COLLECTION));
-    end;
-
   end;
 end;
 
@@ -732,20 +710,19 @@ begin
 end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
-var
-  coll: IFRE_DB_COLLECTION;
-  vm: TFRE_DB_VMACHINE;
 begin
   inherited InstallUserDBObjects(conn, currentVersionId);
    if currentVersionId='' then begin
      currentVersionId:='0.9';
-     coll:=conn.CreateCollection(CFRE_DB_VM_SC_COLLECTION);
-     coll.DefineIndexOnField('scid',fdbft_String,true,true);
-     coll:=conn.CreateCollection(CFRE_DB_VM_KB_COLLECTION);
-     coll.DefineIndexOnField('keyboardid',fdbft_String,true,true);
    end;
    if conn.CollectionExists('VIRTUAL_MACHINE') then begin
      conn.DeleteCollection('VIRTUAL_MACHINE');
+   end;
+   if conn.CollectionExists('VM_SOUND_CARDS') then begin
+     conn.DeleteCollection('VM_SOUND_CARDS');
+   end;
+   if conn.CollectionExists('VM_KEYBOARDS') then begin
+     conn.DeleteCollection('VM_KEYBOARDS');
    end;
 end;
 
@@ -916,7 +893,6 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  res                  : TFRE_DB_FORM_DIALOG_DESC;
   maxRAM,minRAM,stepRAM: Integer;
   maxCPU               : Integer;
   idestore             : TFRE_DB_STORE_DESC;
@@ -933,14 +909,15 @@ var
   group                : TFRE_DB_INPUT_GROUP_DESC;
   sf                   : TFRE_DB_SERVER_FUNC_DESC;
   scheme               : IFRE_DB_SchemeObject;
+  res                  : TFRE_DB_FORM_DIALOG_DESC;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  vm_isos := ses.FetchDerivedCollection('VM_CH_ISOS_DERIVED');
-  vm_disks:= ses.FetchDerivedCollection('VM_CH_DISKS_DERIVED');
-  vm_scs:= ses.FetchDerivedCollection('VM_CH_SCS_DERIVED');
-  vm_keyboards:= ses.FetchDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
+  //vm_isos := ses.FetchDerivedCollection('VM_CH_ISOS_DERIVED');
+  //vm_disks:= ses.FetchDerivedCollection('VM_CH_DISKS_DERIVED');
+  //vm_scs:= ses.FetchDerivedCollection('VM_CH_SCS_DERIVED');
+  //vm_keyboards:= ses.FetchDerivedCollection('VM_CH_KEYBOARDS_DERIVED');
 
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_new_caption'),600,true,true,false);
 
@@ -950,94 +927,94 @@ begin
   end else begin
     res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'zone',ses.FetchDerivedCollection('VM_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
   end;
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   GetSystemScheme(TFRE_DB_VMACHINE,scheme);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,true,false);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
   res.SetElementValue('cores','2');
   res.SetElementValue('threads','4');
   res.SetElementValue('sockets','2');
   (res.GetFormElement('ram').Implementor_HC as TFRE_DB_INPUT_NUMBER_DESC).setMinMax(getMinimumRAM,getAvailableRAM);
   res.SetElementValue('ram',IntToStr(getMinimumRAM));
 
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
   Result:=res;
-  exit; //FIXXME
 
-  res.AddInput.Describe(FetchModuleTextShort(ses,'vm_name'),'name',true);
-  maxRAM:=getAvailableRAM; minRAM:=getMinimumRAM; stepRAM:=getRAMSteps;
-  res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'vm_mem'),'mem',minRAM,maxRAM,true,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);
-
-  maxCPU:=getAvailableCPU;
-  res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'vm_cpu'),'cpu',1,maxCPU,true,IntToStr(maxCPU),0,maxCPU);
-
-  res.AddChooser.Describe(FetchModuleTextShort(ses,'vm_sc'),'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC);
-
-  idestore:=TFRE_DB_STORE_DESC.create.Describe();
-  idestore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_ide_option_disk'),'disk');
-  idestore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_ide_option_iso'),'iso');
-
-  isostore:=vm_isos.GetStoreDescription as TFRE_DB_STORE_DESC;
-  //isostore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_upload_iso'),'upload');
-
-  diskstore:=vm_disks.GetStoreDescription as TFRE_DB_STORE_DESC;
-  diskstore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_create_new_disk'),'create');
-
-  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide0'));
-  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide0',idestore,dh_chooser_combo,false,false,false,false,'disk');
-
-  diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk0',diskstore,dh_chooser_combo,true);
-  chooser.addDependentInput('disk0','disk',fdv_visible);
-  group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname0',true);
-  group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize0',true,false,false,false,'40');
-  diskchooser.addDependentInput('diskname0','create',fdv_visible);
-  diskchooser.addDependentInput('disksize0','create',fdv_visible);
-  isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso0',isostore,dh_chooser_combo,true);
-  chooser.addDependentInput('iso0','iso',fdv_visible);
-
-  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide1'));
-  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide1',idestore,true,dh_chooser_combo,false,false,false,'iso');
-  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide1',idestore);
-
-  diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk1',diskstore,dh_chooser_combo,true);
-  chooser.addDependentInput('disk1','disk',fdv_visible);
-  group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname1',true);
-  group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize1',true,false,false,false,'40');
-  diskchooser.addDependentInput('diskname1','create',fdv_visible);
-  diskchooser.addDependentInput('disksize1','create',fdv_visible);
-  isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso1',isostore,dh_chooser_combo,true);
-  chooser.addDependentInput('iso1','iso',fdv_visible);
-
-  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide2'));
-  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide2',idestore);
-
-  diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk2',diskstore,dh_chooser_combo,true);
-  chooser.addDependentInput('disk2','disk',fdv_visible);
-  group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname2',true);
-  group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize2',true,false,false,false,'40');
-  diskchooser.addDependentInput('diskname2','create',fdv_visible);
-  diskchooser.addDependentInput('disksize2','create',fdv_visible);
-  isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso2',isostore,dh_chooser_combo,true);
-  chooser.addDependentInput('iso2','iso',fdv_visible);
-
-  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide3'));
-  chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide3',idestore);
-
-  diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk3',diskstore,dh_chooser_combo,true);
-  chooser.addDependentInput('disk3','disk',fdv_visible);
-  group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname3',true);
-  group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize3',true,false,false,false,'40');
-  diskchooser.addDependentInput('diskname3','create',fdv_visible);
-  diskchooser.addDependentInput('disksize3','create',fdv_visible);
-  isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso3',isostore,dh_chooser_combo,true);
-  chooser.addDependentInput('iso3','iso',fdv_visible);
-
-  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_advanced'),true,true);
-
-  keyboardstore:=vm_keyboards.GetStoreDescription as TFRE_DB_STORE_DESC;
-  keyboardstore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_keyboard_layout_auto'),'auto');
-  group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_keyboard_layout'),'keybord_layout',keyboardstore,dh_chooser_combo,true);
-
-  Result:=res;
+  //res.AddInput.Describe(FetchModuleTextShort(ses,'vm_name'),'name',true);
+  //maxRAM:=getAvailableRAM; minRAM:=getMinimumRAM; stepRAM:=getRAMSteps;
+  //res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'vm_mem'),'mem',minRAM,maxRAM,true,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);
+  //
+  //maxCPU:=getAvailableCPU;
+  //res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'vm_cpu'),'cpu',1,maxCPU,true,IntToStr(maxCPU),0,maxCPU);
+  //
+  //res.AddChooser.Describe(FetchModuleTextShort(ses,'vm_sc'),'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC);
+  //
+  //idestore:=TFRE_DB_STORE_DESC.create.Describe();
+  //idestore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_ide_option_disk'),'disk');
+  //idestore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_ide_option_iso'),'iso');
+  //
+  //isostore:=vm_isos.GetStoreDescription as TFRE_DB_STORE_DESC;
+  ////isostore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_upload_iso'),'upload');
+  //
+  //diskstore:=vm_disks.GetStoreDescription as TFRE_DB_STORE_DESC;
+  //diskstore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_create_new_disk'),'create');
+  //
+  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide0'));
+  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide0',idestore,dh_chooser_combo,false,false,false,false,'disk');
+  //
+  //diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk0',diskstore,dh_chooser_combo,true);
+  //chooser.addDependentInput('disk0','disk',fdv_visible);
+  //group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname0',true);
+  //group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize0',true,false,false,false,'40');
+  //diskchooser.addDependentInput('diskname0','create',fdv_visible);
+  //diskchooser.addDependentInput('disksize0','create',fdv_visible);
+  //isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso0',isostore,dh_chooser_combo,true);
+  //chooser.addDependentInput('iso0','iso',fdv_visible);
+  //
+  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide1'));
+  ////chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide1',idestore,true,dh_chooser_combo,false,false,false,'iso');
+  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide1',idestore);
+  //
+  //diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk1',diskstore,dh_chooser_combo,true);
+  //chooser.addDependentInput('disk1','disk',fdv_visible);
+  //group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname1',true);
+  //group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize1',true,false,false,false,'40');
+  //diskchooser.addDependentInput('diskname1','create',fdv_visible);
+  //diskchooser.addDependentInput('disksize1','create',fdv_visible);
+  //isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso1',isostore,dh_chooser_combo,true);
+  //chooser.addDependentInput('iso1','iso',fdv_visible);
+  //
+  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide2'));
+  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide2',idestore);
+  //
+  //diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk2',diskstore,dh_chooser_combo,true);
+  //chooser.addDependentInput('disk2','disk',fdv_visible);
+  //group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname2',true);
+  //group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize2',true,false,false,false,'40');
+  //diskchooser.addDependentInput('diskname2','create',fdv_visible);
+  //diskchooser.addDependentInput('disksize2','create',fdv_visible);
+  //isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso2',isostore,dh_chooser_combo,true);
+  //chooser.addDependentInput('iso2','iso',fdv_visible);
+  //
+  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide3'));
+  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide3',idestore);
+  //
+  //diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk3',diskstore,dh_chooser_combo,true);
+  //chooser.addDependentInput('disk3','disk',fdv_visible);
+  //group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname3',true);
+  //group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize3',true,false,false,false,'40');
+  //diskchooser.addDependentInput('diskname3','create',fdv_visible);
+  //diskchooser.addDependentInput('disksize3','create',fdv_visible);
+  //isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso3',isostore,dh_chooser_combo,true);
+  //chooser.addDependentInput('iso3','iso',fdv_visible);
+  //
+  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_advanced'),true,true);
+  //
+  //keyboardstore:=vm_keyboards.GetStoreDescription as TFRE_DB_STORE_DESC;
+  //keyboardstore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_keyboard_layout_auto'),'auto');
+  //group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_keyboard_layout'),'keybord_layout',keyboardstore,dh_chooser_combo,true);
+  //
+  //Result:=res;
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
