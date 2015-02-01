@@ -194,6 +194,710 @@ table {  font-size:100%; }
 .dojoTabular td { 
 	padding: 0.25em 0.5em;
 }
+.dojoxUploaderFileList{
+	border:1px solid #ccc;
+	min-height:50px;
+}
+.dojoxUploaderFileListTable{
+	width:100%;
+	border-collapse:collapse;
+	margin-top:5px;
+}
+.dojoxUploaderFileListHeader th{
+	background-color:#eee;
+	padding:3px;
+}
+.dojoxUploaderFileListRow{
+
+}
+.dojoxUploaderIndex{
+	width:20px;
+}
+.dojoxUploaderIcon{
+	width:50px;
+}
+.dojoxUploaderFileName{
+
+}
+.dojoxUploaderSize{
+	width:70px;
+}
+.dojoxUploaderFileListContent{
+	width:100%;
+}
+.dojoxUploaderFileListProgress{
+	border:1px solid #666;
+	height:15px;
+	position:relative;
+	background:#fff;
+	overflow:hidden;
+}
+.dojoxUploaderFileListPercentText{
+	position:absolute;
+	right:3px;
+	top:3px;
+	font-size:10px;
+	text-align:right;
+}
+.dojoxUploaderFileListProgressBar{
+	position:absolute;
+	top:0px;
+	left:0px;
+	height:15px;
+	width:0%;
+	background:#bfe1fd;
+}
+/* This stylesheet provides the structural CSS for the dgrid */
+.dgrid {
+	position: relative;
+	overflow: hidden; /* This is needed by IE to prevent crazy scrollbar flashing */
+	border: 1px solid #ddd;
+	height: 30em;
+	display: block;
+}
+
+.dgrid-header {
+	background-color: #eee;
+}
+
+.dgrid-header-row {
+	position: absolute;
+	right: 17px; /* scrollbar width; revised in List.js if necessary */
+	left: 0;
+}
+
+.dgrid-header-scroll {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+.dgrid-footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+}
+
+.dgrid-header-hidden {
+	/*
+		Used to "hide" header, without losing size information for reference.
+		!important is used to supersede theme styles at higher specificity.
+		Left/right box styles are untouched, as they may influence width of
+		.dgrid-content as updated in Grid's resize method.
+	*/
+	font-size: 0; /* allow shrinkage in IE Quirks mode for Lists */
+	height: 0 !important;
+	border-top: none !important;
+	border-bottom: none !important;
+	margin-top: 0 !important;
+	margin-bottom: 0 !important;
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+.dgrid-footer-hidden {
+	/* Hiding footer is much simpler; simply set its display to none. */
+	display: none;
+}
+
+.dgrid-sortable {
+	cursor: pointer;
+}
+.dgrid-header, .dgrid-header-row, .dgrid-footer {
+	overflow: hidden;
+	background-color: #eee;
+}
+
+.dgrid-row-table {
+	border-collapse: collapse;
+	border: none;
+	table-layout: fixed;
+	empty-cells: show;
+	width: 100%;
+	height: 100%;
+}
+.dgrid-cell {
+	padding: 3px;
+	text-align: left;
+	overflow: hidden;
+	vertical-align: top;
+	border: 1px solid #ddd;
+	border-top-style: none;
+	
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+.dgrid-content {
+	position: relative;
+	height: 99%;
+}
+
+.dgrid-scroller {
+	overflow-x: auto;
+	overflow-y: scroll;
+	position: absolute;
+	top: 0px;
+	margin-top: 25px; /* this will be adjusted programmatically to fit below the header*/
+	bottom: 0px;
+	width: 100%;
+}
+
+.dgrid-preload {
+	/* Force IE6 to honor 0 height */
+	font-size: 0;
+	line-height: 0;
+}
+
+.dgrid-loading {
+	position: relative;
+	height: 100%;
+}
+.dgrid-above {
+	position: absolute;
+	bottom: 0;
+}
+
+.ui-icon {
+	width: 16px;
+	height: 16px;
+	background-image: url('images/ui-icons_222222_256x240.png');
+}
+
+.ui-icon-triangle-1-e {
+	background-position: -32px -16px;
+}
+.ui-icon-triangle-1-se {
+	background-position: -48px -16px;
+}
+
+.dgrid-expando-icon {
+	width: 16px;
+	height: 16px;
+}
+.dgrid-tree-container {
+	-webkit-transition-duration: 0.3s;
+	-moz-transition-duration: 0.3s;
+	-ms-transition-duration: 0.3s;
+	-o-transition-duration: 0.3s;
+	transition-duration: 0.3s;
+	overflow: hidden;
+}
+.dgrid-tree-container.dgrid-tree-resetting {
+	-webkit-transition-duration: 0;
+	-moz-transition-duration: 0;
+	-ms-transition-duration: 0;
+	-o-transition-duration: 0;
+	transition-duration: 0;
+}
+
+/* Single Sort */
+.dgrid-sort-arrow {
+	background-position: -64px -16px;
+	display: block;
+	float: right;
+	margin: 0 4px 0 5px;
+	height: 12px;
+}
+.dgrid-sort-up .dgrid-sort-arrow {
+	background-position: 0px -16px;
+}
+
+/* selection*/
+.dgrid-selected {
+	background-color: #bfd6eb;
+}
+
+.dgrid-input {
+	width: 99%;
+}
+
+html.has-mozilla .dgrid-focus {
+	/* Tighten outline to fit within cells (avoids cutting off top/bottom outlines) */
+	outline-offset: -1px;
+}
+
+/* will be used to calculate the width of the scrollbar */
+.dgrid-scrollbar-measure {
+	width: 100px;
+	height: 100px;
+	overflow: scroll;
+	position: absolute;
+	top: -9999px;
+}
+
+/* Styles for auto-height grids; simply add the dgrid-autoheight class */
+.dgrid-autoheight {
+	height: auto;
+}
+.dgrid-autoheight .dgrid-scroller {
+	position: relative;
+	overflow-y: hidden;
+}
+.dgrid-autoheight .dgrid-header-scroll {
+	display: none;
+}
+.dgrid-autoheight .dgrid-header {
+	right: 0;
+}
+
+/* indicator of a successful load */
+#dgrid-css-dgrid-loaded {
+	display: none;
+}/*
+**----------------------------------------------------------------------------
+**  CheckedMultiSelect
+**----------------------------------------------------------------------------
+*/
+
+.dojoxCheckedMultiSelectHidden{
+	display: none;
+}
+
+.dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
+	border: solid black 1px;
+	margin: 1px 0;
+	overflow: scroll;
+	overflow-y: scroll;
+	overflow-x: hidden;
+	height: 100px;
+}
+
+.dj_ie .dojoxCheckedMultiSelectWrapper,
+.dj_webkit .dojoxCheckedMultiSelectWrapper {
+	/* So that the scroll bar doesn't cover stuff up */
+	padding-right: 15px;
+}
+
+.dojoxMultiSelectItem {
+	cursor: default;
+	padding: 0.1em 0.2em;
+	white-space: nowrap;
+}
+
+.dojoxCheckedMultiSelectItem {
+	white-space: nowrap;
+	padding:.1em .2em;
+	cursor:default;
+}
+
+.dojoxCheckedMultiSelectDisabled *,
+.dojoxCheckedMultiSelectReadOnly * {
+	color:gray !important;
+}
+
+.dojoxCheckedMultiSelectItemLabel {
+	margin-left: .2em;
+}
+
+.dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
+	margin: 0em 0.1em;
+}
+
+.dojoxCheckedMultiSelectCheckBoxInput {
+	opacity: 0.01;
+}
+
+.dj_ie .dojoxCheckedMultiSelectCheckBoxInput {
+	filter: alpha(opacity=0);
+	width: 15px;
+	height: 16px;
+}
+
+.dijit_a11y .dojoxCheckedMultiSelectCheckBoxInput {
+	opacity: 1;
+	filter: none;
+}
+
+.dojoxCheckedMultiSelectMenu td.dijitMenuArrowCell {
+	display: none;
+}
+
+.dojoxCheckedMultiSelectMenu td.dijitMenuItemLabel {
+	position: static;
+	padding: 2px;
+}
+
+/*
+**----------------------------------------------------------------------------
+**  Tundra theme (make look similar to text box)
+**----------------------------------------------------------------------------
+*/
+.tundra .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
+	background:#fff url("../../../dijit/themes/tundra/images/validationInputBg.png") repeat-x top left;
+	#background:#fff url('../../../dijit/themes/tundra/images/validationInputBg.gif') repeat-x top left;
+	border:1px solid #b3b3b3;
+	line-height: normal;
+}
+
+.tundra .dojoxCheckedMultiSelectFocused .dojoxCheckedMultiSelectWrapper {
+	/* input field when focused (ie: typing affects it) */
+	border-color:#406b9b;
+}
+
+/*
+**----------------------------------------------------------------------------
+**  Soria theme (make look similar to text box)
+**----------------------------------------------------------------------------
+*/
+.soria .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
+	background:#fff url("../../../dijit/themes/soria/images/validationInputBg.png") repeat-x top left;
+	#background:#fff url('../../../dijit/themes/soria/images/validationInputBg.gif') repeat-x top left;
+	border:1px solid #8ba0bd;
+	line-height: normal;
+}
+
+.soria .dojoxCheckedMultiSelectFocused .dojoxCheckedMultiSelectWrapper {
+	/* input field when focused (ie: typing affects it) */
+	border-color:#406b9b;
+}
+
+/*
+**----------------------------------------------------------------------------
+**  Nihilo theme (make look similar to text box)
+**----------------------------------------------------------------------------
+*/
+.nihilo .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
+	background:#fff url("../../../dijit/themes/nihilo/images/validationInputBg.png") repeat-x top left;
+	#background:#fff url('../../../dijit/themes/nihilo/images/validationInputBg.gif') repeat-x top left;
+	border:1px solid #d3d3d3;
+	line-height: normal;
+}
+
+.nihilo .dojoxCheckedMultiSelectFocused .dojoxCheckedMultiSelectWrapper {
+	/* input field when focused (ie: typing affects it) */
+	border-color:#b3b3b3;
+}
+
+/*
+**----------------------------------------------------------------------------
+**  Claro theme (make look similar to text box)
+**----------------------------------------------------------------------------
+*/
+.claro .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
+	border: 1px solid #b5bcc7;
+	background-color: #f7fcff;
+	line-height: normal;
+	-webkit-transition-property:background-color, border;
+	-webkit-transition-duration:.35s;
+}
+
+.claro .dojoxCheckedMultiSelectHover .dojoxCheckedMultiSelectWrapper {
+	border-color: #769dc0;
+	background-color: #e9f4fe;
+	background-image: -moz-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
+	background-image: -webkit-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
+	background-image: linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
+	background-repeat: repeat-x;
+	-webkit-transition-duration:.25s;
+}
+
+.claro .dojoxCheckedMultiSelectFocused .dojoxCheckedMultiSelectWrapper {
+	border: 1px solid #769dc0;
+	-webkit-transition-duration:.1s;
+}
+
+.claro .dojoxCheckedMultiSelectMenuCheckBoxItemIcon {
+	background-image: url('../../../dijit/themes/claro/form/images/checkboxRadioButtonStates.png');
+	background-repeat: no-repeat;
+	background-position: -15px;
+	width: 15px;
+	height: 16px;
+}
+
+.claro .dojoxCheckedMultiSelectMenuRadioItemIcon {
+	background-image: url('../../../dijit/themes/claro/form/images/checkboxRadioButtonStates.png');
+	background-repeat: no-repeat;
+	background-position: -105px;
+	width: 15px;
+	height: 16px;
+}
+
+.dj_ie6 .claro .dojoxCheckedMultiSelectMenuItemIcon {
+	background-image: url('../../../dijit/themes/claro/form/images/checkboxRadioButtonStates.png');
+}
+
+.claro .dojoxCheckedMultiSelectMenuItemChecked .dojoxCheckedMultiSelectMenuCheckBoxItemIcon {
+	background-position: 0;
+}
+
+.claro .dojoxCheckedMultiSelectMenuItemChecked .dojoxCheckedMultiSelectMenuRadioItemIcon {
+	background-position: -90px;
+}
+
+/* Drop down button */
+.claro .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectButton .dijitButtonText {
+	padding: 2px;
+}
+
+/* normal status */
+.claro .dojoxCheckedMultiSelectButton {
+	border: 1px solid #b5bcc7;
+	background-color: #ffffff;
+	border-collapse: separate;
+}
+
+.claro .dojoxCheckedMultiSelect .dijitButtonNode {
+	border: 0 solid #b5bcc7;
+	border-width: 0 0 0 0;
+}
+
+.dj_ie6 .claro .dojoxCheckedMultiSelectButton, .dj_ie6 .claro .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectButton .dijitButtonNode {
+	background-image: none;
+}
+
+.claro .dojoxCheckedMultiSelectButton .dijitButtonContents {
+	border: 0 solid #b5bcc7;
+	border-right-width: 1px;
+}
+
+.claro .dojoxCheckedMultiSelectButton .dijitArrowButton {
+	padding: 0;
+	border: 1px solid #ffffff;
+	border-top: none;
+	background-color: #efefef;
+	background-image: url("../../../dijit/themes/claro/images/standardGradient.png");
+	background-repeat: repeat-x;
+}
+
+.claro .dojoxCheckedMultiSelectButton .dijitArrowButton .dijitArrowButtonInner {
+	background-image: url("../../../dijit/themes/claro/form/images/commonFormArrows.png");
+	background-position: -35px;
+	background-repeat: no-repeat;
+	width: 16px;
+	height: 16px;
+}
+
+/* hover status */
+.claro .dojoxCheckedMultiSelectButtonHover {
+	border: 1px solid #769dc0;
+	background-color: #e9f4fe;
+	background-image: -moz-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
+	background-image: -webkit-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
+	background-image: linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
+	background-repeat: repeat-x;
+}
+
+.claro .dojoxCheckedMultiSelectButtonHover .dijitButtonContents {
+	border-color: #769dc0;
+}
+
+.claro .dojoxCheckedMultiSelectButtonHover .dijitArrowButton {
+	background-color: #abd6ff;
+}
+
+.claro .dojoxCheckedMultiSelectButtonHover .dijitArrowButton .dijitArrowButtonInner {
+	background-position: -70px ;
+}
+
+/* focused status */
+.claro .dojoxCheckedMultiSelectButtonFocused {
+	border: 1px solid #769dc0;
+}
+
+.claro .dojoxCheckedMultiSelectButtonFocused .dijitButtonContents {
+	border-color: #769dc0;
+}
+
+.claro .dojoxCheckedMultiSelectButtonFocused .dijitArrowButton {
+	background-color: #7dbefa;
+	background-position: 0 -177px;
+	border: none;
+	padding: 0 1px;
+}
+
+.claro .dojoxCheckedMultiSelectButtonFocused .dijitArrowButton .dijitArrowButtonInner {
+	background-position: -70px;
+	margin-bottom: 1px;
+}
+
+/* disable status */
+.claro .dojoxCheckedMultiSelectButtonDisabled {
+	border: 1px solid #d3d3d3;
+	background-color: #efefef;
+	background-image: none;
+	color: #818181;
+}
+
+.claro .dojoxCheckedMultiSelectButtonDisabled .dijitArrowButton {
+	background-color: #efefef;
+}
+
+.claro .dojoxCheckedMultiSelectButtonDisabled .dijitArrowButton .dijitArrowButtonInner {
+	background-position: 0;
+}/* Dijit widget common icons*/
+
+/*commonIcons.css is located in dijit/icons
+
+commonIconsRtl.css is TBD. This needs to be reviewed to determine in Rtl is reqd. 
+
+The 16 x 16px icons in these sprites are action and object type images which can be used in the following widgets: accordionContainer, menu, tab, titlepane, tree, and all button widgets and error validation contexts. */
+
+.dijitIconSave,
+.dijitIconPrint,
+.dijitIconCut,
+.dijitIconCopy,
+.dijitIconClear,
+.dijitIconDelete,
+.dijitIconUndo,
+.dijitIconEdit,
+.dijitIconNewTask,
+.dijitIconEditTask,
+.dijitIconEditProperty,
+.dijitIconTask,
+.dijitIconFilter,
+.dijitIconConfigure,
+.dijitIconSearch,
+.dijitIconApplication,
+.dijitIconBookmark,
+.dijitIconChart,
+.dijitIconConnector,
+.dijitIconDatabase,
+.dijitIconDocuments,
+.dijitIconMail,
+.dijitLeaf,
+.dijitIconFile,
+.dijitIconFunction,
+.dijitIconKey,
+.dijitIconPackage,
+.dijitIconSample,
+.dijitIconTable,
+.dijitIconUsers,
+.dijitFolderClosed,
+.dijitIconFolderClosed,
+.dijitFolderOpened,
+.dijitIconFolderOpen,
+.dijitIconError {
+	background-image: url('images/commonIconsObjActEnabled.png'); /* Contains both object and action icons in a sprite image for the enabled state.  */
+	width: 16px;
+	height: 16px;
+}
+
+.dj_ie6 .dijitIconSave,
+.dj_ie6 .dijitIconPrint,
+.dj_ie6 .dijitIconCut,
+.dj_ie6 .dijitIconCopy,
+.dj_ie6 .dijitIconClear,
+.dj_ie6 .dijitIconDelete,
+.dj_ie6 .dijitIconUndo,
+.dj_ie6 .dijitIconEdit,
+.dj_ie6 .dijitIconNewTask,
+.dj_ie6 .dijitIconEditTask,
+.dj_ie6 .dijitIconEditProperty,
+.dj_ie6 .dijitIconTask,
+.dj_ie6 .dijitIconFilter,
+.dj_ie6 .dijitIconConfigure,
+.dj_ie6 .dijitIconSearch,
+.dj_ie6 .dijitIconApplication,
+.dj_ie6 .dijitIconBookmark,
+.dj_ie6 .dijitIconChart,
+.dj_ie6 .dijitIconConnector,
+.dj_ie6 .dijitIconDatabase,
+.dj_ie6 .dijitIconDocuments,
+.dj_ie6 .dijitIconMail,
+.dj_ie6 .dijitLeaf,
+.dj_ie6 .dijitIconFile,
+.dj_ie6 .dijitIconFunction,
+.dj_ie6 .dijitIconKey,
+.dj_ie6 .dijitIconPackage,
+.dj_ie6 .dijitIconSample,
+.dj_ie6 .dijitIconTable,
+.dj_ie6 .dijitIconUsers,
+.dj_ie6 .dijitFolderClosed,
+.dj_ie6 .dijitIconFolderClosed,
+.dj_ie6 .dijitFolderOpened,
+.dj_ie6 .dijitIconFolderOpen,
+.dj_ie6 .dijitIconError {
+	background-image: url('images/commonIconsObjActEnabled8bit.png');
+}
+
+.dijitDisabled .dijitIconSave,
+.dijitDisabled .dijitIconPrint,
+.dijitDisabled .dijitIconCut,
+.dijitDisabled .dijitIconCopy,
+.dijitDisabled .dijitIconClear,
+.dijitDisabled .dijitIconDelete,
+.dijitDisabled .dijitIconUndo,
+.dijitDisabled .dijitIconEdit,
+.dijitDisabled .dijitIconNewTask,
+.dijitDisabled .dijitIconEditTask,
+.dijitDisabled .dijitIconEditProperty,
+.dijitDisabled .dijitIconTask,
+.dijitDisabled .dijitIconFilter,
+.dijitDisabled .dijitIconConfigure,
+.dijitDisabled .dijitIconSearch,
+.dijitDisabled .dijitIconApplication,
+.dijitDisabled .dijitIconBookmark,
+.dijitDisabled .dijitIconChart,
+.dijitDisabled .dijitIconConnector,
+.dijitDisabled .dijitIconDatabase,
+.dijitDisabled .dijitIconDocuments,
+.dijitDisabled .dijitIconMail,
+.dijitDisabled .dijitLeaf,
+.dijitDisabled .dijitIconFile,
+.dijitDisabled .dijitIconFunction,
+.dijitDisabled .dijitIconKey,
+.dijitDisabled .dijitIconPackage,
+.dijitDisabled .dijitIconSample,
+.dijitDisabled .dijitIconTable,
+.dijitDisabled .dijitIconUsers,
+.dijitDisabled .dijitFolderClosed,
+.dijitDisabled .dijitIconFolderClosed,
+.dijitDisabled .dijitFolderOpened,
+.dijitDisabled .dijitIconFolderOpen,
+.dijitDisabled .dijitIconError {
+	background-image: url('images/commonIconsObjActDisabled.png'); /* Contains both object and action icons as a sprite image for the disabled state. These would be used by buttons and menus.   */
+}
+
+/*Action icons*/
+.dijitIconSave { background-position: 0; }
+.dijitIconPrint { background-position: -16px; }
+.dijitIconCut { background-position: -32px; }
+.dijitIconCopy { background-position: -48px; }
+.dijitIconClear { background-position: -64px; }
+.dijitIconDelete { background-position: -80px; }
+.dijitIconUndo { background-position: -96px; }
+.dijitIconEdit { background-position: -112px; }
+.dijitIconNewTask { background-position: -128px; }
+.dijitIconEditTask { background-position: -144px; }
+.dijitIconEditProperty { background-position: -160px; }
+.dijitIconTask { background-position: -176px; }
+.dijitIconFilter { background-position: -192px; }
+.dijitIconConfigure { background-position: -208px; }
+.dijitIconSearch { background-position: -224px; }
+.dijitIconError { background-position: -496px; } 
+
+/*Object icons*/
+.dijitIconApplication { background-position: -240px; }
+.dijitIconBookmark { background-position: -256px; }
+.dijitIconChart { background-position: -272px; }
+.dijitIconConnector { background-position: -288px; }
+.dijitIconDatabase { background-position: -304px; }
+.dijitIconDocuments { background-position: -320px; }
+.dijitIconMail { background-position: -336px; }
+.dijitIconFile, .dijitLeaf { background-position: -352px; }
+.dijitIconFunction { background-position: -368px; }
+.dijitIconKey { background-position: -384px; }
+.dijitIconPackage{ background-position: -400px; }
+.dijitIconSample { background-position: -416px; }
+.dijitIconTable { background-position: -432px; }
+.dijitIconUsers { background-position: -448px; }
+
+
+/*Tree folder icons*/
+.dijitIconFolderClosed, .dijitFolderClosed { background-position: -464px; }
+.dijitIconFolderOpen, .dijitFolderOpened { background-position: -480px; }
+
+/*Loading animation*/
+.dijitIconLoading {
+	background:url('images/loadingAnimation_rtl.gif') no-repeat;
+	height: 20px;
+	width: 20px;
+}
+
+
 /*
 	Essential styles that themes can inherit.
 	In other words, works but doesn't look great.
@@ -2412,711 +3116,7 @@ div.dijitTabDisabled, .dj_ie div.dijitTabDisabled {
 .dijitFocused .dijitMenuItemShortcutKey {
 	text-decoration: underline;
 }
-.dojoxUploaderFileList{
-	border:1px solid #ccc;
-	min-height:50px;
-}
-.dojoxUploaderFileListTable{
-	width:100%;
-	border-collapse:collapse;
-	margin-top:5px;
-}
-.dojoxUploaderFileListHeader th{
-	background-color:#eee;
-	padding:3px;
-}
-.dojoxUploaderFileListRow{
-
-}
-.dojoxUploaderIndex{
-	width:20px;
-}
-.dojoxUploaderIcon{
-	width:50px;
-}
-.dojoxUploaderFileName{
-
-}
-.dojoxUploaderSize{
-	width:70px;
-}
-.dojoxUploaderFileListContent{
-	width:100%;
-}
-.dojoxUploaderFileListProgress{
-	border:1px solid #666;
-	height:15px;
-	position:relative;
-	background:#fff;
-	overflow:hidden;
-}
-.dojoxUploaderFileListPercentText{
-	position:absolute;
-	right:3px;
-	top:3px;
-	font-size:10px;
-	text-align:right;
-}
-.dojoxUploaderFileListProgressBar{
-	position:absolute;
-	top:0px;
-	left:0px;
-	height:15px;
-	width:0%;
-	background:#bfe1fd;
-}
-/* This stylesheet provides the structural CSS for the dgrid */
-.dgrid {
-	position: relative;
-	overflow: hidden; /* This is needed by IE to prevent crazy scrollbar flashing */
-	border: 1px solid #ddd;
-	height: 30em;
-	display: block;
-}
-
-.dgrid-header {
-	background-color: #eee;
-}
-
-.dgrid-header-row {
-	position: absolute;
-	right: 17px; /* scrollbar width; revised in List.js if necessary */
-	left: 0;
-}
-
-.dgrid-header-scroll {
-	position: absolute;
-	top: 0;
-	right: 0;
-}
-
-.dgrid-footer {
-	position: absolute;
-	bottom: 0;
-	width: 100%;
-}
-
-.dgrid-header-hidden {
-	/*
-		Used to "hide" header, without losing size information for reference.
-		!important is used to supersede theme styles at higher specificity.
-		Left/right box styles are untouched, as they may influence width of
-		.dgrid-content as updated in Grid's resize method.
-	*/
-	font-size: 0; /* allow shrinkage in IE Quirks mode for Lists */
-	height: 0 !important;
-	border-top: none !important;
-	border-bottom: none !important;
-	margin-top: 0 !important;
-	margin-bottom: 0 !important;
-	padding-top: 0 !important;
-	padding-bottom: 0 !important;
-}
-
-.dgrid-footer-hidden {
-	/* Hiding footer is much simpler; simply set its display to none. */
-	display: none;
-}
-
-.dgrid-sortable {
-	cursor: pointer;
-}
-.dgrid-header, .dgrid-header-row, .dgrid-footer {
-	overflow: hidden;
-	background-color: #eee;
-}
-
-.dgrid-row-table {
-	border-collapse: collapse;
-	border: none;
-	table-layout: fixed;
-	empty-cells: show;
-	width: 100%;
-	height: 100%;
-}
-.dgrid-cell {
-	padding: 3px;
-	text-align: left;
-	overflow: hidden;
-	vertical-align: top;
-	border: 1px solid #ddd;
-	border-top-style: none;
-	
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-ms-box-sizing: border-box;
-	-webkit-box-sizing: border-box;
-}
-
-.dgrid-content {
-	position: relative;
-	height: 99%;
-}
-
-.dgrid-scroller {
-	overflow-x: auto;
-	overflow-y: scroll;
-	position: absolute;
-	top: 0px;
-	margin-top: 25px; /* this will be adjusted programmatically to fit below the header*/
-	bottom: 0px;
-	width: 100%;
-}
-
-.dgrid-preload {
-	/* Force IE6 to honor 0 height */
-	font-size: 0;
-	line-height: 0;
-}
-
-.dgrid-loading {
-	position: relative;
-	height: 100%;
-}
-.dgrid-above {
-	position: absolute;
-	bottom: 0;
-}
-
-.ui-icon {
-	width: 16px;
-	height: 16px;
-	background-image: url('images/ui-icons_222222_256x240.png');
-}
-
-.ui-icon-triangle-1-e {
-	background-position: -32px -16px;
-}
-.ui-icon-triangle-1-se {
-	background-position: -48px -16px;
-}
-
-.dgrid-expando-icon {
-	width: 16px;
-	height: 16px;
-}
-.dgrid-tree-container {
-	-webkit-transition-duration: 0.3s;
-	-moz-transition-duration: 0.3s;
-	-ms-transition-duration: 0.3s;
-	-o-transition-duration: 0.3s;
-	transition-duration: 0.3s;
-	overflow: hidden;
-}
-.dgrid-tree-container.dgrid-tree-resetting {
-	-webkit-transition-duration: 0;
-	-moz-transition-duration: 0;
-	-ms-transition-duration: 0;
-	-o-transition-duration: 0;
-	transition-duration: 0;
-}
-
-/* Single Sort */
-.dgrid-sort-arrow {
-	background-position: -64px -16px;
-	display: block;
-	float: right;
-	margin: 0 4px 0 5px;
-	height: 12px;
-}
-.dgrid-sort-up .dgrid-sort-arrow {
-	background-position: 0px -16px;
-}
-
-/* selection*/
-.dgrid-selected {
-	background-color: #bfd6eb;
-}
-
-.dgrid-input {
-	width: 99%;
-}
-
-html.has-mozilla .dgrid-focus {
-	/* Tighten outline to fit within cells (avoids cutting off top/bottom outlines) */
-	outline-offset: -1px;
-}
-
-/* will be used to calculate the width of the scrollbar */
-.dgrid-scrollbar-measure {
-	width: 100px;
-	height: 100px;
-	overflow: scroll;
-	position: absolute;
-	top: -9999px;
-}
-
-/* Styles for auto-height grids; simply add the dgrid-autoheight class */
-.dgrid-autoheight {
-	height: auto;
-}
-.dgrid-autoheight .dgrid-scroller {
-	position: relative;
-	overflow-y: hidden;
-}
-.dgrid-autoheight .dgrid-header-scroll {
-	display: none;
-}
-.dgrid-autoheight .dgrid-header {
-	right: 0;
-}
-
-/* indicator of a successful load */
-#dgrid-css-dgrid-loaded {
-	display: none;
-}/* Dijit widget common icons*/
-
-/*commonIcons.css is located in dijit/icons
-
-commonIconsRtl.css is TBD. This needs to be reviewed to determine in Rtl is reqd. 
-
-The 16 x 16px icons in these sprites are action and object type images which can be used in the following widgets: accordionContainer, menu, tab, titlepane, tree, and all button widgets and error validation contexts. */
-
-.dijitIconSave,
-.dijitIconPrint,
-.dijitIconCut,
-.dijitIconCopy,
-.dijitIconClear,
-.dijitIconDelete,
-.dijitIconUndo,
-.dijitIconEdit,
-.dijitIconNewTask,
-.dijitIconEditTask,
-.dijitIconEditProperty,
-.dijitIconTask,
-.dijitIconFilter,
-.dijitIconConfigure,
-.dijitIconSearch,
-.dijitIconApplication,
-.dijitIconBookmark,
-.dijitIconChart,
-.dijitIconConnector,
-.dijitIconDatabase,
-.dijitIconDocuments,
-.dijitIconMail,
-.dijitLeaf,
-.dijitIconFile,
-.dijitIconFunction,
-.dijitIconKey,
-.dijitIconPackage,
-.dijitIconSample,
-.dijitIconTable,
-.dijitIconUsers,
-.dijitFolderClosed,
-.dijitIconFolderClosed,
-.dijitFolderOpened,
-.dijitIconFolderOpen,
-.dijitIconError {
-	background-image: url('images/commonIconsObjActEnabled.png'); /* Contains both object and action icons in a sprite image for the enabled state.  */
-	width: 16px;
-	height: 16px;
-}
-
-.dj_ie6 .dijitIconSave,
-.dj_ie6 .dijitIconPrint,
-.dj_ie6 .dijitIconCut,
-.dj_ie6 .dijitIconCopy,
-.dj_ie6 .dijitIconClear,
-.dj_ie6 .dijitIconDelete,
-.dj_ie6 .dijitIconUndo,
-.dj_ie6 .dijitIconEdit,
-.dj_ie6 .dijitIconNewTask,
-.dj_ie6 .dijitIconEditTask,
-.dj_ie6 .dijitIconEditProperty,
-.dj_ie6 .dijitIconTask,
-.dj_ie6 .dijitIconFilter,
-.dj_ie6 .dijitIconConfigure,
-.dj_ie6 .dijitIconSearch,
-.dj_ie6 .dijitIconApplication,
-.dj_ie6 .dijitIconBookmark,
-.dj_ie6 .dijitIconChart,
-.dj_ie6 .dijitIconConnector,
-.dj_ie6 .dijitIconDatabase,
-.dj_ie6 .dijitIconDocuments,
-.dj_ie6 .dijitIconMail,
-.dj_ie6 .dijitLeaf,
-.dj_ie6 .dijitIconFile,
-.dj_ie6 .dijitIconFunction,
-.dj_ie6 .dijitIconKey,
-.dj_ie6 .dijitIconPackage,
-.dj_ie6 .dijitIconSample,
-.dj_ie6 .dijitIconTable,
-.dj_ie6 .dijitIconUsers,
-.dj_ie6 .dijitFolderClosed,
-.dj_ie6 .dijitIconFolderClosed,
-.dj_ie6 .dijitFolderOpened,
-.dj_ie6 .dijitIconFolderOpen,
-.dj_ie6 .dijitIconError {
-	background-image: url('images/commonIconsObjActEnabled8bit.png');
-}
-
-.dijitDisabled .dijitIconSave,
-.dijitDisabled .dijitIconPrint,
-.dijitDisabled .dijitIconCut,
-.dijitDisabled .dijitIconCopy,
-.dijitDisabled .dijitIconClear,
-.dijitDisabled .dijitIconDelete,
-.dijitDisabled .dijitIconUndo,
-.dijitDisabled .dijitIconEdit,
-.dijitDisabled .dijitIconNewTask,
-.dijitDisabled .dijitIconEditTask,
-.dijitDisabled .dijitIconEditProperty,
-.dijitDisabled .dijitIconTask,
-.dijitDisabled .dijitIconFilter,
-.dijitDisabled .dijitIconConfigure,
-.dijitDisabled .dijitIconSearch,
-.dijitDisabled .dijitIconApplication,
-.dijitDisabled .dijitIconBookmark,
-.dijitDisabled .dijitIconChart,
-.dijitDisabled .dijitIconConnector,
-.dijitDisabled .dijitIconDatabase,
-.dijitDisabled .dijitIconDocuments,
-.dijitDisabled .dijitIconMail,
-.dijitDisabled .dijitLeaf,
-.dijitDisabled .dijitIconFile,
-.dijitDisabled .dijitIconFunction,
-.dijitDisabled .dijitIconKey,
-.dijitDisabled .dijitIconPackage,
-.dijitDisabled .dijitIconSample,
-.dijitDisabled .dijitIconTable,
-.dijitDisabled .dijitIconUsers,
-.dijitDisabled .dijitFolderClosed,
-.dijitDisabled .dijitIconFolderClosed,
-.dijitDisabled .dijitFolderOpened,
-.dijitDisabled .dijitIconFolderOpen,
-.dijitDisabled .dijitIconError {
-	background-image: url('images/commonIconsObjActDisabled.png'); /* Contains both object and action icons as a sprite image for the disabled state. These would be used by buttons and menus.   */
-}
-
-/*Action icons*/
-.dijitIconSave { background-position: 0; }
-.dijitIconPrint { background-position: -16px; }
-.dijitIconCut { background-position: -32px; }
-.dijitIconCopy { background-position: -48px; }
-.dijitIconClear { background-position: -64px; }
-.dijitIconDelete { background-position: -80px; }
-.dijitIconUndo { background-position: -96px; }
-.dijitIconEdit { background-position: -112px; }
-.dijitIconNewTask { background-position: -128px; }
-.dijitIconEditTask { background-position: -144px; }
-.dijitIconEditProperty { background-position: -160px; }
-.dijitIconTask { background-position: -176px; }
-.dijitIconFilter { background-position: -192px; }
-.dijitIconConfigure { background-position: -208px; }
-.dijitIconSearch { background-position: -224px; }
-.dijitIconError { background-position: -496px; } 
-
-/*Object icons*/
-.dijitIconApplication { background-position: -240px; }
-.dijitIconBookmark { background-position: -256px; }
-.dijitIconChart { background-position: -272px; }
-.dijitIconConnector { background-position: -288px; }
-.dijitIconDatabase { background-position: -304px; }
-.dijitIconDocuments { background-position: -320px; }
-.dijitIconMail { background-position: -336px; }
-.dijitIconFile, .dijitLeaf { background-position: -352px; }
-.dijitIconFunction { background-position: -368px; }
-.dijitIconKey { background-position: -384px; }
-.dijitIconPackage{ background-position: -400px; }
-.dijitIconSample { background-position: -416px; }
-.dijitIconTable { background-position: -432px; }
-.dijitIconUsers { background-position: -448px; }
-
-
-/*Tree folder icons*/
-.dijitIconFolderClosed, .dijitFolderClosed { background-position: -464px; }
-.dijitIconFolderOpen, .dijitFolderOpened { background-position: -480px; }
-
-/*Loading animation*/
-.dijitIconLoading {
-	background:url('images/loadingAnimation_rtl.gif') no-repeat;
-	height: 20px;
-	width: 20px;
-}
-
-
-/*
-**----------------------------------------------------------------------------
-**  CheckedMultiSelect
-**----------------------------------------------------------------------------
-*/
-
-.dojoxCheckedMultiSelectHidden{
-	display: none;
-}
-
-.dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
-	border: solid black 1px;
-	margin: 1px 0;
-	overflow: scroll;
-	overflow-y: scroll;
-	overflow-x: hidden;
-	height: 100px;
-}
-
-.dj_ie .dojoxCheckedMultiSelectWrapper,
-.dj_webkit .dojoxCheckedMultiSelectWrapper {
-	/* So that the scroll bar doesn't cover stuff up */
-	padding-right: 15px;
-}
-
-.dojoxMultiSelectItem {
-	cursor: default;
-	padding: 0.1em 0.2em;
-	white-space: nowrap;
-}
-
-.dojoxCheckedMultiSelectItem {
-	white-space: nowrap;
-	padding:.1em .2em;
-	cursor:default;
-}
-
-.dojoxCheckedMultiSelectDisabled *,
-.dojoxCheckedMultiSelectReadOnly * {
-	color:gray !important;
-}
-
-.dojoxCheckedMultiSelectItemLabel {
-	margin-left: .2em;
-}
-
-.dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
-	margin: 0em 0.1em;
-}
-
-.dojoxCheckedMultiSelectCheckBoxInput {
-	opacity: 0.01;
-}
-
-.dj_ie .dojoxCheckedMultiSelectCheckBoxInput {
-	filter: alpha(opacity=0);
-	width: 15px;
-	height: 16px;
-}
-
-.dijit_a11y .dojoxCheckedMultiSelectCheckBoxInput {
-	opacity: 1;
-	filter: none;
-}
-
-.dojoxCheckedMultiSelectMenu td.dijitMenuArrowCell {
-	display: none;
-}
-
-.dojoxCheckedMultiSelectMenu td.dijitMenuItemLabel {
-	position: static;
-	padding: 2px;
-}
-
-/*
-**----------------------------------------------------------------------------
-**  Tundra theme (make look similar to text box)
-**----------------------------------------------------------------------------
-*/
-.tundra .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
-	background:#fff url("../../../dijit/themes/tundra/images/validationInputBg.png") repeat-x top left;
-	#background:#fff url('../../../dijit/themes/tundra/images/validationInputBg.gif') repeat-x top left;
-	border:1px solid #b3b3b3;
-	line-height: normal;
-}
-
-.tundra .dojoxCheckedMultiSelectFocused .dojoxCheckedMultiSelectWrapper {
-	/* input field when focused (ie: typing affects it) */
-	border-color:#406b9b;
-}
-
-/*
-**----------------------------------------------------------------------------
-**  Soria theme (make look similar to text box)
-**----------------------------------------------------------------------------
-*/
-.soria .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
-	background:#fff url("../../../dijit/themes/soria/images/validationInputBg.png") repeat-x top left;
-	#background:#fff url('../../../dijit/themes/soria/images/validationInputBg.gif') repeat-x top left;
-	border:1px solid #8ba0bd;
-	line-height: normal;
-}
-
-.soria .dojoxCheckedMultiSelectFocused .dojoxCheckedMultiSelectWrapper {
-	/* input field when focused (ie: typing affects it) */
-	border-color:#406b9b;
-}
-
-/*
-**----------------------------------------------------------------------------
-**  Nihilo theme (make look similar to text box)
-**----------------------------------------------------------------------------
-*/
-.nihilo .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
-	background:#fff url("../../../dijit/themes/nihilo/images/validationInputBg.png") repeat-x top left;
-	#background:#fff url('../../../dijit/themes/nihilo/images/validationInputBg.gif') repeat-x top left;
-	border:1px solid #d3d3d3;
-	line-height: normal;
-}
-
-.nihilo .dojoxCheckedMultiSelectFocused .dojoxCheckedMultiSelectWrapper {
-	/* input field when focused (ie: typing affects it) */
-	border-color:#b3b3b3;
-}
-
-/*
-**----------------------------------------------------------------------------
-**  Claro theme (make look similar to text box)
-**----------------------------------------------------------------------------
-*/
-.claro .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectWrapper {
-	border: 1px solid #b5bcc7;
-	background-color: #f7fcff;
-	line-height: normal;
-	-webkit-transition-property:background-color, border;
-	-webkit-transition-duration:.35s;
-}
-
-.claro .dojoxCheckedMultiSelectHover .dojoxCheckedMultiSelectWrapper {
-	border-color: #769dc0;
-	background-color: #e9f4fe;
-	background-image: -moz-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
-	background-image: -webkit-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
-	background-image: linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
-	background-repeat: repeat-x;
-	-webkit-transition-duration:.25s;
-}
-
-.claro .dojoxCheckedMultiSelectFocused .dojoxCheckedMultiSelectWrapper {
-	border: 1px solid #769dc0;
-	-webkit-transition-duration:.1s;
-}
-
-.claro .dojoxCheckedMultiSelectMenuCheckBoxItemIcon {
-	background-image: url('../../../dijit/themes/claro/form/images/checkboxRadioButtonStates.png');
-	background-repeat: no-repeat;
-	background-position: -15px;
-	width: 15px;
-	height: 16px;
-}
-
-.claro .dojoxCheckedMultiSelectMenuRadioItemIcon {
-	background-image: url('../../../dijit/themes/claro/form/images/checkboxRadioButtonStates.png');
-	background-repeat: no-repeat;
-	background-position: -105px;
-	width: 15px;
-	height: 16px;
-}
-
-.dj_ie6 .claro .dojoxCheckedMultiSelectMenuItemIcon {
-	background-image: url('../../../dijit/themes/claro/form/images/checkboxRadioButtonStates.png');
-}
-
-.claro .dojoxCheckedMultiSelectMenuItemChecked .dojoxCheckedMultiSelectMenuCheckBoxItemIcon {
-	background-position: 0;
-}
-
-.claro .dojoxCheckedMultiSelectMenuItemChecked .dojoxCheckedMultiSelectMenuRadioItemIcon {
-	background-position: -90px;
-}
-
-/* Drop down button */
-.claro .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectButton .dijitButtonText {
-	padding: 2px;
-}
-
-/* normal status */
-.claro .dojoxCheckedMultiSelectButton {
-	border: 1px solid #b5bcc7;
-	background-color: #ffffff;
-	border-collapse: separate;
-}
-
-.claro .dojoxCheckedMultiSelect .dijitButtonNode {
-	border: 0 solid #b5bcc7;
-	border-width: 0 0 0 0;
-}
-
-.dj_ie6 .claro .dojoxCheckedMultiSelectButton, .dj_ie6 .claro .dojoxCheckedMultiSelect .dojoxCheckedMultiSelectButton .dijitButtonNode {
-	background-image: none;
-}
-
-.claro .dojoxCheckedMultiSelectButton .dijitButtonContents {
-	border: 0 solid #b5bcc7;
-	border-right-width: 1px;
-}
-
-.claro .dojoxCheckedMultiSelectButton .dijitArrowButton {
-	padding: 0;
-	border: 1px solid #ffffff;
-	border-top: none;
-	background-color: #efefef;
-	background-image: url("../../../dijit/themes/claro/images/standardGradient.png");
-	background-repeat: repeat-x;
-}
-
-.claro .dojoxCheckedMultiSelectButton .dijitArrowButton .dijitArrowButtonInner {
-	background-image: url("../../../dijit/themes/claro/form/images/commonFormArrows.png");
-	background-position: -35px;
-	background-repeat: no-repeat;
-	width: 16px;
-	height: 16px;
-}
-
-/* hover status */
-.claro .dojoxCheckedMultiSelectButtonHover {
-	border: 1px solid #769dc0;
-	background-color: #e9f4fe;
-	background-image: -moz-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
-	background-image: -webkit-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
-	background-image: linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);
-	background-repeat: repeat-x;
-}
-
-.claro .dojoxCheckedMultiSelectButtonHover .dijitButtonContents {
-	border-color: #769dc0;
-}
-
-.claro .dojoxCheckedMultiSelectButtonHover .dijitArrowButton {
-	background-color: #abd6ff;
-}
-
-.claro .dojoxCheckedMultiSelectButtonHover .dijitArrowButton .dijitArrowButtonInner {
-	background-position: -70px ;
-}
-
-/* focused status */
-.claro .dojoxCheckedMultiSelectButtonFocused {
-	border: 1px solid #769dc0;
-}
-
-.claro .dojoxCheckedMultiSelectButtonFocused .dijitButtonContents {
-	border-color: #769dc0;
-}
-
-.claro .dojoxCheckedMultiSelectButtonFocused .dijitArrowButton {
-	background-color: #7dbefa;
-	background-position: 0 -177px;
-	border: none;
-	padding: 0 1px;
-}
-
-.claro .dojoxCheckedMultiSelectButtonFocused .dijitArrowButton .dijitArrowButtonInner {
-	background-position: -70px;
-	margin-bottom: 1px;
-}
-
-/* disable status */
-.claro .dojoxCheckedMultiSelectButtonDisabled {
-	border: 1px solid #d3d3d3;
-	background-color: #efefef;
-	background-image: none;
-	color: #818181;
-}
-
-.claro .dojoxCheckedMultiSelectButtonDisabled .dijitArrowButton {
-	background-color: #efefef;
-}
-
-.claro .dojoxCheckedMultiSelectButtonDisabled .dijitArrowButton .dijitArrowButtonInner {
-	background-position: 0;
-}/* Dijit Editor icons*/
+/* Dijit Editor icons*/
 
 /*editorIcons.css  is located in dijit/images 
 
@@ -3257,6 +3257,14 @@ editorIcons.css contains references to the dijit editor widget icons. There are 
 #sitemap_sm_pressed1_stop8{stop-color:#5499CB;stop-opacity:0.6357;}
 #sitemap_sm_pressed1_stop9{stop-color:#56A1D6;stop-opacity:0.5203;}
 #sitemap_sm_pressed1_stop10{stop-color:#57A4DA;stop-opacity:0.2;}
+@import url("../../dojo/dojo/resources/dojo.css");
+.firmos{font-family:Verdana,Arial,Helvetica,sans-serif;font-size:.688em;color:#131313;}
+.firmos h1{font-size:1.545em;margin-bottom:0.727em;}
+.firmos h2{font-size:1.364em;line-height:1.455em;margin-top:1em;margin-bottom:0.60em;font-weight:normal;}
+.firmos h3,.firmos h4,.firmos h5,.firmos h6{font-size:1.091em;font-weight:normal;}
+.firmos p{line-height:1.3em;}
+.firmos pre,.firmos code{font-family:inherit;background-color:#b6bac1;border:1px solid #dddddd;}
+.firmos table.dojoTabular thead,.firmos table.dojoTabular tfoot{background-color:#b6bac1;border:1px solid #dddddd;}
 .firmos .dijitTabPaneWrapper{background:#ffffff;}
 .firmos .dijitTabPaneWrapper,.firmos .dijitTabContainerTop-tabs,.firmos .dijitTabContainerBottom-tabs,.firmos .dijitTabContainerLeft-tabs,.firmos .dijitTabContainerRight-tabs{border-color:#5b5b5b;}
 .firmos .dijitTabCloseButton{background:url("images/tabClose.png") no-repeat;width:14px;height:14px;margin-left:5px;margin-right:-5px;}
@@ -3303,14 +3311,6 @@ editorIcons.css contains references to the dijit editor widget icons. There are 
 .firmos .dijitTabContainerTabListNested .dijitTabChecked .tabLabel{text-decoration:none;background-image:none;}
 .firmos .dijitTabPaneWrapperNested{border:none;}
 .firmos .dijitTabContainer .dijitTab,.firmos .dijitTabContainer .tabStripButton{_background-image:none;}
-@import url("../../dojo/dojo/resources/dojo.css");
-.firmos{font-family:Verdana,Arial,Helvetica,sans-serif;font-size:.688em;color:#131313;}
-.firmos h1{font-size:1.545em;margin-bottom:0.727em;}
-.firmos h2{font-size:1.364em;line-height:1.455em;margin-top:1em;margin-bottom:0.60em;font-weight:normal;}
-.firmos h3,.firmos h4,.firmos h5,.firmos h6{font-size:1.091em;font-weight:normal;}
-.firmos p{line-height:1.3em;}
-.firmos pre,.firmos code{font-family:inherit;background-color:#b6bac1;border:1px solid #dddddd;}
-.firmos table.dojoTabular thead,.firmos table.dojoTabular tfoot{background-color:#b6bac1;border:1px solid #dddddd;}
 .firmos .dijitPopup{-webkit-box-shadow:0 1px 5px rgba(0, 0, 0, 0.25);-moz-box-shadow:0 1px 5px rgba(0, 0, 0, 0.25);box-shadow:0 1px 5px rgba(0, 0, 0, 0.25);}
 .firmos .dijitTooltipDialogPopup{-webkit-box-shadow:none;-moz-box-shadow:none;box-shadow:none;}
 .firmos .dijitComboBoxHighlightMatch{background-color:#546791;}
@@ -3363,9 +3363,6 @@ editorIcons.css contains references to the dijit editor widget icons. There are 
 .dj_ff3 .firmos .dijitInputField input[type="hidden"]{display:none;height:0;width:0;}
 .dj_borderbox .firmos .dijitComboBox .dijitHasDropDownOpen .dijitArrowButtonInner{width:18px;}
 .dj_borderbox .firmos .dijitComboBoxFocused .dijitHasDropDownOpen .dijitArrowButtonInner{width:16px;}
-.firmos .dijitContentPane{padding:8px;}
-.firmos .dijitTabContainerTop-dijitContentPane,.firmos .dijitTabContainerLeft-dijitContentPane,.firmos .dijitTabContainerBottom-dijitContentPane,.firmos .dijitTabContainerRight-dijitContentPane,.firmos .dijitAccordionContainer-dijitContentPane{background-color:#ffffff;padding:8px;}
-.firmos .dijitSplitContainer-dijitContentPane,.firmos .dijitBorderContainer-dijitContentPane{background-color:#ffffff;padding:8px;}
 .firmos .dijitAccordionContainer{border:none;}
 .firmos .dijitAccordionInnerContainer{background-color:#b6bac1;border:solid 1px #5b5b5b;margin-bottom:1px;-webkit-transition-property:background-color,border;-moz-transition-property:background-color,border;-o-transition-property:background-color,border;transition-property:background-color,border;-webkit-transition-duration:0.3s;-moz-transition-duration:0.3s;-o-transition-duration:0.3s;transition-duration:0.3s;-webkit-transition-timing-function:linear;-moz-transition-timing-function:linear;transition-timing-function:linear;}
 .firmos .dijitAccordionTitle{background-color:transparent;background-image:url("images/standardGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);_background-image:none;padding:5px 7px 2px 7px;min-height:17px;color:#141518;}
@@ -3377,6 +3374,10 @@ editorIcons.css contains references to the dijit editor widget icons. There are 
 .firmos .dijitAccordionInnerContainerActive .dijitAccordionTitle{background-image:url("images/activeGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);_background-image:none;color:#000000;}
 .firmos .dijitAccordionInnerContainerSelected{border-color:#383838;background-color:#787e8b;}
 .firmos .dijitAccordionInnerContainerSelected .dijitAccordionTitle{color:#000000;background-image:url("images/standardGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);_background-image:none;}
+.firmos .dijitContentPane{padding:8px;}
+.firmos .dijitTabContainerTop-dijitContentPane,.firmos .dijitTabContainerLeft-dijitContentPane,.firmos .dijitTabContainerBottom-dijitContentPane,.firmos .dijitTabContainerRight-dijitContentPane,.firmos .dijitAccordionContainer-dijitContentPane{background-color:#ffffff;padding:8px;}
+.firmos .dijitSplitContainer-dijitContentPane,.firmos .dijitBorderContainer-dijitContentPane{background-color:#ffffff;padding:8px;}
+.firmos .dijitBorderContainer-firmosMultiContentContainerTop{border:0 none;}
 .firmos .dijitBorderContainer{padding:5px;}
 .firmos .dijitSplitContainer-child,.firmos .dijitBorderContainer-child{border:1px #5b5b5b solid;}
 .firmos .dijitBorderContainer-dijitTabContainerTop,.firmos .dijitBorderContainer-dijitTabContainerBottom,.firmos .dijitBorderContainer-dijitTabContainerLeft,.firmos .dijitBorderContainer-dijitTabContainerRight,.firmos .dijitBorderContainer-dijitAccordionContainer{border:none;}
@@ -3414,7 +3415,6 @@ editorIcons.css contains references to the dijit editor widget icons. There are 
 .firmos table.dijitComboButton{border-collapse:separate;}
 .firmos .dijitComboButton .dijitStretch{-moz-border-radius:5px 0 0 5px;border-radius:5px 0 0 5px;}
 .firmos .dijitComboButton .dijitArrowButton{-moz-border-radius:0 5px 5px 0;border-radius:0 5px 5px 0;}
-.firmos .dijitBorderContainer-firmosMultiContentContainerTop{border:0 none;}
 .firmos .dijitToggleButton .dijitCheckBoxIcon{background-image:url("images/checkmarkNoBorder.png");}
 .dj_ie6 .firmos .dijitToggleButton .dijitCheckBoxIcon{background-image:url("images/checkmarkNoBorder.gif");}
 .firmos .dijitCheckBox,.firmos .dijitCheckBoxIcon{background-image:url("images/checkboxRadioButtonStates.png");background-repeat:no-repeat;width:15px;height:16px;margin:0 2px 0 0;padding:0;}
@@ -3425,18 +3425,6 @@ editorIcons.css contains references to the dijit editor widget icons. There are 
 .firmos .dijitCheckBoxCheckedDisabled{background-position:-60px;}
 .firmos .dijitCheckBoxHover{background-position:-45px;}
 .firmos .dijitCheckBoxCheckedHover{background-position:-30px;}
-.firmos .dijitToggleButton .dijitRadio,.firmos .dijitToggleButton .dijitRadioIcon{background-image:url("images/checkboxRadioButtonStates.png");}
-.dj_ie6 .firmos .dijitToggleButton .dijitRadio,.dj_ie6 .firmos .dijitToggleButton .dijitRadioIcon{background-image:url("images/checkboxAndRadioButtons_IE6.png");}
-.firmos .dijitRadio,.firmos .dijitRadioIcon{background-image:url("images/checkboxRadioButtonStates.png");background-repeat:no-repeat;width:15px;height:15px;margin:0 2px 0 0;padding:0;}
-.dj_ie6 .firmos .dijitRadio,.dj_ie6 .firmos .dijitRadioIcon{background-image:url("images/checkboxAndRadioButtons_IE6.png");}
-.firmos .dijitRadio{background-position:-105px;}
-.firmos .dijitToggleButton .dijitRadioIcon{background-position:-107px;}
-.firmos .dijitRadioDisabled{background-position:-165px;}
-.firmos .dijitRadioHover{background-position:-135px;}
-.firmos .dijitRadioChecked{background-position:-90px;}
-.firmos .dijitToggleButtonChecked .dijitRadioIcon{background-position:-92px;}
-.firmos .dijitRadioCheckedHover{background-position:-120px;}
-.firmos .dijitRadioCheckedDisabled{background-position:-150px;}
 .firmos .dijitSelect .dijitArrowButtonContainer{border:1px solid #ffffff;}
 .firmos .dijitSelect .dijitArrowButton{padding:0;background-color:#b6bac1;background-image:url("images/standardGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);_background-image:none;}
 .firmos .dijitSelect .dijitArrowButton .dijitArrowButtonInner{height:16px;}
@@ -3451,6 +3439,18 @@ editorIcons.css contains references to the dijit editor widget icons. There are 
 .firmos .dijitSelectMenu td.dijitMenuItemIconCell,.firmos .dijitSelectMenu td.dijitMenuArrowCell{display:none;}
 .firmos .dijitSelectMenu td.dijitMenuItemLabel{padding:2px;}
 .firmos .dijitSelectMenu .dijitMenuSeparatorTop{border-bottom:1px solid #383838;}
+.firmos .dijitToggleButton .dijitRadio,.firmos .dijitToggleButton .dijitRadioIcon{background-image:url("images/checkboxRadioButtonStates.png");}
+.dj_ie6 .firmos .dijitToggleButton .dijitRadio,.dj_ie6 .firmos .dijitToggleButton .dijitRadioIcon{background-image:url("images/checkboxAndRadioButtons_IE6.png");}
+.firmos .dijitRadio,.firmos .dijitRadioIcon{background-image:url("images/checkboxRadioButtonStates.png");background-repeat:no-repeat;width:15px;height:15px;margin:0 2px 0 0;padding:0;}
+.dj_ie6 .firmos .dijitRadio,.dj_ie6 .firmos .dijitRadioIcon{background-image:url("images/checkboxAndRadioButtons_IE6.png");}
+.firmos .dijitRadio{background-position:-105px;}
+.firmos .dijitToggleButton .dijitRadioIcon{background-position:-107px;}
+.firmos .dijitRadioDisabled{background-position:-165px;}
+.firmos .dijitRadioHover{background-position:-135px;}
+.firmos .dijitRadioChecked{background-position:-90px;}
+.firmos .dijitToggleButtonChecked .dijitRadioIcon{background-position:-92px;}
+.firmos .dijitRadioCheckedHover{background-position:-120px;}
+.firmos .dijitRadioCheckedDisabled{background-position:-150px;}
 .firmos .dijitSliderBar{border-style:solid;outline:1px;}
 .firmos .dijitSliderFocused .dijitSliderBar{border-color:#383838;}
 .firmos .dijitSliderHover .dijitSliderBar{border-color:#383838;}
@@ -3513,6 +3513,29 @@ editorIcons.css contains references to the dijit editor widget icons. There are 
 .firmos .dijitSliderReadOnly .dijitSliderIncrementIconH,.firmos .dijitSliderDisabled .dijitSliderIncrementIconH{background-position:-215px 50%;background-color:#dddddd;}
 .firmos .dijitSliderReadOnly .dijitSliderDecrementIconV,.firmos .dijitSliderDisabled .dijitSliderDecrementIconV{background-position:-3px 49%;background-color:#dddddd;}
 .firmos .dijitSliderReadOnly .dijitSliderIncrementIconV,.firmos .dijitSliderDisabled .dijitSliderIncrementIconV{background-position:-107px 49%;background-color:#dddddd;}
+.firmos .dijitSpinnerButtonContainer{overflow:hidden;position:relative;width:auto;padding:0 2px;}
+.firmos .dijitSpinnerButtonContainer .dijitSpinnerButtonInner{border-width:1px 0;border-style:solid none;}
+.firmos .dijitSpinner .dijitArrowButton{width:auto;background-color:#b6bac1;background-image:url("images/standardGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);_background-image:none;overflow:hidden;}
+.dj_iequirks .firmos .dijitSpinner .dijitArrowButton{overflow:visible;}
+.firmos .dijitSpinner .dijitSpinnerButtonInner{width:15px;}
+.firmos .dijitSpinner .dijitArrowButtonInner{border:solid 1px #ffffff;border-bottom-width:0;background-image:url("images/commonFormArrows.png");background-repeat:no-repeat;height:100%;width:15px;padding-left:1px;padding-right:1px;background-position:-139px center;display:block;margin:-1px 0 -1px 0;}
+.dj_iequirks .firmos .dijitSpinner .dijitArrowButtonInner,.dj_ie6 .firmos .dijitSpinner .dijitArrowButtonInner,.dj_ie7 .firmos .dijitSpinner .dijitArrowButtonInner,.dj_ie8 .firmos .dijitSpinner .dijitArrowButtonInner{margin-top:0;}
+.dj_iequirks .firmos .dijitSpinner .dijitArrowButtonInner{width:19px;}
+.firmos .dijitSpinner .dijitDownArrowButton .dijitArrowButtonInner{background-position:-34px;}
+.firmos .dijitSpinner .dijitArrowButtonInner .dijitInputField{padding:0;}
+.firmos .dijitUpArrowButtonActive,.firmos .dijitDownArrowButtonActive{background-color:#546791;}
+.firmos .dijitSpinner .dijitUpArrowButtonHover,.firmos .dijitSpinner .dijitDownArrowButtonHover,.firmos .dijitSpinnerFocused .dijitArrowButton{background-color:#546791;}
+.firmos .dijitSpinner .dijitUpArrowButtonHover .dijitArrowButtonInner{background-position:-174px;}
+.firmos .dijitSpinner .dijitDownArrowButtonHover .dijitArrowButtonInner{background-position:-69px;}
+.firmos .dijitSpinnerFocused{background-color:#fafad2;background-image:none;}
+.firmos .dijitSpinner .dijitDownArrowButtonActive,.firmos .dijitSpinner .dijitUpArrowButtonActive{background-color:#7dbefa;background-image:url("images/activeGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);_background-image:none;}
+.firmos .dijitSpinner .dijitUpArrowButtonActive .dijitArrowButtonInner,.firmos .dijitSpinner .dijitDownArrowButtonActive .dijitArrowButtonInner{border:0;padding:1px;margin-right:2px;margin-bottom:1px;}
+.firmos .dijitSpinner .dijitUpArrowButtonActive .dijitArrowButtonInner{background-position:-173px;}
+.firmos .dijitSpinner .dijitDownArrowButtonActive .dijitArrowButtonInner{background-position:-68px;}
+.firmos .dijitSpinnerDisabled .dijitArrowButtonInner{background-color:#dddddd;}
+.firmos .dijitSpinnerDisabled .dijitUpArrowButton .dijitArrowButtonInner{background-position:-104px;}
+.firmos .dijitSpinnerDisabled .dijitDownArrowButton .dijitArrowButtonInner{background-position:1px;}
+.dj_ie7 .firmos .dijitSpinner{overflow:visible;}
 .firmos .dijitDialog{border:1px solid #383838;-webkit-box-shadow:0 1px 5px rgba(0, 0, 0, 0.25);-moz-box-shadow:0 1px 5px rgba(0, 0, 0, 0.25);box-shadow:0 1px 5px rgba(0, 0, 0, 0.25);}
 .firmos .dijitDialogPaneContent{background:#ffffff repeat-x top left;border-top:1px solid #383838;padding:10px 8px;position:relative;}
 .firmos .dijitDialogPaneContentArea{margin:-10px -8px;padding:10px 8px;}
@@ -3640,29 +3663,9 @@ div.dojoxCalendar tr.dojoxCal-MY-G-Template td.dijitCalendarSelectedDate{backgro
 .dojoxCal-MY-labels .dojoxCal-MY-M-last .dojoxCalendarMonthLabel,.dojoxCal-MY-labels .dojoxCal-MY-G-Template div.dojoxCalendarYearLabel{width:42px;}
 .dojoxCalendar .cancel-btn{margin-left:11px;}
 .dojoxCalendar .ok-btn{margin-left:15px;}
-.firmos .dijitSpinnerButtonContainer{overflow:hidden;position:relative;width:auto;padding:0 2px;}
-.firmos .dijitSpinnerButtonContainer .dijitSpinnerButtonInner{border-width:1px 0;border-style:solid none;}
-.firmos .dijitSpinner .dijitArrowButton{width:auto;background-color:#b6bac1;background-image:url("images/standardGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);_background-image:none;overflow:hidden;}
-.dj_iequirks .firmos .dijitSpinner .dijitArrowButton{overflow:visible;}
-.firmos .dijitSpinner .dijitSpinnerButtonInner{width:15px;}
-.firmos .dijitSpinner .dijitArrowButtonInner{border:solid 1px #ffffff;border-bottom-width:0;background-image:url("images/commonFormArrows.png");background-repeat:no-repeat;height:100%;width:15px;padding-left:1px;padding-right:1px;background-position:-139px center;display:block;margin:-1px 0 -1px 0;}
-.dj_iequirks .firmos .dijitSpinner .dijitArrowButtonInner,.dj_ie6 .firmos .dijitSpinner .dijitArrowButtonInner,.dj_ie7 .firmos .dijitSpinner .dijitArrowButtonInner,.dj_ie8 .firmos .dijitSpinner .dijitArrowButtonInner{margin-top:0;}
-.dj_iequirks .firmos .dijitSpinner .dijitArrowButtonInner{width:19px;}
-.firmos .dijitSpinner .dijitDownArrowButton .dijitArrowButtonInner{background-position:-34px;}
-.firmos .dijitSpinner .dijitArrowButtonInner .dijitInputField{padding:0;}
-.firmos .dijitUpArrowButtonActive,.firmos .dijitDownArrowButtonActive{background-color:#546791;}
-.firmos .dijitSpinner .dijitUpArrowButtonHover,.firmos .dijitSpinner .dijitDownArrowButtonHover,.firmos .dijitSpinnerFocused .dijitArrowButton{background-color:#546791;}
-.firmos .dijitSpinner .dijitUpArrowButtonHover .dijitArrowButtonInner{background-position:-174px;}
-.firmos .dijitSpinner .dijitDownArrowButtonHover .dijitArrowButtonInner{background-position:-69px;}
-.firmos .dijitSpinnerFocused{background-color:#fafad2;background-image:none;}
-.firmos .dijitSpinner .dijitDownArrowButtonActive,.firmos .dijitSpinner .dijitUpArrowButtonActive{background-color:#7dbefa;background-image:url("images/activeGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(190, 190, 190, 0.98) 0px, rgba(255, 255, 255, 0.65) 3px, rgba(255, 255, 255, 0) 100%);_background-image:none;}
-.firmos .dijitSpinner .dijitUpArrowButtonActive .dijitArrowButtonInner,.firmos .dijitSpinner .dijitDownArrowButtonActive .dijitArrowButtonInner{border:0;padding:1px;margin-right:2px;margin-bottom:1px;}
-.firmos .dijitSpinner .dijitUpArrowButtonActive .dijitArrowButtonInner{background-position:-173px;}
-.firmos .dijitSpinner .dijitDownArrowButtonActive .dijitArrowButtonInner{background-position:-68px;}
-.firmos .dijitSpinnerDisabled .dijitArrowButtonInner{background-color:#dddddd;}
-.firmos .dijitSpinnerDisabled .dijitUpArrowButton .dijitArrowButtonInner{background-position:-104px;}
-.firmos .dijitSpinnerDisabled .dijitDownArrowButton .dijitArrowButtonInner{background-position:1px;}
-.dj_ie7 .firmos .dijitSpinner{overflow:visible;}
+.firmos .dijitInlineEditBoxDisplayMode{border:1px solid transparent;}
+.firmos .dijitInlineEditBoxDisplayModeHover{background-color:#fafad2;border:solid 1px #383838;}
+.dj_ie6 .firmos .dijitInlineEditBoxDisplayMode{border:none;}
 .firmos .dijitColorPalette{border:1px solid #5b5b5b;background:#ffffff;-moz-border-radius:0;border-radius:0;}
 .firmos .dijitColorPalette .dijitPaletteImg{border:1px solid #dddddd;}
 .firmos .dijitColorPalette .dijitPaletteCell:hover .dijitPaletteImg{border:1px solid #000000;}
@@ -3691,9 +3694,6 @@ div.dojoxCalendar tr.dojoxCal-MY-G-Template td.dijitCalendarSelectedDate{backgro
 .firmos .dijitMenu .dijitMenuItemSelected td,.firmos .dijitComboBoxMenu .dijitMenuItemSelected{color:#000000;border-color:#383838;background-color:#546791;}
 .firmos .dijitComboBoxMenuActive .dijitMenuItemSelected{background-color:#47526a;}
 .firmos .dijitMenuPreviousButton,.firmos .dijitMenuNextButton{font-style:italic;}
-.firmos .dijitInlineEditBoxDisplayMode{border:1px solid transparent;}
-.firmos .dijitInlineEditBoxDisplayModeHover{background-color:#fafad2;border:solid 1px #383838;}
-.dj_ie6 .firmos .dijitInlineEditBoxDisplayMode{border:none;}
 .firmos .dijitProgressBar{margin:2px 0 2px 0;}
 .firmos .dijitProgressBarEmpty{background-color:#ffffff;border-color:#383838;}
 .firmos .dijitProgressBarTile{background-color:#546791;background-image:url("images/progressBarFull.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.93) 0px, rgba(255, 255, 255, 0.41) 1px, rgba(255, 255, 255, 0.7) 2px, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.93) 0px, rgba(255, 255, 255, 0.41) 1px, rgba(255, 255, 255, 0.7) 2px, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.93) 0px, rgba(255, 255, 255, 0.41) 1px, rgba(255, 255, 255, 0.7) 2px, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(255, 255, 255, 0.93) 0px, rgba(255, 255, 255, 0.41) 1px, rgba(255, 255, 255, 0.7) 2px, rgba(255, 255, 255, 0) 100%);background-attachment:scroll;}
@@ -3738,15 +3738,6 @@ div.dojoxCalendar tr.dojoxCal-MY-G-Template td.dijitCalendarSelectedDate{backgro
 .firmos .dijitToolbarSeparator{background:url("images/editorIconsEnabled.png");}
 .firmos .dijitDisabled .dijitToolbar{background:none;background-color:#dddddd;border-bottom:1px solid #c4c4c4;}
 .firmos .dijitToolbar .dijitComboBoxDisabled .dijitArrowButtonInner{background-position:0 50%;}
-.firmos .dijitEditorIFrameContainer{padding:3px 3px 1px 10px;}
-.firmos .dijitEditorIFrame{background-color:#ffffff;}
-.firmos .dijitEditor{border:1px solid #5b5b5b;}
-.firmos .dijitEditor .dijitEditorIFrameContainer{background-color:#ffffff;background-repeat:repeat-x;}
-.firmos .dijitEditorHover .dijitEditorIFrameContainer,.firmos .dijitEditorHover .dijitEditorIFrameContainer .dijitEditorIFrame{background-color:#fafad2;}
-.firmos .dijitEditorFocused .dijitEditorIFrameContainer,.firmos .dijitEditorFocused .dijitEditorIFrameContainer .dijitEditorIFrame{background-color:#fafad2;}
-.firmos .dijitEditorHover .dijitEditorIFrameContainer,.firmos .dijitEditorFocused .dijitEditorIFrameContainer{background-image:-moz-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);background-image:-webkit-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);background-image:-o-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);background-image:linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);}
-.firmos .dijitEditorDisabled{border:1px solid #c4c4c4;color:#6f6f6f;}
-.firmos .dijitDisabled .dijitEditorIFrame,.firmos .dijitDisabled .dijitEditorIFrameContainer,.firmos .dijitDisabled .dijitEditorIFrameContainer .dijitEditorIFrame{background-color:#dddddd;background-image:none;}
 .firmos .dijitTitlePaneTitle{background-color:#b6bac1;background-image:url("images/standardGradient.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);_background-image:none;border:1px solid #5b5b5b;padding:0 7px 3px 7px;min-height:17px;color:#141518;}
 .firmos .dijitFieldset{-moz-border-radius:4px;border-radius:4px;}
 .firmos .dijitTitlePaneTitleOpen,.firmos .dijitTitlePaneTitleFixedOpen{background-color:#787e8b;color:#000000;}
@@ -3760,6 +3751,15 @@ div.dojoxCalendar tr.dojoxCal-MY-G-Template td.dijitCalendarSelectedDate{backgro
 .firmos .dijitTitlePaneContentInner{padding:10px;}
 .firmos .dijitFieldsetContentInner{padding:4px;}
 .firmos .dijitTitlePaneTextNode,.firmos .dijitFieldsetLegendNode{margin-left:4px;margin-right:4px;vertical-align:text-top;}
+.firmos .dijitEditorIFrameContainer{padding:3px 3px 1px 10px;}
+.firmos .dijitEditorIFrame{background-color:#ffffff;}
+.firmos .dijitEditor{border:1px solid #5b5b5b;}
+.firmos .dijitEditor .dijitEditorIFrameContainer{background-color:#ffffff;background-repeat:repeat-x;}
+.firmos .dijitEditorHover .dijitEditorIFrameContainer,.firmos .dijitEditorHover .dijitEditorIFrameContainer .dijitEditorIFrame{background-color:#fafad2;}
+.firmos .dijitEditorFocused .dijitEditorIFrameContainer,.firmos .dijitEditorFocused .dijitEditorIFrameContainer .dijitEditorIFrame{background-color:#fafad2;}
+.firmos .dijitEditorHover .dijitEditorIFrameContainer,.firmos .dijitEditorFocused .dijitEditorIFrameContainer{background-image:-moz-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);background-image:-webkit-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);background-image:-o-linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);background-image:linear-gradient(rgba(127, 127, 127, 0.2) 0%, rgba(127, 127, 127, 0) 2px);}
+.firmos .dijitEditorDisabled{border:1px solid #c4c4c4;color:#6f6f6f;}
+.firmos .dijitDisabled .dijitEditorIFrame,.firmos .dijitDisabled .dijitEditorIFrameContainer,.firmos .dijitDisabled .dijitEditorIFrameContainer .dijitEditorIFrame{background-color:#dddddd;background-image:none;}
 .firmos .dgrid{border:0px solid red;border-color:#aaaaaa;background-color:#ffffff;color:#000000;}
 .firmos .ui-widget-header{font-weight:bold;}
 .firmos .ui-widget-header,.firmos .dgrid-footer{background-color:#b6bac1;background-image:-moz-linear-gradient(#c4c7cd 0%, #787e8b 100%);background-image:-webkit-linear-gradient(#c4c7cd 0%, #787e8b 100%);background-image:-o-linear-gradient(#c4c7cd 0%, #787e8b 100%);background-image:linear-gradient(#c4c7cd 0%, #787e8b 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='lighten(@secondary-color, 5)', endColorstr='@secondary-color', GradientType=0);}
@@ -3772,24 +3772,6 @@ div.dojoxCalendar tr.dojoxCal-MY-G-Template td.dijitCalendarSelectedDate{backgro
 .firmos .ui-state-highlight{background-color:#f90;}
 .firmos .dgrid-cell{border:0px;}
 .firmos .ui-widget-header .dgrid-cell{border-color:#dddddd;}
-#topmenu_home_enabled1_stop1{stop-color:#57A4DA;stop-opacity:0.2;}
-#topmenu_home_enabled1_stop2{stop-color:#56A1D6;stop-opacity:0.5203;}
-#topmenu_home_enabled1_stop3{stop-color:#5499CB;stop-opacity:0.6357;}
-#topmenu_home_enabled1_stop4{stop-color:#508DBC;stop-opacity:0.718;}
-#topmenu_home_enabled1_stop5{stop-color:#4A7DA9;stop-opacity:0.7845;}
-#topmenu_home_enabled1_stop6{stop-color:#426A92;stop-opacity:0.8415;}
-#topmenu_home_enabled1_stop7{stop-color:#375479;stop-opacity:0.8919;}
-#topmenu_home_enabled1_stop8{stop-color:#2A3C5F;stop-opacity:0.9375;}
-#topmenu_home_enabled1_stop9{stop-color:#1C2245;stop-opacity:0.9781;}
-#topmenu_home_enabled1_stop10{stop-color:#121037;}
-#topmenu_home_enabled2_stop1{stop-color:#B6BEC8;stop-opacity:0.2;}
-#topmenu_home_enabled2_stop2{stop-color:#B6BEC8;}
-#topmenu_home_enabled2_stop3{stop-color:#7D888F;stop-opacity:0.2;}
-.firmos .topMenu{float:left;width:100%;padding-top:5px;padding-bottom:5px;overflow:hidden;}
-.firmos .topMenu .buttonListWrapper{clear:left;float:left;margin:0;padding:0;position:relative;left:50%;text-align:center;}
-.firmos .topMenu .buttonListWrapper .buttonListItem{float:left;position:relative;right:50%;}
-.firmos .firmosTopMenuHome{fill:black;fill-opacity:1;stroke:url("/#sm_pressed1");}
-.firmos .firmosTopMenuHome2{fill-opacity:0.2;fill:url("/#sm_disabled2");}
 .firmos{font-family:'Source Sans Pro',sans-serif;font-size:14px;font-weight:400;}
 .firmos .dojoDndItem{padding:0px;}
 .firmos .dojoDndItemOver{padding:0px;border:none;}
@@ -3834,6 +3816,24 @@ div.dojoxCalendar tr.dojoxCal-MY-G-Template td.dijitCalendarSelectedDate{backgro
 .firmos .dijitToolbar{background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 25%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 25%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 25%);background-image:linear-gradient(rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 25%);padding:12px 0 0px 5px;margin:4px 4px 4px 4px;border-radius:4px;height:25px;overflow:hidden;border-bottom:none;background-color:transparent;}
 .firmos .dijitToolbar .dijitButton .dijitButtonNode,.firmos .dijitToolbar .dijitDropDownButton .dijitButtonNode,.firmos .dijitToolbar .dijitComboButton .dijitButtonNode,.firmos .dijitToolbar .dijitToggleButton .dijitButtonNode,.firmos .dijitToolbar .dijitComboBox .dijitButtonNode{margin-right:4px;height:21px;}
 .firmos .dijitToolbar .dijitButtonHover .dijitButtonNode,.firmos .dijitToolbar .dijitDropDownButtonHover .dijitButtonNode,.firmos .dijitToolbar .dijitToggleButtonHover .dijitButtonNode,.firmos .dijitToolbar .dijitComboButtonHover .dijitButtonNode{background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);}
+#topmenu_home_enabled1_stop1{stop-color:#57A4DA;stop-opacity:0.2;}
+#topmenu_home_enabled1_stop2{stop-color:#56A1D6;stop-opacity:0.5203;}
+#topmenu_home_enabled1_stop3{stop-color:#5499CB;stop-opacity:0.6357;}
+#topmenu_home_enabled1_stop4{stop-color:#508DBC;stop-opacity:0.718;}
+#topmenu_home_enabled1_stop5{stop-color:#4A7DA9;stop-opacity:0.7845;}
+#topmenu_home_enabled1_stop6{stop-color:#426A92;stop-opacity:0.8415;}
+#topmenu_home_enabled1_stop7{stop-color:#375479;stop-opacity:0.8919;}
+#topmenu_home_enabled1_stop8{stop-color:#2A3C5F;stop-opacity:0.9375;}
+#topmenu_home_enabled1_stop9{stop-color:#1C2245;stop-opacity:0.9781;}
+#topmenu_home_enabled1_stop10{stop-color:#121037;}
+#topmenu_home_enabled2_stop1{stop-color:#B6BEC8;stop-opacity:0.2;}
+#topmenu_home_enabled2_stop2{stop-color:#B6BEC8;}
+#topmenu_home_enabled2_stop3{stop-color:#7D888F;stop-opacity:0.2;}
+.firmos .topMenu{float:left;width:100%;padding-top:5px;padding-bottom:5px;overflow:hidden;}
+.firmos .topMenu .buttonListWrapper{clear:left;float:left;margin:0;padding:0;position:relative;left:50%;text-align:center;}
+.firmos .topMenu .buttonListWrapper .buttonListItem{float:left;position:relative;right:50%;}
+.firmos .firmosTopMenuHome{fill:black;fill-opacity:1;stroke:url("/#sm_pressed1");}
+.firmos .firmosTopMenuHome2{fill-opacity:0.2;fill:url("/#sm_disabled2");}
 html,body{width:100%;height:100%;margin:0;overflow:hidden;}
 body.firmos{background-color:#485062;}
 .firmos .aloha-editable{min-height:1.2em;outline:0;color:navy;}
