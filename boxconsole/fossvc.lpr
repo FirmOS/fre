@@ -14,7 +14,7 @@ uses
   Classes, SysUtils, CustApp, fosillu_libzonecfg,fre_process,
   FRE_SYSTEM,FOS_DEFAULT_IMPLEMENTATION,FOS_TOOL_INTERFACES,FOS_FCOM_TYPES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,
   FRE_DB_CORE,fre_dbbase, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs, fosillu_libscf,fos_firmbox_svcctrl,
-  fos_citycom_voip_mod, fosillu_ipadm, fosillu_hal_svcctrl,fosillu_hal_dbo_common
+  fos_citycom_voip_mod, fosillu_ipadm, fosillu_hal_svcctrl,fosillu_hal_dbo_common,fre_dbbusiness
   { you can add units after this };
 
 type
@@ -181,9 +181,12 @@ var
 
 begin
   InitMinimal(false);
+  fre_dbbase.Register_DB_Extensions;
+  fre_dbbusiness.Register_DB_Extensions;
   fre_zfs.Register_DB_Extensions;
   fre_hal_schemes.Register_DB_Extensions;
   fos_citycom_voip_mod.Register_DB_Extensions;
+  GFRE_DB.Initialize_Extension_ObjectsBuild;
 
   ErrorMsg:=CheckOptions('cslt',['createsvc','services','list','test','ip:','routing:','start','stop','restart','enable:','disable:','refresh:']);
   if ErrorMsg<>'' then begin
