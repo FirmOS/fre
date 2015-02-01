@@ -388,7 +388,7 @@ begin
       exit; //vinc can not be added to a vinc
     end;
     if dbo.Implementor_HC is TFRE_DB_IP_HOSTNET then begin
-      exit; //vinc can not be added to a vinc
+      exit; //vinc can not be added to a hostnet
     end;
 
     if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
@@ -417,6 +417,9 @@ begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
       exit; //hostnet has to be added on the aggregation
+    end;
+    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_BRIDGE','datalinkParent')>0 then begin
+      exit; //hostnet has to be added on the bridge
     end;
     if dbo.Implementor_HC is TFRE_DB_IP_HOSTNET then begin
       exit; //hostnet can not be added to a hostnet
@@ -1650,6 +1653,7 @@ begin
   _updateDatalinkGridTB(input,ses,app,conn);
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
+
 function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_AddHostnet(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   scheme      : IFRE_DB_SchemeObject;
@@ -1852,7 +1856,7 @@ begin
   dbo.Field('serviceParent').AddObjectLink(bridgeUid);
 
   refs:=conn.GetReferences(dbo.UID,false,'','datalinkParent');
-  for i := 0 to High(refs) do begin //move hostnets to aggregation
+  for i := 0 to High(refs) do begin //move hostnets to bridge
     CheckDbResult(conn.Fetch(refs[i],childDbo));
     childDbo.Field('datalinkParent').RemoveObjectLinkByUID(dbo.UID);
     childDbo.Field('datalinkParent').AddObjectLink(bridgeUid);
