@@ -39,15 +39,15 @@ type
     function  getRAMSteps               :Integer;
     function  getAvailableCPU           :Integer;
   protected
-    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
-    procedure       MySessionInitializeModule (const session   : TFRE_DB_UserSession);override;
   public
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     class procedure InstallUserDBObjects      (const conn:IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   published
+    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
+    procedure       MySessionInitializeModule (const session   : TFRE_DB_UserSession);override;
     function  WEB_VM_Feed_Update        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     function  WEB_VM_ShowInfo           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_VM_ShowVNC            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_VM_ShowPerf           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -932,6 +932,7 @@ var
   isochooser           : TFRE_DB_INPUT_CHOOSER_DESC;
   group                : TFRE_DB_INPUT_GROUP_DESC;
   sf                   : TFRE_DB_SERVER_FUNC_DESC;
+  scheme               : IFRE_DB_SchemeObject;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
@@ -947,9 +948,20 @@ begin
   if input.FieldExists('zoneId') then begin
     sf.AddParam.Describe('zoneId',input.Field('zoneId').AsString);
   end else begin
-    res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'customer',ses.FetchDerivedCollection('VM_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
+    res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'zone',ses.FetchDerivedCollection('VM_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
   end;
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+
+  GetSystemScheme(TFRE_DB_VMACHINE,scheme);
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  res.SetElementValue('cores','2');
+  res.SetElementValue('threads','4');
+  res.SetElementValue('sockets','2');
+  (res.GetFormElement('ram').Implementor_HC as TFRE_DB_INPUT_NUMBER_DESC).setMinMax(getMinimumRAM,getAvailableRAM);
+  res.SetElementValue('ram',IntToStr(getMinimumRAM));
+
+  Result:=res;
+  exit; //FIXXME
 
   res.AddInput.Describe(FetchModuleTextShort(ses,'vm_name'),'name',true);
   maxRAM:=getAvailableRAM; minRAM:=getMinimumRAM; stepRAM:=getRAMSteps;
@@ -1030,49 +1042,43 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  customer : IFRE_DB_Object;
-  sdomain  : TFRE_DB_GUID;
-  coll     : IFRE_DB_COLLECTION;
-  vmService: TFRE_DB_VMACHINE;
-  zone     : TFRE_DB_ZONE;
-  idx      : String;
+  customer    : IFRE_DB_Object;
+  sdomain     : TFRE_DB_GUID;
+  coll        : IFRE_DB_COLLECTION;
+  vmService   : TFRE_DB_VMACHINE;
+  zone        : TFRE_DB_ZONE;
+  idx         : String;
+  schemeObject: IFRE_DB_SchemeObject;
 begin
-  if input.FieldPathExists('data.customer') then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('data.customer').AsString),customer));
-    if not customer.FieldExists('servicedomain') then
-      raise EFRE_DB_Exception.Create(edb_ERROR,'The given customer has no service domain set!');
-
-    input.Field('data').AsObject.DeleteField('customer');
-    sdomain:=customer.Field('servicedomain').AsObjectLink;
+  if input.FieldPathExists('data.zone') then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.FieldPath('data.zone').AsString),TFRE_DB_ZONE,zone));
+    input.Field('data').AsObject.DeleteField('zone');
   end else begin
     if input.FieldExists('zoneId') then begin
       CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
-      sdomain:=zone.DomainID;
     end else begin
       raise EFRE_DB_Exception.Create(edb_ERROR,'No domain Id given for new VM Service');
     end;
   end;
+  sdomain:=zone.DomainID;
 
   if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE,sdomain) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
 
-  vmService:=TFRE_DB_VMACHINE.CreateForDB;  //FIXXME - use whole input
+  if not GFRE_DBI.GetSystemScheme(TFRE_DB_VMACHINE,schemeObject) then
+    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_VMACHINE]);
+
+  vmService:=TFRE_DB_VMACHINE.CreateForDB;
   vmService.SetDomainID(sdomain);
-  vmService.ObjectName:=input.FieldPath('data.name').AsString;
-  vmService.key:=vmService.ObjectName;
-  //vmService.vncHost:=mgmt_ip;
-  //vmService.vncPort:=port;
-  vmService.MemoryMB:=input.FieldPath('data.mem').AsUInt32;
-  //vmService.CpuCores:=2;
-  //vmService.CpuSockets:=2;
+  schemeObject.SetObjectFieldsWithScheme(input.Field('data').AsObject,vmService,true,conn);
   vmService.Field('serviceParent').AsObjectLink:=zone.UID;
   vmService.Field('zoneid').AsObjectLink:=zone.UID;
   idx:=TFRE_DB_VMACHINE.ClassName + '_' + vmService.ObjectName + '@' + zone.UID_String;
   vmService.Field('uniquephysicalid').asstring := idx;
 
-  if coll.ExistsIndexed(idx) then begin
+  if coll.ExistsIndexedText(idx)<>0 then begin
     Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_exists_cap'),FetchModuleTextShort(ses,'vm_create_error_exists_msg'),fdbmt_error);
     exit;
   end;
