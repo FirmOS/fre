@@ -55,6 +55,8 @@ type
     function  WEB_VMSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_VM_Details            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_AddVM                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddVMConfigureIDE     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddVMConfigureVirtIO  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_CreateVM              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StartVM               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StopVM                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -698,6 +700,10 @@ begin
    if currentVersionId='0.9' then begin
      currentVersionId:='0.9.1';
      DeleteModuleText(conn,'vm_new_save');
+     DeleteModuleText(conn,'vm_name');
+     DeleteModuleText(conn,'vm_mem');
+     DeleteModuleText(conn,'vm_cpu');
+     DeleteModuleText(conn,'vm_sc');
 
      CreateModuleText(conn,'gc_vm_customer','Customer');
      CreateModuleText(conn,'gc_vm_customer_default_value','No Customer assigned');
@@ -706,6 +712,11 @@ begin
      CreateModuleText(conn,'vm_create_error_exists_msg','A VM with the given name already exists in the choosen zone!');
      CreateModuleText(conn,'zone_chooser_value','%zone_str% (%customer_str%)');
      CreateModuleText(conn,'zone_chooser_value_no_customer','%zone_str%');
+
+     CreateModuleText(conn,'vm_form_ide','IDE');
+     CreateModuleText(conn,'vm_form_virtio','VirtIO');
+     CreateModuleText(conn,'vm_form_ide_button','Configure');
+     CreateModuleText(conn,'vm_form_virtio_button','Configure');
    end;
 end;
 
@@ -927,17 +938,23 @@ begin
   end else begin
     res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'zone',ses.FetchDerivedCollection('VM_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
   end;
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   GetSystemScheme(TFRE_DB_VMACHINE,scheme);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,true,false);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
   res.SetElementValue('cores','2');
   res.SetElementValue('threads','4');
   res.SetElementValue('sockets','2');
   (res.GetFormElement('ram').Implementor_HC as TFRE_DB_INPUT_NUMBER_DESC).setMinMax(getMinimumRAM,getAvailableRAM);
   res.SetElementValue('ram',IntToStr(getMinimumRAM));
 
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  sf:=CWSF(@WEB_AddVMConfigureIDE);
+  res.AddInputButton.Describe(FetchModuleTextShort(ses,'vm_form_ide'),FetchModuleTextShort(ses,'vm_form_ide_button'),sf);
+  sf:=CWSF(@WEB_AddVMConfigureVirtIO);
+  res.AddInputButton.Describe(FetchModuleTextShort(ses,'vm_form_virtio'),FetchModuleTextShort(ses,'vm_form_virtio_button'),sf);
+
+  res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
+
   Result:=res;
 
   //res.AddInput.Describe(FetchModuleTextShort(ses,'vm_name'),'name',true);
@@ -1015,6 +1032,16 @@ begin
   //group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_keyboard_layout'),'keybord_layout',keyboardstore,dh_chooser_combo,true);
   //
   //Result:=res;
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureIDE(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureVirtIO(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
