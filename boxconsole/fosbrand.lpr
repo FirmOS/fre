@@ -12,7 +12,7 @@ uses
   {$ENDIF}
   Classes, SysUtils, CustApp, fosillu_libzonecfg,fre_process,
   FRE_SYSTEM,FOS_DEFAULT_IMPLEMENTATION,FOS_TOOL_INTERFACES,FOS_FCOM_TYPES,FRE_APS_INTERFACE,FRE_DB_INTERFACE,
-  FRE_DB_CORE,fre_dbbase, fre_dbbusiness, FRE_DB_EMBEDDED_IMPL, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs,fosillu_dladm,fosillu_libdladm
+  FRE_DB_CORE,fre_dbbase, fre_dbbusiness, FRE_CONFIGURATION,fre_hal_schemes, fre_zfs,fosillu_dladm,fosillu_libdladm
   { you can add units after this };
 
 type

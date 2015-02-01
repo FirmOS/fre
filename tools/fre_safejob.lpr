@@ -45,7 +45,7 @@ uses
   cthreads,
   {$ENDIF}
   Classes, sysutils,
-  FRE_DB_INTERFACE,FRE_DB_EMBEDDED_IMPL,
+  FRE_DB_INTERFACE,
   FOS_TOOL_INTERFACES, FRE_DB_CORE,
   FOS_DEFAULT_IMPLEMENTATION,fre_configuration,FRE_SYSTEM,
   fre_hal_schemes,
@@ -58,7 +58,6 @@ uses
 
 begin
   Initialize_Read_FRE_CFG_Parameter;
-  InitEmbedded;
   InitMinimal(false);
 
   FRE_DBBASE.Register_DB_Extensions;
