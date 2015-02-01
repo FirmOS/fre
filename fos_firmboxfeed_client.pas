@@ -549,18 +549,14 @@ begin
   end;
 
 
-  FEED_Timer := chanman.AddTimer(30000); // Beside the "normal 1 sec" Timer a 5 sec timer in the channel context
-  FEED_Timer.TIM_SetID('FEED_'+inttostr(chanman.GetID));
-  writeln('Generated Feedtimer 30 ',FEED_Timer.TIM_GetID);
-  FEED_Timer.TIM_SetCallback(@GenerateFeedDataTimer);
-  FEED_Timer.TIM_Start;
-
-
+  FEED_Timer := chanman.AddChannelManagerTimer('FEED_'+chanman.GetID,30000,@GenerateFeedDataTimer,true); // Beside the "normal 1 sec" Timer a 5 sec timer in the channel context
+  writeln('Generated Feedtimer ',FEED_Timer.cs_GetID);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MySessionDisconnected(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 begin
-  FEED_Timer.Finalize;
+  writeln('FINALIZING FEED FROM CM_'+chanman.GetID);
+  FEED_Timer.cs_Finalize;
   FVM_Feeding   := false;
   FDISK_Feeding := false;
   FAPP_Feeding  := false;
