@@ -10,7 +10,11 @@ uses
   FOS_TOOL_INTERFACES,
   FRE_DB_INTERFACE,
   FRE_DB_COMMON,
-  fre_hal_schemes,fre_dbbusiness,fre_zfs;
+  fre_hal_schemes,fre_zfs;
+
+const
+
+  CFOS_DATALINK_PARENT_FIELD = 'datalinkParent';
 
 type
 
@@ -166,7 +170,7 @@ begin
     dc:=ses.FetchDerivedCollection('DATALINK_GRID');
   end;
   dc.Filters.RemoveFilter('zone');
-  dc.Filters.AddRootNodeFilter('zone','uid',conn.GetReferences(zone.UID,false,'','datalinkParent'),dbnf_OneValueFromFilter);
+  dc.Filters.AddRootNodeFilter('zone','uid',conn.GetReferences(zone.UID,false,'',CFOS_DATALINK_PARENT_FIELD),dbnf_OneValueFromFilter);
   res:=dc.GetDisplayDescription.Implementor_HC as TFRE_DB_VIEW_LIST_DESC;
 
   dc:=ses.FetchDerivedCollection('AGGREGATION_CHOOSER');
@@ -316,7 +320,7 @@ begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     Result:=conn.sys.CheckClassRight4DomainId(sr_DELETE,dbo.Implementor_HC.ClassType,dbo.DomainID) and             //check rights
             (conn.GetReferencesCount(dbo.UID,false)=0) and                                                         //no children
-            (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) and                 //not within aggregation
+            (conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD)=0) and                 //not within aggregation
             (ses.GetSessionModuleData(ClassName).Field('zoneIsGlobal').AsBoolean or not _isDelegated(dbo,conn));   //delegated obj not deletable in client zone
   end;
 end;
@@ -341,7 +345,7 @@ end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canDelegate(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
 var
-  hcObj: TObject;
+  hcObj    : TObject;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
@@ -349,12 +353,12 @@ begin
     if _isDelegated(dbo,conn) then begin //already delegated
       exit;
     end;
-    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_IPMP','datalinkParent')>0 then begin
+    if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_IPMP.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin
       exit; //object is within an IPMP
     end;
     hcObj:=dbo.Implementor_HC;
     if (hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET) then begin //only if empty
-      if (conn.GetReferencesCount(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent')=0) and (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) then begin
+      if (conn.GetReferencesCount(dbo.UID,false,TFRE_DB_DATALINK_VNIC.ClassName,CFOS_DATALINK_PARENT_FIELD)=0) and (conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD)=0) then begin
         Result:=_delegateRightsCheck(dbo.DomainID,hcObj.ClassName,conn);
       end;
     end else
@@ -394,7 +398,7 @@ begin
       exit; //vinc can not be added to a IPTUN
     end;
 
-   if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
+   if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin
       exit; //vnic has to be added on the aggregation
     end;
 
@@ -418,10 +422,10 @@ begin
   ipv6:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
+    if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin
       exit; //hostnet has to be added on the aggregation
     end;
-    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_BRIDGE','datalinkParent')>0 then begin
+    if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_BRIDGE.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin
       exit; //hostnet has to be added on the bridge
     end;
     if dbo.Implementor_HC is TFRE_DB_IP_HOSTNET then begin
@@ -466,7 +470,7 @@ begin
         exit; //delegated
       end;
 
-     refs:=conn.GetReferences(dbo.UID,true,'','datalinkParent');
+     refs:=conn.GetReferences(dbo.UID,true,'',CFOS_DATALINK_PARENT_FIELD);
      for i := 0 to High(refs) do begin
        CheckDbResult(conn.Fetch(refs[i],parentDbo));
        if (parentDbo.Implementor_HC is TFRE_DB_DATALINK_AGGR) or (parentDbo.Implementor_HC is TFRE_DB_DATALINK_BRIDGE) then begin //already within an aggregation or bridge
@@ -474,7 +478,7 @@ begin
        end;
      end;
 
-      refs:=conn.GetReferences(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent');
+      refs:=conn.GetReferences(dbo.UID,false,TFRE_DB_DATALINK_VNIC.ClassName,CFOS_DATALINK_PARENT_FIELD);
       for i := 0 to High(refs) do begin
         CheckDbResult(conn.Fetch(refs[i],vnic));
         if _isDelegated(vnic,conn) then begin //at least on vnic is delegated
@@ -482,7 +486,7 @@ begin
         end;
       end;
 
-      if (conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0) then begin //not already in an aggregation
+      if (conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD)=0) then begin //not already in an aggregation
         //check possible aggregations count
         dc:=ses.FetchDerivedCollection('AGGREGATION_CHOOSER');
         dc.Filters.RemoveFilter('rights');
@@ -518,7 +522,7 @@ begin
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     hcObj:=dbo.Implementor_HC;
-    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')=0 then begin
+    if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD)=0 then begin
       exit; //object is not within an aggregation
     end;
     zone:=_getZone(dbo,conn,true);
@@ -549,19 +553,19 @@ begin
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     hcObj:=dbo.Implementor_HC;
-    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET)) and
+    if ((hcObj is TFRE_DB_DATALINK_PHYS) or (hcObj is TFRE_DB_DATALINK_SIMNET) or (hcObj is TFRE_DB_DATALINK_STUB)) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,hcObj.ClassName,dbo.DomainID) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID) then begin
 
-      refs:=conn.GetReferences(dbo.UID,true,'','datalinkParent');
+      refs:=conn.GetReferences(dbo.UID,true,'',CFOS_DATALINK_PARENT_FIELD);
       for i := 0 to High(refs) do begin
         CheckDbResult(conn.Fetch(refs[i],parentDbo));
         if (parentDbo.Implementor_HC is TFRE_DB_DATALINK_AGGR) or (parentDbo.Implementor_HC is TFRE_DB_DATALINK_BRIDGE) then begin //already within an aggregation or bridge
           exit;
         end;
       end;
-      if conn.GetReferencesCount(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent')>0 then begin //only datalinks without vnics allowed
+      if conn.GetReferencesCount(dbo.UID,false,TFRE_DB_DATALINK_VNIC.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin //only datalinks without vnics allowed
         exit;
       end;
       if _isDelegated(dbo,conn) then begin //delegated datalinks can not be used
@@ -586,7 +590,7 @@ begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_BRIDGE','datalinkParent')=0 then begin
+    if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_BRIDGE.ClassName,CFOS_DATALINK_PARENT_FIELD)=0 then begin
       exit; //object is not within an bridge
     end;
     Result:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,dbo.Implementor_HC.ClassName,dbo.DomainID);
@@ -617,14 +621,14 @@ begin
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID) then begin
 
-      if conn.GetReferencesCount(dbo.UID,false,'TFRE_DB_DATALINK_VNIC','datalinkParent')>0 then begin //only datalinks without vnics allowed
+      if conn.GetReferencesCount(dbo.UID,false,TFRE_DB_DATALINK_VNIC.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin //only datalinks without vnics allowed
         exit;
       end;
       if _isDelegated(dbo,conn) then begin //delegated datalinks can not be used
         exit;
       end;
       if (hcObj is TFRE_DB_DATALINK_VNIC) then begin
-        refs:=conn.GetReferences(dbo.UID,true,'','datalinkParent');
+        refs:=conn.GetReferences(dbo.UID,true,'',CFOS_DATALINK_PARENT_FIELD);
         for i := 0 to High(refs) - 1 do begin
           CheckDbResult(conn.Fetch(refs[i],parentDbo));
           if parentDbo.Implementor_HC is TFRE_DB_DATALINK_IPMP then
@@ -652,7 +656,7 @@ begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_IPMP','datalinkParent')=0 then begin
+    if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_IPMP.ClassName,CFOS_DATALINK_PARENT_FIELD)=0 then begin
       exit; //object is not within an IPMP
     end;
     Result:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,dbo.Implementor_HC.ClassName,dbo.DomainID);
@@ -676,7 +680,7 @@ function TFRE_FIRMBOX_NET_ROUTING_MOD._getZone(const dbo: IFRE_DB_Object; const 
     parentUids: TFRE_DB_ObjLinkArray;
     i         : Integer;
   begin
-    parentUids:=dbo.Field('datalinkParent').AsObjectLinkArray;
+    parentUids:=dbo.Field(CFOS_DATALINK_PARENT_FIELD).AsObjectLinkArray;
     for i := 0 to High(parentUids) do begin
       CheckDbResult(conn.Fetch(parentUids[i],parentObj));
       if parentObj.Implementor_HC is TFRE_DB_DATALINK_IPMP then continue; //skip IPMP paths
@@ -708,7 +712,7 @@ var
     parentUids: TFRE_DB_ObjLinkArray;
     i         : Integer;
   begin
-    parentUids:=dbo.Field('datalinkParent').AsObjectLinkArray;
+    parentUids:=dbo.Field(CFOS_DATALINK_PARENT_FIELD).AsObjectLinkArray;
     for i := 0 to High(parentUids) do begin
       CheckDbResult(conn.Fetch(parentUids[i],parentObj));
       if parentObj.Implementor_HC is TFRE_DB_DATALINK_IPMP then continue; //skip IPMP paths
@@ -1158,7 +1162,7 @@ begin
   GFRE_DBI.GetSystemSchemeByName(serviceClass,scheme);
   dbo:=GFRE_DBI.NewObjectSchemeByName(serviceClass);
   dbo.Field('serviceParent').AsObjectLink:=zone.UID;
-  dbo.Field('datalinkParent').AsObjectLink:=zone.UID;
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).AsObjectLink:=zone.UID;
   dbo.Field('uniquephysicalid').AsString:=idx;
   dbo.SetDomainID(zone.DomainID);
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dbo,true,conn);
@@ -1395,7 +1399,7 @@ begin
   end;
 
   route.Field('serviceParent').AsObjectLink:=zone.UID;
-  route.Field('datalinkParent').AsObjectLink:=zone.UID;
+  route.Field(CFOS_DATALINK_PARENT_FIELD).AsObjectLink:=zone.UID;
   route.Field('uniquephysicalid').AsString:=idx;
   route.SetDomainID(zone.DomainID);
   if ipv4 then begin
@@ -1559,7 +1563,7 @@ var
     hostnet: IFRE_DB_Object;
     refs   : TFRE_DB_GUIDArray;
   begin
-    refs:=conn.GetReferences(parentDbo.UID,false,'','datalinkParent');
+    refs:=conn.GetReferences(parentDbo.UID,false,'',CFOS_DATALINK_PARENT_FIELD);
     for i := 0 to High(refs) do begin
       CheckDbResult(conn.Fetch(refs[i],hostnet));
       hostnet.SetDomainID(newDomainId);
@@ -1579,7 +1583,7 @@ begin
   if dbo.DomainID<>zone.DomainID then begin
     dbo.SetDomainID(zone.DomainID);
     if dbo.Implementor_HC is TFRE_DB_DATALINK_AGGR then begin
-      refs:=conn.GetReferences(dbo.UID,false,'','datalinkParent');
+      refs:=conn.GetReferences(dbo.UID,false,'',CFOS_DATALINK_PARENT_FIELD);
       for i := 0 to High(refs) do begin //handle datalinks of the aggregation
         CheckDbResult(conn.Fetch(refs[i],datalink));
         datalink.SetDomainID(zone.DomainID);
@@ -1590,7 +1594,7 @@ begin
       _handleHostnets(dbo,zone.DomainID);
     end;
   end;
-  dbo.Field('datalinkParent').AddObjectLink(zone.UID);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(zone.UID);
   dbo.Field('serviceParent').AddObjectLink(zone.UID);
 
   CheckDbResult(conn.Update(dbo));
@@ -1646,7 +1650,7 @@ begin
   GFRE_DBI.GetSystemSchemeByName(TFRE_DB_DATALINK_VNIC.ClassName,scheme);
   vnic:=TFRE_DB_DATALINK_VNIC.CreateForDB;
   vnic.Field('serviceParent').AsObjectLink:=dbo.UID;
-  vnic.Field('datalinkParent').AsObjectLink:=dbo.UID;
+  vnic.Field(CFOS_DATALINK_PARENT_FIELD).AsObjectLink:=dbo.UID;
   vnic.SetDomainID(dbo.DomainID);
   vnic.Field('uniquephysicalid').AsString:=idx;
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,vnic,true,conn);
@@ -1720,7 +1724,7 @@ begin
   end;
 
   hostnet.Field('serviceParent').AsObjectLink:=dbo.UID;
-  hostnet.Field('datalinkParent').AsObjectLink:=dbo.UID;
+  hostnet.Field(CFOS_DATALINK_PARENT_FIELD).AsObjectLink:=dbo.UID;
   hostnet.Field('uniquephysicalid').AsString:=idx;
   hostnet.SetDomainID(dbo.DomainID);
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,hostnet,true,conn);
@@ -1768,16 +1772,16 @@ begin
   aggrUid:=FREDB_H2G(input.FieldPath('data.aggr').AsString);
 
   zone:=_getZone(dbo,conn,true);
-  dbo.Field('datalinkParent').RemoveObjectLinkByUID(zone.UID);
-  dbo.Field('datalinkParent').AddObjectLink(aggrUid);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).RemoveObjectLinkByUID(zone.UID);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(aggrUid);
   dbo.Field('serviceParent').RemoveObjectLinkByUID(zone.UID);
   dbo.Field('serviceParent').AddObjectLink(aggrUid);
 
-  refs:=conn.GetReferences(dbo.UID,false,'','datalinkParent');
+  refs:=conn.GetReferences(dbo.UID,false,'',CFOS_DATALINK_PARENT_FIELD);
   for i := 0 to High(refs) do begin //move vnics and hostnets to aggregation
     CheckDbResult(conn.Fetch(refs[i],childDbo));
-    childDbo.Field('datalinkParent').RemoveObjectLinkByUID(dbo.UID);
-    childDbo.Field('datalinkParent').AddObjectLink(aggrUid);
+    childDbo.Field(CFOS_DATALINK_PARENT_FIELD).RemoveObjectLinkByUID(dbo.UID);
+    childDbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(aggrUid);
     childDbo.Field('serviceParent').RemoveObjectLinkByUID(dbo.UID);
     childDbo.Field('serviceParent').AddObjectLink(aggrUid);
     CheckDbResult(conn.Update(childDbo));
@@ -1800,14 +1804,14 @@ begin
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   zone:=_getZone(dbo,conn,true);
-  refs:=conn.GetReferences(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent');
+  refs:=conn.GetReferences(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD);
 
   if Length(refs)=0 then
     raise EFRE_DB_Exception.Create('No aggregation found for given object!');
 
-  dbo.Field('datalinkParent').RemoveObjectLinkByUID(refs[0]);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).RemoveObjectLinkByUID(refs[0]);
   dbo.Field('serviceParent').RemoveObjectLinkByUID(refs[0]);
-  dbo.Field('datalinkParent').AddObjectLink(zone.UID);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(zone.UID);
   dbo.Field('serviceParent').AddObjectLink(zone.UID);
 
   CheckDbResult(conn.Update(dbo));
@@ -1853,16 +1857,16 @@ begin
   bridgeUid:=FREDB_H2G(input.FieldPath('data.bridge').AsString);
 
   zone:=_getZone(dbo,conn,true);
-  dbo.Field('datalinkParent').RemoveObjectLinkByUID(zone.UID);
-  dbo.Field('datalinkParent').AddObjectLink(bridgeUid);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).RemoveObjectLinkByUID(zone.UID);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(bridgeUid);
   dbo.Field('serviceParent').RemoveObjectLinkByUID(zone.UID);
   dbo.Field('serviceParent').AddObjectLink(bridgeUid);
 
-  refs:=conn.GetReferences(dbo.UID,false,'','datalinkParent');
+  refs:=conn.GetReferences(dbo.UID,false,'',CFOS_DATALINK_PARENT_FIELD);
   for i := 0 to High(refs) do begin //move hostnets to bridge
     CheckDbResult(conn.Fetch(refs[i],childDbo));
-    childDbo.Field('datalinkParent').RemoveObjectLinkByUID(dbo.UID);
-    childDbo.Field('datalinkParent').AddObjectLink(bridgeUid);
+    childDbo.Field(CFOS_DATALINK_PARENT_FIELD).RemoveObjectLinkByUID(dbo.UID);
+    childDbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(bridgeUid);
     childDbo.Field('serviceParent').RemoveObjectLinkByUID(dbo.UID);
     childDbo.Field('serviceParent').AddObjectLink(bridgeUid);
     CheckDbResult(conn.Update(childDbo));
@@ -1885,7 +1889,7 @@ begin
   if not _canRemoveFromBridge(input,conn,dbo) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  refs:=conn.GetReferences(dbo.UID,true,'TFRE_DB_DATALINK_BRIDGE','datalinkParent');
+  refs:=conn.GetReferences(dbo.UID,true,TFRE_DB_DATALINK_BRIDGE.ClassName,CFOS_DATALINK_PARENT_FIELD);
   if Length(refs)=0 then
     raise EFRE_DB_Exception.Create('No bridge found for given object!');
   CheckDbResult(conn.Fetch(refs[0],bridgeDbo));
@@ -1893,9 +1897,9 @@ begin
   zone:=_getZone(bridgeDbo,conn,true);
 
 
-  dbo.Field('datalinkParent').RemoveObjectLinkByUID(bridgeDbo.UID);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).RemoveObjectLinkByUID(bridgeDbo.UID);
   dbo.Field('serviceParent').RemoveObjectLinkByUID(bridgeDbo.UID);
-  dbo.Field('datalinkParent').AddObjectLink(zone.UID);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(zone.UID);
   dbo.Field('serviceParent').AddObjectLink(zone.UID);
 
   CheckDbResult(conn.Update(dbo));
@@ -1936,7 +1940,7 @@ begin
 
   ipmpUid:=FREDB_H2G(input.FieldPath('data.ipmp').AsString);
 
-  dbo.Field('datalinkParent').AddObjectLink(ipmpUid);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(ipmpUid);
   dbo.Field('serviceParent').AddObjectLink(ipmpUid);
 
   CheckDbResult(conn.Update(dbo));
@@ -1955,12 +1959,12 @@ begin
   if not _canUnlinkFromIPMP(input,conn,dbo) then
      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  refs:=conn.GetReferences(dbo.UID,true,'TFRE_DB_DATALINK_IPMP','datalinkParent');
+  refs:=conn.GetReferences(dbo.UID,true,TFRE_DB_DATALINK_IPMP.ClassName,CFOS_DATALINK_PARENT_FIELD);
   if Length(refs)=0 then
     raise EFRE_DB_Exception.Create('No ipmp datlink found for given object!');
   CheckDbResult(conn.Fetch(refs[0],ipmpDbo));
 
-  dbo.Field('datalinkParent').RemoveObjectLinkByUID(ipmpDbo.UID);
+  dbo.Field(CFOS_DATALINK_PARENT_FIELD).RemoveObjectLinkByUID(ipmpDbo.UID);
   dbo.Field('serviceParent').RemoveObjectLinkByUID(ipmpDbo.UID);
 
   CheckDbResult(conn.Update(dbo));
