@@ -4365,6 +4365,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
         } else {
           if (fielddef[i].visible!='NONE') { //VISIBILITY
             ignoreVis = false;
+            doHide = (fielddef[i].visible!='HIDDEN');
           }
         }
       }
