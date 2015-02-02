@@ -390,8 +390,11 @@ begin
     if dbo.Implementor_HC is TFRE_DB_IP_HOSTNET then begin
       exit; //vinc can not be added to a hostnet
     end;
+    if dbo.Implementor_HC is TFRE_DB_DATALINK_IPTUN then begin
+      exit; //vinc can not be added to a IPTUN
+    end;
 
-    if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
+   if conn.GetReferencesCount(dbo.UID,true,'TFRE_DB_DATALINK_AGGR','datalinkParent')>0 then begin
       exit; //vnic has to be added on the aggregation
     end;
 
