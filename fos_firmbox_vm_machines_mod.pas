@@ -55,8 +55,8 @@ type
     function  WEB_VMSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_VM_Details            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_AddVM                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_AddVMConfigureIDE     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_AddVMConfigureVirtIO  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddVMConfigureDrives  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddVMConfigureNetwork (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_CreateVM              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StartVM               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StopVM                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -713,10 +713,10 @@ begin
      CreateModuleText(conn,'zone_chooser_value','%zone_str% (%customer_str%)');
      CreateModuleText(conn,'zone_chooser_value_no_customer','%zone_str%');
 
-     CreateModuleText(conn,'vm_form_ide','IDE');
-     CreateModuleText(conn,'vm_form_virtio','VirtIO');
-     CreateModuleText(conn,'vm_form_ide_button','Configure');
-     CreateModuleText(conn,'vm_form_virtio_button','Configure');
+     CreateModuleText(conn,'vm_drives','Drives');
+     CreateModuleText(conn,'vm_network','Network');
+     CreateModuleText(conn,'vm_drives_button','Configure');
+     CreateModuleText(conn,'vm_network_button','Configure');
    end;
 end;
 
@@ -941,17 +941,19 @@ begin
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   GetSystemScheme(TFRE_DB_VMACHINE,scheme);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,true,false);
-  res.SetElementValue('cores','2');
-  res.SetElementValue('threads','4');
-  res.SetElementValue('sockets','2');
+  group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,true,false);
+  res.SetElementValue('cores','1');
+  res.SetElementValue('threads','1');
+  res.SetElementValue('sockets','1');
   (res.GetFormElement('ram').Implementor_HC as TFRE_DB_INPUT_NUMBER_DESC).setMinMax(getMinimumRAM,getAvailableRAM);
   res.SetElementValue('ram',IntToStr(getMinimumRAM));
 
-  sf:=CWSF(@WEB_AddVMConfigureIDE);
-  res.AddInputButton.Describe(FetchModuleTextShort(ses,'vm_form_ide'),FetchModuleTextShort(ses,'vm_form_ide_button'),sf);
-  sf:=CWSF(@WEB_AddVMConfigureVirtIO);
-  res.AddInputButton.Describe(FetchModuleTextShort(ses,'vm_form_virtio'),FetchModuleTextShort(ses,'vm_form_virtio_button'),sf);
+
+
+  sf:=CWSF(@WEB_AddVMConfigureDrives);
+  group.AddInputButton.Describe(FetchModuleTextShort(ses,'vm_form_drives'),FetchModuleTextShort(ses,'vm_form_drives_button'),sf);
+  sf:=CWSF(@WEB_AddVMConfigureNetwork);
+  group.AddInputButton.Describe(FetchModuleTextShort(ses,'vm_form_network'),FetchModuleTextShort(ses,'vm_form_network_button'),sf);
 
   res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
 
@@ -1034,12 +1036,12 @@ begin
   //Result:=res;
 end;
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureIDE(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureDrives(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureVirtIO(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureNetwork(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   Result:=GFRE_DB_NIL_DESC;
 end;
