@@ -397,6 +397,9 @@ begin
     if dbo.Implementor_HC is TFRE_DB_DATALINK_IPTUN then begin
       exit; //vinc can not be added to a IPTUN
     end;
+    if dbo.Implementor_HC is TFRE_DB_DATALINK_BRIDGE then begin
+      exit; //vinc can not be added to a bridge
+    end;
 
    if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin
       exit; //vnic has to be added on the aggregation
@@ -565,9 +568,6 @@ begin
           exit;
         end;
       end;
-      if conn.GetReferencesCount(dbo.UID,false,TFRE_DB_DATALINK_VNIC.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin //only datalinks without vnics allowed
-        exit;
-      end;
       if _isDelegated(dbo,conn) then begin //delegated datalinks can not be used
         exit;
       end;
@@ -621,9 +621,6 @@ begin
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET.ClassName,dbo.DomainID) and
          conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET.ClassName,dbo.DomainID) then begin
 
-      if conn.GetReferencesCount(dbo.UID,false,TFRE_DB_DATALINK_VNIC.ClassName,CFOS_DATALINK_PARENT_FIELD)>0 then begin //only datalinks without vnics allowed
-        exit;
-      end;
       if _isDelegated(dbo,conn) then begin //delegated datalinks can not be used
         exit;
       end;
