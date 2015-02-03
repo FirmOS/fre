@@ -515,6 +515,20 @@ var
   pncoll  : IFRE_DB_COLLECTION;
   noteObjs: TFRE_DB_GUIDArray;
   i       : Integer;
+  wfcoll  : IFRE_DB_COLLECTION;
+
+    procedure WFPatch(const obj:IFRE_DB_Object);
+    var
+      refs   : TFRE_DB_GUIDArray;
+    begin
+      //writeln('Processing ',obj.UID_String);
+      if obj.FieldExists('error_idx') then begin
+        writeln('SEAS');
+        refs:=conn.GetReferences(obj.UID,false,'','');
+        obj.Field('error_idx').AsString:=FREDB_G2H(refs[0]) + '_wf';
+        CheckDbResult(conn.Update(obj));
+      end;
+    end;
 
     procedure ObjectPatch(const obj:IFRE_DB_Object; var halt:boolean ; const current,max : NativeInt);
     var
@@ -568,7 +582,8 @@ begin
   for i := 0 to High(noteObjs) do begin
    CheckDbResult(ncoll.Remove(noteObjs[i]));
   end;
-
+  wfcoll:=conn.AdmGetWorkFlowSchemeCollection;
+  wfcoll.ForAll(@WFPatch);
   writeln('DONE');
   conn.Finalize;
 end;
