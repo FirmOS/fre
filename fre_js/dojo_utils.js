@@ -818,6 +818,7 @@ dojo.declare("FIRMOS.uiHandler", null, {
     var form = dijit.byId(formId);
     var trs=dojo.query('tr[firmosGroup~="'+gId+'"]',form.domeNode);
     for (var i=0; i<trs.length; i++) {
+      if (trs[i]._depHidden) continue; //skip dependent hidden rows
       dojo.style(trs[i],'display',displayStyle);
     }
     form.handleContentChange();
@@ -3853,7 +3854,7 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     var res = this.inherited(arguments);
     var children = this.getChildren();
     for (var i=0; i<children.length; i++) {
-      if (children[i].name && children[i]._ignore && res[children[i].name]) {
+      if (children[i].name && children[i]._ignore && !(typeof res[children[i].name]=='undefined')) {
         delete res[children[i].name];
       }
     }
@@ -4404,6 +4405,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
       if (domElem && (forceHide || !ignoreVis)) {
         if (doHide) {
           dojo.style(domElem,'display','none');
+          domElem._depHidden = true;
           elem._ignore = true;
           if (elem.get('required')) {
             elem._required = true;
@@ -4414,6 +4416,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
           }
         } else {
           dojo.style(domElem,'display','');
+          domElem._depHidden = false;
           if (elem._ignore) {
             delete elem._ignore;
           }
