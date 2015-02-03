@@ -622,8 +622,8 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname');
-      //AddMatchingReferencedField(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false); //FIXXME - Heli - please implement me
-      AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'uid','zid','',false);
+      //AddMatchingReferencedField(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
+      AddMatchingReferencedFieldArray(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
     end;
     dc := session.NewDerivedCollection('VNIC_CHOOSER');
     with dc do begin
