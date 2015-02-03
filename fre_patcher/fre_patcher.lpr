@@ -1685,12 +1685,11 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      vm:=TFRE_DB_VMACHINE.CreateForDB;
      vm.SetDomainID(g_domain_id);
      vm.ObjectName:=name;
-     vm.key:=name;
      vm.vncHost:=mgmt_ip;
      vm.vncPort:=port;
-     vm.MemoryMB:=memory_mb;
-     vm.CpuCores:=2;
-     vm.CpuSockets:=2;
+     vm.Field('ram').asint32:=memory_mb;
+     vm.Field('cores').asint16:=2;
+     vm.Field('Sockets').asint16:=2;
      vm.Field('serviceParent').AsObjectLink:=zone_id;
      vm.Field('zoneid').AsObjectLink:=zone_id;
      vm.Field('uniquephysicalid').asstring := TFRE_DB_VMACHINE.ClassName + '_' + vm.ObjectName + '@' + zone_id.AsHexString;
@@ -2416,6 +2415,7 @@ begin
   AddIPV4('10.1.0.119/24',link_id);
   e0_id    := link_id;
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'igb1',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'0c:c4:7a:14:1c:9b','generic');
+  e1_id    := link_id;
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   domainsds_id  := CreateParentDatasetwithStructure('parentds','syspool',pool_id,rootds_id);
 
@@ -2439,14 +2439,12 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'18:a6:35:a1:29:fd','vm','VM 1');
   CreateVM(zone_id,'SSDB qemulin2','10.1.0.211',5901,link_id,40960,4096);
 
-  zone_id  := CreateZone('demossd_c',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'461fe5b2d584f7a8a2a7c9b6ec10f8d0');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a4:94:40:69:76:79','mgmt','Mgmt Lan');
+  zone_id  := CreateZone('demo_fw',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'461fe5b2d584f7a8a2a7c9b6ec10f8d0');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a4:94:40:69:76:79','Lan','Lan');
   AddIPV4('10.1.0.212/24',link_id);
-  AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'3c:9e:28:56:1c:ac','vm','VM 0');
-  CreateVM(zone_id,'SSDC qemulin1','10.1.0.212',5900,link_id,40960,4096);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm1',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a4:50:23:c6:32:f2','vm','VM 1');
-  CreateVM(zone_id,'SSDC qemulin2','10.1.0.212',5901,link_id,40960,4096);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,e1_id,0,0,CFRE_DB_NullGUID,'9c:26:9c:38:9d:62','Internet','Internet');
+  AddIPV4('91.114.28.44/29',link_id);
+  AddRoutingIPV4('default','91.114.28.41',zone_id,'Default Route');
 
 
   host_id  := CreateHost('FirmboxOffice',dc_id,'00:25:90:ea:b5:e6');
