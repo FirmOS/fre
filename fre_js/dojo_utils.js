@@ -1405,7 +1405,7 @@ dojo.declare("FIRMOS.Store", null, {
   },
   getChildren: function(parent) {
     args = dojo.clone(this._orgArgs);
-    args.id = this.id + '_' + this.getIdentity(parent);
+    args.id = this.id + '@' + this.getIdentity(parent);
     var childStore = new FIRMOS.Store(args);
     childStore.parent = parent;
     childStore.parentStore = this;
