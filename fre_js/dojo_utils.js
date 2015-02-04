@@ -1405,7 +1405,7 @@ dojo.declare("FIRMOS.Store", null, {
   },
   getChildren: function(parent) {
     args = dojo.clone(this._orgArgs);
-    args.id = this.id + '_' + this.getItemIdentity(parent);
+    args.id = this.id + '_' + this.getIdentity(parent);
     var childStore = new FIRMOS.Store(args);
     childStore.parent = parent;
     childStore.parentStore = this;
@@ -1439,7 +1439,7 @@ dojo.declare("FIRMOS.Store", null, {
     var params = dojo.clone(this.getParams);
     dojo.mixin(params, this.params_);
     if (this.parent) {
-      params.parentid = this.getItemIdentity(this.parent);
+      params.parentid = this.getIdentity(this.parent).split('@');
     }
 
     //if (args.query) {
