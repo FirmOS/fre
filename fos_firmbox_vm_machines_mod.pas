@@ -717,6 +717,8 @@ begin
      CreateModuleText(conn,'vm_form_network_2','Interface 2');
      CreateModuleText(conn,'vm_form_network_3','Interface 3');
      CreateModuleText(conn,'vm_form_network_4','Interface 4');
+
+     CreateModuleText(conn,'vm_form_network_configure_button','Configure');
    end;
 end;
 
@@ -961,15 +963,27 @@ begin
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_1'),'net1');
   block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net1',false);
+  sf:=CWSF(@WEB_AddVMConfigureNetwork);
+  sf.AddParam.Describe('id','net1');
+  block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_configure_button'),sf);
   (block.GetFormElement('net1.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).addDependentInput('net2','',fdv_hidden);
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_2'),'net2');
   block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net2',false);
+  sf:=CWSF(@WEB_AddVMConfigureNetwork);
+  sf.AddParam.Describe('id','net2');
+  block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_configure_button'),sf);
   (block.GetFormElement('net2.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).addDependentInput('net3','',fdv_hidden);
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_3'),'net3');
   block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net3',false);
+  sf:=CWSF(@WEB_AddVMConfigureNetwork);
+  sf.AddParam.Describe('id','net3');
+  block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_configure_button'),sf);
   (block.GetFormElement('net3.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).addDependentInput('net4','',fdv_hidden);
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_4'),'net4');
   block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net4',false);
+  sf:=CWSF(@WEB_AddVMConfigureNetwork);
+  sf.AddParam.Describe('id','net4');
+  block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_configure_button'),sf);
 
   res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
 
