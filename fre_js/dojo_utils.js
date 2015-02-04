@@ -3682,7 +3682,7 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
   getInputBlockById: function(fieldname) {
     var iblocks=dojo.query('.firmosFormBlock', this.domNode);
     for (var i=0; i<iblocks.length; i++) {
-      if (iblocks[i].id = fieldname) {
+      if (iblocks[i].id == fieldname) {
         return iblocks[i];
       }
     }
