@@ -625,7 +625,7 @@ begin
       //AddMatchingReferencedField(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
       AddMatchingReferencedFieldArray(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
     end;
-    dc := session.NewDerivedCollection('VNIC_CHOOSER');
+    dc := session.NewDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC);
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       SetDeriveTransformation(transform);
@@ -709,11 +709,14 @@ begin
 
      CreateModuleText(conn,'vm_create_error_cap','Error: Add VM Service');
      CreateModuleText(conn,'vm_create_error_msg_cpu_config','Cores * Threads * Sockets can not exceed 64.');
+     CreateModuleText(conn,'vm_create_error_msg_net_interface_used','Each network interface can be used only once.');
+     CreateModuleText(conn,'vm_create_error_msg_net_interface_used_by_vm','The VNIC %vnic_str% is already used by another VM.');
 
-     CreateModuleText(conn,'vm_drives','Drives');
-     CreateModuleText(conn,'vm_network','Network');
-     CreateModuleText(conn,'vm_drives_button','Configure');
-     CreateModuleText(conn,'vm_network_button','Configure');
+     CreateModuleText(conn,'vm_form_network_group','Network');
+     CreateModuleText(conn,'vm_form_network_1','Interface 1');
+     CreateModuleText(conn,'vm_form_network_2','Interface 2');
+     CreateModuleText(conn,'vm_form_network_3','Interface 3');
+     CreateModuleText(conn,'vm_form_network_4','Interface 4');
    end;
 end;
 
@@ -916,6 +919,9 @@ var
   res                  : TFRE_DB_FORM_DIALOG_DESC;
   dc                   : IFRE_DB_DERIVED_COLLECTION;
   zoneId               : TFRE_DB_String;
+  ch                   : TFRE_DB_INPUT_CHOOSER_DESC;
+  block                : TFRE_DB_INPUT_BLOCK_DESC;
+  nicScheme: IFRE_DB_SchemeObject;
 begin
   if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
@@ -939,6 +945,7 @@ begin
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   GetSystemScheme(TFRE_DB_VMACHINE,scheme);
+  GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,true,false);
   res.SetElementValue('cores','1');
   res.SetElementValue('threads','1');
@@ -946,18 +953,23 @@ begin
   (res.GetFormElement('ram').Implementor_HC as TFRE_DB_INPUT_NUMBER_DESC).setMinMax(getMinimumRAM,getAvailableRAM);
   res.SetElementValue('ram',IntToStr(getMinimumRAM));
 
-  sf:=CWSF(@WEB_AddVMConfigureDrives);
-  group.AddInputButton.Describe(FetchModuleTextShort(ses,'vm_form_drives'),FetchModuleTextShort(ses,'vm_form_drives_button'),sf);
-  sf:=CWSF(@WEB_AddVMConfigureNetwork);
-  group.AddInputButton.Describe(FetchModuleTextShort(ses,'vm_form_network'),FetchModuleTextShort(ses,'vm_form_network_button'),sf);
-
-  dc:=ses.FetchDerivedCollection('VNIC_CHOOSER');
+  dc:=ses.FetchDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC);
   dc.Filters.RemoveFilter('zone');
   dc.Filters.AddUIDFieldFilter('zone','zid',[FREDB_H2G(zoneId)],dbnf_OneValueFromFilter);
-  //dc.Filters.AddRootNodeFilter('zone','uid',conn.GetReferences(FREDB_H2G(zoneId),false,'','datalinkParent'),dbnf_OneValueFromFilter);
 
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_form_network_group'),true,false);
 
-  res.AddChooser.Describe('NETWORK','net',dc.GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_1'),'net1');
+  block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net1',false);
+  (block.GetFormElement('net1.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).addDependentInput('net2','',fdv_hidden);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_2'),'net2');
+  block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net2',false);
+  (block.GetFormElement('net2.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).addDependentInput('net3','',fdv_hidden);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_3'),'net3');
+  block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net3',false);
+  (block.GetFormElement('net3.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).addDependentInput('net4','',fdv_hidden);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_4'),'net4');
+  block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net4',false);
 
   res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
 
@@ -1066,13 +1078,21 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  sdomain     : TFRE_DB_GUID;
-  coll        : IFRE_DB_COLLECTION;
-  vmService   : TFRE_DB_VMACHINE;
-  zone        : TFRE_DB_ZONE;
-  idx         : String;
-  schemeObject: IFRE_DB_SchemeObject;
-  data        : IFRE_DB_Object;
+  sdomain          : TFRE_DB_GUID;
+  coll,nicColl     : IFRE_DB_COLLECTION;
+  vmService        : TFRE_DB_VMACHINE;
+  zone             : TFRE_DB_ZONE;
+  idx              : String;
+  schemeObject     : IFRE_DB_SchemeObject;
+  data             : IFRE_DB_Object;
+  i,j              : Integer;
+  netInterfaces    : TFRE_DB_GUIDArray;
+  netInterfaceObjs : IFRE_DB_ObjectArray;
+  interfaceGuid    : TFRE_DB_GUID;
+  netObj           : IFRE_DB_Object;
+  nicScheme        : IFRE_DB_SchemeObject;
+  nicObj           : TFRE_DB_VMACHINE_NIC;
+  vnic             : IFRE_DB_Object;
 begin
   if input.FieldPathExists('data.zone') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.FieldPath('data.zone').AsString),TFRE_DB_ZONE,zone));
@@ -1090,15 +1110,38 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
+  nicColl:=conn.GetCollection(CFRE_DB_VM_COMPONENTS_COLLECTION);
 
-  if not GFRE_DBI.GetSystemScheme(TFRE_DB_VMACHINE,schemeObject) then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'the scheme [%s] is unknown!',[TFRE_DB_VMACHINE]);
-
+  GetSystemScheme(TFRE_DB_VMACHINE,schemeObject);
+  GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
 
   data:=input.Field('data').AsObject;
+  //check cpu config
   if (data.Field('cores').AsInt16 * data.Field('threads').AsInt16 * data.Field('sockets').AsInt16>64) then begin
     Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),FetchModuleTextShort(ses,'vm_create_error_msg_cpu_config'),fdbmt_error);
     exit;
+  end;
+  //check network
+  SetLength(netInterfaces,0);
+  SetLength(netInterfaceObjs,4);
+  for i := 1 to 4 do begin
+    netObj:=data.Field('net'+IntToStr(i)).AsObject;
+    if netObj.FieldExists('nic') and (netObj.Field('nic').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+      //check if already used
+      interfaceGuid:=FREDB_H2G(netObj.Field('nic').AsString);
+      for j := 0 to High(netInterfaces) do begin
+        if netInterfaces[j]=interfaceGuid then begin
+          Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used'),fdbmt_error);
+          exit;
+        end;
+      end;
+      SetLength(netInterfaces,Length(netInterfaces)+1);
+      netInterfaces[Length(netInterfaces)-1]:=interfaceGuid;
+      nicObj:=TFRE_DB_VMACHINE_NIC.CreateForDB;
+      nicScheme.SetObjectFieldsWithScheme(netObj,nicObj,true,conn);
+      netInterfaceObjs[Length(netInterfaces)-1]:=nicObj;
+    end;
+    data.DeleteField('net'+IntToStr(i));
   end;
 
   vmService:=TFRE_DB_VMACHINE.CreateForDB;
@@ -1113,10 +1156,21 @@ begin
     Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_exists_cap'),FetchModuleTextShort(ses,'vm_create_error_exists_msg'),fdbmt_error);
     exit;
   end;
+  for i := 0 to High(netInterfaces) do begin
+    if nicColl.ExistsIndexedText(netInterfaceObjs[i].Field('nic').AsString + '@' + zone.UID_String)<>0 then begin
+      CheckDbResult(conn.Fetch(netInterfaceObjs[i].Field('nic').AsObjectLink,vnic));
+      Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),StringReplace(FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used_by_vm'),'%vnic_str%',vnic.Field('objname').AsString,[rfReplaceAll]),fdbmt_error);
+      exit;
+    end;
+  end;
 
-  CheckDbResult(coll.Store(vmService));
+  CheckDbResult(coll.Store(vmService.CloneToNewObject()));
+  for i := 0 to High(netInterfaces) do begin
+    netInterfaceObjs[i].Field('serviceParent').AsObjectLink:=vmService.UID;
+    netInterfaceObjs[i].Field('uniquephysicalid').asstring := netInterfaceObjs[i].Field('nic').AsString + '@' + zone.UID_String;
+    CheckDbResult(nicColl.Store(netInterfaceObjs[i]));
+  end;
 
-  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
