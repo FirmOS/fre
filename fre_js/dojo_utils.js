@@ -3679,6 +3679,22 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     this.groupRequiredFields[path].required = required;
   },
 
+  getInputBlockById: function(fieldname) {
+    var iblocks=dojo.query('.firmosFormBlock', this.domNode);
+    for (var i=0; i<iblocks.length; i++) {
+      if (iblocks[i].id = fieldname) {
+        return iblocks[i];
+      }
+    }
+  },
+  getInputBlockChildren: function(block) {
+    var elems = eval(block.getAttribute('childIds'));
+    for (var i=0;i<elems.length;i++) {
+      elems[i]=dijit.byId(elems[i]);
+    }
+    return elems;
+  },
+
   getFieldEmptyValue: function(field) {
     if (field.isInstanceOf(FIRMOS.BoolCheckBox)) {
       return 'false';
@@ -3850,16 +3866,10 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     }
   },
   
-  _getValueAttr: function() {
-    var res = this.inherited(arguments);
-    var children = this.getChildren();
-    for (var i=0; i<children.length; i++) {
-      if (children[i].name && children[i]._ignore && !(typeof res[children[i].name]=='undefined')) {
-        delete res[children[i].name];
-      }
-    }
-    return res;
-  },
+  //_getValueAttr: function() {
+  //  var res = this.inherited(arguments);
+  //  return res;
+  //},
 
   _handleFiles: function(classname, functionname, uidPath, params, hiddenParams, isDialog) {
     var children = this.getChildren();
@@ -4309,12 +4319,17 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
   },
   _updateDepField: function(fieldname,fielddef,forceHide,form) {
     var elem = form.getInputById(fieldname);
+    var isBlockInput = false;
+    if (!elem) {
+      elem = form.getInputBlockById(fieldname);
+      isBlockInput = true;
+    }
     if (elem) {
       var doHide = true;
       var ignoreVis = true;
       var resetLabel = true;
       var resetValidator = true;
-      var labelElem = dojo.byId(elem.id+'_label');
+      var labelElem = dojo.byId(fieldname+'_label');
 
       for (var i=0; i<fielddef.length; i++) {
         if (fielddef[i].value == this.value) {
@@ -4323,7 +4338,6 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
             doHide = (fielddef[i].visible=='HIDDEN');
           }
           if (fielddef[i].caption!='') { //CAPTION
-            var labelElem = dojo.byId(elem.id+'_label');
             if (!labelElem._orgLabel) {
               labelElem._orgLabel = labelElem.innerHTML;
             }
@@ -4371,7 +4385,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
         }
       }
 
-      if (labelElem._orgLabel && resetLabel) {
+      if (labelElem && labelElem._orgLabel && resetLabel) {
         labelElem.innerHTML = labelElem._orgLabel;
         delete labelElem._orgLabel;
       }
@@ -4398,7 +4412,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
 
       doHide = forceHide || doHide;
 
-      var domElem = elem.domNode;
+      var domElem = elem.domNode || elem;
       while (domElem && domElem.tagName!='TR') {
         domElem = domElem.parentNode;
       }
@@ -4406,26 +4420,37 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
         if (doHide) {
           dojo.style(domElem,'display','none');
           domElem._depHidden = true;
-          elem._ignore = true;
-          if (elem.get('required')) {
-            elem._required = true;
-            elem.set('required',false);
+          if (isBlockInput) {
+            var elems = form.getInputBlockChildren(elem);
+          } else {
+            var elems = [elem];
           }
-          if (elem.isInstanceOf(FIRMOS.FilteringSelect)) {
-            elem.hide(form);
+          for (var i=0; i<elems.length; i++) {
+            elems[i].set('value',form.getFieldEmptyValue(elems[i]));
+            if (elems[i].get('required')) {
+              elems[i]._required = true;
+              elems[i].set('required',false);
+            }
+            if (elems[i].isInstanceOf(FIRMOS.FilteringSelect)) {
+              elems[i].hide(form);
+            }
           }
         } else {
           dojo.style(domElem,'display','');
           domElem._depHidden = false;
-          if (elem._ignore) {
-            delete elem._ignore;
+          if (isBlockInput) {
+            var elems = form.getInputBlockChildren(elem);
+          } else {
+            var elems = [elem];
           }
-          if (elem._required) {
-            elem.set('required',elem._required);
-            delete elem._required;
-          }
-          if (elem.isInstanceOf(FIRMOS.FilteringSelect)) {
-            elem.unhide(form);
+          for (var i=0; i<elems.length; i++) {
+            if (elems[i]._required) {
+              elems[i].set('required',elems[i]._required);
+              delete elem._required;
+            }
+            if (elems[i].isInstanceOf(FIRMOS.FilteringSelect)) {
+              elems[i].unhide(form);
+            }
           }
         }
       }
