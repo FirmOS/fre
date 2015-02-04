@@ -3689,10 +3689,14 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
   },
   getInputBlockChildren: function(block) {
     var elems = eval(block.getAttribute('childIds'));
+    var res = [];
     for (var i=0;i<elems.length;i++) {
-      elems[i]=dijit.byId(elems[i]);
+      var widget=dijit.byId(elems[i]);
+      if (widget) {
+        res.push(widget);
+      }
     }
-    return elems;
+    return res;
   },
 
   getFieldEmptyValue: function(field) {
@@ -4427,6 +4431,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
           }
           for (var i=0; i<elems.length; i++) {
             elems[i].set('value',form.getFieldEmptyValue(elems[i]));
+            elems[i].onChange();
             if (elems[i].get('required')) {
               elems[i]._required = true;
               elems[i].set('required',false);
