@@ -627,7 +627,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname');
-      //AddMatchingReferencedField(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
+      AddMatchingReferencedField(['TFRE_DB_VMACHINE_NIC<NIC'],'uid','vmid','',false,dt_string,false,false,1,'','OK');
       AddMatchingReferencedFieldArray(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
     end;
     dc := session.NewDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC);
@@ -636,6 +636,7 @@ begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'');
       Filters.AddSchemeObjectFilter('type',[TFRE_DB_DATALINK_VNIC.ClassName]);
+      Filters.AddStringFieldFilter('used','vmid','OK',dbft_EXACT);
     end;
   end;
 end;
