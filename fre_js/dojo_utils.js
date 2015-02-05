@@ -2491,6 +2491,9 @@ dojo.declare("FIRMOS.FormButton", dijit.form.Button, {
       case 'button': 
         this.handleTypeButton();
         break;
+      case 'form':
+        this.handleTypeForm();
+        break;
     }
   },
   cleanUp: function() {
@@ -2513,6 +2516,9 @@ dojo.declare("FIRMOS.FormButton", dijit.form.Button, {
       }
     }
     return widget;
+  },
+  handleTypeForm: function() {
+    G_SERVER_COM.callServerFunction(this.actionClassname,this.actionFunctionname,this.actionUidPath,this.actionParams,this.sfCallback.bind(this));
   },
   handleTypeButton: function() {
     if (this.closeDialog) {
