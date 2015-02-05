@@ -2478,9 +2478,11 @@ dojo.declare("FIRMOS.GridBase", null, {
 
 //FormButton
 dojo.declare("FIRMOS.FormButton", dijit.form.Button, {
+  _used: false,
   onClick: function(evt) {
     evt.preventDefault();
     dojo.stopEvent(evt);
+    this._used = true;
     this._getWidget().disableAllButtons();
     switch (this.type) {
       case 'submit': 
@@ -2489,6 +2491,15 @@ dojo.declare("FIRMOS.FormButton", dijit.form.Button, {
       case 'button': 
         this.handleTypeButton();
         break;
+    }
+  },
+  cleanUp: function() {
+    if (this._used) {
+      this._used = false;
+      if (this.cleanupClassname) {
+        alert('CALL CLEANUP');
+        G_SERVER_COM.callServerFunction(this.cleanupClassname,this.cleanupFunctionname,this.cleanupUidPath,this.cleanupParams);
+      }
     }
   },
   _getWidget: function(dialogOnly) {
@@ -4037,7 +4048,8 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
         return children[i];
       }
     }
-    return null;
+    var widget = dijit.byId(id);
+    return widget;
   }
 });
 
@@ -4438,6 +4450,9 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
             }
             if (elems[i].isInstanceOf(FIRMOS.FilteringSelect)) {
               elems[i].hide(form);
+            }
+            if (elems[i].isInstanceOf(FIRMOS.FormButton)) {
+              elems[i].cleanUp();
             }
           }
         } else {
