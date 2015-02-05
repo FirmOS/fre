@@ -39,6 +39,7 @@ type
     function  getRAMSteps               :Integer;
     function  getAvailableCPU           :Integer;
     function  _addVMChooseZone          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    procedure _cleanupAddVMTmpData      (const ses: IFRE_DB_Usersession);
   protected
     procedure       SetupAppModuleStructure   ; override;
   public
@@ -57,8 +58,10 @@ type
     function  WEB_VMSC                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_VM_Details                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_AddVM                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddVMCleanup                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_AddVMConfigureDrives        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_AddVMConfigureNetwork       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddVMConfigureNetworkStore  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_AddVMConfigureNetworkCleanup(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_CreateVM                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_StartVM                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -70,10 +73,10 @@ type
 
   TFRE_FIRMBOX_VM_RESOURCES_MOD = class (TFRE_DB_APPLICATION_MODULE)
   protected
-    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
-    procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   public
+    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
+    procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     class procedure InstallUserDBObjects      (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   published
@@ -90,13 +93,13 @@ type
 
   TFRE_FIRMBOX_VM_NETWORK_MOD = class (TFRE_DB_APPLICATION_MODULE)
   protected
-    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
     procedure       SetupAppModuleStructure   ; override;
-    procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
   public
+    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
+    procedure       MySessionInitializeModule (const session : TFRE_DB_UserSession);override;
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   published
-    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     function        WEB_DatalinkContent       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DatalinkMenu          (const input:IFRE_DB_OBject; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DatalinkCreateStub    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -105,7 +108,7 @@ type
   { TFRE_FIRMBOX_VM_DISK }
 
   TFRE_FIRMBOX_VM_DISK = class (TFRE_DB_ObjectEx)
-  protected
+  public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
@@ -113,7 +116,7 @@ type
   { TFRE_FIRMBOX_VM_ISO }
 
   TFRE_FIRMBOX_VM_ISO = class (TFRE_DB_ObjectEx)
-  protected
+  public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
@@ -720,7 +723,14 @@ begin
      CreateModuleText(conn,'vm_form_network_3','Interface 3');
      CreateModuleText(conn,'vm_form_network_4','Interface 4');
 
-     CreateModuleText(conn,'vm_form_network_configure_button','Configure');
+     CreateModuleText(conn,'vm_form_network_advanced_button','Advanced');
+     CreateModuleText(conn,'vm_form_network_advanced_diag_cap','Advanced Network Settings');
+     CreateModuleText(conn,'vm_form_network_advanced_diag_ok','OK');
+
+     CreateModuleText(conn,'vm_form_network_advanced_ip_net','IP/Subnet');
+     CreateModuleText(conn,'vm_form_network_advanced_gateway','Gateway');
+     CreateModuleText(conn,'vm_form_network_advanced_dns1','DNS1');
+     CreateModuleText(conn,'vm_form_network_advanced_dns2','DNS2');
    end;
 end;
 
@@ -931,7 +941,8 @@ var
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_new_caption'),600,true,true,false);
+  _cleanupAddVMTmpData(ses);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_new_caption'),600,false,true,false);
 
   sf:=CWSF(@WEB_CreateVM);
 
@@ -952,6 +963,8 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  sf:=CWSF(@WEB_AddVMCleanup);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('close')),sf,fdbbt_close);
 
   GetSystemScheme(TFRE_DB_VMACHINE,scheme);
   GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
@@ -974,7 +987,7 @@ begin
   sf.AddParam.Describe('id','net1');
   cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
   cusf.AddParam.Describe('id','net1');
-  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_configure_button'),sf,cusf);
+  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
   ch:=(block.GetFormElement('net1.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
   ch.addDependentInput('net2','',fdv_hidden);
   ch.AddDependence(button.contentId,false);
@@ -984,7 +997,7 @@ begin
   sf.AddParam.Describe('id','net2');
   cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
   cusf.AddParam.Describe('id','net1');
-  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_configure_button'),sf,cusf);
+  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
   ch:=(block.GetFormElement('net2.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
   ch.addDependentInput('net3','',fdv_hidden);
   ch.AddDependence(button.contentId,false);
@@ -994,7 +1007,7 @@ begin
   sf.AddParam.Describe('id','net3');
   cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
   cusf.AddParam.Describe('id','net1');
-  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_configure_button'),sf,cusf);
+  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
   ch:=(block.GetFormElement('net3.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
   ch.addDependentInput('net4','',fdv_hidden);
   ch.AddDependence(button.contentId,false);
@@ -1004,7 +1017,7 @@ begin
   sf.AddParam.Describe('id','net4');
   cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
   cusf.AddParam.Describe('id','net1');
-  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_configure_button'),sf,cusf);
+  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
   ch:=(block.GetFormElement('net4.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
   ch.AddDependence(button.contentId,false);
 
@@ -1089,6 +1102,13 @@ begin
   //Result:=res;
 end;
 
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMCleanup(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  CheckClassVisibility4MyDomain(ses);
+  _cleanupAddVMTmpData(ses);
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
 function TFRE_FIRMBOX_VM_MACHINES_MOD._addVMChooseZone(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   res: TFRE_DB_FORM_DIALOG_DESC;
@@ -1101,6 +1121,15 @@ begin
   res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'zone',ses.FetchDerivedCollection('VM_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
   Result:=res;
+end;
+
+procedure TFRE_FIRMBOX_VM_MACHINES_MOD._cleanupAddVMTmpData(const ses: IFRE_DB_Usersession);
+var
+  i: Integer;
+begin
+  for i := 1 to 4 do begin
+    ses.GetSessionModuleData(ClassName).DeleteField('AddVMNC_net' + IntToStr(i));
+  end;
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.canAddVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const zone: TFRE_DB_ZONE): Boolean;
@@ -1117,12 +1146,45 @@ begin
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureNetwork(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res      : TFRE_DB_FORM_DIALOG_DESC;
+  scheme   : IFRE_DB_SchemeObject;
+  sf       : TFRE_DB_SERVER_FUNC_DESC;
+  block    : TFRE_DB_INPUT_BLOCK_DESC;
+  validator: IFRE_DB_ClientFieldValidator;
 begin
-  Result:=GFRE_DB_NIL_DESC;
+  CheckClassVisibility4MyDomain(ses);
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_diag_cap'),600,true,true,false);
+
+  GetSystemScheme(TFRE_DB_IPV4_HOSTNET,scheme);
+  block:=res.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_ip_net'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ip_net'),ses,'ip_net',false);
+  GFRE_DBI.GetSystemClientFieldValidator('ip',validator);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_gateway'),'gateway',false,false,false,false,'',validator);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_dns1'),'dns1',false,false,false,false,'',validator);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_dns2'),'dns2',false,false,false,false,'',validator);
+
+  sf:=CWSF(@WEB_AddVMConfigureNetworkStore);
+  sf.AddParam.Describe('id',input.Field('id').AsString);
+  res.AddButton.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_diag_ok'),sf,fdbbt_submit);
+
+  if ses.GetSessionModuleData(ClassName).FieldExists('AddVMNC_' + input.Field('id').AsString) then begin
+    res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddVMNC_' + input.Field('id').AsString).AsObject,ses);
+  end;
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureNetworkStore(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  ses.GetSessionModuleData(ClassName).Field('AddVMNC_' + input.Field('id').AsString).AsObject:=input.Field('data').AsObject.CloneToNewObject();
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureNetworkCleanup(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
+  ses.GetSessionModuleData(ClassName).DeleteField('AddVMNC_' + input.Field('id').AsString);
   Result:=GFRE_DB_NIL_DESC;
 end;
 
@@ -1143,6 +1205,10 @@ var
   nicScheme        : IFRE_DB_SchemeObject;
   nicObj           : TFRE_DB_VMACHINE_NIC;
   vnic             : IFRE_DB_Object;
+  configObj        : IFRE_DB_Object;
+  hostnet          : TFRE_DB_IPV4_HOSTNET;
+  hnScheme         : IFRE_DB_SchemeObject;
+  hnColl           : IFRE_DB_COLLECTION;
 begin
   if input.FieldPathExists('data.zone') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.FieldPath('data.zone').AsString),TFRE_DB_ZONE,zone));
@@ -1161,9 +1227,11 @@ begin
 
   coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   nicColl:=conn.GetCollection(CFRE_DB_VM_COMPONENTS_COLLECTION);
+  hnColl:=conn.GetCollection(CFRE_DB_IP_COLLECTION);
 
   GetSystemScheme(TFRE_DB_VMACHINE,schemeObject);
   GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
+  GetSystemScheme(TFRE_DB_IPV4_HOSTNET,hnScheme);
 
   data:=input.Field('data').AsObject;
   //check cpu config
@@ -1217,8 +1285,44 @@ begin
   CheckDbResult(coll.Store(vmService.CloneToNewObject()));
   for i := 0 to High(netInterfaces) do begin
     netInterfaceObjs[i].Field('serviceParent').AsObjectLink:=vmService.UID;
-    netInterfaceObjs[i].Field('uniquephysicalid').asstring := netInterfaceObjs[i].Field('nic').AsString + '@' + zone.UID_String;
-    CheckDbResult(nicColl.Store(netInterfaceObjs[i]));
+    netInterfaceObjs[i].Field('uniquephysicalid').asstring := netInterfaceObjs[i].Field('nic').AsString + '@' + vmService.UID_String;
+    if ses.GetSessionModuleData(ClassName).FieldExists('AddVMNC_net' + IntToStr(i+1)) then begin
+      configObj:=ses.GetSessionModuleData(ClassName).Field('AddVMNC_net' + IntToStr(i+1)).AsObject;
+      if configObj.FieldExists('ip_net') and (configObj.Field('ip_net').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+        if configObj.FieldPathExists('ip_net.ip') and (configObj.FieldPath('ip_net.ip').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+          hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+          hnScheme.SetObjectFieldsWithScheme(configObj.Field('ip_net').AsObject,hostnet,true,conn);
+          hostnet.Field('uniquephysicalid').AsString:='ip@'+netInterfaceObjs[i].UID_String;
+          CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
+          netInterfaceObjs[i].Field('ip').AsObjectLink:=hostnet.UID;
+        end;
+      end;
+      if configObj.FieldExists('gateway') and (configObj.Field('gateway').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+        hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+        hostnet.Field('ip').AsString:=configObj.Field('gateway').AsString;
+        hostnet.Field('uniquephysicalid').AsString:='gateway@'+netInterfaceObjs[i].UID_String;
+        CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
+        netInterfaceObjs[i].Field('gateway').AsObjectLink:=hostnet.UID;
+      end;
+      if configObj.FieldExists('dns1') and (configObj.Field('dns1').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+        hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+        hostnet.Field('ip').AsString:=configObj.Field('dns1').AsString;
+        hostnet.Field('uniquephysicalid').AsString:='dns1@'+netInterfaceObjs[i].UID_String;
+        CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
+        netInterfaceObjs[i].Field('dns_ip0').AsObjectLink:=hostnet.UID;
+      end;
+      if configObj.FieldExists('dns2') and (configObj.Field('dns1').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+        hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+        hostnet.Field('ip').AsString:=configObj.Field('dns2').AsString;
+        hostnet.Field('uniquephysicalid').AsString:='dns2@'+netInterfaceObjs[i].UID_String;
+        CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
+        netInterfaceObjs[i].Field('dns_ip1').AsObjectLink:=hostnet.UID;
+      end;
+      CheckDbResult(nicColl.Store(netInterfaceObjs[i].CloneToNewObject()));
+    end;
+
+    //scheme.AddSchemeField('hostname',fdbft_String);
+
   end;
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();

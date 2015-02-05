@@ -715,7 +715,7 @@ begin
   AddApplicationModule(fVoIPMod);
   fVMMod:=TFRE_FIRMBOX_VM_MACHINES_MOD.create;
   AddApplicationModule(fVMMod);
-  InitModuleDesc('infrastructure_description')
+  InitModuleDesc('infrastructure_description');
 end;
 
 class procedure TFOS_INFRASTRUCTURE_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
