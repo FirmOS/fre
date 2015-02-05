@@ -732,6 +732,7 @@ begin
      CreateModuleText(conn,'vm_form_network_advanced_gateway','Gateway');
      CreateModuleText(conn,'vm_form_network_advanced_dns1','DNS1');
      CreateModuleText(conn,'vm_form_network_advanced_dns2','DNS2');
+     CreateModuleText(conn,'vm_form_network_advanced_hostname','Hostname');
    end;
 end;
 
@@ -1159,6 +1160,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_diag_cap'),600,true,true,false);
 
   GetSystemScheme(TFRE_DB_IPV4_HOSTNET,scheme);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_hostname'),'hostname');
   block:=res.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_ip_net'));
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ip_net'),ses,'ip_net',false);
   GFRE_DBI.GetSystemClientFieldValidator('ip',validator);
@@ -1289,6 +1291,9 @@ begin
     netInterfaceObjs[i].Field('uniquephysicalid').asstring := netInterfaceObjs[i].Field('nic').AsString + '@' + vmService.UID_String;
     if ses.GetSessionModuleData(ClassName).FieldExists('AddVMNC_net' + IntToStr(i+1)) then begin
       configObj:=ses.GetSessionModuleData(ClassName).Field('AddVMNC_net' + IntToStr(i+1)).AsObject;
+      if configObj.FieldExists('hostname') and (configObj.Field('hostname').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+        netInterfaceObjs[i].Field('hostname').AsString:=configObj.Field('hostname').AsString;
+      end;
       if configObj.FieldExists('ip_net') and (configObj.Field('ip_net').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
         if configObj.FieldPathExists('ip_net.ip') and (configObj.FieldPath('ip_net.ip').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
           hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
@@ -1321,8 +1326,6 @@ begin
       end;
       CheckDbResult(nicColl.Store(netInterfaceObjs[i].CloneToNewObject()));
     end;
-
-    //scheme.AddSchemeField('hostname',fdbft_String);
 
   end;
 
