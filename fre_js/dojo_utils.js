@@ -495,14 +495,14 @@ dojo.declare("FIRMOS.uiHandler", null, {
   updateStore: function(storeId, data) {
     var store = this.getStoreById(storeId);
     if (store) {
-      if (data.updated) {
-        store.store.updateItems(data.updated);
-      }
       if (data.deleted) {
         store.store.deleteItems(data.deleted);
       }
       if (data.new) {
         store.store.newItems(data.new);
+      }
+      if (data.updated) {
+        store.store.updateItems(data.updated);
       }
     } else {
 //      console.warn('Store ' + storeId + ' not registered');
@@ -1407,6 +1407,7 @@ dojo.declare("FIRMOS.Store", null, {
     args = dojo.clone(this._orgArgs);
     args.id = this.id + '@' + this.getIdentity(parent);
     var childStore = new FIRMOS.Store(args);
+    console.log('GETCHILDREN>> '+childStore.id);
     childStore.parent = parent;
     childStore.parentStore = this;
     this.childStores[this.getItemIdentity(parent)] = childStore;
@@ -1504,6 +1505,7 @@ dojo.declare("FIRMOS.Store", null, {
   },
 //FIRMOS update API
   newItems: function(data) {
+    console.log('new '+JSON.stringify(data));
     for (var i=0;i<data.length;i++) {
       var event = new Object();
       event.type = 'add';
@@ -1514,6 +1516,7 @@ dojo.declare("FIRMOS.Store", null, {
     }
   },
   deleteItems: function(data) {
+    console.log('del '+JSON.stringify(data));
     for (var i=0;i<data.length;i++) {
       var event = new Object();
       event.type = 'delete';
@@ -1524,11 +1527,13 @@ dojo.declare("FIRMOS.Store", null, {
     }
   },
   updateItems: function(data) {
+    console.log('upd '+JSON.stringify(data));
     for (var i=0; i<data.length; i++) {
       var event = new Object();
       event.type = 'update';
       event.target = data[i].item;
-      event.index = data[i].pos;
+      event.index = data[i].newpos;
+      event.previousIndex = data[i].pos;
       event.totalLength = data[i].total;
       this.onUpdate(event);
     }
