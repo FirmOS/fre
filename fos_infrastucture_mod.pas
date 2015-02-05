@@ -1260,22 +1260,23 @@ end;
 
 function TFOS_INFRASTRUCTURE_MOD.WEB_ZoneContentServices(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  zone        : TFRE_DB_ZONE;
-  res         : TFRE_DB_VIEW_LIST_DESC;
-  dc          : IFRE_DB_DERIVED_COLLECTION;
-  menu        : TFRE_DB_MENU_DESC;
-  canAdd      : Boolean;
-  template    : TFRE_DB_FBZ_TEMPLATE;
-  i           : Integer;
-  serviceClass: String;
-  exClass     : TFRE_DB_ObjectClassEx;
-  conf        : IFRE_DB_Object;
-  sf          : TFRE_DB_SERVER_FUNC_DESC;
-  submenu     : TFRE_DB_SUBMENU_DESC;
-  canDelete   : Boolean;
-  canStart    : Boolean;
-  canStop     : Boolean;
-  disabledSCs : TFRE_DB_StringArray;
+  zone          : TFRE_DB_ZONE;
+  res           : TFRE_DB_VIEW_LIST_DESC;
+  dc            : IFRE_DB_DERIVED_COLLECTION;
+  menu          : TFRE_DB_MENU_DESC;
+  canAdd        : Boolean;
+  canAddService : Boolean;
+  template      : TFRE_DB_FBZ_TEMPLATE;
+  i             : Integer;
+  serviceClass  : String;
+  exClass       : TFRE_DB_ObjectClassEx;
+  conf          : IFRE_DB_Object;
+  sf            : TFRE_DB_SERVER_FUNC_DESC;
+  submenu       : TFRE_DB_SUBMENU_DESC;
+  canDelete     : Boolean;
+  canStart      : Boolean;
+  canStop       : Boolean;
+  disabledSCs   : TFRE_DB_StringArray;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -1306,7 +1307,19 @@ begin
     if conf.Field('type').AsString='service' then begin
       canDelete:=canDelete or conn.SYS.CheckClassRight4DomainId(sr_DELETE,serviceClass,zone.DomainID);
       canStart:=canStart or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,serviceClass,zone.DomainID);
-      if conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID) then begin
+
+      case serviceClass of
+        //'TFOS_DB_CITYCOM_VOIP_SERVICE' : begin
+        //                                   Result:=fVoIPMod.WEB_AddService(input,ses,app,conn);
+        //                                 end;
+        'TFRE_DB_VMACHINE' : begin
+                               canAddService:=fVMMod.canAddVM(input,ses,app,conn,zone);
+                             end
+        else begin
+          canAddService:=conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID);
+        end;
+      end;
+      if canAddService then begin
         canAdd:=true;
         sf:=CWSF(@WEB_AddService);
         sf.AddParam.Describe('serviceClass',serviceClass);
