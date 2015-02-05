@@ -211,7 +211,7 @@ begin
     end;
   end;
   canAddHostnet:=conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
-  canAddRoute:=canAddHostnet;
+  canAddRoute:=conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_ROUTE,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_ROUTE,zone.DomainID);
 
   canAddVNIC:=conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DATALINK_VNIC,zone.DomainID);
   if isGlobal then begin
@@ -798,8 +798,11 @@ begin
   if data.FieldExists('slaac') and data.Field('slaac').AsBoolean then begin
     Result:='SLAAC';
   end else
-  if data.FieldExists('ip_net') then begin
-    Result:=data.Field('ip_net').AsString;
+  if data.FieldExists('ip') then begin
+    Result:=data.Field('ip').AsString;
+    if data.FieldExists('subnet') then begin
+      Result:=Result+'/'+data.Field('subnet').AsString;
+    end;
   end;
 end;
 
@@ -1241,12 +1244,7 @@ begin
 
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(cap,600,true,true,false);
   GFRE_DBI.GetSystemSchemeByName(dbo.Implementor_HC.ClassName,scheme);
-  if (dbo.Implementor_HC is TFRE_DB_IP_HOSTNET) and (dbo.FieldExists('gateway')) then begin //route
-    res.AddSchemeFormGroup(scheme.GetInputGroup('route'),ses);
-    res.SetElementRequired('gateway');
-  end else begin
-    res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
-  end;
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
   res.FillWithObjectValues(dbo,ses);
   sf:=CWSF(@WEB_StoreModify);
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
@@ -1324,25 +1322,23 @@ var
 begin
   conn.Fetch(FREDB_H2G(input.Field('zoneId').AsString),zone);
 
-  if not (conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_HOSTNET,zone.DomainID)) then
+  if not (conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_ROUTE,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_ROUTE,zone.DomainID)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_route_diag_cap'),600,true,true,false);
   store:=TFRE_DB_STORE_DESC.create.Describe('id');
   ch:=res.AddChooser.Describe(FetchModuleTextShort(ses,'add_route_diag_type'),'type',store,dh_chooser_combo,true);
-  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) then begin
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_ROUTE,zone.DomainID) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_route_diag_type_ipv4'),'ipv4');
-    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV4_HOSTNET.ClassName,scheme);
-    group:=res.AddSchemeFormGroup(scheme.GetInputGroup('route'),ses,false,false,'ipv4',true,true);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV4_ROUTE.ClassName,scheme);
+    group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'ipv4',true,true);
     ch.addDependentInputGroup(group,'ipv4',fdv_visible);
-    res.SetElementRequired('ipv4.gateway');
   end;
-  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) then begin
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_ROUTE,zone.DomainID) then begin
     store.AddEntry.Describe(FetchModuleTextShort(ses,'add_route_diag_type_ipv6'),'ipv6');
-    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV6_HOSTNET.ClassName,scheme);
-    group:=res.AddSchemeFormGroup(scheme.GetInputGroup('route'),ses,false,false,'ipv6',true,true);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV6_ROUTE.ClassName,scheme);
+    group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'ipv6',true,true);
     ch.addDependentInputGroup(group,'ipv6',fdv_visible);
-    res.SetElementRequired('ipv6.gateway');
   end;
   sf:=CWSF(@WEB_StoreRoute);
   sf.AddParam.Describe('zoneId',input.Field('zoneId').AsString);
@@ -1354,14 +1350,10 @@ function TFRE_FIRMBOX_NET_ROUTING_MOD.WEB_StoreRoute(const input: IFRE_DB_Object
 var
   scheme      : IFRE_DB_SchemeObject;
   zone        : IFRE_DB_Object;
-  dbo         : IFRE_DB_Object;
   coll        : IFRE_DB_COLLECTION;
-  exClass     : TFRE_DB_ObjectClassEx;
-  conf        : IFRE_DB_Object;
-
   idx         : String;
-  ipv4: Boolean;
-  route: TFRE_DB_IP_HOSTNET;
+  ipv4        : Boolean;
+  route       : TFRE_DB_IP_HOSTNET;
 begin
   conn.Fetch(FREDB_H2G(input.Field('zoneId').AsString),zone);
 
@@ -1376,11 +1368,11 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   if ipv4 then begin
-    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV4_HOSTNET.ClassName,scheme);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV4_ROUTE.ClassName,scheme);
     route:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
     route.Field('objname').AsString:=_getHostnetObjname(input.FieldPath('data.ipv4').AsObject);
   end else begin
-    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV6_HOSTNET.ClassName,scheme);
+    GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV6_ROUTE.ClassName,scheme);
     route:=TFRE_DB_IPV6_HOSTNET.CreateForDB;
     route.Field('objname').AsString:=_getHostnetObjname(input.FieldPath('data.ipv6').AsObject);
   end;
