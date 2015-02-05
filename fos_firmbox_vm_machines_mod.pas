@@ -660,6 +660,7 @@ begin
      CreateModuleText(conn,'machines_kill','Kill','','Stop the selected VM (FORCED)');
 
      CreateModuleText(conn,'vm_new_caption','New Virtual Machine');
+     CreateModuleText(conn,'vm_new_save','Create');
 
      CreateModuleText(conn,'vm_name','Name');
      CreateModuleText(conn,'vm_mem','RAM (kB)');
