@@ -1026,7 +1026,7 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       s       :string;
       b_ip    :integer;
       i       :integer;
-      r       :TFRE_DB_IPV6_HOSTNET;
+      r       :TFRE_DB_IPV6_ROUTE;
       shareobj: TFRE_DB_VIRTUAL_FILESHARE;
     begin
       cpe:=TFRE_DB_CRYPTOCPE.CreateForDB;
@@ -1085,9 +1085,9 @@ var cpe  : TFRE_DB_CRYPTOCPE;
       tnl.Field(ip6.UID.AsHexString).AsObject:=ip6;
       network.Field(tnl.ObjectName).AsObject:=tnl;
 
-      r := TFRE_DB_IPV6_HOSTNET.CreateForDB;
+      r := TFRE_DB_IPV6_ROUTE.CreateForDB;
       r.SetIPCIDR('fdd7:f47b:4605:1b0d::/64');
-      r.SetGatewayIP('fdd7:f47b:4605:02c4:0001:0000:0000:'+inttostr(zone_nr));
+      r.Field('gateway').asstring:='fdd7:f47b:4605:02c4:0001:0000:0000:'+inttostr(zone_nr);
       network.Field(r.UID_String).AsObject:=r;
 
       //tnl := TFRE_DB_DATALINK_IPTUN.CreateForDB;
@@ -1347,6 +1347,14 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     root_tmpl_uid   : TFRE_DB_GUID;
     g_vmdisk_id     : TFRE_DB_GUID;
     zone            : TFRE_DB_ZONE;
+    fwrule_coll     : IFRE_DB_COLLECTION;
+    fwpool_coll     : IFRE_DB_COLLECTION;
+    fwpoolent_coll  : IFRE_DB_COLLECTION;
+    fwnat_coll      : IFRE_DB_COLLECTION;
+    lan_link_id     : TFRE_DB_GUID;
+    int_link_id     : TFRE_DB_GUID;
+    lan_ip_id       : TFRE_DB_GUID;
+    int_ip_id       : TFRE_DB_GUID;
 
     function       CreateDC(const name:string):TFRE_DB_GUID;
     var
@@ -1630,11 +1638,11 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
 
     function AddRoutingIPV4( const ip_mask:string; const gw:string; const zone_id:TFRE_DB_GUID;const description:string=''): TFRE_DB_GUID;
     var
-      r    : TFRE_DB_IPV4_HOSTNET;
+      r    : TFRE_DB_IPV4_ROUTE;
     begin
-      r               := TFRE_DB_IPV4_HOSTNET.CreateForDB;
+      r               := TFRE_DB_IPV4_ROUTE.CreateForDB;
       r.SetIPCIDR(ip_mask);
-      r.SetGatewayIP(gw);
+      r.Field('gateway').asstring:=gw;
       r.ObjectName:=ip_mask;
       r.Field('zoneid').AsObjectLink:=zone_id;
       r.Field('serviceParent').AsObjectLink:=zone_id;
@@ -1754,6 +1762,446 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      writeln('CreateVM NET ',net.DumpToString);
      CheckDbResult(vmcomp_coll.Store(net));
 
+   end;
+
+   procedure AddFirewall(const zoned_id:TFRE_DB_GUID);
+   var fw     : TFRE_DB_FIREWALL_SERVICE;
+       r      : TFRE_DB_FIREWALL_RULE;
+       p      : TFRE_DB_FIREWALL_POOL;
+       n      : TFRE_DB_FIREWALL_NAT;
+       fw_uid : TFRE_DB_GUID;
+       fw_pool_uid : TFRE_DB_GUID;
+       nr     : integer;
+       rnr    : integer;
+       fwo    : IFRE_DB_Object;
+
+       function AddRule(const action:string; const direction:string; const ipversion:string): TFRE_DB_FIREWALL_RULE;
+       begin
+         result := TFRE_DB_FIREWALL_RULE.CreateForDB;
+         result.Field('firewall_id').AsObjectLink := fw_uid;
+         result.SetDomainID(g_domain_id);
+         result.Field('number').asuint32          := nr;
+         inc(nr);
+         result.Field('action').asstring          := action;
+         result.Field('direction').asstring       := direction;
+         result.Field('ipversion').asstring       := ipversion;
+         if action = 'block' then
+           result.Field('option_log').asboolean     := true;
+       end;
+
+       procedure SaveRule(const fwr:TFRE_DB_FIREWALL_RULE);
+       begin
+         writeln('SaveFWRule ',fwr.DumpToString);
+         CheckDbResult(fwrule_coll.Store(fwr));
+       end;
+
+
+       procedure AddInterface(const fwr:TFRE_DB_FIREWALL_RULE;const id:TFRE_DB_GUID);
+       begin
+         fwr.Field('interface').AsObjectLink:=id;
+       end;
+
+       procedure SetQuick(const fwr:TFRE_DB_FIREWALL_RULE);
+       begin
+         fwr.Field('option_quick').AsBoolean:=true;
+       end;
+
+       procedure AddProtocol(const fwr:TFRE_DB_FIREWALL_RULE;const p:string);
+       begin
+         fwr.Field('protocol').Asstring:=p;
+       end;
+
+       procedure SetKeep(const fwr:TFRE_DB_FIREWALL_RULE);
+       begin
+         fwr.Field('keep_state').asboolean:=true;
+       end;
+
+
+       function AddPool(const number:uint32; const mapping:string; const ptype:string; const direction:string; const default_group:Uint32): TFRE_DB_FIREWALL_POOL;
+       begin
+         result := TFRE_DB_FIREWALL_POOL.CreateForDB;
+         result.Field('firewall_id').AsObjectLink := fw_uid;
+         result.SetDomainID(g_domain_id);
+         result.Field('number').asuint32          := number;
+         result.Field('mapping').asstring         := mapping;
+         if mapping = 'table' then
+           result.Field('type').asstring          := ptype;
+         if mapping = 'group-map' then
+           begin
+             result.Field('direction').asstring       := direction;
+             if default_group<>0 then
+               result.Field('default_group').asuint32 := default_group;
+           end;
+       end;
+
+       procedure SavePool(const fwp:TFRE_DB_FIREWALL_POOL);
+       begin
+         writeln('SaveFWPool ',fwp.DumpToString);
+         fw_pool_uid := fwp.Uid;
+         CheckDbResult(fwpool_coll.Store(fwp));
+       end;
+
+       procedure AddSavePoolEntry(const group_map:boolean; const ip:TFRE_DB_GUID; const ip_host:boolean; const ip_not:boolean; const group:Uint32);
+       var pe : TFRE_DB_FIREWALL_POOLENTRY;
+       begin
+         if group_map then
+           pe := TFRE_DB_FIREWALL_POOLENTRY_GROUP.CreateForDB
+         else
+           pe := TFRE_DB_FIREWALL_POOLENTRY_TABLE.CreateForDB;
+         pe.Field('firewallpool_id').AsObjectLink := fw_pool_uid;
+         pe.SetDomainID(g_domain_id);
+         pe.Field('ip').AsObjectLink    := ip;
+         pe.Field('ip_host').Asboolean  := ip_host;
+         if group_map then
+           pe.Field('group').asuint32   := group
+         else
+           pe.Field('ip_not').AsBoolean := ip_not;
+         writeln('SaveFWPoolEntry ',pe.DumpToString);
+         CheckDbResult(fwpoolent_coll.Store(pe));
+       end;
+
+       function AddNAT(const command:string; const intf:TFRE_DB_GUID; const protocol : string): TFRE_DB_FIREWALL_NAT;
+       begin
+         result := TFRE_DB_FIREWALL_NAT.CreateForDB;
+         result.Field('firewall_id').AsObjectLink := fw_uid;
+         result.SetDomainID(g_domain_id);
+         result.Field('number').asuint32          := rnr;
+         inc(rnr);
+         result.Field('command').asstring         := command;
+         result.Field('protocol').asstring          := protocol;
+         result.Field('interface').AsObjectLink   := intf;
+       end;
+
+       procedure SaveNAT(const fwn:TFRE_DB_FIREWALL_NAT);
+       begin
+         writeln('SaveFWNAT ',fwn.DumpToString);
+         CheckDbResult(fwnat_coll.Store(fwn));
+       end;
+
+   begin
+     nr  := 1;
+     rnr := 1;
+
+     fw := TFRE_DB_FIREWALL_SERVICE.CreateForDB;
+     fw.SetDomainID(g_domain_id);
+     fw.Field('uniquephysicalid').asstring := TFRE_DB_FIREWALL_SERVICE.ClassName + '@' + zone_id.AsHexString;
+     fw.Field('serviceParent').AsObjectLink:=zone_id;
+     fw.Field('zoneid').AsObjectLink:=zone_id;
+     fw_uid:=fw.UID;
+     writeln('CreateFW ',fw.DumpToString);
+     CheckDbResult(svc_coll.Store(fw));
+
+     r:=AddRule('block','in','ipv4');
+     AddInterface(r,lan_link_id);
+     SaveRule(r);
+     r:=AddRule('block','in','ipv4');
+     AddInterface(r,int_link_id);
+     SaveRule(r);
+     r:=AddRule('block','out','ipv4');
+     AddInterface(r,lan_link_id);
+     SaveRule(r);
+     r:=AddRule('block','out','ipv4');
+     AddInterface(r,int_link_id);
+     SaveRule(r);
+
+     r:=AddRule('pass','out','ipv4');
+     AddInterface(r,int_link_id);
+     r.Field('src_addr').AsObjectLink:=int_ip_id;
+     r.Field('src_addr_host').asboolean:=true;
+     AddProtocol(r,'tcp/udp');
+     r.Field('dst_port_1').AsUInt16:=53;
+     SetKeep(r);
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('src_addr').AsObjectLink:=lan_ip_id;
+     r.Field('src_addr_not').asboolean:=true;
+     AddProtocol(r,'tcp/udp');
+     r.Field('dst_port_1').AsUInt16:=53;
+     SetKeep(r);
+     SaveRule(r);
+
+//     pass out quick on ce1 proto tcp/udp from ce1/32 to any port = domain keep state
+//     pass in quick on ce0 proto tcp/udp from 192.168.1.2 to any port = domain keep state
+
+     r:=AddRule('pass','in','ipv4');
+     AddProtocol(r,'icmp');
+     SetKeep(r);
+     SaveRule(r);
+
+     r:=AddRule('pass','out','ipv4');
+     AddProtocol(r,'icmp');
+     SetKeep(r);
+     SaveRule(r);
+
+     // test rule block
+     r:=AddRule('block','out','ipv4');
+     AddProtocol(r,'tcp');
+     r.Field('tos').AsByte:=100;
+     r.Field('ttl').AsByte:=200;
+     r.Field('keep_frags').AsBoolean:=true;
+     r.Field('block_option').asstring:='return-icmp';
+     SaveRule(r);
+
+     r:=AddRule('count','in','ipv4');
+     SaveRule(r);
+     r:=AddRule('log','in','ipv4');
+     SaveRule(r);
+     r:=AddRule('skip','in','ipv4');
+     r.Field('skip_count').asuint32:=10;
+     SaveRule(r);
+
+     r:=AddRule('block','out','ipv4');
+     r.Field('block_option').asstring:='return-icmp';
+     r.Field('block_option_icmp').asstring:='host-prohib';
+     SaveRule(r);
+
+     r:=AddRule('block','out','ipv4');
+     r.Field('block_option').asstring:='return-icmp-as-dest';
+     r.Field('block_option_icmp').asstring:='net-prohib';
+     SaveRule(r);
+
+     r:=AddRule('block','out','ipv4');
+     r.Field('block_option').asstring:='return-rst';
+     SaveRule(r);
+
+     r:=AddRule('block','out','ipv4');
+     r.Field('icmp_type').asstring:='echo';
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('dst_addr').AsObjectLink:=lan_ip_id;
+     r.Field('dst_addr_not').asboolean:=true;
+     AddProtocol(r,'tcp/udp');
+     r.Field('dst_port_1').AsUInt16:=53;
+     SetKeep(r);
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('src_addr').AsObjectLink:=lan_ip_id;
+     r.Field('src_addr_host').Asboolean:=true;
+     r.Field('dst_addr').AsObjectLink:=lan_ip_id;
+     r.Field('dst_addr_not').asboolean:=true;
+     AddProtocol(r,'tcp');
+     r.Field('dst_port_1').AsUInt16:=53;
+     SetKeep(r);
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('src_addr').AsObjectLink:=lan_ip_id;
+     r.Field('src_addr_host').Asboolean:=true;
+     r.Field('src_port_1').asuint16:=80;
+     r.Field('src_port_comparator').asstring:=':';
+     r.Field('src_port_2').asuint16:=88;
+     r.Field('dst_addr').AsObjectLink:=lan_ip_id;
+     r.Field('dst_addr_not').asboolean:=true;
+     r.Field('dst_port_1').asuint16:=99;
+     AddProtocol(r,'tcp');
+     SetKeep(r);
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('src_port_1').asuint16:=80;
+     r.Field('src_port_comparator').asstring:=':';
+     r.Field('src_port_2').asuint16:=88;
+     r.Field('dst_port_1').asuint16:=99;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('option_log').asboolean:=true;
+     r.Field('option_log_body').asboolean:=true;
+     r.Field('option_log_first').asboolean:=true;
+     r.Field('option_log_or_block').asboolean:=true;
+     r.Field('option_log_loglevel').asstring:='warn';
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('option_to_interface').AsObjectLink:=link_id;
+     r.Field('head').asint32:=1000;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('option_dup_to_interface').AsObjectLink:=int_link_id;
+     r.Field('option_dup_to_ip').AsObjectLink:=int_ip_id;
+     r.Field('head').asint32:=100;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     AddInterface(r,lan_link_id);
+     r.Field('option_reply_to_interface').AsObjectLink:=int_link_id;
+     r.Field('option_reply_to_ip').AsObjectLink:=int_ip_id;
+     r.Field('group').asint32:=1000;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     r.Field('tcp_flag_fin').asboolean:=true;
+     r.Field('tcp_flag_syn').asboolean:=true;
+     r.Field('tcp_flag_rst').asboolean:=true;
+     r.Field('tcp_flag_push').asboolean:=true;
+     r.Field('tcp_flag_ack').asboolean:=true;
+     r.Field('tcp_flag_urg').asboolean:=true;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     r.Field('with_option').addString('ipopts');
+     r.Field('with_option').addString('frag');
+     r.Field('with_option_not').addString('multicast');
+     r.Field('with_extra_opts').addString('tr');
+     r.Field('with_extra_opts').addString('sec');
+     r.Field('set_tag_log').asint32:=33;
+     SaveRule(r);
+
+     r:=AddRule('pass','in','ipv4');
+     r.Field('match_tag_nat').asstring:='mtag';
+     r.Field('set_tag_nat').asstring:='stag';
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('block','out','ipv6');
+     r.Field('ipv6hdr').asstring:='esp';
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('block','in','ipv6');
+     SaveRule(r);
+
+     p := AddPool(100,'table','tree','',0);
+     SavePool(p);
+     AddSavePoolEntry(false,lan_ip_id,true,true,0);
+     AddSavePoolEntry(false,int_ip_id,false,false,0);
+
+     r:=AddRule('pass','in','ipv4');
+     r.Field('pool_in').AsObjectLink :=fw_pool_uid;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('pass','out','ipv4');
+     r.Field('pool_out').AsObjectLink :=fw_pool_uid;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+
+     p := AddPool(1010,'group-map','','in',0);
+     SavePool(p);
+     AddSavePoolEntry(true,lan_ip_id,true,false,2030);
+
+     p := AddPool(2010,'group-map','','out',2020);
+     SavePool(p);
+     AddSavePoolEntry(true,lan_ip_id,true,false,2030);
+     AddSavePoolEntry(true,int_ip_id,false,false,2040);
+
+     r:=AddRule('call','in','ipv4');
+     r.Field('pool_in').AsObjectLink :=fw_pool_uid;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     r:=AddRule('call','out','ipv4');
+     r.Field('pool_out').AsObjectLink :=fw_pool_uid;
+     AddProtocol(r,'tcp');
+     SaveRule(r);
+
+     p := AddPool(200,'table','hash','',0);
+     p.Field('hash_size').asuint32:=100;
+     p.Field('hash_seed').asuint32:=200;
+     SavePool(p);
+     AddSavePoolEntry(false,lan_ip_id,true,false,0);
+
+     n := AddNAT('bimap',int_link_id,'tcp/udp');
+     n.Field('src_addr').AsObjectLink:=lan_ip_id;
+     n.Field('dst_addr').AsObjectLink:=int_ip_id;
+     SaveNAT(n);
+
+     n := AddNAT('map',int_link_id,'tcp/udp');
+     n.Field('src_addr').AsObjectLink:=lan_ip_id;
+     n.Field('src_addr_host').Asboolean:=true;
+     n.Field('src_to_addr').AsObjectLink:=lan_ip_id;
+     n.Field('src_to_addr_host').Asboolean:=true;
+     n.Field('dst_addr').AsObjectLink:=int_ip_id;
+     n.Field('dst_addr_host').Asboolean:=true;
+     SaveNAT(n);
+
+     n := AddNAT('map',int_link_id,'tcp/udp');
+     n.Field('src_addr').AsObjectLink:=lan_ip_id;
+     n.Field('src_addr_host').Asboolean:=true;
+     n.Field('dst_addr').AsObjectLink:=int_ip_id;
+     n.Field('dst_addr_host').Asboolean:=true;
+     n.Field('option_frag').asboolean:=true;
+     n.Field('option_age').asuint32:=10;
+     n.Field('option_clamp').asuint32:=12;
+     SaveNAT(n);
+
+     n := AddNAT('map',int_link_id,'tcp/udp');
+     n.Field('src_addr').AsObjectLink:=lan_ip_id;
+     n.Field('src_addr_host').Asboolean:=true;
+     n.Field('dst_addr').AsObjectLink:=int_ip_id;
+     n.Field('dst_addr_host').Asboolean:=true;
+     n.Field('proxy_name').AsString:='ftp/tcp';
+     n.Field('proxy_port').AsUInt16:=21;
+     SaveNAT(n);
+
+     n := AddNAT('bimap',int_link_id,'tcp');
+     n.Field('src_addr').AsObjectLink:=lan_ip_id;
+     n.Field('dst_addr').AsObjectLink:=int_ip_id;
+     n.Field('dst_port_mode').asstring:='auto';
+     SaveNAT(n);
+
+     n := AddNAT('map-block',int_link_id,'tcp/udp');
+     n.Field('src_addr').AsObjectLink:=lan_ip_id;
+     n.Field('dst_addr').AsObjectLink:=int_ip_id;
+     n.Field('dst_port_mode').asstring:='auto';
+     SaveNAT(n);
+
+     n := AddNAT('rdr',int_link_id,'tcp');
+     n.Field('src_addr').AsObjectLink:=lan_ip_id;
+     n.Field('src_addr_host').Asboolean:=true;
+     n.Field('dst_addr').AsObjectLink:=int_ip_id;
+     n.Field('dst_addr_host').Asboolean:=true;
+     n.Field('src_port').asuint16:=80;
+     n.Field('dst_port_1').asuint16:=8080;
+     n.Field('option_frag').asboolean:=true;
+     n.Field('option_age').asuint32:=10;
+     n.Field('option_clamp').asuint32:=12;
+     n.Field('option_roundrobin').asboolean:=true;
+     SaveNAT(n);
+
+     n := AddNAT('rdr',int_link_id,'tcp');
+     n.Field('src_addr').AsObjectLink:=lan_ip_id;
+     n.Field('src_addr_host').Asboolean:=true;
+     n.Field('dst_addr').AsObjectLink:=int_ip_id;
+     n.Field('dst_addr_host').Asboolean:=true;
+     n.Field('src_port').asuint16:=80;
+     n.Field('dst_port_1').asuint16:=8080;
+     n.Field('proxy_name').AsString:='ftp';
+     SaveNAT(n);
+
+
+     CheckDbResult(conn.FetchI(fw_uid,fwo));
+
+     if fwo.IsA(TFRE_DB_FIREWALL_SERVICE,fw) then
+       begin
+         fw.Embed(conn);
+         writeln('SWL FW EMBEDED ',fw.DumpToString);
+         fw.RIF_CreateOrUpdateService;
+       end;
    end;
 
    procedure CreateShare(const fileserver_id:TFRE_DB_GUID; const pool_id:TFRE_DB_GUID;const ds:string; const sharename:string;const quota,rquota:integer);
@@ -1986,6 +2434,32 @@ begin
       vmcomp_coll  := conn.getCollection(CFRE_DB_VM_COMPONENTS_COLLECTION);
     end;
 
+  if not conn.CollectionExists(CFRE_DB_FIREWALL_RULE_COLLECTION) then
+    fwrule_coll  := conn.CreateCollection(CFRE_DB_FIREWALL_RULE_COLLECTION)
+  else
+    fwrule_coll  := conn.GetCollection(CFRE_DB_FIREWALL_RULE_COLLECTION);
+
+  if not conn.CollectionExists(CFRE_DB_FIREWALL_POOL_COLLECTION) then
+    fwpool_coll  := conn.CreateCollection(CFRE_DB_FIREWALL_POOL_COLLECTION)
+  else
+    fwpool_coll  := conn.GetCollection(CFRE_DB_FIREWALL_POOL_COLLECTION);
+
+  if not conn.CollectionExists(CFRE_DB_FIREWALL_POOLENTRY_COLLECTION) then
+    fwpoolent_coll  := conn.CreateCollection(CFRE_DB_FIREWALL_POOLENTRY_COLLECTION)
+  else
+    fwpoolent_coll  := conn.GetCollection(CFRE_DB_FIREWALL_POOLENTRY_COLLECTION);
+
+  if not conn.CollectionExists(CFRE_DB_FIREWALL_NAT_COLLECTION) then
+    fwnat_coll  := conn.CreateCollection(CFRE_DB_FIREWALL_NAT_COLLECTION)
+  else
+    fwnat_coll  := conn.GetCollection(CFRE_DB_FIREWALL_NAT_COLLECTION);
+
+  RemoveLinksifExists(CFRE_DB_FIREWALL_RULE_COLLECTION);
+  RemoveLinksifExists(CFRE_DB_FIREWALL_NAT_COLLECTION);
+  RemoveLinksifExists(CFRE_DB_FIREWALL_POOLENTRY_COLLECTION);
+  RemoveLinksifExists(CFRE_DB_FIREWALL_POOL_COLLECTION);
+
+
   ClearCollectionifExists(CFRE_DB_SG_LOGS_COLLECTION);
   ClearCollectionifExists(CFRE_DB_DEVICE_IOSTAT_COLLECTION);
   ClearCollectionifExists(CFRE_DB_DEVICE_COLLECTION);
@@ -2013,6 +2487,12 @@ begin
   RemoveLinksifExists(CFRE_DB_IMAGEFILE_COLLECTION);
   ClearCollectionifExists(CFRE_DB_VM_COMPONENTS_COLLECTION,true);
   ClearCollectionifExists(CFRE_DB_IMAGEFILE_COLLECTION,true);
+
+  ClearCollectionifExists(CFRE_DB_FIREWALL_NAT_COLLECTION,true);
+  ClearCollectionifExists(CFRE_DB_FIREWALL_POOLENTRY_COLLECTION,true);
+  ClearCollectionifExists(CFRE_DB_FIREWALL_RULE_COLLECTION,true);
+  ClearCollectionifExists(CFRE_DB_FIREWALL_POOL_COLLECTION,true);
+
   ClearCollectionifExists(CFOS_DB_SERVICES_COLLECTION,true);
 
 
@@ -2392,12 +2872,14 @@ begin
   AddIPV6('fdd7:f47b:4605:0705:1:0:0:3/64',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,e0_id,0,1588,CFRE_DB_NullGUID,'02:08:20:e7:40:51','internet','Internet');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:d3:59:df','mgmt','Mgmt Lan');
-  AddIPV4('10.1.0.89/24',link_id);
+  int_link_id := link_id;
+  int_ip_id := AddIPV4('10.1.0.89/24',link_id);
   AddRoutingIPV4('default','10.1.0.1',zone_id,'Default Route');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vm0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:52:58:69','vm','VM 0');
   CreateVM(zone_id,'Fusion qemutest1','10.1.0.89',5900,link_id,512,512);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,e0_id,0,1589,CFRE_DB_NullGUID,'02:08:20:3a:4c:16','lan','Lan');
-  AddIPV4('192.168.3.1/24',link_id);
+  lan_link_id := link_id;
+  lan_ip_id   := AddIPV4('192.168.3.1/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,e0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:a7:7b:de','mgmt','Global NFS');
   AddIPV4('172.22.1.2/16',link_id);
   vf_id:=CreateVFiler(zone_id,'Test Virtual Fileserver');
@@ -2406,6 +2888,8 @@ begin
   CreateShare(vf_id,pool_id,'syspool/domains/demo/demo/zonedata/vfiler/management','Management',10240,10240);
   vf_id:=CreateCFiler(zone_id,'Test Crypto Fileserver');
   CreateShare(vf_id,pool_id,'syspool/domains/mydomain/newzone0/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
+  AddFirewall(zone_id);
+
 
   //CheckDbResult(conn.FetchI(zone_id,obj));
   //if obj.IsA(TFRE_DB_ZONE,zone) then
@@ -2456,10 +2940,15 @@ begin
 
   zone_id  := CreateZone('demo_fw',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'461fe5b2d584f7a8a2a7c9b6ec10f8d0');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'lan0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'a4:94:40:69:76:79','Lan','Lan');
-  AddIPV4('10.1.0.212/24',link_id);
+  lan_link_id :=link_id;
+  lan_ip_id:=AddIPV4('10.1.0.212/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,e1_id,0,0,CFRE_DB_NullGUID,'9c:26:9c:38:9d:62','Internet','Internet');
-  AddIPV4('91.114.28.44/29',link_id);
+  int_link_id := link_id;
+  int_ip_id:=AddIPV4('91.114.28.44/29',link_id);
   AddRoutingIPV4('default','91.114.28.41',zone_id,'Default Route');
+
+
+  AddFirewall(zone_id);
 
 
   host_id  := CreateHost('FirmboxOffice',dc_id,'00:25:90:ea:b5:e6');
@@ -2553,7 +3042,6 @@ begin
   tmpl.Field('serviceclasses').AddString(TFRE_DB_VROOTSERVER.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_SSH_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
   root_tmpl_uid := tmpl.UID;
@@ -2576,7 +3064,6 @@ begin
   tmpl.Field('serviceclasses').AddString(TFRE_DB_HTTP_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFOS_DB_CITYCOM_VOIP_SERVICE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_IPTUN.ClassName);
-  tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_BRIDGE.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_PHPFPM_SERVICE.ClassName);
