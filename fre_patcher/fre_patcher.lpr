@@ -1883,6 +1883,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      rnr := 1;
 
      fw := TFRE_DB_FIREWALL_SERVICE.CreateForDB;
+     fw.ObjectName:='Firewall';
      fw.SetDomainID(g_domain_id);
      fw.Field('uniquephysicalid').asstring := TFRE_DB_FIREWALL_SERVICE.ClassName + '@' + zone_id.AsHexString;
      fw.Field('serviceParent').AsObjectLink:=zone_id;
@@ -3067,6 +3068,7 @@ begin
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_SIMNET.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_DATALINK_VNIC.ClassName);
   tmpl.Field('serviceclasses').AddString(TFRE_DB_PHPFPM_SERVICE.ClassName);
+  tmpl.Field('serviceclasses').AddString(TFRE_DB_FIREWALL_SERVICE.Classname);
   fbz_tmpl_uid := tmpl.UID;
   tmpl.SetDomainID(g_def_domain_id);
   CheckDBResult(tcoll.Store(tmpl));
