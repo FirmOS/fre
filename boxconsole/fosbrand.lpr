@@ -72,14 +72,14 @@ begin
   writeln('SWL: ',zone_dbo_file);
   zone_dbo  := GFRE_DBI.CreateFromFile(zone_dbo_file);
 //  writeln('SWL ZONE:',zone_dbo.DumpToString());
-//  0=[/usr/lib/brand/fbz/fosbrand] 1=[--post] 2=[15a56c904a7f00248929bfdb576a45c9] 3=[/syspool/domains/df842e6d890b0fb5bb3a1b8db0cc8dc6/15a56c904a7f00248929bfdb576a45c9] 4=[2] 5=[0]
+//  0=[/usr/lib/brand/fbz/fosbrand] 1=[--post] 2=[15a56c904a7f00248929bfdb576a45c9] 3=[/syspool/parentds/domains/be866bbf47fe770522885cf5e884bf0d/15a56c904a7f00248929bfdb576a45c9] 4=[2] 5=[0]
+  // --post 15a56c904a7f00248929bfdb576a45c9 /syspool/parentds/domains/be866bbf47fe770522885cf5e884bf0d/15a56c904a7f00248929bfdb576a45c9 2 0
 
   if (state=ZONE_STATE_INSTALLED) and (pre=false) and (cmd=0) then
     begin
       zone := (zone_dbo.Implementor_HC as TFRE_DB_ZONE);
       zone.BootingHookConfigure;
     end;
-
 
   // stop program loop
   Terminate;

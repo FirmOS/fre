@@ -648,6 +648,7 @@ begin
   RegisterSupportedRifClass(TFRE_DB_ZONE);
   RegisterSupportedRifClass(TFRE_DB_SERVICE);
   RegisterSupportedRifClass(TFRE_DB_VMACHINE);
+  RegisterSupportedRifClass(TFRE_DB_FIREWALL_SERVICE);
 end;
 
 procedure TFRE_BOX_FEED_CLIENT.MyFinalize;
