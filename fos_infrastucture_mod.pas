@@ -1455,8 +1455,8 @@ begin
   if input.FieldExists('selected') then begin
     deleteDisabled:=not _canDeleteService(input,conn);
     ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringArr:=input.Field('selected').AsStringArr;
-    enableDisabled:=input.Field('selected').ValueCount=1; //FIXXMME - check if service is enabled
-    disableDisabled:=input.Field('selected').ValueCount=1; //FIXXMME - check if service is disabled
+    enableDisabled:=not input.Field('selected').ValueCount=1; //FIXXMME - check if service is enabled
+    disableDisabled:=not input.Field('selected').ValueCount=1; //FIXXMME - check if service is disabled
   end else begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedService');
   end;
@@ -1627,7 +1627,8 @@ begin
           CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringItem[i]),TFRE_DB_SERVICE,service));
           CheckDbResult(conn.FetchAs(service.Field('serviceparent').asGUID,TFRE_DB_ZONE,zone));
           machine_uid := zone.MachineID;
-          service.Field('zone').AsString:=zone.UID_String;
+          service.Field('zonename').AsString:=zone.UID_String;
+          service.Embed(conn);
           if ses.InvokeRemoteInterface(machine_uid,@service.RIF_EnableService,@GotAnswer,nil)=edb_OK then
             begin
               result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
@@ -1674,7 +1675,8 @@ begin
           CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedService').AsStringItem[i]),TFRE_DB_SERVICE,service));
           CheckDbResult(conn.FetchAs(service.Field('serviceparent').asGUID,TFRE_DB_ZONE,zone));
           machine_uid := zone.MachineID;
-          service.Field('zone').AsString:=zone.UID_String;
+          service.Field('zonename').AsString:=zone.UID_String;
+          service.Embed(conn);
           if ses.InvokeRemoteInterface(machine_uid,@service.RIF_DisableService,@GotAnswer,nil)=edb_OK then
             begin
               result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
