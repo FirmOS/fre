@@ -321,6 +321,7 @@ type
    published
      function        IMI_Menu               (const input:IFRE_DB_Object): IFRE_DB_Object;
      function        IMI_AddVNIC            (const input:IFRE_DB_Object): IFRE_DB_Object;
+     class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
    end;
 
    { TFRE_DB_DATALINK_VNIC }
@@ -7756,6 +7757,8 @@ end;
      StoreTranslateableText(conn,'scheme_name','Link Name');
      StoreTranslateableText(conn,'scheme_description','Description');
      StoreTranslateableText(conn,'scheme_mtu','MTU');
+
+     StoreTranslateableText(conn,'caption','Physical Datalink');
    end;
  end;
 
@@ -7778,6 +7781,11 @@ end;
  begin
    result :=  TFRE_DB_MESSAGE_DESC.create.Describe('','Feature disabled in Demo Mode',fdbmt_info,nil);
  end;
+
+ class function TFRE_DB_DATALINK_PHYS.GetCaption(const conn: IFRE_DB_CONNECTION): String;
+begin
+  Result:=GetTranslateableTextShort(conn,'caption');
+end;
 
  { TFRE_DB_DATALINK }
 
