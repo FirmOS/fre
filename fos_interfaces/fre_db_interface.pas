@@ -3535,8 +3535,10 @@ end;
 
   function  FREDB_PP_ObjectInParentPath                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_String): boolean;
   procedure FREDB_PP_AddParentPathToObj                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_String);
+  procedure FREDB_PP_SetParentPathToObj                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_StringArray);
   function  FREDB_PP_GetParentPaths                           (const obj : IFRE_DB_Object):TFRE_DB_StringArray;
   function  FREDB_PP_ExtendParentPath                         (const uid : TFRE_DB_GUID ; const pp :TFRE_DB_String):TFRE_DB_String;
+  function  FREDB_PP_ExtendAllParentPaths                     (const uid : TFRE_DB_GUID ; const ppa :TFRE_DB_StringArray):TFRE_DB_StringArray;
 
   function  FREDB_CreateIndexDefFromObject                    (const ix_def_o : IFRE_DB_Object): TFRE_DB_INDEX_DEF;
   function  FREDB_CreateIndexDefArrayFromObject               (const ix_def_ao : IFRE_DB_Object): TFRE_DB_INDEX_DEF_ARRAY;
@@ -11570,6 +11572,11 @@ begin
   //    tr_obj.Field(cFRE_DB_SYS_PARENT_PATH_PART).AsString := ppart;
 end;
 
+procedure FREDB_PP_SetParentPathToObj(const obj: IFRE_DB_Object; const pp: TFRE_DB_StringArray);
+begin
+  obj.Field(cFRE_DB_SYS_PARENT_PATH_FULL).AsStringArr := pp;
+end;
+
 function FREDB_PP_GetParentPaths(const obj: IFRE_DB_Object): TFRE_DB_StringArray;
 var fld : IFRE_DB_Field;
 begin
@@ -11585,6 +11592,15 @@ begin
     result := uid.AsHexString
   else
     result := uid.AsHexString+'@'+pp; { extend reverse (!) to match client spec }
+end;
+
+function FREDB_PP_ExtendAllParentPaths(const uid: TFRE_DB_GUID; const ppa: TFRE_DB_StringArray): TFRE_DB_StringArray;
+var
+  i: NativeInt;
+begin
+  SetLength(result,Length(ppa));
+  for i:=0 to high(ppa) do
+    result[i] := FREDB_PP_ExtendParentPath(uid,ppa[i]);
 end;
 
 

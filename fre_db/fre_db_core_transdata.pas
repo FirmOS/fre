@@ -50,7 +50,7 @@ interface
 uses
      Classes,contnrs, SysUtils,fre_db_interface,fre_db_core,fos_art_tree,fos_tool_interfaces,fos_arraygen,fre_db_common,fre_db_persistance_common,fos_strutils,fre_aps_interface,math,fre_system;
 var
-    cFRE_INT_TUNE_TDM_COMPUTE_WORKERS : NativeUInt =  8;
+    cFRE_INT_TUNE_TDM_COMPUTE_WORKERS : NativeUInt =  1;
     cFRE_INT_TUNE_SYSFILTEXTENSION_SZ : NativeUint =  128;
     cFRE_INT_TUNE_FILTER_PURGE_TO     : NativeUint =  0; // 5*1000; // 0 DONT PURGE
     cFRE_INT_RANGE_LIST_TUNE          : NativeInt  =  24; { default increment of list extension }
@@ -618,15 +618,17 @@ type
     function    HasReflinksInTransform        : Boolean; { the query has reflinks in the transform, so on RL change the Transform has to be revaluated ...}
     procedure   _AssertCheckTransid           (const obj : IFRE_DB_Object ; const transkey : TFRE_DB_TransStepId);
 
-    procedure   TransformSingleUpdate         (const in_object: IFRE_DB_Object ; const upd_idx: NativeInt; const parentpath_full: TFRE_DB_String; const transkey: TFRE_DB_TransStepId);
-    procedure   TransformSingleInsert         (const in_object: IFRE_DB_Object ; const rl_ins: boolean; const parentpath: TFRE_DB_String ; const parent_tr_obj : IFRE_DB_Object ; const transkey : TFRE_DB_TransStepId);
+    procedure   TransformSingleUpdate         (const in_object: IFRE_DB_Object ; const upd_idx: NativeInt; const parentpath_full: TFRE_DB_StringArray; const transkey: TFRE_DB_TransStepId);
+    procedure   TransformSingleInsert         (const in_object: IFRE_DB_Object ; const rl_ins: boolean; const parentpaths: TFRE_DB_StringArray ; const parent_tr_obj : IFRE_DB_Object ; const transkey : TFRE_DB_TransStepId);
     procedure   TransformFetchAll             ;
     procedure   TransformAllParallel          (const startchunk, endchunk: Nativeint; const wid: nativeint);
-    procedure   MyTransForm                   (const start_idx,endindx : NativeInt ; const lazy_child_expand : boolean ; const mode : TDC_TransMode ; const update_idx : NativeInt ; const rl_ins: boolean; const parentpath: TFRE_DB_String ; const in_parent_tr_obj : IFRE_DB_Object ; const transkey : TFRE_DB_TransStepId ; const wid : nativeint ; const single_in_object: IFRE_DB_Object);
+    procedure   MyTransForm                   (const start_idx,endindx : NativeInt ; const lazy_child_expand : boolean ; const mode : TDC_TransMode ; const update_idx : NativeInt ; const rl_ins: boolean; const parentpaths: TFRE_DB_StringArray ; const in_parent_tr_obj : IFRE_DB_Object ; const transkey : TFRE_DB_TransStepId ; const wid : nativeint ; const single_in_object: IFRE_DB_Object);
 
   public
     function    TransformedCount              : NativeInt;
     procedure   Cleanup                       ; override;
+
+    function    FindParentIndex               (paruid : TFRE_DB_GUID ; out rootinsert : boolean) : Nativeint;
 
     procedure   UpdateObjectByNotify          (const obj : IFRE_DB_Object ; const transkey : TFRE_DB_TransStepId);                                                                                             { notify step 1 }
     procedure   InsertObjectByNotify          (const coll_name : TFRE_DB_NameType ; const obj : IFRE_DB_Object ; const rl_ins : boolean ; const parent : TFRE_DB_GUID ; const transkey : TFRE_DB_TransStepId); { notify step 1 }
@@ -640,7 +642,7 @@ type
     procedure   CheckFiltersForReflinkChanges (const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 
 
-    function    ExistsObj                     (const uid:TFRE_DB_GUID):NativeInt;
+    function    ExistsObjDirect               (const uid:TFRE_DB_GUID):NativeInt;
     procedure   SetTransformedObject          (const tr_obj : IFRE_DB_Object);override;                           { inital fill, from initial transform }
 
     procedure   SetSkippedParentChildScheme   (const parent_uid,child_uid : TFRE_DB_GUID ; const child_class : ShortString);
@@ -5002,14 +5004,14 @@ end;
 
 { TFRE_DB_TRANFORMED_DATA }
 
-procedure TFRE_DB_TRANFORMED_DATA.TransformSingleUpdate(const in_object: IFRE_DB_Object; const upd_idx: NativeInt; const parentpath_full: TFRE_DB_String; const transkey: TFRE_DB_TransStepId);
+procedure TFRE_DB_TRANFORMED_DATA.TransformSingleUpdate(const in_object: IFRE_DB_Object; const upd_idx: NativeInt; const parentpath_full: TFRE_DB_StringArray; const transkey: TFRE_DB_TransStepId);
 begin
   MyTransForm(-1,-1,false,trans_Update,upd_idx,false,parentpath_full,nil,transkey,-1,in_object);
 end;
 
-procedure TFRE_DB_TRANFORMED_DATA.TransformSingleInsert(const in_object: IFRE_DB_Object; const rl_ins: boolean; const parentpath: TFRE_DB_String; const parent_tr_obj: IFRE_DB_Object; const transkey: TFRE_DB_TransStepId);
+procedure TFRE_DB_TRANFORMED_DATA.TransformSingleInsert(const in_object: IFRE_DB_Object; const rl_ins: boolean; const parentpaths: TFRE_DB_StringArray; const parent_tr_obj: IFRE_DB_Object; const transkey: TFRE_DB_TransStepId);
 begin
-  MyTransForm(-1,-1,false,trans_SingleInsert,-1,rl_ins,parentpath,parent_tr_obj,transkey,-1,in_object);
+  MyTransForm(-1,-1,false,trans_SingleInsert,-1,rl_ins,parentpaths,parent_tr_obj,transkey,-1,in_object);
 end;
 
 procedure TFRE_DB_TRANFORMED_DATA.TransformFetchAll;
@@ -5031,11 +5033,11 @@ end;
 
 procedure TFRE_DB_TRANFORMED_DATA.TransformAllParallel(const startchunk, endchunk: Nativeint ; const wid : nativeint);
 begin
-  MyTransForm(startchunk,endchunk,false,trans_Insert,-1,false,'',nil,'-',wid,nil);
+  MyTransForm(startchunk,endchunk,false,trans_Insert,-1,false,[],nil,'-',wid,nil);
 end;
 
 
-procedure TFRE_DB_TRANFORMED_DATA.MyTransForm(const start_idx, endindx: NativeInt; const lazy_child_expand: boolean; const mode: TDC_TransMode; const update_idx: NativeInt; const rl_ins: boolean; const parentpath: TFRE_DB_String; const in_parent_tr_obj: IFRE_DB_Object; const transkey: TFRE_DB_TransStepId; const wid: nativeint; const single_in_object: IFRE_DB_Object);
+procedure TFRE_DB_TRANFORMED_DATA.MyTransForm(const start_idx, endindx: NativeInt; const lazy_child_expand: boolean; const mode: TDC_TransMode; const update_idx: NativeInt; const rl_ins: boolean; const parentpaths: TFRE_DB_StringArray; const in_parent_tr_obj: IFRE_DB_Object; const transkey: TFRE_DB_TransStepId; const wid: nativeint; const single_in_object: IFRE_DB_Object);
 var
   in_object     : IFRE_DB_Object;
   tr_obj        : TFRE_DB_Object;
@@ -5199,23 +5201,16 @@ begin
         ino_up_class := uppercase(single_in_object.Implementor_HC.ClassName);
         tr_obj := FTransform.TransformInOut(FConnection,single_in_object);
         SetSpecialFields(tr_obj,single_in_object);
-        SetParentPath(parentpath);
+        FREDB_PP_SetParentPathToObj(tr_obj,parentpaths);
         SetInternalFields(tr_obj,single_in_object);
         HandleInsertTransformedObject(tr_obj,in_parent_tr_obj);
-        {OLD CODE}
-        //tr_obj := FTransform.TransformInOut(upconn,in_object);
-        //if IncludesChildData then
-        //  SetSpecialFields(tr_obj,in_object); { do not transfrom children recursive, these will come as single add updates, when inserted in a transaction }
-        //SetParentPath(parentpath);
-        //SetInternalFields(tr_obj,in_object);
-        //transdata.HandleInsertTransformedObject(tr_obj,in_parent_tr_obj);
       end;
     trans_Update:
       begin
         ino_up_class := uppercase(single_in_object.Implementor_HC.ClassName);
         tr_obj := FTransform.TransformInOut(FConnection,single_in_object);
         SetSpecialFields(tr_obj,single_in_object);
-        SetParentPath(parentpath);
+        FREDB_PP_SetParentPathToObj(tr_obj,parentpaths);
         SetInternalFields(tr_obj,single_in_object);
         if IncludesChildData then
           begin
@@ -5258,23 +5253,56 @@ begin
   FTransformedData.Clear;
 end;
 
+function TFRE_DB_TRANFORMED_DATA.FindParentIndex(paruid: TFRE_DB_GUID; out rootinsert: boolean): Nativeint;
+var us    : ShortString;
+    skip  : TFRE_DB_SKIP_ENC;
+begin
+  rootinsert := false;
+  repeat
+    result := ExistsObjDirect(paruid);
+    if result<0 then { not found }
+      begin
+        us   := FREDB_G2SB(paruid);
+        skip := FSkipSkipped.Find(us) as TFRE_DB_SKIP_ENC;
+        if assigned(skip) then
+          begin
+            paruid := skip.parent_uid;
+            if paruid=CFRE_DB_NullGUID then
+              begin
+                rootinsert:=true;
+                exit(0);
+              end;
+            continue;
+          end;
+        break;
+      end
+    else
+      begin
+        exit;
+      end;
+  until false;
+  result := -1;
+end;
+
 procedure TFRE_DB_TRANFORMED_DATA.UpdateObjectByNotify(const obj: IFRE_DB_Object; const transkey: TFRE_DB_TransStepId);
 var idx  : NativeInt;
     tupo : TFRE_DB_Object;
-    ppf  : string;
+    ppfa : TFRE_DB_StringArray;
+    root : boolean;
 begin
   _AssertCheckTransid(obj,transkey);
-  idx := ExistsObj(obj.UID); { Check if the Object Exists in the current Transformed Data}
+  idx  := FindParentIndex(obj.UID,root); { Check if the Object Exists in the current Transformed Data}  //self
+  ppfa := nil;
   if idx>=0 then
     begin
-      tupo := FTransformedData.Items[idx] as TFRE_DB_Object;
-      ppf  := tupo.Field(cFRE_DB_SYS_PARENT_PATH_FULL).AsString;
-      GFRE_DBI.LogDebug(dblc_DBTDM,'   >NOTIFY UPDATE OBJECT [%s] AGAINST TRANSDATA [%s] PARENTPATH [%s]',[obj.GetDescriptionID,FKey.GetBaseDataKey,ppf]);
-      TransformSingleUpdate(obj,idx,ppf,transkey);
+      tupo  := FTransformedData.Items[idx] as TFRE_DB_Object;
+      ppfa  := FREDB_PP_GetParentPaths(tupo);
+      GFRE_DBI.LogDebug(dblc_DBTDM,'   >NOTIFY UPDATE OBJECT [%s] AGAINST TRANSDATA [%s] PARENTPATH [%s]',[obj.GetDescriptionID,FKey.GetBaseDataKey,FREDB_CombineString(ppfa,',')]);
+      TransformSingleUpdate(obj,idx,ppfa,transkey);
     end
   else
     begin
-      GFRE_DBI.LogDebug(dblc_DBTDM,'   >NOTIFY SKIP UPDATE OBJECT [%s] AGAINST TRANSDATA [%s] PARENTPATH [%s] OBJECT NOT FOUND',[obj.GetDescriptionID,FKey.GetBaseDataKey,ppf]);
+      GFRE_DBI.LogDebug(dblc_DBTDM,'   >NOTIFY SKIP UPDATE OBJECT [%s] AGAINST TRANSDATA [%s] PARENTPATH [%s] OBJECT NOT FOUND',[obj.GetDescriptionID,FKey.GetBaseDataKey,FREDB_CombineString(ppfa,',')]);
       { not needed - dont clone }
     end;
 end;
@@ -5282,40 +5310,8 @@ end;
 procedure TFRE_DB_TRANFORMED_DATA.InsertObjectByNotify(const coll_name: TFRE_DB_NameType; const obj: IFRE_DB_Object; const rl_ins: boolean; const parent: TFRE_DB_GUID; const transkey: TFRE_DB_TransStepId);
 var idx   : NativeInt;
     par   : IFRE_DB_Object;
-    ppf   : TFRE_DB_String;
+    ppfa  : TFRE_DB_StringArray;
     rooti : boolean;
-
-
-    function FindParentIndex(paruid : TFRE_DB_GUID ; out rootinsert : boolean) : Nativeint;
-    var us    : ShortString;
-        skip  : TFRE_DB_SKIP_ENC;
-    begin
-      rootinsert := false;
-      repeat
-        result := ExistsObj(paruid);
-        if result<0 then { not found }
-          begin
-            us   := FREDB_G2SB(paruid);
-            skip := FSkipSkipped.Find(us) as TFRE_DB_SKIP_ENC;
-            if assigned(skip) then
-              begin
-                paruid := skip.parent_uid;
-                if paruid=CFRE_DB_NullGUID then
-                  begin
-                    rootinsert:=true;
-                    exit(0);
-                  end;
-                continue;
-              end;
-            break;
-          end
-        else
-          begin
-            exit;
-          end;
-      until false;
-      result := -1;
-    end;
 
 begin
   _AssertCheckTransid(obj,transkey);
@@ -5323,22 +5319,21 @@ begin
     begin
       if rl_ins then { Reflink update (tree), fetch parent,  set parentpath} //self
         begin
-          //idx := ExistsObj(parent);
           idx := FindParentIndex(parent,rooti);
           if idx>=0 then
             begin
               if rooti then
                 begin
                   GFRE_DBI.LogDebug(dblc_DBTDM,' >NOTIFY INSERT OBJECT [%s] AGAINST TRANSDATA [%s] COLL [%s] IS A REFLINK UPDATE (SKIPCLASSES/ROOT)',[obj.GetDescriptionID,FKey.GetBaseDataKey,coll_name]);
-                  TransformSingleInsert(obj.CloneToNewObject(),true,'',nil,transkey);
+                  TransformSingleInsert(obj.CloneToNewObject(),true,[],nil,transkey);
                 end
               else
                 begin
                   GFRE_DBI.LogDebug(dblc_DBTDM,' >NOTIFY INSERT OBJECT [%s] AGAINST TRANSDATA [%s] COLL [%s] IS A REFLINK UPDATE',[obj.GetDescriptionID,FKey.GetBaseDataKey,coll_name]);
-                  par := FTransformedData.Items[idx] as TFRE_DB_Object;
-                  ppf := par.Field(cFRE_DB_SYS_PARENT_PATH_FULL).AsString;
-                  ppf := FREDB_PP_ExtendParentPath(par.UID,ppf);
-                  TransformSingleInsert(obj.CloneToNewObject(),true,ppf,par,transkey); { Frees the object }
+                  par  := FTransformedData.Items[idx] as TFRE_DB_Object;
+                  ppfa := FREDB_PP_GetParentPaths(par);
+                  ppfa := FREDB_PP_ExtendAllParentPaths(par.UID,ppfa);
+                  TransformSingleInsert(obj.CloneToNewObject(),true,ppfa,par,transkey); { Frees the object }
                 end;
             end
           else
@@ -5347,7 +5342,7 @@ begin
       else
         begin { root insert }
           //GFRE_DBI.LogDebug(dblc_DBTDM,' >NOTIFY INSERT OBJECT [%s] AGAINST TRANSDATA [%s] COLL [%s] IS A COLLECTION UPDATE',[obj.GetDescriptionID,FKey.key,coll_name]);
-          idx := ExistsObj(obj.UID);
+          idx := FindParentIndex(obj.UID,rooti);
           if idx>=0 then
             begin
               if IncludesChildData then
@@ -5359,7 +5354,7 @@ begin
           else
             begin
               GFRE_DBI.LogDebug(dblc_DBTDM,' >NOTIFY INSERT OBJECT [%s] AGAINST TRANSDATA [%s] COLL [%s] IS A COLLECTION UPDATE',[obj.GetDescriptionID,FKey.GetBaseDataKey,coll_name]);
-              TransformSingleInsert(obj.CloneToNewObject(),false,'',nil,transkey); { Frees the object }
+              TransformSingleInsert(obj.CloneToNewObject(),false,[],nil,transkey); { Frees the object }
             end;
         end;
     end
@@ -5376,15 +5371,16 @@ end;
 procedure TFRE_DB_TRANFORMED_DATA.RemoveObjectByNotify(const coll_name: TFRE_DB_NameType; const obj: IFRE_DB_Object; const rl_rem: boolean; const parent: TFRE_DB_GUID; const transkey: TFRE_DB_TransStepId);
 var idx,pidx : NativeInt;
     par      : TFRE_DB_Object;
+    root     : Boolean;
 begin
   if rl_rem or (uppercase(coll_name) =  FKey.Collname) then
     begin
-      idx := ExistsObj(obj.UID);
+      idx := FindParentIndex(obj.UID,root);
       if idx>=0 then
         begin
           if rl_rem then
             begin
-              pidx := ExistsObj(parent);
+              pidx := FindParentIndex(parent,root);
               par  := FTransformedData.Items[pidx] as TFRE_DB_Object;
             end
           else
@@ -5410,7 +5406,7 @@ begin
   if IncludesChildData and
      FREDB_CompareReflinkSpecs(FParentChildLinkFldSpec,key_description) then
        begin
-         idx := ExistsObj(to_obj.UID);
+         idx := ExistsObjDirect(to_obj.UID);
          if idx>=0 then
            raise EFRE_DB_Exception.Create(edb_EXISTS,'td setupoutbound rl - exists')
          else
@@ -5430,7 +5426,7 @@ begin
   if IncludesChildData and
      FREDB_CompareReflinkSpecs(FParentChildLinkFldSpec,key_description) then
        begin
-         idx := ExistsObj(from_obj.UID);
+         idx := ExistsObjDirect(from_obj.UID);
          if idx>=0 then
            raise EFRE_DB_Exception.Create(edb_EXISTS,'td setupinbound rl - exists')
          else
@@ -5450,7 +5446,7 @@ begin
   if IncludesChildData and
      FREDB_CompareReflinkSpecs(FParentChildLinkFldSpec,key_description) then // self
        begin
-         idx := ExistsObj(from_obj.UID);
+         idx := ExistsObjDirect(from_obj.UID);
          if idx<0 then
            raise EFRE_DB_Exception.Create(edb_NOT_FOUND,'td inboundrldropped - not found')
          else
@@ -5470,7 +5466,7 @@ begin
   if IncludesChildData and
      FREDB_CompareReflinkSpecs(FParentChildLinkFldSpec,key_description) then
        begin
-         idx := ExistsObj(to_obj.UID);
+         idx := ExistsObjDirect(to_obj.UID);
          if idx<0 then
            raise EFRE_DB_Exception.Create(edb_EXISTS,'td outboundrldropped - not found')
          else
@@ -5496,7 +5492,7 @@ begin
     end;
 end;
 
-function TFRE_DB_TRANFORMED_DATA.ExistsObj(const uid: TFRE_DB_GUID): NativeInt;
+function TFRE_DB_TRANFORMED_DATA.ExistsObjDirect(const uid: TFRE_DB_GUID): NativeInt;
 var us : ShortString;
     ob : TFRE_DB_Object;
 begin

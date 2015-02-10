@@ -9785,7 +9785,7 @@ procedure TFRE_DB_SchemeObject.SetObjectFieldsWithScheme(const Raw_Object: TFRE_
   end;
 
 begin
-  if Update_Object.SchemeClass <> DefinedSchemeName then raise EFRE_DB_Exception.Create(edb_ILLEGALCONVERSION,'the update object must be of the same schemeclass as the schemeobject itself');
+  if Update_Object.SchemeClass <> DefinedSchemeName then raise EFRE_DB_Exception.Create(edb_ILLEGALCONVERSION,'the update object must be of the same schemeclass as the schemeobject itself [%s]<>[%s]',[Update_Object.SchemeClass,DefinedSchemeName]);
   Raw_Object.ForAll(@SetUpdateObjectFields);
 end;
 
@@ -14830,10 +14830,18 @@ begin
 end;
 
 function TFRE_DB_Object._ObjectRoot: TFRE_DB_Object;
+var brk : NativeInt=100;
 begin
  result := self;
  while assigned(result.FParentDBO) do
-   result := result.FParentDBO.Fobj;
+   begin
+     result := result.FParentDBO.Fobj;
+     dec(brk);
+     if brk=0 then
+       begin
+         raise EFRE_DB_Exception.Create(edb_INTERNAL,'CRITICAL :: objectroot rootloop/invalid object?');
+       end;
+   end;
 end;
 
 function TFRE_DB_Object.ObjectRoot: TFRE_DB_Object;
