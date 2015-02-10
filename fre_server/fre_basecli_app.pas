@@ -230,10 +230,19 @@ begin
   writeln('');
   writeln(dbo.DumpToString(2));
   writeln('');
+  writeln('REFERENCES OUTBOUND');
   for i:=0 to high(refs) do
     begin
-      writeln('Scheme:',refs[i].schemename,'.',refs[i].fieldname,'(',refs[i].linked_uid.AsHexString,')');
+      writeln('>Scheme:',refs[i].schemename,'.',refs[i].fieldname,'(',refs[i].linked_uid.AsHexString,')');
     end;
+  writeln('REFERENCES INBOUND');
+  SetLength(refs,0);
+  refs := conn.GetReferencesDetailed(uid,true);
+  for i:=0 to high(refs) do
+    begin
+      writeln('<Scheme:',refs[i].schemename,'.',refs[i].fieldname,'(',refs[i].linked_uid.AsHexString,')');
+    end;
+
   conn.Finalize;
 end;
 

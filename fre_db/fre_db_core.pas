@@ -1817,12 +1817,13 @@ type
     procedure       MustBeInitialized             ;
   protected
     procedure    BindSession                   (const session : TFRE_DB_UserSession);
+    function     WEB2ParentPath                (const web_input : IFRE_DB_Object):TFRE_DB_String; { the parent path is stored in reverse, => from child up to parent }
+    function     FixUpQryId4PArentChildStore   (const web_input : IFRE_DB_Object):TFRE_DB_SESSION_DC_RANGE_MGR_KEY;
+
   public
     constructor  Create                        (const dbname: TFRE_DB_NameType; const name: TFRE_DB_NameType);
     destructor   Destroy                       ; override;
     function     GetCollectionTransformKey     : TFRE_DB_NameTypeRL; { deliver a key which identifies transformed data depending on ParentCollection and Transformation}
-
-    procedure    MyTransForm                   (const connection : TFRE_DB_CONNECTION ; const in_objects : array of IFRE_DB_Object ; const transdata: TFRE_DB_TRANSFORMED_ARRAY_BASE ; var rec_cnt : NativeInt ; const lazy_child_expand : boolean ; const mode : TDC_TransMode ; const update_idx : NativeInt ; const rl_ins: boolean; const parentpath: TFRE_DB_String ; const in_parent_tr_obj : IFRE_DB_Object ; const transkey : TFRE_DB_TransStepId);
 
     class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
 
@@ -7852,6 +7853,29 @@ begin
   FDC_Session := session;
 end;
 
+function TFRE_DB_DERIVED_COLLECTION.WEB2ParentPath(const web_input: IFRE_DB_Object): TFRE_DB_String;
+var sa : TFRE_DB_StringArray;
+     i : NativeInt;
+begin
+  if web_input.FieldExists('parentid') then
+    begin
+      sa := web_input.Field('parentid').AsStringArr;
+      result := sa[0];
+      for i:=1 to high(sa) do
+        result := result+'@'+sa[i];
+    end
+  else
+    result := '';
+end;
+
+function TFRE_DB_DERIVED_COLLECTION.FixUpQryId4PArentChildStore(const web_input: IFRE_DB_Object): TFRE_DB_SESSION_DC_RANGE_MGR_KEY;
+var pp  : TFRE_DB_String;
+begin
+  result := FLastQryID;
+  pp     := WEB2ParentPath(web_input);
+  result.Parenthash := GFRE_BT.HashFast32_Hex(pp);
+end;
+
 constructor TFRE_DB_DERIVED_COLLECTION.Create(const dbname: TFRE_DB_NameType; const name: TFRE_DB_NameType); //self
 begin
   Inherited Create;
@@ -7870,168 +7894,6 @@ begin
   result := FParentCollection.CollectionName(true)+'#'+CollectionName(true);
 end;
 
-{ record cnt includes transformed childs}
-procedure TFRE_DB_DERIVED_COLLECTION.MyTransForm(const connection: TFRE_DB_CONNECTION; const in_objects: array of IFRE_DB_Object; const transdata: TFRE_DB_TRANSFORMED_ARRAY_BASE; var rec_cnt: NativeInt; const lazy_child_expand: boolean; const mode: TDC_TransMode; const update_idx: NativeInt; const rl_ins: boolean; const parentpath: TFRE_DB_String; const in_parent_tr_obj: IFRE_DB_Object; const transkey: TFRE_DB_TransStepId);
-var
-  in_object     : IFRE_DB_Object;
-  tr_obj        : TFRE_DB_Object;
-  len_chld      : NativeInt;
-  upconn        : TFRE_DB_CONNECTION;
-
-    procedure SetInternalFields(const tro,ino:IFRE_DB_Object);
-    begin
-      tro.Field(cFRE_DB_SYS_T_LMO_TRANSID).AsString := ino.Field(cFRE_DB_SYS_T_LMO_TRANSID).AsString;
-    end;
-
-    procedure SetSpecialFields(const tro,ino:IFRE_DB_Object);
-    var fld : IFRE_DB_FIELD;
-    begin
-      tro.Field('_menufunc_').AsString      := 'Menu';
-      tro.Field('_contentfunc_').AsString   := 'Content';
-      //tro.Field('children').AsString        := 'UNCHECKED';
-      //if ino.FieldOnlyExisting('icon',fld) then // icon in source
-      //  tro.Field('icon').AsString:= FREDB_getThemedResource(fld.AsString); // icon in transformed
-    end;
-
-    procedure SetParentPath(const pp:string);
-    begin
-      FREDB_PP_AddParentPathToObj(tr_obj,pp);
-    end;
-
-    {FParentChildStopOnLeaves, FParentChildFilterClasses, FParentChildSkipClasses}
-    procedure TransFormChildsForUid(const parent_tr_obj : IFRE_DB_Object ; const parentpath : string ; const depth : NativeInt ; const in_uid : TFRE_DB_GUID);
-    var j           : NativeInt;
-        refd_uids   : TFRE_DB_GUIDArray;
-        refd_objs   : IFRE_DB_ObjectArray;
-        len_chld    : NativeInt;
-        in_chld_obj : IFRE_DB_Object;
-        in_ch_class : ShortString;
-        stop        : boolean;
-    begin
-     refd_uids     := upconn.GetReferencesNoRightCheck(in_uid,FParentLinksChild,FParentChildScheme,FParentChildField);
-     if length(refd_uids)>0 then
-       begin
-         len_chld := 0;
-         CheckDbResult(upconn.BulkFetchNoRightCheck(refd_uids,refd_objs),'transform childs');
-         for j:=0 to high(refd_objs) do
-           begin
-             in_chld_obj  := refd_objs[j];
-             in_ch_class  := in_chld_obj.Implementor_HC.ClassName;
-             try
-               stop := FREDB_StringInNametypeArray(in_ch_class,FParentChildStopOnLeaves);
-               if FREDB_StringInNametypeArray(in_ch_class,FParentChildFilterClasses) then
-                 begin
-                  continue; { skip the object as a whole}
-                 end;
-               if FREDB_StringInNametypeArray(in_ch_class,FParentChildSkipSchemes) then
-                 begin
-                   TransFormChildsForUid(parent_tr_obj,parentpath,depth+1,refd_uids[j]); { this is the initial fill case, next step transfrom children recursive, but they are now root nodes }
-                 end
-               else
-                 begin
-                   inc(rec_cnt);
-                   inc(len_chld);
-                   tr_obj    := FTransform.TransformInOut(upconn,in_chld_obj);
-                   SetInternalFields(tr_obj,in_chld_obj);
-                   SetSpecialFields(tr_obj,in_chld_obj);
-                   SetParentPath(parentpath);
-                   transdata.SetTransformedObject(tr_obj);
-                   if not stop then
-                     TransFormChildsForUid(tr_obj,parentpath+'/'+FREDB_G2H(refd_uids[j]),depth+1,refd_uids[j]); { recurse }
-                 end;
-             finally
-               refd_objs[j].Finalize;
-             end;
-           end;
-         SetLength(refd_objs,0);
-       end;
-       if assigned(parent_tr_obj) then { not assigned = skipped root }
-         begin
-           parent_tr_obj.Field(cFRE_DB_CLN_CHILD_CNT).AsInt32 := len_chld;
-           if len_chld>0 then
-             parent_tr_obj.Field(cFRE_DB_CLN_CHILD_FLD).AsString := cFRE_DB_CLN_CHILD_FLG;
-         end;
-    end;
-
-    var rc           : NativeInt;
-        ino_up_class : ShortString;
-
-begin
-  try
-    upconn := Connection;
-    for in_object in in_objects do
-      begin
-        ino_up_class := uppercase(in_object.Implementor_HC.ClassName);
-        case mode of
-          trans_Insert:
-            begin
-              if HasParentChildRefRelationDefined then
-                begin
-                  if FREDB_StringInNametypeArray(ino_up_class,FParentChildFilterClasses) then //self
-                    begin
-                      { skip the object as a whole}
-                    end
-                  else
-                    begin
-                      rc := upconn.GetReferencesCountNoRightCheck(in_object.UID,not FParentLinksChild,FParentChildScheme,FParentChildField);
-                      if rc=0 then { ROOT NODE}
-                        begin
-                          if FREDB_StringInNametypeArray(ino_up_class,FParentChildSkipSchemes) then
-                            begin
-                              TransFormChildsForUid(nil,'',0,in_object.UID); { this is the initial fill case, next step transfrom children recursive, but they are now root nodes }
-                            end
-                          else
-                            begin
-                              tr_obj := FTransform.TransformInOut(upconn,in_object);
-                              transdata.SetTransformedObject(tr_obj);
-                              SetParentPath(''); { this is a root node }
-                              SetInternalFields(tr_obj,in_object);
-                              SetSpecialFields(tr_obj,in_object);
-                              TransFormChildsForUid(tr_obj,tr_obj.UID_String,0,tr_obj.UID); { this is the initial fill case, next step transfrom children recursive }
-                            end;
-                         end;
-                    end;
-                end
-              else
-                begin
-                  tr_obj := FTransform.TransformInOut(upconn,in_object);
-                  transdata.SetTransformedObject(tr_obj);
-                  SetParentPath(''); { this is a root node }
-                  SetInternalFields(tr_obj,in_object);
-                end;
-            end;
-          trans_SingleInsert:
-            begin
-              tr_obj := FTransform.TransformInOut(upconn,in_object);
-              if HasParentChildRefRelationDefined then
-                SetSpecialFields(tr_obj,in_object); { do not transfrom children recursive, these will come as single add updates, when inserted in a transaction }
-              SetParentPath(parentpath);
-              SetInternalFields(tr_obj,in_object);
-              transdata.HandleInsertTransformedObject(tr_obj,in_parent_tr_obj);
-            end;
-          trans_Update:
-            begin
-              tr_obj := FTransform.TransformInOut(upconn,in_object);
-              SetSpecialFields(tr_obj,in_object);
-              SetParentPath(parentpath);
-              SetInternalFields(tr_obj,in_object);
-              if HasParentChildRefRelationDefined then
-                begin
-                  len_chld := upconn.GetReferencesCountNoRightCheck(in_object.UID,FParentLinksChild,FParentChildScheme,FParentChildField);
-                  tr_obj.Field(cFRE_DB_CLN_CHILD_CNT).AsInt32 := len_chld;
-                  if len_chld>0 then
-                    tr_obj.Field(cFRE_DB_CLN_CHILD_FLD).AsString := cFRE_DB_CLN_CHILD_FLG;
-                end;
-              transdata.HandleUpdateTransformedObject(tr_obj,update_idx);
-              { do not handle child updates now, the will get handled on field update event of the parent }
-            end;
-        end;
-      end;
-  finally
-    for in_object in in_objects do
-      in_object.Finalize;
-  end;
-end;
 
 class procedure TFRE_DB_DERIVED_COLLECTION.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
@@ -8391,25 +8253,11 @@ var i, j, cnt : NativeInt;
         dop.ForAllObjectsFieldName(@AddFilter);
     end;
 
-    function WEB2ParentPath:TFRE_DB_String; { the parent path is stored in reverse, => from child up to parent }
-    var sa : TFRE_DB_StringArray;
-         i : NativeInt;
-    begin
-      result := '';
-      sa := web_input.Field('parentid').AsStringArr;
-      result := sa[0];
-      for i:=1 to high(sa) do
-        result := result+'@'+sa[i];
-    end;
-
 begin
   qrydef := SetupQryDefinitionBasic(web_input.Field('start').AsInt32,web_input.Field('end').AsInt32);
   qrydef.FullTextFilter := web_input.Field('FULLTEXT').AsString;
 
-  if web_input.FieldExists('parentid') then
-    qrydef.ParentPath := WEB2ParentPath { this is a child query }
-  else
-    qrydef.ParentPath := '';
+  qrydef.ParentPath := WEB2ParentPath(web_input); { this may be  a child query }
 
   Processfilters;
   result := qrydef;
@@ -8625,11 +8473,13 @@ begin
 end;
 
 function TFRE_DB_DERIVED_COLLECTION.WEB_RELEASE_GRID_DATA(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var key : TFRE_DB_SESSION_DC_RANGE_MGR_KEY;
 begin
-  writeln('>WEB RELEASE GD  ----------');
+  key := FixUpQryId4PArentChildStore(input);
+  writeln('>WEB RELEASE GD  ----------',FName,' ',key.GetFullKeyString);
   writeln(input.DumpToString());
-  writeln('>WEB RELEASE GD  ----------');
-  GFRE_DB_TCDM.cs_RemoveQueryRange(FLastQryID.GetFullKeyString,input.Field('START').AsInt64,input.Field('END').AsInt64);
+  writeln('>WEB RELEASE GD  ----------',FName);
+  GFRE_DB_TCDM.cs_RemoveQueryRange(key.GetFullKeyString,input.Field('START').AsInt64,input.Field('END').AsInt64);
   Result:=GFRE_DB_NIL_DESC;
 end;
 
@@ -8815,12 +8665,15 @@ function TFRE_DB_DERIVED_COLLECTION.WEB_SET_SORT_AND_FILTER(const input: IFRE_DB
       end;
   end;
 
-
+var key : TFRE_DB_SESSION_DC_RANGE_MGR_KEY;
 begin
-///  writeln('WEB_SET_SORT_AND_FILTER: ' + input.DumpToString()); //FIXXME heli - please implement me
+  key := FixUpQryId4PArentChildStore(input);
+  writeln('WEB_SET_SORT_AND_FILTER: ',FName,' ',key.GetFullKeyString);
+  writeln(input.DumpToString()); //FIXXME heli - please implement me
   ProcessOrders;
   Processfilters;
-  GFRE_DB_TCDM.cs_DropAllQueryRanges(FLastQryID.GetFullKeyString,false);
+  GFRE_DB_TCDM.cs_DropAllQueryRanges(key.GetFullKeyString,false);
+
   Result:=GFRE_DB_NIL_DESC;
 end;
 
@@ -8831,13 +8684,15 @@ begin
 end;
 
 function TFRE_DB_DERIVED_COLLECTION.WEB_DESTROY_STORE(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var key : TFRE_DB_SESSION_DC_RANGE_MGR_KEY;
 begin
-  writeln('>WEB DESTROY STORE ----------');
+  key := FixUpQryId4PArentChildStore(input);
+  writeln('>WEB DESTROY STORE ----------',FName,' ',key.GetFullKeyString);
   writeln(input.DumpToString());
-  writeln('<WEB DESTROY STORE ----------');
+  writeln('<WEB DESTROY STORE ----------',FName);
   FDCollFiltersDyn.RemoveAllFilters;
   FDCollOrderDyn.ClearOrders;
-  GFRE_DB_TCDM.cs_DropAllQueryRanges(FLastQryID.GetFullKeyString,false);
+  GFRE_DB_TCDM.cs_DropAllQueryRanges(key.GetFullKeyString,false);
   result := GFRE_DB_NIL_DESC;
 end;
 

@@ -80,6 +80,7 @@ type
   TFRE_DB_GUID = packed record
      D: Array [0..15] of Byte;
      function  AsHexString         : TFRE_DB_GUID_String;
+     function  AsBinaryString      : ShortString;
      procedure ClearGuid           ;
      procedure SetFromHexString    (const hexs:TFRE_DB_GUID_String);
      procedure SetFromRFCISOString (const isoguid:shortstring);
@@ -973,9 +974,8 @@ type
   { TFRE_DB_TRANS_COLL_DATA_KEY }
 
   TFRE_DB_TRANS_COLL_DATA_KEY = record
-    Collname  : TFRE_DB_NameType;
+    CollName  : TFRE_DB_NameType;
     DC_Name   : TFRE_DB_NameType;
-    RL_Spec   : TFRE_DB_NameTypeRL;
     orderkey  : TFRE_DB_Nametype;
     filterkey : TFRE_DB_TRANS_COLL_FILTER_KEY;
     FSealed   : Boolean;
@@ -1604,6 +1604,7 @@ type
 
   IFRE_DB_DBChangedNotificationBlock=interface
     procedure  SendNotificationBlock  (const block : IFRE_DB_Object); { encapsulate a block of changes from a transaction }
+    function   Implementor : Tobject;
   end;
 
   IFRE_DB_DBChangedNotificationConnection = interface { handle metadata changes }
@@ -3532,9 +3533,6 @@ end;
   procedure FREDB_ApplyNotificationBlockToNotifIF_Connection (const block: IFRE_DB_Object ; const deploy_if : IFRE_DB_DBChangedNotificationConnection);
   procedure FREDB_ApplyNotificationBlockToNotifIF_Session    (const block: IFRE_DB_Object ; const deploy_if : IFRE_DB_DBChangedNotificationSession);
 
-  function  FREDB_CompareTransCollDataKeys                    (const a,b : TFRE_DB_TRANS_COLL_DATA_KEY):boolean;
-  function  FREDB_CompareTransCollDataKeysOrderOnly           (const a,b : TFRE_DB_TRANS_COLL_DATA_KEY):boolean;
-
   function  FREDB_PP_ObjectInParentPath                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_String): boolean;
   procedure FREDB_PP_AddParentPathToObj                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_String);
   function  FREDB_PP_GetParentPaths                           (const obj : IFRE_DB_Object):TFRE_DB_StringArray;
@@ -5056,12 +5054,12 @@ end;
 
 function TFRE_DB_SESSION_DC_RANGE_MGR_KEY.GetRmKeyAsString: TFRE_DB_CACHE_DATA_KEY;
 begin
-  result := SessionID+'@'+DataKey.DC_Name+'#'+Parenthash;
+  result := SessionID+'@'+DataKey.DC_Name+'/'+Parenthash;
 end;
 
 function TFRE_DB_SESSION_DC_RANGE_MGR_KEY.GetFullKeyString: TFRE_DB_CACHE_DATA_KEY;
 begin
-  result := SessionID+'@'+DataKey.GetFullKeyString+'#'+Parenthash;
+  result := SessionID+'@'+DataKey.GetFullKeyString+'/'+Parenthash;
 end;
 
 procedure TFRE_DB_SESSION_DC_RANGE_MGR_KEY.SetupFromQryID(qryid: TFRE_DB_CACHE_DATA_KEY);
@@ -5076,13 +5074,14 @@ begin
   SessionID := GFRE_BT.SepLeft(qryid,'@');
   qryid     := GFRE_BT.SepRight(qryid,'@');
   FREDB_SeperateString(qryid,'/',parts);
-  if Length(parts)<>5 then
+  if Length(parts)<>4 then
     raise EFRE_DB_Exception.Create(edb_ERROR,'cannot setup key rm key, syntax [%s]',[qryid]);
-  DataKey.Collname  := parts[0];
-  DataKey.DC_Name   := parts[1];
-  DataKey.RL_Spec   := parts[2];
-  DataKey.orderkey  := parts[3];
-  DataKey.filterkey := parts[4];
+  //DataKey.Collname  := parts[0];
+  DataKey.DC_Name   := parts[0];
+  //DataKey.RL_Spec   := parts[2];
+  DataKey.orderkey  := parts[1];
+  DataKey.filterkey := parts[2];
+  Parenthash        := parts[3]; // GFRE_BT.HashFast32_Hex(''); //FIXME : Need right StoreID
 end;
 
 { TFRE_DB_STORE_DATA_DESC }
@@ -5112,7 +5111,8 @@ end;
 
 function TFRE_DB_TRANS_COLL_DATA_KEY.GetFullKeyString: TFRE_DB_CACHE_DATA_KEY;
 begin
-  result := Collname+'/'+DC_Name+'/'+RL_Spec+'/'+OrderKey+'/'+filterkey;
+  //result := Collname+'/'+DC_Name+'/'+RL_Spec+'/'+OrderKey+'/'+filterkey;
+  result := DC_Name+'/'+OrderKey+'/'+filterkey;
   if orderkey='' then
     raise EFRE_DB_Exception.Create(edb_ERROR,'invalid cache key usage, order part is undefined');
   if filterkey='' then
@@ -5121,14 +5121,16 @@ end;
 
 function TFRE_DB_TRANS_COLL_DATA_KEY.GetOrderKeyPart: TFRE_DB_CACHE_DATA_KEY;
 begin
-  result := Collname+'/'+DC_Name+'/'+RL_Spec+'/'+OrderKey;
+  //result := Collname+'/'+DC_Name+'/'+RL_Spec+'/'+OrderKey;
+  result := DC_Name+'/'+OrderKey;
   if orderkey='' then
     raise EFRE_DB_Exception.Create(edb_ERROR,'invalid cache key usage, order part is undefined');
 end;
 
 function TFRE_DB_TRANS_COLL_DATA_KEY.GetBaseDataKey: TFRE_DB_CACHE_DATA_KEY;
 begin
-  result := Collname+'/'+DC_Name+'/'+RL_Spec;
+  //result := Collname+'/'+DC_Name+'/'+RL_Spec;
+  result := DC_Name;
 end;
 
 { TFRE_DB_OBJECT_PLUGIN_BASE }
@@ -5271,6 +5273,12 @@ begin
     Inc(n, 2);
     Inc(h);
   end;
+end;
+
+function TFRE_DB_GUID.AsBinaryString: ShortString;
+begin
+  SetLength(result,16);
+  move(d[0],result[1],16);
 end;
 
 procedure TFRE_DB_GUID.ClearGuid;
@@ -11351,7 +11359,12 @@ end;
 procedure FREDB_SetStringFromExistingFieldPathOrNoChange(const obj: IFRE_DB_Object; const fieldpath: string; var string_fld: TFRE_DB_String);
 begin
   if obj.FieldPathExists(fieldpath) then
-    string_fld := obj.FieldPath(fieldpath).AsString
+    begin
+      if obj.FieldPath(fieldpath).IsSpecialClearMarked then
+        string_fld := ''
+      else
+        string_fld := obj.FieldPath(fieldpath).AsString
+    end
   else
     string_fld := cFRE_DB_SYS_NOCHANGE_VAL_STR;
 end;
@@ -11495,23 +11508,6 @@ begin
         //    raise EFRE_DB_Exception.Create(edb_ERROR,'undefined block notification encoding : '+cmd);
         end;
       end;
-end;
-
-function FREDB_CompareTransCollDataKeys(const a, b: TFRE_DB_TRANS_COLL_DATA_KEY): boolean;
-begin
-  result := (a.Collname  = b.Collname ) and
-            (a.DC_Name   = b.DC_Name  ) and
-            (a.filterkey = b.filterkey) and
-            (a.orderkey  = b.orderkey ) and
-            (a.RL_Spec   = b.RL_Spec  );
-end;
-
-function FREDB_CompareTransCollDataKeysOrderOnly(const a, b: TFRE_DB_TRANS_COLL_DATA_KEY): boolean;
-begin
-  result := (a.Collname  = b.Collname ) and
-            (a.DC_Name   = b.DC_Name  ) and
-            (a.orderkey  = b.orderkey ) and
-            (a.RL_Spec   = b.RL_Spec  );
 end;
 
 function FREDB_PP_ObjectInParentPath(const obj: IFRE_DB_Object; const pp: TFRE_DB_String): boolean;

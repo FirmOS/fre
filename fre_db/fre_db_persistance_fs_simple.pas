@@ -2327,7 +2327,11 @@ var up_dbname : TFRE_DB_String;
       begin
         if assigned(dblayer_o.FChangeNotificationIF)
            and (not dblayer_o.FDontFinalizeNotif) then
-             dblayer_o.FChangeNotificationIF.FinalizeNotif;
+             begin
+               //dblayer_o.FChangeNotificationIF.FinalizeNotif;
+               exit;
+               { DO NOT REPLACE NOTIFY IF (BUG IF CONNECTION GETS FINALIZED AND PROXY IS DANGLING) }
+             end;
         dblayer_o.FChangeNotificationIF := TFRE_DB_DBChangedNotificationProxy.Create(NotifIF,db_name);
         dblayer_o.FDontFinalizeNotif := false;
       end
