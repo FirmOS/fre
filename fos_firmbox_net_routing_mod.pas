@@ -221,21 +221,25 @@ begin
     canMoveToAggr:=canMoveToAggr and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
 
     canRemoveFromAggr:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+    canMoveToBridge:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
+                     conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
+    canMoveToBridge:=canMoveToBridge and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+
+    canRemoveFromBridge:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+
+    canLinkToIPMP:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
+                   conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
+    canLinkToIPMP:=canLinkToIPMP and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
+
+    canUnlinkFromIPMP:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
   end else begin
     canMoveToAggr:=false;
     canRemoveFromAggr:=false;
+    canMoveToBridge:=false;
+    canRemoveFromBridge:=false;
+    canLinkToIPMP:=false;
+    canUnlinkFromIPMP:=false;
   end;
-  canMoveToBridge:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
-                 conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
-  canMoveToBridge:=canMoveToBridge and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
-
-  canRemoveFromBridge:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
-
-  canLinkToIPMP:=conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
-                 conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_IPV6_HOSTNET,zone.DomainID);
-  canLinkToIPMP:=canLinkToIPMP and (conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
-
-  canUnlinkFromIPMP:=(conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_PHYS,zone.DomainID) or conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DATALINK_SIMNET,zone.DomainID));
 
   if canAddRoute then begin
     canAdd:=true;
@@ -525,6 +529,8 @@ begin
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     hcObj:=dbo.Implementor_HC;
+    if ((hcObj is TFRE_DB_DATALINK_VNIC) or (hcObj is TFRE_DB_IP_HOSTNET)) then exit; //have to be deleted not removed
+
     if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_AGGR.ClassName,CFOS_DATALINK_PARENT_FIELD)=0 then begin
       exit; //object is not within an aggregation
     end;
@@ -586,10 +592,15 @@ begin
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canRemoveFromBridge(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+var
+  hcObj: TObject;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    hcObj:=dbo.Implementor_HC;
+    if (hcObj is TFRE_DB_IP_HOSTNET) then exit; //has to be deleted not removed
+
     if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_BRIDGE.ClassName,CFOS_DATALINK_PARENT_FIELD)=0 then begin
       exit; //object is not within an bridge
     end;
@@ -649,10 +660,15 @@ begin
 end;
 
 function TFRE_FIRMBOX_NET_ROUTING_MOD._canUnlinkFromIPMP(const input: IFRE_DB_Object; const conn: IFRE_DB_CONNECTION; var dbo: IFRE_DB_Object): Boolean;
+var
+  hcObj: TObject;
 begin
   Result:=false;
   if (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+    hcObj:=dbo.Implementor_HC;
+    if ((hcObj is TFRE_DB_DATALINK_VNIC) or (hcObj is TFRE_DB_IP_HOSTNET)) then exit; //have to be deleted not removed
+
     if conn.GetReferencesCount(dbo.UID,true,TFRE_DB_DATALINK_IPMP.ClassName,CFOS_DATALINK_PARENT_FIELD)=0 then begin
       exit; //object is not within an IPMP
     end;
@@ -680,7 +696,6 @@ function TFRE_FIRMBOX_NET_ROUTING_MOD._getZone(const dbo: IFRE_DB_Object; const 
     parentUids:=dbo.Field(CFOS_DATALINK_PARENT_FIELD).AsObjectLinkArray;
     for i := 0 to High(parentUids) do begin
       CheckDbResult(conn.Fetch(parentUids[i],parentObj));
-      if parentObj.Implementor_HC is TFRE_DB_DATALINK_IPMP then continue; //skip IPMP paths
       if not (parentObj.Implementor_HC is TFRE_DB_ZONE) then begin
         Result:=_checkParents(parentObj);
       end else begin
@@ -800,7 +815,7 @@ begin
   end else
   if data.FieldExists('ip') then begin
     Result:=data.Field('ip').AsString;
-    if data.FieldExists('subnet') then begin
+    if data.FieldExists('subnet') and not data.Field('subnet').IsSpecialClearMarked and (data.Field('subnet').AsString<>'') then begin
       Result:=Result+'/'+data.Field('subnet').AsString;
     end;
   end;
@@ -896,6 +911,9 @@ begin
     CreateModuleText(conn,'add_route_diag_type','Type');
     CreateModuleText(conn,'add_route_diag_type_ipv4','IPv4');
     CreateModuleText(conn,'add_route_diag_type_ipv6','IPv6');
+
+    CreateModuleText(conn,'modify_datalink_diag_cap','Modify %datalink_str%');
+    CreateModuleText(conn,'modify_diag_cap','Modify');
 
     CreateModuleText(conn,'datalink_modify_error_exists_cap','Error: Modify datalink');
     CreateModuleText(conn,'datalink_modify_error_exists_msg','A %datalink_str% datalink with the given name already exists!');

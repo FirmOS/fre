@@ -10,7 +10,7 @@ uses
   FOS_TOOL_INTERFACES,
   FRE_DB_INTERFACE,
   FOS_VM_CONTROL_INTERFACE,
-  fre_hal_schemes,
+  fre_hal_schemes,fre_zfs,
   fre_system,
   fre_dbbusiness,
   FRE_DB_COMMON;
@@ -129,6 +129,8 @@ implementation
 procedure Register_DB_Extensions;
 begin
   fre_dbbusiness.Register_DB_Extensions;
+  fre_hal_schemes.Register_DB_Extensions;
+  fre_zfs.Register_DB_Extensions;
 
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_MACHINES_MOD);
   GFRE_DBI.RegisterObjectClassEx(TFRE_FIRMBOX_VM_RESOURCES_MOD);
@@ -638,6 +640,19 @@ begin
       Filters.AddSchemeObjectFilter('type',[TFRE_DB_DATALINK_VNIC.ClassName]);
       Filters.AddStringFieldFilter('used','vmid','OK',dbft_EXACT);
     end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddMatchingReferencedFieldArray(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
+    end;
+    dc := session.NewDerivedCollection(CFRE_DB_VMACHINE_HDD_CHOOSER_DC);
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      Filters.AddSchemeObjectFilter('type',[TFRE_DB_ZFS_DATASET_ZVOL.ClassName]);
+    end;
   end;
 end;
 
@@ -734,6 +749,28 @@ begin
      CreateModuleText(conn,'vm_form_network_advanced_dns1','DNS1');
      CreateModuleText(conn,'vm_form_network_advanced_dns2','DNS2');
      CreateModuleText(conn,'vm_form_network_advanced_hostname','Hostname');
+
+     CreateModuleText(conn,'vm_form_drives_group','Drives');
+     CreateModuleText(conn,'vm_form_hdd1','Hard Disk 1');
+     CreateModuleText(conn,'vm_form_hdd2','Hard Disk 2');
+     CreateModuleText(conn,'vm_form_hdd3','Hard Disk 3');
+     CreateModuleText(conn,'vm_form_hdd4','Hard Disk 4');
+     CreateModuleText(conn,'vm_form_hdd5','Hard Disk 5');
+     CreateModuleText(conn,'vm_form_hdd6','Hard Disk 6');
+     CreateModuleText(conn,'vm_form_hdd7','Hard Disk 7');
+     CreateModuleText(conn,'vm_form_hdd8','Hard Disk 8');
+
+     CreateModuleText(conn,'vm_form_hdd_new_option','New');
+     CreateModuleText(conn,'vm_form_hdd_new_caption','Caption');
+     CreateModuleText(conn,'vm_form_hdd_new_size','Size (GB)');
+
+     CreateModuleText(conn,'vm_form_cd1','CD Rom 1');
+     CreateModuleText(conn,'vm_form_cd2','CD Rom 2');
+
+     CreateModuleText(conn,'vm_form_usb','USB Stick');
+
+     CreateModuleText(conn,'vm_form_floppy1','Floppy A');
+     CreateModuleText(conn,'vm_form_floppy2','Floppy B');
    end;
 end;
 
@@ -921,15 +958,6 @@ end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 var
-  idestore             : TFRE_DB_STORE_DESC;
-  isostore             : TFRE_DB_STORE_DESC;
-  diskstore            : TFRE_DB_STORE_DESC;
-  keyboardstore        : TFRE_DB_STORE_DESC;
-  vm_disks             : IFRE_DB_DERIVED_COLLECTION;
-  vm_isos              : IFRE_DB_DERIVED_COLLECTION;
-  chooser              : TFRE_DB_INPUT_CHOOSER_DESC;
-  diskchooser          : TFRE_DB_INPUT_CHOOSER_DESC;
-  isochooser           : TFRE_DB_INPUT_CHOOSER_DESC;
   group                : TFRE_DB_INPUT_GROUP_DESC;
   sf,cusf              : TFRE_DB_SERVER_FUNC_DESC;
   scheme               : IFRE_DB_SchemeObject;
@@ -941,6 +969,9 @@ var
   nicScheme            : IFRE_DB_SchemeObject;
   button               : TFRE_DB_INPUT_BUTTON_DESC;
   zone                 : TFRE_DB_ZONE;
+  diskScheme           : IFRE_DB_SchemeObject;
+  i                    : Integer;
+  idx_str              : String;
 begin
   CheckClassVisibility4MyDomain(ses);
 
@@ -971,6 +1002,7 @@ begin
 
   GetSystemScheme(TFRE_DB_VMACHINE,scheme);
   GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
+  GetSystemScheme(TFRE_DB_VMACHINE_DISK,diskScheme);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,true,false);
   res.SetElementValue('cores','1');
   res.SetElementValue('threads','1');
@@ -981,49 +1013,72 @@ begin
   dc:=ses.FetchDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC);
   dc.Filters.RemoveFilter('zone');
   dc.Filters.AddUIDFieldFilter('zone','zid',[FREDB_H2G(zoneId)],dbnf_OneValueFromFilter);
+  dc:=ses.FetchDerivedCollection(CFRE_DB_VMACHINE_HDD_CHOOSER_DC);
+  //dc.Filters.RemoveFilter('zone');
+  //dc.Filters.AddUIDFieldFilter('zone','zid',[FREDB_H2G(zoneId)],dbnf_OneValueFromFilter);
 
+  //NETWORK
   group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_form_network_group'),true,false);
 
-  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_1'),'net1');
-  block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net1',false);
-  sf:=CWSF(@WEB_AddVMConfigureNetwork);
-  sf.AddParam.Describe('id','net1');
-  cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
-  cusf.AddParam.Describe('id','net1');
-  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
-  ch:=(block.GetFormElement('net1.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
-  ch.addDependentInput('net2','',fdv_hidden);
-  ch.AddDependence(button.contentId,false);
-  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_2'),'net2');
-  block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net2',false);
-  sf:=CWSF(@WEB_AddVMConfigureNetwork);
-  sf.AddParam.Describe('id','net2');
-  cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
-  cusf.AddParam.Describe('id','net1');
-  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
-  ch:=(block.GetFormElement('net2.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
-  ch.addDependentInput('net3','',fdv_hidden);
-  ch.AddDependence(button.contentId,false);
-  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_3'),'net3');
-  block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net3',false);
-  sf:=CWSF(@WEB_AddVMConfigureNetwork);
-  sf.AddParam.Describe('id','net3');
-  cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
-  cusf.AddParam.Describe('id','net1');
-  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
-  ch:=(block.GetFormElement('net3.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
-  ch.addDependentInput('net4','',fdv_hidden);
-  ch.AddDependence(button.contentId,false);
-  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_4'),'net4');
-  block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net4',false);
-  sf:=CWSF(@WEB_AddVMConfigureNetwork);
-  sf.AddParam.Describe('id','net4');
-  cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
-  cusf.AddParam.Describe('id','net1');
-  button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
-  ch:=(block.GetFormElement('net4.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
-  ch.AddDependence(button.contentId,false);
+  for i := 0 to 3 do begin
+    idx_str:=IntToStr(i+1);
+    block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_'+idx_str),'net'+idx_str);
+    block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net'+idx_str,false);
+    sf:=CWSF(@WEB_AddVMConfigureNetwork);
+    sf.AddParam.Describe('id','net'+idx_str);
+    cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
+    cusf.AddParam.Describe('id','net'+idx_str);
+    button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
+    ch:=(block.GetFormElement('net'+idx_str+'.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
+    if (i<3) then begin
+      ch.addDependentInput('net'+IntToStr(i+2),'',fdv_hidden);
+    end;
+    ch.AddDependence(button.contentId,false);
+  end;
 
+  //DRIVES
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_form_drives_group'),true,false);
+
+  for i := 0 to 7 do begin
+    idx_str:=IntToStr(i+1);
+    block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_hdd'+idx_str),'hdd'+idx_str);
+    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main_hdd'),ses,'hdd'+idx_str,false);
+    ch:=(block.GetFormElement('hdd'+idx_str+'.file').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
+    if (i<7) then begin
+      ch.addDependentInput('hdd'+IntToStr(i+2),'',fdv_hidden);
+    end;
+    ch.addDependentInput('hdd'+idx_str+'_new','_new_',fdv_visible);
+    block:=group.AddBlock.Describe('','hdd'+idx_str+'_new',true);
+    block.AddInput().Describe(FetchModuleTextShort(ses,'vm_form_hdd_new_caption'),'hdd'+idx_str+'.cap',true);
+    block.AddNumber().Describe(FetchModuleTextShort(ses,'vm_form_hdd_new_size'),'hdd'+idx_str+'.size',true,false,false,false,'',0);
+  end;
+  //add new option once since it is always the same store within the form
+  ch.addOption(FetchModuleTextShort(ses,'vm_form_hdd_new_option'),'_new_');
+
+  for i := 0 to 1 do begin
+    idx_str:=IntToStr(i+1);
+    block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_cd'+idx_str),'cd'+idx_str);
+    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,'cd'+idx_str,false);
+    if (i=0) then begin
+      ch:=(block.GetFormElement('cd'+idx_str+'.file').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
+      ch.addDependentInput('cd'+IntToStr(i+2),'',fdv_hidden);
+    end;
+  end;
+
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_usb'),'usb');
+  block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,'usb',false);
+
+  for i := 0 to 1 do begin
+    idx_str:=IntToStr(i+1);
+    block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_floppy'+idx_str),'floppy'+idx_str);
+    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,'floppy'+idx_str,false);
+    if (i=0) then begin
+      ch:=(block.GetFormElement('floppy'+idx_str+'.file').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
+      ch.addDependentInput('floppy'+IntToStr(i+2),'',fdv_hidden);
+    end;
+  end;
+
+  //ADVANCED
   res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
 
   Result:=res;
