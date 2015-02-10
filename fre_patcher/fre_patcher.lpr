@@ -2473,7 +2473,9 @@ begin
 
   sharecoll.ClearCollection;
   rcoll.ClearCollection;
-  ipcoll.ClearCollection;
+
+
+  RemoveLinksifExists(CFOS_DB_SERVICES_COLLECTION);
 
   RemoveLinksifExists(CFOS_DB_VOIP_EXT_EXP_REL_COLLECTION);
   RemoveLinksifExists(CFOS_DB_VOIP_EXTENSIONS_COLLECTION);
@@ -2494,7 +2496,9 @@ begin
   ClearCollectionifExists(CFRE_DB_FIREWALL_RULE_COLLECTION,true);
   ClearCollectionifExists(CFRE_DB_FIREWALL_POOL_COLLECTION,true);
 
+  RemoveLinksifExists(CFRE_DB_IP_COLLECTION);
   ClearCollectionifExists(CFOS_DB_SERVICES_COLLECTION,true);
+  ipcoll.ClearCollection;
 
 
   RemoveObjLinks(conn.GetJobsCollection);
@@ -2721,7 +2725,7 @@ begin
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:86:12:9c','mgmt');
   AddIPV4('10.54.240.103/24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce3',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'0:90:fa:47:6c:b4','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'vnicnfs0_3',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:c7:6a:fd','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_3',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:c7:6a:fd','mgmt');
   AddIPV4('10.54.250.207/25',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:39:36:36','mgmt');
   AddIPV4('10.54.240.104/24',link_id);
