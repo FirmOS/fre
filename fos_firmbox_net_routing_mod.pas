@@ -1371,11 +1371,11 @@ begin
 
   if ipv4 then begin
     GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV4_ROUTE.ClassName,scheme);
-    route:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+    route:=TFRE_DB_IPV4_ROUTE.CreateForDB;
     route.Field('objname').AsString:=_getHostnetObjname(input.FieldPath('data.ipv4').AsObject);
   end else begin
     GFRE_DBI.GetSystemSchemeByName(TFRE_DB_IPV6_ROUTE.ClassName,scheme);
-    route:=TFRE_DB_IPV6_HOSTNET.CreateForDB;
+    route:=TFRE_DB_IPV6_ROUTE.CreateForDB;
     route.Field('objname').AsString:=_getHostnetObjname(input.FieldPath('data.ipv6').AsObject);
   end;
 
