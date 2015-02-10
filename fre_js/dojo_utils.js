@@ -1261,6 +1261,9 @@ dojo.declare("FIRMOS.Store", null, {
     }
     if (this.sortAndFilterClassname) {
       var params = dojo.clone(this.sortAndFilterParams);
+      if (this.parent) {
+        params.parentid = this.getIdentity(this.parent).split('@');
+      }
       params.filter = this._filterSettings;
       G_SERVER_COM.callServerFunction(this.sortAndFilterClassname, this.sortAndFilterFunctionname, this.sortAndFilterUidPath, params);
     }
@@ -1277,6 +1280,9 @@ dojo.declare("FIRMOS.Store", null, {
     }
     if (this.sortAndFilterClassname) {
       var params = dojo.clone(this.sortAndFilterParams);
+      if (this.parent) {
+        params.parentid = this.getIdentity(this.parent).split('@');
+      }
       params.sort = this._sortSettings;
       G_SERVER_COM.callServerFunction(this.sortAndFilterClassname, this.sortAndFilterFunctionname, this.sortAndFilterUidPath, params);
     }
@@ -1331,6 +1337,9 @@ dojo.declare("FIRMOS.Store", null, {
     console.log('FUNTION releaseRange ' + JSON.stringify(arguments));
     if (this.clearClassname) {
       var params = dojo.clone(this.clearParams);
+      if (this.parent) {
+        params.parentid = this.getIdentity(this.parent).split('@');
+      }
       params.start = start;
       params.end = end;
       G_SERVER_COM.callServerFunction(this.clearClassname, this.clearFunctionname, this.clearUidPath, params);
