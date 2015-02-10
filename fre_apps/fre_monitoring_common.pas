@@ -164,6 +164,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddMultiToOnescheme(TFRE_DB_NameTypeArray.create('caption','step_caption'),'caption',FetchModuleTextShort(session,'gc_wf_caption'),dt_string,true,true);
+      AddMatchingReferencedField(['<wf','customer>'],'objname','customer','',true,dt_description);
       AddOneToOnescheme('state','state','',dt_string,false);
       AddOneToOnescheme('stateHR','stateHR',FetchModuleTextShort(session,'gc_wf_state'));
       AddMatchingReferencedField('DESIGNATED_GROUP>TFRE_DB_GROUP','displayname','group',FetchModuleTextShort(session,'gc_wf_group'));
