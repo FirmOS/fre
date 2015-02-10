@@ -170,7 +170,7 @@ begin
     dc:=ses.FetchDerivedCollection('DATALINK_GRID');
   end;
   dc.Filters.RemoveFilter('zone');
-  dc.Filters.AddRootNodeFilter('zone','uid',conn.GetReferences(zone.UID,false,'',CFOS_DATALINK_PARENT_FIELD),dbnf_OneValueFromFilter);
+  dc.Filters.AddRootNodeFilter('zone','zuid',zone.UID,dbnf_OneValueFromFilter);
   res:=dc.GetDisplayDescription.Implementor_HC as TFRE_DB_VIEW_LIST_DESC;
 
   dc:=ses.FetchDerivedCollection('AGGREGATION_CHOOSER');
@@ -986,6 +986,7 @@ begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_DATALINK_IPMP'],'objname','ipmp','',true,dt_description);
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'objname','czone',FetchModuleTextShort(session,'grid_delegation_zone'),true,dt_string);
+      AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_GLOBAL_ZONE'],'uid','zuid','',false);
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('serviceparent','','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
@@ -1004,6 +1005,7 @@ begin
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_DATALINK_IPMP'],'objname','ipmp','',true,dt_description);
+      AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'uid','zuid','',false);
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('serviceparent','','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
