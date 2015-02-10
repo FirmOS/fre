@@ -36,6 +36,7 @@ program fpmake_packages;
          AddUnit('fosillu_hal_dbo_zfs_pool.pp');
          AddUnit('fosillu_libdladm.pp');
          AddUnit('fosillu_sysnet_common.pp');
+         AddUnit('fosillu_vndadm.pas'); 
          AddUnit('fosillu_dladm.pas');
          AddUnit('fosillu_ipadm.pas');
          AddUnit('fosillu_hal_zonectrl.pas');
