@@ -2335,9 +2335,9 @@ var up_dbname : TFRE_DB_String;
         dblayer_o.FChangeNotificationIF := TFRE_DB_DBChangedNotificationProxy.Create(NotifIF,db_name);
         dblayer_o.FDontFinalizeNotif := false;
       end
-    else
-      if not assigned(dblayer_o.FChangeNotificationIF) then
-        raise EFRE_DB_Exception.Create(edb_INTERNAL,' should not happen ');
+    //else { a NOTIF isnt strictly required anymore }
+    //  if not assigned(dblayer_o.FChangeNotificationIF) then
+    //    raise EFRE_DB_Exception.Create(edb_INTERNAL,' should not happen ');
   end;
 
 begin

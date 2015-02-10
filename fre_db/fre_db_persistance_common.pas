@@ -489,6 +489,7 @@ type
   TFRE_DB_ChangeStep=class
   protected
     FLayer         : IFRE_DB_PERSISTANCE_LAYER;
+    FNotifIF       : IFRE_DB_DBChangedNotification;
     Fmaster        : TFRE_DB_Master_Data;
     FTransList     : TFRE_DB_TransactionalUpdateList;
     FStepID        : NativeInt;
@@ -511,7 +512,6 @@ type
     procedure      SetStepID                   (const id:NativeInt);
     function       GetTransActionStepID        : TFRE_DB_TransStepId;
     function       Master                      : TFRE_DB_Master_Data;
-    function       GetNotificationRecordIF     : IFRE_DB_DBChangedNotification; { the recording notification if }
   end;
 
   { TFRE_DB_NewCollectionStep }
@@ -832,7 +832,8 @@ procedure TFRE_DB_DropIndexStep.MasterStore(const check: boolean);
 begin
   if not check then
     begin
-      FLayer.GetNotificationRecordIF.IndexDroppedOnField(FCollname,FIndexName,GetTransActionStepID);
+      if assigned(FNotifIF) then
+        FNotifIF.IndexDroppedOnField(FCollname,FIndexName,GetTransActionStepID);
       CheckWriteThroughIndexDrop(FCollection,FIndexName);
     end;
 end;
@@ -1008,7 +1009,8 @@ procedure TFRE_DB_DefineIndexOnFieldStep.MasterStore(const check: boolean);
 begin
   if not check then
     begin
-      FLayer.GetNotificationRecordIF.IndexDefinedOnField(FCollname,FFieldName,FFieldType,FUnique,FIgnoreCC,FindexName,Fallownull,FUniqueNull,GetTransActionStepID);
+      if assigned(FNotifIF) then
+        FNotifIF.IndexDefinedOnField(FCollname,FFieldName,FFieldType,FUnique,FIgnoreCC,FindexName,Fallownull,FUniqueNull,GetTransActionStepID);
       CheckWriteThroughColl(FCollection);
     end;
 end;
@@ -1565,7 +1567,8 @@ begin
       res := Master.MasterColls.DeleteCollection(FCollname);
       if res<>edb_OK  then
         raise EFRE_DB_PL_Exception.Create(res,'failed to delete new collection [%s] in transaction step',[FCollname]);
-      GetNotificationRecordIF.CollectionDeleted(FCollname,GetTransActionStepID);
+      if assigned(FNotifIF) then
+        FNotifIF.CollectionDeleted(FCollname,GetTransActionStepID);
       if not FVolatile then
         CheckWriteThroughDeleteColl(FCollname);
     end;
@@ -1638,7 +1641,8 @@ begin
             end;
         end;
       if not check then
-        GetNotificationRecordIF.ObjectRemoved(FDelFromCollectionsNames,FDeleteList[0],true,GetTransActionStepID);
+        if assigned(FNotifIF) then
+          FNotifIF.ObjectRemoved(FDelFromCollectionsNames,FDeleteList[0],true,GetTransActionStepID);
     end
   else
     begin { Delete from specific collection}
@@ -1655,7 +1659,8 @@ begin
       if not check then
         begin
           FDeleteList[0].Field(cFRE_DB_SYS_T_LMO_TRANSID).AsString:=GetTransActionStepID;
-          GetNotificationRecordIF.ObjectRemoved(FDelFromCollectionsNames, FDeleteList[0],FWouldNeedMasterDelete,GetTransActionStepID);
+          if assigned(FNotifIF) then
+            FNotifIF.ObjectRemoved(FDelFromCollectionsNames, FDeleteList[0],FWouldNeedMasterDelete,GetTransActionStepID);
           CheckWriteThroughColl(arr[idx]);
         end;
     end;
@@ -1668,21 +1673,25 @@ begin
   if check
      and FWouldNeedMasterDelete then { this is the check phase, the internalcount is >1}
        begin
-         master.DeleteObjectWithSubobjs(FDeleteList[0],check,GetNotificationRecordIF,GetTransActionStepID);
+         master.DeleteObjectWithSubobjs(FDeleteList[0],check,FNotifIF,GetTransActionStepID);
        end
   else
     begin
       if length(FDeleteList[0].__InternalGetCollectionList)=0 then { this is the real phase}
         begin
           G_Transaction.Forget_UnlockedObject(FDeleteList[0]); { do not unlock it, later it ceases to be }
-          notify_delob := FDeleteList[0].CloneToNewObject;
-          notify_delob.Field(cFRE_DB_SYS_T_LMO_TRANSID).AsString:=GetTransActionStepID;
+          if assigned(FNotifIF) then
+            begin
+              notify_delob := FDeleteList[0].CloneToNewObject;
+              notify_delob.Field(cFRE_DB_SYS_T_LMO_TRANSID).AsString:=GetTransActionStepID;
+            end;
           CheckWriteThroughDeleteObj(FDeleteList[0]); { the changes must only be recorded persistent when the object is finally deleted, the internal collection assosciation is not stored persistent }
           if FDeleteList[0].IsSystemDB then
-            G_SysMaster.DeleteObjectWithSubobjs(FDeleteList[0],check,GetNotificationRecordIF,GetTransActionStepID)
+            G_SysMaster.DeleteObjectWithSubobjs(FDeleteList[0],check,FNotifIF,GetTransActionStepID)
           else
-            master.DeleteObjectWithSubobjs(FDeleteList[0],check,GetNotificationRecordIF,GetTransActionStepID);
-          GetNotificationRecordIF.ObjectDeleted(FDelFromCollectionsNames,notify_delob,GetTransActionStepID); { Notify after delete }
+            master.DeleteObjectWithSubobjs(FDeleteList[0],check,FNotifIF,GetTransActionStepID);
+          if assigned(FNotifIF) then
+            FNotifIF.ObjectDeleted(FDelFromCollectionsNames,notify_delob,GetTransActionStepID); { Notify after delete }
         end;
       for i:=0 to high(FDelFromCollections) do
         CheckWriteThroughColl(FDelFromCollections[i]);
@@ -1719,7 +1728,8 @@ begin
       res := Master.MasterColls.NewCollection(FCollname,FNewCollection,FVolatile,Master);
       if res<>edb_OK  then
         raise EFRE_DB_PL_Exception.Create(res,'failed to create new collectiion in step [%s] ',[FCollname]);
-      GetNotificationRecordIF.CollectionCreated(FCollname,FVolatile,GetTransActionStepID);
+      if assigned(FNotifIF) then
+        FNotifIF.CollectionCreated(FCollname,FVolatile,GetTransActionStepID);
       CheckWriteThroughColl(FNewCollection);
     end;
 end;
@@ -2198,6 +2208,7 @@ constructor TFRE_DB_ChangeStep.Create(const layer: IFRE_DB_PERSISTANCE_LAYER; co
 begin
   FLayer       := layer;
   Fmaster      := masterdata;
+  FNotifIF     := Flayer.GetNotificationRecordIF;
   FUserContext := user_context;
 end;
 
@@ -2221,11 +2232,6 @@ end;
 function TFRE_DB_ChangeStep.Master: TFRE_DB_Master_Data;
 begin
   result := Fmaster;
-end;
-
-function TFRE_DB_ChangeStep.GetNotificationRecordIF: IFRE_DB_DBChangedNotification;
-begin
-  Result := FLayer.GetNotificationRecordIF;
 end;
 
 { TFRE_DB_UpdateStep }
@@ -2462,42 +2468,22 @@ var i,j         : NativeInt;
     inmemobject : TFRE_DB_Object;
 
     procedure _DeletedField;
-    //var  lDeleteList : TFRE_DB_ObjectArray;
-    //     k,h         : NativeInt;
     begin
       with FSublist[i] do
         begin
           if not check then
-            GetNotificationRecordIF.FieldDelete(oldfield,GetTransActionStepID); { Notify before delete }
+            if assigned(FNotifIF) then
+              FNotifIF.FieldDelete(oldfield,GetTransActionStepID); { Notify before delete }
           case oldfield.FieldType of
             fdbft_Object:
               begin
-                //writeln('MASTERSTORE ABORT 1'); {TODO: Make a testcase }
-                //GFRE_BT.CriticalAbort('MASTERSTORE ABORT 1');
-                //abort;
                 if check then
                   begin
-                    master.DeleteObjectWithSubobjs(oldfield.AsObject,true,GetNotificationRecordIF,GetTransActionStepID,true);
-                    //lDeleteList :=  oldfield.AsObject.GetFullHierarchicObjectList(true);
-                    //if lDeleteList[0].IsObjectRoot=true then
-                    //  raise EFRE_DB_Exception.Create(edb_INTERNAL,'unexpected objectroot in subobject delete field');
-                    //h := high(lDeletelist);
-                    //if h>0 then
-                    //  h:=h;
-                    //for k:=0 to h do
-                    //  master.DeleteObjectSingle(lDeleteList[k].UID,true,GetNotificationRecordIF,GetTransActionStepID); { sub object delete }
+                    master.DeleteObjectWithSubobjs(oldfield.AsObject,true,FNotifIF,GetTransActionStepID,true);
                   end
                 else
                   begin
-                    master.DeleteObjectWithSubobjs(oldfield.AsObject,false,GetNotificationRecordIF,GetTransActionStepID,true);
-                    //lDeleteList :=  oldfield.AsObject.GetFullHierarchicObjectList(true);
-                    //if lDeleteList[0].IsObjectRoot=true then
-                    //  raise EFRE_DB_Exception.Create(edb_INTERNAL,'unexpected objectroot in subobject delete field');
-                    //h := high(lDeletelist);
-                    //if h>0 then
-                    //  h:=h;
-                    //for k:=0 to h do
-                    //  master.DeleteObjectSingle(lDeleteList[k].UID,true,GetNotificationRecordIF,GetTransActionStepID); { root and sub object delete }
+                    master.DeleteObjectWithSubobjs(oldfield.AsObject,false,FNotifIF,GetTransActionStepID,true);
                     inmemobject.DeleteField(oldfield.FieldName);
                   end;
               end;
@@ -2510,7 +2496,7 @@ var i,j         : NativeInt;
                   end
                 else
                   begin
-                    master._ChangeRefLink(inmemobject,uppercase(inmemobject.SchemeClass),uppercase(oldfield.FieldName),oldfield.AsObjectLinkArray,nil,GetNotificationRecordIF,GetTransActionStepID);
+                    master._ChangeRefLink(inmemobject,uppercase(inmemobject.SchemeClass),uppercase(oldfield.FieldName),oldfield.AsObjectLinkArray,nil,FNotifIF,GetTransActionStepID);
                     inmemobject.Field(oldfield.FieldName).Clear;
                   end;
               end;
@@ -2534,34 +2520,12 @@ var i,j         : NativeInt;
           if check then // debug
             begin
               if not FSublist[i].in_del_list then { skip store checks for to be in teh same step deleted objects }
-                master.StoreObjectWithSubjs(FSublist[i].newfield.AsObject,check,GetNotificationRecordIF,GetTransActionStepID);
-              //FInsertList := FSublist[i].newfield.AsObject.GetFullHierarchicObjectList(true);
-              //for k:=0 to high(FInsertList) do
-              //  begin
-              //    //writeln('CHECK INSERT ',k);
-              //    //writeln(FInsertList[k].DumpToString());
-              //    master.StoreObject(FInsertList[k],check,GetNotificationRecordIF,GetTransActionStepID); { check if all subobjects object exists as root or subobjects in masterdata }
-              //  end;
+                master.StoreObjectWithSubjs(FSublist[i].newfield.AsObject,check,FNotifIF,GetTransActionStepID);
             end
           else
             begin { for real }
-              //writeln('------------Before-------------');
-              //writeln(inmemobject.DumpToString());
-              //writeln('-------------------------------');
               inmemobject.Field(FSublist[i].newfield.FieldName).AsObject := FSublist[i].newfield.AsObject.CloneToNewObject(); { subobject insert}
-              master.StoreObjectWithSubjs(inmemobject.Field(FSublist[i].newfield.FieldName).AsObject,check,GetNotificationRecordIF,GetTransActionStepID);
-              //FInsertList := inmemobject.Field(FSublist[i].newfield.FieldName).AsObject.GetFullHierarchicObjectList(true);
-              //for k:=0 to high(FInsertList) do
-              //  begin
-              //    //writeln('DOINSERT INSERT ',k);
-              //    //writeln(FInsertList[k].DumpToString());
-              //    master.StoreObject(FInsertList[k],check,GetNotificationRecordIF,GetTransActionStepID); { store the  subobjects }
-              //  end;
-              //writeln('---RESULTS---');
-              //writeln(inmemobject.DumpToString());
-              //writeln('-----------');
-              //writeln(inmemobject.ObjectRoot.DumpToString());
-              //writeln('-----------');
+              master.StoreObjectWithSubjs(inmemobject.Field(FSublist[i].newfield.FieldName).AsObject,check,FNotifIF,GetTransActionStepID);
             end;
         end;
 
@@ -2570,7 +2534,8 @@ var i,j         : NativeInt;
       with FSublist[i] do
         begin
           if not check then
-            GetNotificationRecordIF.FieldAdd(newfield,GetTransActionStepID)
+            if assigned(FNotifIF) then
+              FNotifIF.FieldAdd(newfield,GetTransActionStepID)
           else
             if (inmemobject.FieldExists(newfield.FieldName) and (not in_del_list)) then
               raise EFRE_DB_Exception.Create(edb_ERROR,'updatestep add field [%s] to object [%s], but the field already exists, and it is not in a delete that happens before',[newfield.FieldName,inmemobject.UID_String]);
@@ -2601,7 +2566,7 @@ var i,j         : NativeInt;
                   for j:=0 to high(newfield.AsObjectLinkArray) do
                     begin
                       master.__CheckReferenceLink(inmemobject,newfield.FieldName,newfield.AsObjectLinkArray[j],sc);
-                      master.__SetupInitialRefLink(inmemobject,sc,fn,newfield.AsObjectLinkArray[j],GetNotificationRecordIF,GetTransActionStepID);
+                      master.__SetupInitialRefLink(inmemobject,sc,fn,newfield.AsObjectLinkArray[j],FNotifIF,GetTransActionStepID);
                     end;
                 end;
           end;
@@ -2619,7 +2584,8 @@ var i,j         : NativeInt;
           assert(up_obj.ObjectRoot = to_upd_obj,'internal, logic');
           if (not check) then
             begin
-              GetNotificationRecordIF.FieldChange(oldfield, newfield,GetTransActionStepID);
+              if assigned(FNotifIF) then
+                FNotifIF.FieldChange(oldfield, newfield,GetTransActionStepID);
             end;
           case newfield.FieldType of
             fdbft_NotFound,fdbft_GUID,fdbft_Byte,fdbft_Int16,fdbft_UInt16,fdbft_Int32,fdbft_UInt32,fdbft_Int64,fdbft_UInt64,
@@ -2646,11 +2612,11 @@ var i,j         : NativeInt;
                   end
                 else
                   begin
-                    master.DeleteObjectWithSubobjs(oldfield.AsObject,false,GetNotificationRecordIF,GetTransActionStepID,true);
+                    master.DeleteObjectWithSubobjs(oldfield.AsObject,false,FNotifIF,GetTransActionStepID,true);
                     inmemobject.DeleteField(oldfield.FieldName);
 
                     inmemobject.Field(newfield.FieldName).AsObject := newfield.AsObject.CloneToNewObject(); { subobject insert}
-                    master.StoreObjectWithSubjs(inmemobject.Field(newfield.FieldName).AsObject,check,GetNotificationRecordIF,GetTransActionStepID);
+                    master.StoreObjectWithSubjs(inmemobject.Field(newfield.FieldName).AsObject,check,FNotifIF,GetTransActionStepID);
                   end;
               end;
             fdbft_ObjLink:
@@ -2665,7 +2631,7 @@ var i,j         : NativeInt;
                 begin
                   oldlinks := oldfield.AsObjectLinkArray;
                   inmemobject.Field(newfield.FieldName).AsObjectLinkArray:=newfield.AsObjectLinkArray;
-                  master._ChangeRefLink(inmemobject,uppercase(inmemobject.SchemeClass),uppercase(newfield.FieldName),oldlinks,newfield.AsObjectLinkArray,GetNotificationRecordIF,GetTransActionStepID);
+                  master._ChangeRefLink(inmemobject,uppercase(inmemobject.SchemeClass),uppercase(newfield.FieldName),oldlinks,newfield.AsObjectLinkArray,FNotifIF,GetTransActionStepID);
                 end;
           end;
         end;
@@ -2691,7 +2657,8 @@ begin
       diffupdo.ClearAllFields;
       diffupdo.Field('uid').AsGUID      := to_upd_obj.UID;
       diffupdo.Field('domainid').AsGUID := to_upd_obj.DomainID;
-      GetNotificationRecordIF.DifferentiallUpdStarts(diffupdo,GetTransActionStepID);
+      if assigned(FNotifIF) then
+        FNotifIF.DifferentiallUpdStarts(diffupdo,GetTransActionStepID);
     end;
 
   for i:=0 to FCnt-1 do
@@ -2708,11 +2675,13 @@ begin
         end;
     end;
   if not check then
-    GetNotificationRecordIF.DifferentiallUpdEnds(to_upd_obj.UID,GetTransActionStepID); { Notifications will be transmitted on block level -> no special handling here, block get deleted on error }
+    if assigned(FNotifIF) then
+      FNotifIF.DifferentiallUpdEnds(to_upd_obj.UID,GetTransActionStepID); { Notifications will be transmitted on block level -> no special handling here, block get deleted on error }
   if not check then
     begin
       to_upd_obj.Field(cFRE_DB_SYS_T_LMO_TRANSID).AsString := GetTransActionStepID;
-      GetNotificationRecordIF.ObjectUpdated(to_upd_obj,to_upd_obj.__InternalGetCollectionListUSL,GetTransActionStepID);
+      if assigned(FNotifIF) then
+        FNotifIF.ObjectUpdated(to_upd_obj,to_upd_obj.__InternalGetCollectionListUSL,GetTransActionStepID);
       {$IFDEF DEBUG_CONSOLE_DUMP_TRANS}
         writeln('---UPDATESTEP DUMP --- FINAL');
         writeln(to_upd_obj.ObjectRoot.DumpToString());
@@ -2898,9 +2867,10 @@ var changes          : boolean;
   procedure GatherNotifs(var step:TFRE_DB_ChangeStep;const idx:NativeInt ; var halt_flag:boolean);
   var ni : IFRE_DB_DBChangedNotification;
   begin
-    ni := step.GetNotificationRecordIF;
-    if l_notifs.IndexOf(ni)=-1 then
-      l_notifs.Add(ni);
+    ni := step.FNotifIF;
+    if assigned(ni) then
+      if l_notifs.IndexOf(ni)=-1 then
+        l_notifs.Add(ni);
   end;
 
   procedure StartNotifBlocks;
@@ -3086,14 +3056,13 @@ begin
     G_Transaction.Record_A_NewObject(FInsertList[0]);
   if not FThisIsAnAddToAnotherColl then
     begin
-      master.StoreObjectWithSubjs(FInsertList[0],check,GetNotificationRecordIF,GetTransActionStepID);
-       //for i:=0 to high(FInsertList) do
-       //  master.StoreObject(FInsertList[i],check,GetNotificationRecordIF,GetTransActionStepID);
+      master.StoreObjectWithSubjs(FInsertList[0],check,FNotifIF,GetTransActionStepID);
     end;
   if not check then
     begin
       FInsertList[0].Field(cFRE_DB_SYS_T_LMO_TRANSID).AsString := GetTransActionStepID;
-      GetNotificationRecordIF.ObjectStored(FColl.CollectionName, FInsertList[0],GetTransActionStepID);
+      if assigned(FNotifIF) then
+         FNotifIF.ObjectStored(FColl.CollectionName, FInsertList[0],GetTransActionStepID);
       CheckWriteThroughObj(FInsertList[0]);
       CheckWriteThroughColl(FColl);
     end;

@@ -1642,7 +1642,7 @@ type
     procedure   ClearUserSessionBinding       ;
 
     function    GetDatabaseName               : TFRE_DB_String;
-    function    Connect                       (const db,user,pass:TFRE_DB_String):TFRE_DB_Errortype;
+    function    Connect                       (const db,user,pass:TFRE_DB_String ; const wants_notifications:boolean=false):TFRE_DB_Errortype;
 
     function    CollectionExists              (const name:TFRE_DB_NameType):boolean;
 
@@ -1727,7 +1727,7 @@ type
     function    GetClassesVersionDirectory  : IFRE_DB_Object;
     function    StoreClassesVersionDirectory(const version_dbo : IFRE_DB_Object) : TFRE_DB_Errortype;
     function    DelClassesVersionDirectory  : TFRE_DB_Errortype;
-    function    Connect                     (const loginatdomain,pass:TFRE_DB_String):TFRE_DB_Errortype;
+    function    Connect                     (const loginatdomain,pass:TFRE_DB_String ; const wants_notifications : boolean=false):TFRE_DB_Errortype;
     function    CheckLogin                  (const loginatdomain,pass:TFRE_DB_String;const allowed_classes : TFRE_DB_StringArray):TFRE_DB_Errortype;
 
     function    AddUser                     (const login:TFRE_DB_String; const domainUID: TFRE_DB_GUID;const password,first_name,last_name:TFRE_DB_String;const image : TFRE_DB_Stream=nil; const imagetype : String='';const is_internal:Boolean=false;const long_desc : TFRE_DB_String='' ; const short_desc : TFRE_DB_String='' ; const userclass : TFRE_DB_STRING=''):TFRE_DB_Errortype;
@@ -4916,9 +4916,9 @@ begin
       session.FetchDerivedCollection(stid).GetDeriveTransformation.GetFinalRightTransformFunction(frt,lang);
       ct.ForAllUpdated(@FinalTransform);
       ct.ForAllInserted(@FinalTransform);
-      writeln('HH>>> FINAL,FINAL UPDATE DESC ');
-      writeln(ct.DumpToString);
-      writeln('-------------------------------');
+      //writeln('HH>>> FINAL,FINAL UPDATE DESC ');
+      //writeln(ct.DumpToString);
+      //writeln('-------------------------------');
       session.SendServerClientRequest(ct);
     end;
 end;
@@ -8078,9 +8078,9 @@ begin
   qry.GetTransfrom.GetFinalRightTransformFunction(frt,langr);
   resdata := qry.GetResultData;
   result := GetGridDataDescription;
-  writeln('__>>> ANSWER GGD');
-  writeln(result.DumpToString());
-  writeln('__>>> ANSWER GGD');
+  //writeln('__>>> ANSWER GGD');
+  //writeln(result.DumpToString());
+  //writeln('__>>> ANSWER GGD');
   qry.free;
 end;
 

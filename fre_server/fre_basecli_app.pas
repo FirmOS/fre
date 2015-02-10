@@ -224,23 +224,28 @@ begin
   _CheckAdminPassSupplied;
   _CheckNoCustomextensionsSet;
   CONN := GFRE_DBI.NewConnection;
+  if cG_OVERRIDE_USER='' then
+    cG_OVERRIDE_USER:=cFRE_ADMIN_USER;
+  if cG_OVERRIDE_PASS='' then
+    cG_OVERRIDE_PASS:=cFRE_ADMIN_PASS;
   CheckDbResult(CONN.Connect(FDBName,cG_OVERRIDE_USER,cG_OVERRIDE_PASS),'cannot connect system db');
   CheckDbResult(conn.fetch(uid,dbo));
   refs := conn.GetReferencesDetailed(uid,false);
   writeln('');
   writeln(dbo.DumpToString(2));
   writeln('');
-  writeln('REFERENCES OUTBOUND');
+  writeln('REFERENCES INBOUND ');
   for i:=0 to high(refs) do
     begin
-      writeln('>Scheme:',refs[i].schemename,'.',refs[i].fieldname,'(',refs[i].linked_uid.AsHexString,')');
+      writeln('  <- ',refs[i].schemename,'.',refs[i].fieldname,'(',refs[i].linked_uid.AsHexString,')');
     end;
-  writeln('REFERENCES INBOUND');
+  writeln('');
+  writeln('REFERENCES OUTBOUND');
   SetLength(refs,0);
   refs := conn.GetReferencesDetailed(uid,true);
   for i:=0 to high(refs) do
     begin
-      writeln('<Scheme:',refs[i].schemename,'.',refs[i].fieldname,'(',refs[i].linked_uid.AsHexString,')');
+      writeln('  ',refs[i].fieldname,' -> ',refs[i].schemename,'(',refs[i].linked_uid.AsHexString,')');
     end;
 
   conn.Finalize;
@@ -605,7 +610,7 @@ var ErrorMsg : String;
         res  : TFRE_DB_Errortype;
     begin
       FSystemConnection := GFRE_DB.NewDirectSysConnection;
-      res := FSystemConnection.Connect(cFRE_ADMIN_USER,cFRE_ADMIN_PASS);
+      res := FSystemConnection.Connect(cFRE_ADMIN_USER,cFRE_ADMIN_PASS,true);
       if res<>edb_OK then begin
         FSystemConnection.Free;
         FSystemConnection := nil;

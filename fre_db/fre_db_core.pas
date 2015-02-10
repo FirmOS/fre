@@ -1938,7 +1938,7 @@ type
     function            GetReferencesDetailed        (const user_context : PFRE_DB_GUID ; const obj_uid:TFRE_DB_GUID;const from:boolean ; const scheme_prefix_filter : TFRE_DB_NameType ='' ; const field_exact_filter : TFRE_DB_NameType=''):TFRE_DB_ObjectReferences;virtual;
 
     function           _FetchApp                    (const name:TFRE_DB_String;var app:TFRE_DB_APPLICATION):boolean;
-    function           _Connect                     (const db:TFRE_DB_String ; const is_clone_connect : boolean):TFRE_DB_Errortype;virtual;
+    function           _Connect                     (const db:TFRE_DB_String ; const is_clone_connect : boolean ; const wants_notifications:boolean=false):TFRE_DB_Errortype;
     procedure          InternalSetupConnection      ;virtual;
 
 
@@ -2170,7 +2170,7 @@ type
     destructor  Destroy                     ; override;
 
     function    CheckLogin                  (const loginatdomain,pass:TFRE_DB_String;const allowed_classes : TFRE_DB_StringArray):TFRE_DB_Errortype;
-    function    Connect                     (const loginatdomain:TFRE_DB_String='';const password:TFRE_DB_String='') : TFRE_DB_Errortype;
+    function    Connect                     (const loginatdomain:TFRE_DB_String='';const password:TFRE_DB_String='' ; const want_notifications : boolean=false) : TFRE_DB_Errortype;
 
     function    AddUser                     (const login:TFRE_DB_String; const domainUID: TFRE_DB_GUID;const password,first_name,last_name:TFRE_DB_String;const image : TFRE_DB_Stream=nil; const imagetype : String='';const is_internal:Boolean=false; const long_desc : TFRE_DB_String='' ; const short_desc : TFRE_DB_String='' ; const userclass : TFRE_DB_String=''):TFRE_DB_Errortype;
     function    UserExists                  (const login:TFRE_DB_String; const domainUID: TFRE_DB_GUID):boolean;
@@ -2341,8 +2341,8 @@ type
     function    GetDatabaseName           : TFRE_DB_String;
     function    ImpersonateClone          (const user,pass:TFRE_DB_String;out conn:IFRE_DB_CONNECTION;const allowed_classes: TFRE_DB_StringArray): TFRE_DB_Errortype;
 
-    function    Connect                   (const db,user,pass:TFRE_DB_String;const ProxySysConnection:TFRE_DB_SYSTEM_CONNECTION):TFRE_DB_Errortype;
-    function    Connect                   (Const db:TFRE_DB_String;const user:TFRE_DB_String='';const password:TFRE_DB_String='') : TFRE_DB_Errortype;
+    function    Connect                   (const db,user,pass:TFRE_DB_String;const ProxySysConnection:TFRE_DB_SYSTEM_CONNECTION;const wants_notifications:boolean=false):TFRE_DB_Errortype;
+    function    Connect                   (Const db:TFRE_DB_String;const user:TFRE_DB_String='';const password:TFRE_DB_String='' ; const wants_notifications:boolean=false) : TFRE_DB_Errortype;
 
     function    CheckLogin                (const loginatdomain,pass:TFRE_DB_String;const allowed_classes : TFRE_DB_StringArray):TFRE_DB_Errortype;
     function    CollectionExists          (const name:TFRE_DB_NameType):boolean;
@@ -7492,7 +7492,7 @@ begin
   end;
 end;
 
-function TFRE_DB_SYSTEM_CONNECTION.Connect(const loginatdomain: TFRE_DB_String; const password: TFRE_DB_String): TFRE_DB_Errortype;
+function TFRE_DB_SYSTEM_CONNECTION.Connect(const loginatdomain: TFRE_DB_String; const password: TFRE_DB_String; const want_notifications: boolean): TFRE_DB_Errortype;
 var
   login  : TFRE_DB_String;
   domain : TFRE_DB_String;
@@ -7502,7 +7502,7 @@ begin
     _CloneCheck;
     if not FConnected then
       begin
-        result := _Connect('SYSTEM',false);
+        result := _Connect('SYSTEM',false,want_notifications);
         if Result<>edb_OK then
           exit;
       end;
@@ -8453,9 +8453,9 @@ var
     e               : IFOS_E;
 
 begin
-  writeln('>WEB GGD QRY ----------');
-  writeln(input.DumpToString());
-  writeln('<WEB GGD  QRY ----------');
+  //writeln('>WEB GGD QRY ----------');
+  //writeln(input.DumpToString());
+  //writeln('<WEB GGD  QRY ----------');
   result := GFRE_DB_SUPPRESS_SYNC_ANSWER;
   try
     MustBeInitialized;
@@ -8476,9 +8476,9 @@ function TFRE_DB_DERIVED_COLLECTION.WEB_RELEASE_GRID_DATA(const input: IFRE_DB_O
 var key : TFRE_DB_SESSION_DC_RANGE_MGR_KEY;
 begin
   key := FixUpQryId4PArentChildStore(input);
-  writeln('>WEB RELEASE GD  ----------',FName,' ',key.GetFullKeyString);
-  writeln(input.DumpToString());
-  writeln('>WEB RELEASE GD  ----------',FName);
+  //writeln('>WEB RELEASE GD  ----------',FName,' ',key.GetFullKeyString);
+  //writeln(input.DumpToString());
+  //writeln('>WEB RELEASE GD  ----------',FName);
   GFRE_DB_TCDM.cs_RemoveQueryRange(key.GetFullKeyString,input.Field('START').AsInt64,input.Field('END').AsInt64);
   Result:=GFRE_DB_NIL_DESC;
 end;
@@ -8668,8 +8668,8 @@ function TFRE_DB_DERIVED_COLLECTION.WEB_SET_SORT_AND_FILTER(const input: IFRE_DB
 var key : TFRE_DB_SESSION_DC_RANGE_MGR_KEY;
 begin
   key := FixUpQryId4PArentChildStore(input);
-  writeln('WEB_SET_SORT_AND_FILTER: ',FName,' ',key.GetFullKeyString);
-  writeln(input.DumpToString()); //FIXXME heli - please implement me
+  //writeln('WEB_SET_SORT_AND_FILTER: ',FName,' ',key.GetFullKeyString);
+  //writeln(input.DumpToString());
   ProcessOrders;
   Processfilters;
   GFRE_DB_TCDM.cs_DropAllQueryRanges(key.GetFullKeyString,false);
@@ -8687,9 +8687,9 @@ function TFRE_DB_DERIVED_COLLECTION.WEB_DESTROY_STORE(const input: IFRE_DB_Objec
 var key : TFRE_DB_SESSION_DC_RANGE_MGR_KEY;
 begin
   key := FixUpQryId4PArentChildStore(input);
-  writeln('>WEB DESTROY STORE ----------',FName,' ',key.GetFullKeyString);
-  writeln(input.DumpToString());
-  writeln('<WEB DESTROY STORE ----------',FName);
+  //writeln('>WEB DESTROY STORE ----------',FName,' ',key.GetFullKeyString);
+  //writeln(input.DumpToString());
+  //writeln('<WEB DESTROY STORE ----------',FName);
   FDCollFiltersDyn.RemoveAllFilters;
   FDCollOrderDyn.ClearOrders;
   GFRE_DB_TCDM.cs_DropAllQueryRanges(key.GetFullKeyString,false);
@@ -11392,7 +11392,7 @@ begin
   GFRE_DB.ForAllClientFieldValidators(@DumpCLF);
 end;
 
-function TFRE_DB_BASE_CONNECTION._Connect(const db: TFRE_DB_String; const is_clone_connect: boolean): TFRE_DB_Errortype;
+function TFRE_DB_BASE_CONNECTION._Connect(const db: TFRE_DB_String; const is_clone_connect: boolean; const wants_notifications: boolean): TFRE_DB_Errortype;
 begin
   try
     if is_clone_connect then
@@ -11406,7 +11406,7 @@ begin
         if FConnected then
           exit(edb_ALREADY_CONNECTED);
       end;
-    if is_clone_connect then
+    if (is_clone_connect) or (wants_notifications=false) then
       result :=   GFRE_DB_PS_LAYER.Connect(db,FPersistance_Layer,nil) { don't set a notif if on cloned connect}
     else
       result :=   GFRE_DB_PS_LAYER.Connect(db,FPersistance_Layer,self);
@@ -11730,7 +11730,7 @@ begin
   end;
 end;
 
-function TFRE_DB_CONNECTION.Connect(const db, user, pass: TFRE_DB_String; const ProxySysConnection: TFRE_DB_SYSTEM_CONNECTION): TFRE_DB_Errortype;
+function TFRE_DB_CONNECTION.Connect(const db, user, pass: TFRE_DB_String; const ProxySysConnection: TFRE_DB_SYSTEM_CONNECTION; const wants_notifications: boolean): TFRE_DB_Errortype;
 begin
   try
     if FConnected then
@@ -11741,7 +11741,7 @@ begin
     if not assigned(FSysConnection) then
       begin
         FSysConnection := GFRE_DB.NewDirectSysConnection;
-        result := FSysConnection.Connect(user,pass);
+        result := FSysConnection.Connect(user,pass,wants_notifications);
         if result=edb_NOT_FOUND then
           exit(edb_DB_NO_SYSTEM)
         else
@@ -11750,17 +11750,17 @@ begin
       end
     else
       FProxySysconnection := true;
-    result := _Connect(db,false);
+    result := _Connect(db,false,wants_notifications);
     FSysConnection.FPairedAppDBConn := self;
   except on e:exception do
       result := FREDB_TransformException2ec(e,{$I %FILE%}+'@'+{$I %LINE%});
   end;
 end;
 
-function TFRE_DB_CONNECTION.Connect(const db: TFRE_DB_String; const user: TFRE_DB_String; const password: TFRE_DB_String): TFRE_DB_Errortype;
+function TFRE_DB_CONNECTION.Connect(const db: TFRE_DB_String; const user: TFRE_DB_String; const password: TFRE_DB_String; const wants_notifications: boolean): TFRE_DB_Errortype;
 begin //nl
   try
-    result := Connect(db,user,password,nil);
+    result := Connect(db,user,password,nil,wants_notifications);
   except on e:exception do
       result := FREDB_TransformException2ec(e,{$I %FILE%}+'@'+{$I %LINE%});
   end;
