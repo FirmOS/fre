@@ -286,18 +286,16 @@ end;
 
 function TFRE_DB_LOGIN.WEB_LoginDlg(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var dialog     : TFRE_DB_FORM_DIALOG_DESC;
-    session    : TFRE_DB_UserSession;
     scheme     : IFRE_DB_SchemeObject;
     block      : TFRE_DB_INPUT_BLOCK_DESC;
     user       : IFRE_DB_Object;
-    dlg        : TFRE_DB_LAYOUT_DESC;
     group      : TFRE_DB_INPUT_GROUP_DESC;
 begin
   if ses.LoggedIn then begin
     dialog:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(app.FetchAppTextShort(ses,'profile_diag_cap'),0,false,false,false);
     GFRE_DBI.GetSystemSchemeByName('TFRE_DB_USER',scheme);
     block := dialog.AddBlock.Describe();
-    group := block.AddSchemeFormGroup(scheme.GetInputGroup('main_edit'),ses,false,false,2);
+    group := block.AddSchemeFormGroup(scheme.GetInputGroup('main_edit'),ses,false,false,20);
     group.AddInput.Describe('Old Password','pass.old',false,false,false,false,'',nil,nil,false,true);  //FIXXME : Languagekey -> also for dialog Sitemap Upper RIGHT (!!)
     group.AddInput.Describe('Password','pass.new',false,true,false,False,'',nil,nil,false,true);
     group.AddInput.Describe('Confirm Password','pass.confirm',false,true,false,False,'',nil,nil,false,true,'pass.new');
@@ -325,12 +323,9 @@ end;
 
 function TFRE_DB_LOGIN.WEB_doLogin(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  pass              : TFRE_DB_INPUT_DESC;
   data              : IFRE_DB_Object;
-  res               : TFRE_DB_Errortype;
   promotion_status  : TFRE_DB_String;
   clear_session     : boolean;
-  wsf               : TFRE_DB_SERVER_FUNC_DESC;
   domain            : TFRE_DB_String;
   user              : TFRE_DB_String;
   username          : TFRE_DB_String;

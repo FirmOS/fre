@@ -777,14 +777,16 @@ implementation
         allRequired:=true;
         _checkBlockChildren(elem as TFRE_DB_INPUT_BLOCK_DESC, allRequired, ids);
         jsContentAdd('"<tr firmosGroup='''+groupId+''' childIds=\"'+_BuildJSArray(ids)+'\" '+BoolToStr(hidden,' style=''display:none;''','')+' class=''firmosFormBlock'' id='''+elem.Field('id').AsString+'''>"+');
-        if elem.Field('caption').AsString<>'' then begin
+        if (elem.Field('caption').AsString<>'') or (elem.Field('indentEmptyCaption').AsBoolean) then begin
           if allRequired then begin
             labelclass:='firmosFormLabelRequired';
           end else begin
             labelclass:='firmosFormLabel';
           end;
           jsContentAdd('"<td class=''firmosFormLabelTD''>"+');
-          jsContentAdd('"<label for='''+elem.Field('id').AsString+''' id='''+elem.Field('id').AsString+'_label'' class='''+labelclass+'''>'+_EscapeValueString(elem.Field('caption').AsString)+': </label>"+');
+          if (elem.Field('caption').AsString<>'') then begin
+            jsContentAdd('"<label for='''+elem.Field('id').AsString+''' id='''+elem.Field('id').AsString+'_label'' class='''+labelclass+'''>'+_EscapeValueString(elem.Field('caption').AsString)+': </label>"+');
+          end;
           jsContentAdd('"</td><td>"+');
         end else begin
           jsContentAdd('"<td colspan=2>"+');

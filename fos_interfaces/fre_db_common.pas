@@ -241,6 +241,8 @@ type
     procedure addDependentInput     (const inputId: String; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility=fdv_none; const caption: String='';const validator: IFRE_DB_ClientFieldValidator=nil; const validatorConfigParams : IFRE_DB_Object=nil);
     //@ Adds a dependent input group. If chooserValue is selected the input element will be updated.
     procedure addDependentInputGroup(const inputGroup: TFRE_DB_INPUT_GROUP_DESC; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility=fdv_visible);
+
+    procedure addOption             (const caption,value: String);
     //@ Enables the caption compare.
     //@ Useful for fields which store the caption and not a link to the object.
     //@ Default is false.
@@ -457,10 +459,10 @@ type
     function  GetStore    (const id: String):TFRE_DB_STORE_DESC;override;
   public
     //@ Describes an horizontal input block within a form (e.g. Favourite 3 colours: input input input).
-    function  Describe    (const caption:String=''; const id: String=''):TFRE_DB_INPUT_BLOCK_DESC;
+    function  Describe    (const caption:String=''; const id: String=''; const indentEmptyCaption: Boolean=false):TFRE_DB_INPUT_BLOCK_DESC;
     //@ Adds the given InputGroupSchemeDefinition to the form and returns the TFRE_DB_INPUT_GROUP_DESC.
     //@ See TFRE_DB_INPUT_GROUP_DESC.
-    function  AddSchemeFormGroup      (const schemeGroup: IFRE_DB_InputGroupSchemeDefinition ; const session : IFRE_DB_UserSession; const collapsible: Boolean=false; const collapsed: Boolean=false; const relSize:Integer=1; const groupPreFix:String=''; const groupRequired:Boolean=true; const hideGroupHeader:Boolean=false): TFRE_DB_INPUT_GROUP_DESC; reintroduce;
+    function  AddSchemeFormGroup      (const schemeGroup: IFRE_DB_InputGroupSchemeDefinition ; const session : IFRE_DB_UserSession; const collapsible: Boolean=false; const collapsed: Boolean=false; const relSize:Integer=10; const groupPreFix:String=''; const groupRequired:Boolean=true; const hideGroupHeader:Boolean=false): TFRE_DB_INPUT_GROUP_DESC; reintroduce;
     //@ Adds the given input fields of the schemeGroup as fields of the input block with relSize 10
     function  AddSchemeFormGroupInputs(const schemeGroup: IFRE_DB_InputGroupSchemeDefinition ; const session : IFRE_DB_UserSession;  const groupPreFix:String=''; const groupRequired:Boolean=true): TFRE_DB_INPUT_BLOCK_DESC;
     //@ Creates a new input field and adds it to the form. See also TFRE_DB_INPUT_DESC.
@@ -1279,7 +1281,7 @@ implementation
 
   { TFRE_DB_INPUT_BLOCK_DESC }
 
-  function TFRE_DB_INPUT_BLOCK_DESC.Describe(const caption: String; const id:String): TFRE_DB_INPUT_BLOCK_DESC;
+  function TFRE_DB_INPUT_BLOCK_DESC.Describe(const caption: String; const id:String; const indentEmptyCaption: Boolean): TFRE_DB_INPUT_BLOCK_DESC;
   begin
     if id='' then begin
       if not FieldExists('id') then begin
@@ -1290,6 +1292,7 @@ implementation
     end;
     Field('caption').AsString:=caption;
     Field('sizeSum').AsInt16:=0;
+    Field('indentEmptyCaption').AsBoolean:=indentEmptyCaption;
     Result:=Self;
   end;
 
@@ -1429,7 +1432,7 @@ implementation
     obj := Self.ObjectRoot;
     if obj.Implementor_HC is TFRE_DB_FORM_DESC then begin
       if obj.Implementor_HC<>Self then begin
-        TFRE_DB_FORM_DESC(obj.Implementor_HC).GetStore(id);
+        Result:=TFRE_DB_FORM_DESC(obj.Implementor_HC).GetStore(id);
       end else begin
         Result:=inherited GetStore(id);
       end;
@@ -1595,6 +1598,14 @@ implementation
         end;
       end;
     end;
+  end;
+
+  procedure TFRE_DB_INPUT_CHOOSER_DESC.addOption(const caption, value: String);
+  var
+    store: TFRE_DB_STORE_DESC;
+  begin
+    store:=(Parent.Parent.Implementor_HC as TFRE_DB_FORM_DESC).GetStore(FieldPath('store.id').AsString);
+    store.AddEntry.Describe(caption,value);
   end;
 
   function TFRE_DB_INPUT_CHOOSER_DESC.Describe(const caption, field_reference: string; const store: TFRE_DB_STORE_DESC; const display_hint: TFRE_DB_CHOOSER_DH; const required: boolean; const groupRequired: Boolean; const add_empty_for_required: Boolean; const disabled: boolean; const defaultValue: String): TFRE_DB_INPUT_CHOOSER_DESC;
@@ -2548,7 +2559,7 @@ implementation
     obj := Self.ObjectRoot;
     if obj.Implementor_HC is TFRE_DB_FORM_DESC then begin
       if obj.Implementor_HC<>Self then begin
-        (obj.Implementor_HC as TFRE_DB_FORM_DESC).GetStore(id);
+        Result:=(obj.Implementor_HC as TFRE_DB_FORM_DESC).GetStore(id);
       end else begin
         Result:=inherited GetStore(id);
       end;
