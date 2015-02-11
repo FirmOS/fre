@@ -3334,7 +3334,7 @@ begin
     GFRE_DBI.GetSystemSchemeByName('TFRE_DB_USER',scheme);
     panel :=TFRE_DB_FORM_PANEL_DESC.Create.Describe(FetchModuleTextShort(ses,'user_content_header'),false,userEditable);
     block:=panel.AddBlock.Describe();
-    group  := block.AddSchemeFormGroup(scheme.GetInputGroup('main_edit'),ses,false,false,2);
+    group  := block.AddSchemeFormGroup(scheme.GetInputGroup('main_edit'),ses,false,false,20);
     group.AddInput.Describe('Old Password','pass.old',false,false,false,false,'',nil,nil,false,true);  //FIXXME : Languagekey -> also for dialog Sitemap Upper RIGHT (!!)
     group.AddInput.Describe('Password','pass.new',false,true,false,False,'',nil,nil,false,true);
     group.AddInput.Describe('Confirm Password','pass.confirm',false,true,false,False,'',nil,nil,false,true,'pass.new');
@@ -3478,7 +3478,7 @@ begin
   GFRE_DBI.GetSystemSchemeByName('TFRE_DB_USER',scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_user_diag_cap'),600,true,true,false);
   block:=res.AddBlock.Describe();
-  block.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,2);
+  block.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,20);
   block.AddSchemeFormGroup(scheme.GetInputGroup('picture'),ses,true,false);
   res.AddSchemeFormGroup(scheme.GetInputGroup('descr'),ses,true,false);
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),CSCF('TFRE_DB_USER','NewUserOperation'),fdbbt_submit);

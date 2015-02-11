@@ -5549,8 +5549,8 @@ end;
 class procedure TFRE_DB_WORKFLOW.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   inherited RegisterSystemScheme(scheme);
-  scheme.AddSchemeField('wf_caption',fdbft_String).required:=true;    { caption of the workflow step }
-  scheme.AddSchemeField('state',fdbft_UInt32).required:=true;         { should be an enum : -> 1-> WAITING, 2-> CHILD IN PROGRESS, 3-> IN PROGRESS, 4-> DONE, 5 -> FAILED }
+  scheme.AddSchemeField('caption',fdbft_String).required:=true;    { caption of the workflow }
+  scheme.AddSchemeField('state',fdbft_UInt32).required:=true;      { should be an enum : -> 1-> WAITING, 2-> CHILD IN PROGRESS, 3-> IN PROGRESS, 4-> DONE, 5 -> FAILED }
 end;
 
 class procedure TFRE_DB_WORKFLOW.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
