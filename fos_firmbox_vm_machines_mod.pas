@@ -17,10 +17,6 @@ uses
 
 const
 
-  //CFRE_DB_VM_COLLECTION            = 'VIRTUAL_MACHINES';
-  //CFRE_DB_VM_SC_COLLECTION         = 'VM_SOUND_CARDS';
-  //CFRE_DB_VM_KB_COLLECTION         = 'VM_KEYBOARDS';
-
   CFRE_DB_VM_DISKS_COLLECTION      = 'VM_DISKS';
   CFRE_DB_VM_ISOS_COLLECTION       = 'VM_ISOS';
 
@@ -720,6 +716,22 @@ begin
      DeleteModuleText(conn,'vm_mem');
      DeleteModuleText(conn,'vm_cpu');
      DeleteModuleText(conn,'vm_sc');
+     DeleteModuleText(conn,'vm_ide0');
+     DeleteModuleText(conn,'vm_ide1');
+     DeleteModuleText(conn,'vm_ide2');
+     DeleteModuleText(conn,'vm_ide3');
+     DeleteModuleText(conn,'vm_ide_type');
+     DeleteModuleText(conn,'vm_disk_chooser');
+     DeleteModuleText(conn,'vm_iso_chooser');
+     DeleteModuleText(conn,'vm_ide_option_disk');
+     DeleteModuleText(conn,'vm_ide_option_iso');
+     DeleteModuleText(conn,'vm_upload_iso');
+     DeleteModuleText(conn,'vm_create_new_disk');
+     DeleteModuleText(conn,'vm_new_disk_name');
+     DeleteModuleText(conn,'vm_new_disk_size');
+     DeleteModuleText(conn,'vm_advanced');
+     DeleteModuleText(conn,'vm_keyboard_layout_auto');
+     DeleteModuleText(conn,'vm_keyboard_layout');
 
      CreateModuleText(conn,'gc_vm_customer','Customer');
      CreateModuleText(conn,'gc_vm_customer_default_value','No Customer assigned');
@@ -1043,6 +1055,7 @@ begin
     idx_str:=IntToStr(i+1);
     block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_hdd'+idx_str),'hdd'+idx_str);
     block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main_hdd'),ses,'hdd'+idx_str,false);
+    res.SetElementGroupRequired('hdd'+idx_str+'.hdd_type');
     ch:=(block.GetFormElement('hdd'+idx_str+'.file').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
     if (i<7) then begin
       ch.addDependentInput('hdd'+IntToStr(i+2),'',fdv_hidden);
@@ -1082,82 +1095,6 @@ begin
   res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
 
   Result:=res;
-
-  //res.AddInput.Describe(FetchModuleTextShort(ses,'vm_name'),'name',true);
-  //maxRAM:=getAvailableRAM; minRAM:=getMinimumRAM; stepRAM:=getRAMSteps;
-  //res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'vm_mem'),'mem',minRAM,maxRAM,true,IntToStr(minRAM),2, round((maxRAM-minRAM) / stepRAM) + 1);
-  //
-  //maxCPU:=getAvailableCPU;
-  //res.AddNumber.DescribeSlider(FetchModuleTextShort(ses,'vm_cpu'),'cpu',1,maxCPU,true,IntToStr(maxCPU),0,maxCPU);
-  //
-  //res.AddChooser.Describe(FetchModuleTextShort(ses,'vm_sc'),'sc',vm_scs.GetStoreDescription as TFRE_DB_STORE_DESC);
-  //
-  //idestore:=TFRE_DB_STORE_DESC.create.Describe();
-  //idestore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_ide_option_disk'),'disk');
-  //idestore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_ide_option_iso'),'iso');
-  //
-  //isostore:=vm_isos.GetStoreDescription as TFRE_DB_STORE_DESC;
-  ////isostore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_upload_iso'),'upload');
-  //
-  //diskstore:=vm_disks.GetStoreDescription as TFRE_DB_STORE_DESC;
-  //diskstore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_create_new_disk'),'create');
-  //
-  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide0'));
-  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide0',idestore,dh_chooser_combo,false,false,false,false,'disk');
-  //
-  //diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk0',diskstore,dh_chooser_combo,true);
-  //chooser.addDependentInput('disk0','disk',fdv_visible);
-  //group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname0',true);
-  //group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize0',true,false,false,false,'40');
-  //diskchooser.addDependentInput('diskname0','create',fdv_visible);
-  //diskchooser.addDependentInput('disksize0','create',fdv_visible);
-  //isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso0',isostore,dh_chooser_combo,true);
-  //chooser.addDependentInput('iso0','iso',fdv_visible);
-  //
-  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide1'));
-  ////chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide1',idestore,true,dh_chooser_combo,false,false,false,'iso');
-  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide1',idestore);
-  //
-  //diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk1',diskstore,dh_chooser_combo,true);
-  //chooser.addDependentInput('disk1','disk',fdv_visible);
-  //group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname1',true);
-  //group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize1',true,false,false,false,'40');
-  //diskchooser.addDependentInput('diskname1','create',fdv_visible);
-  //diskchooser.addDependentInput('disksize1','create',fdv_visible);
-  //isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso1',isostore,dh_chooser_combo,true);
-  //chooser.addDependentInput('iso1','iso',fdv_visible);
-  //
-  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide2'));
-  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide2',idestore);
-  //
-  //diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk2',diskstore,dh_chooser_combo,true);
-  //chooser.addDependentInput('disk2','disk',fdv_visible);
-  //group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname2',true);
-  //group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize2',true,false,false,false,'40');
-  //diskchooser.addDependentInput('diskname2','create',fdv_visible);
-  //diskchooser.addDependentInput('disksize2','create',fdv_visible);
-  //isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso2',isostore,dh_chooser_combo,true);
-  //chooser.addDependentInput('iso2','iso',fdv_visible);
-  //
-  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_ide3'));
-  //chooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_ide_type'),'ide3',idestore);
-  //
-  //diskchooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_disk_chooser'),'disk3',diskstore,dh_chooser_combo,true);
-  //chooser.addDependentInput('disk3','disk',fdv_visible);
-  //group.AddInput.Describe(FetchModuleTextShort(ses,'vm_new_disk_name'),'diskname3',true);
-  //group.AddNumber.Describe(FetchModuleTextShort(ses,'vm_new_disk_size'),'disksize3',true,false,false,false,'40');
-  //diskchooser.addDependentInput('diskname3','create',fdv_visible);
-  //diskchooser.addDependentInput('disksize3','create',fdv_visible);
-  //isochooser:=group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_iso_chooser'),'iso3',isostore,dh_chooser_combo,true);
-  //chooser.addDependentInput('iso3','iso',fdv_visible);
-  //
-  //group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_advanced'),true,true);
-  //
-  //keyboardstore:=vm_keyboards.GetStoreDescription as TFRE_DB_STORE_DESC;
-  //keyboardstore.AddEntry.Describe(FetchModuleTextShort(ses,'vm_keyboard_layout_auto'),'auto');
-  //group.AddChooser.Describe(FetchModuleTextShort(ses,'vm_keyboard_layout'),'keybord_layout',keyboardstore,dh_chooser_combo,true);
-  //
-  //Result:=res;
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMCleanup(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -1250,7 +1187,7 @@ end;
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   sdomain          : TFRE_DB_GUID;
-  coll,nicColl     : IFRE_DB_COLLECTION;
+  coll,compsColl   : IFRE_DB_COLLECTION;
   vmService        : TFRE_DB_VMACHINE;
   zone             : TFRE_DB_ZONE;
   idx              : String;
@@ -1259,6 +1196,7 @@ var
   i,j              : Integer;
   netInterfaces    : TFRE_DB_GUIDArray;
   netInterfaceObjs : IFRE_DB_ObjectArray;
+  diskObjs         : IFRE_DB_ObjectArray;
   interfaceGuid    : TFRE_DB_GUID;
   netObj           : IFRE_DB_Object;
   nicScheme        : IFRE_DB_SchemeObject;
@@ -1268,6 +1206,9 @@ var
   hostnet          : TFRE_DB_IPV4_HOSTNET;
   hnScheme         : IFRE_DB_SchemeObject;
   hnColl           : IFRE_DB_COLLECTION;
+  idx_str          : String;
+  diskObj          : TFRE_DB_VMACHINE_DISK;
+  diskScheme       : IFRE_DB_SchemeObject;
 begin
   if input.FieldPathExists('data.zone') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.FieldPath('data.zone').AsString),TFRE_DB_ZONE,zone));
@@ -1285,12 +1226,16 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
-  nicColl:=conn.GetCollection(CFRE_DB_VM_COMPONENTS_COLLECTION);
+  compsColl:=conn.GetCollection(CFRE_DB_VM_COMPONENTS_COLLECTION);
   hnColl:=conn.GetCollection(CFRE_DB_IP_COLLECTION);
 
   GetSystemScheme(TFRE_DB_VMACHINE,schemeObject);
   GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
+  GetSystemScheme(TFRE_DB_VMACHINE_DISK,diskScheme);
   GetSystemScheme(TFRE_DB_IPV4_HOSTNET,hnScheme);
+
+  vmService:=TFRE_DB_VMACHINE.CreateForDB;
+  vmService.SetDomainID(sdomain);
 
   data:=input.Field('data').AsObject;
   //check cpu config
@@ -1301,6 +1246,7 @@ begin
   //check network
   SetLength(netInterfaces,0);
   SetLength(netInterfaceObjs,4);
+  SetLength(diskObjs,0);
   for i := 1 to 4 do begin
     netObj:=data.Field('net'+IntToStr(i)).AsObject;
     if netObj.FieldExists('nic') and (netObj.Field('nic').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
@@ -1321,8 +1267,86 @@ begin
     data.DeleteField('net'+IntToStr(i));
   end;
 
-  vmService:=TFRE_DB_VMACHINE.CreateForDB;
-  vmService.SetDomainID(sdomain);
+  //DRIVES
+  for i := 0 to 7 do begin //HDD
+    idx_str:=IntToStr(i+1);
+
+    if data.FieldExists('hdd'+idx_str) then begin
+      configObj:=data.Field('hdd'+idx_str).AsObject;
+      if (configObj.Field('file').AsString = '_new_') then begin
+      //create new zvol
+      end else begin
+        if not configObj.Field('file').IsSpecialClearMarked then begin
+          //link existing zvol/file
+          diskObj:=TFRE_DB_VMACHINE_DISK.CreateForDB;
+          diskObj.Field('hdd_type').AsString:='disk';
+          diskObj.Field('uniquephysicalid').AsString:='hdd'+idx_str+'@'+vmService.UID_String;
+          configObj.DeleteField('cap');
+          configObj.DeleteField('size');
+          diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
+
+          SetLength(diskObjs,Length(diskObjs)+1);
+          diskObjs[Length(diskObjs)-1]:=diskObj;
+        end;
+      end;
+    end;
+    data.DeleteField('hdd'+idx_str);
+  end;
+
+  for i := 0 to 1 do begin //CD
+    idx_str:=IntToStr(i+1);
+
+    if data.FieldExists('cd'+idx_str) then begin
+      configObj:=data.FieldPath('cd'+idx_str).AsObject;
+      if not configObj.Field('file').IsSpecialClearMarked then begin
+        //link existing file
+        diskObj:=TFRE_DB_VMACHINE_DISK.CreateForDB;
+        diskObj.Field('hdd_type').AsString:='cdrom';
+        diskObj.Field('uniquephysicalid').AsString:='cd'+idx_str+'@'+vmService.UID_String;
+        diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
+
+        SetLength(diskObjs,Length(diskObjs)+1);
+        diskObjs[Length(diskObjs)-1]:=diskObj;
+      end;
+    end;
+    data.DeleteField('cd'+idx_str);
+  end;
+
+  //USB
+  if data.FieldExists('usb') then begin
+    configObj:=data.Field('usb').AsObject;
+    if not configObj.Field('file').IsSpecialClearMarked then begin
+      //link existing file
+      diskObj:=TFRE_DB_VMACHINE_DISK.CreateForDB;
+      diskObj.Field('hdd_type').AsString:='usb';
+      diskObj.Field('uniquephysicalid').AsString:='usb@'+vmService.UID_String;
+      diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
+
+      SetLength(diskObjs,Length(diskObjs)+1);
+      diskObjs[Length(diskObjs)-1]:=diskObj;
+    end;
+  end;
+  data.DeleteField('usb');
+
+  for i := 0 to 1 do begin //Floppy
+    idx_str:=IntToStr(i+1);
+
+    if data.FieldExists('floppy'+idx_str) then begin
+      configObj:=data.Field('floppy'+idx_str).AsObject;
+      if not configObj.Field('file').IsSpecialClearMarked then begin
+        //link existing file
+        diskObj:=TFRE_DB_VMACHINE_DISK.CreateForDB;
+        diskObj.Field('hdd_type').AsString:='floppy';
+        diskObj.Field('uniquephysicalid').AsString:='floppy'+idx_str+'@'+vmService.UID_String;
+        diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
+
+        SetLength(diskObjs,Length(diskObjs)+1);
+        diskObjs[Length(diskObjs)-1]:=diskObj;
+      end;
+    end;
+    data.DeleteField('floppy'+idx_str);
+  end;
+
   schemeObject.SetObjectFieldsWithScheme(data,vmService,true,conn);
   vmService.Field('serviceParent').AsObjectLink:=zone.UID;
   vmService.Field('zoneid').AsObjectLink:=zone.UID;
@@ -1334,7 +1358,7 @@ begin
     exit;
   end;
   for i := 0 to High(netInterfaces) do begin
-    if nicColl.ExistsIndexedText(netInterfaceObjs[i].Field('nic').AsString + '@' + zone.UID_String)<>0 then begin
+    if compsColl.ExistsIndexedText(netInterfaceObjs[i].Field('nic').AsString + '@' + zone.UID_String)<>0 then begin
       CheckDbResult(conn.Fetch(netInterfaceObjs[i].Field('nic').AsObjectLink,vnic));
       Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),StringReplace(FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used_by_vm'),'%vnic_str%',vnic.Field('objname').AsString,[rfReplaceAll]),fdbmt_error);
       exit;
@@ -1380,9 +1404,13 @@ begin
         CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
         netInterfaceObjs[i].Field('dns_ip1').AsObjectLink:=hostnet.UID;
       end;
-      CheckDbResult(nicColl.Store(netInterfaceObjs[i].CloneToNewObject()));
+      CheckDbResult(compsColl.Store(netInterfaceObjs[i].CloneToNewObject()));
     end;
+  end;
 
+  //Store disks
+  for i := 0 to High(diskObjs) do begin
+    CheckDbResult(compsColl.Store(diskObjs[i]));
   end;
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
