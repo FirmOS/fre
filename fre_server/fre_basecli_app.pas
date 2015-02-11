@@ -349,7 +349,7 @@ begin
   AddCheckOption('d:' ,'database:'    ,'  -d <database> | --database=<database>          : specify database, default is "ADMIN_DB"');
   AddCheckOption('x'  ,'forcedb'      ,'  -x            | --forcedb                      : recreates specified database (CAUTION)');
   AddCheckOption('y'  ,'forcesysdb'   ,'  -y            | --forcesysdb                   : recreates system database (CAUTION)');
-  AddCheckOption('i'  ,'init'         ,'  -i            | --init                         : init a new database with the chosen extensions');
+  AddCheckOption('i::','init::'       ,'  -i [fast]     | --init [fast]                  : init a new database with the chosen extensions, fast enables write back mode');
   AddCheckOption('r'  ,'remove'       ,'  -r            | --remove                       : remove extensions from system database (CAUTION)');
   AddCheckOption('t'  ,'testdata'     ,'  -t            | --testdata                     : creates test data for extensions');
   AddCheckOption('u:' ,'user:'        ,'  -u <user>     | --user=<user>                  : specify autologin (debug) user');
@@ -580,6 +580,12 @@ var ErrorMsg : String;
         end;
       if HasOption('i','init') then
         begin
+          if GetOptionValue('i','init')='fast' then
+           begin
+             writeln('WRITE BACK MODE ACTIVATED');
+             GDBPS_TRANS_WRITE_THROUGH := false;
+             GDISABLE_SYNC             := false;
+           end;
           FOnlyInitDB:=true;
           InitExtensions;
           GFRE_DB_PS_LAYER.SyncSnapshot;

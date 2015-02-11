@@ -688,7 +688,11 @@ procedure TFRE_DB_PS_FILE._SyncDBInternal;
 
    procedure StoreObjects(const obj : TFRE_DB_Object ; var break:boolean);
    begin
-     _StoreObjectPersistent(obj);
+     if obj.IsObjectRoot then
+       begin
+         obj.Set_Store_Locked(false);
+         _StoreObjectPersistent(obj);
+       end;
    end;
 
 begin
