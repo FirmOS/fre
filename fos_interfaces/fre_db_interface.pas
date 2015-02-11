@@ -7835,7 +7835,6 @@ procedure TFRE_DB_UserSession.SendServerClientRequest(const description: TFRE_DB
 var CMD        : IFRE_DB_COMMAND;
     request_id : Qword;
 begin
-  if description=GFRE_DB_NIL_DESC then exit;
   cmd  := GFRE_DBI.NewDBCommand;
   cmd.SetIsClient(false);
   cmd.SetIsAnswer(false);
