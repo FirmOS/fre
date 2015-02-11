@@ -25,7 +25,7 @@ program fpmake_packages;
        with Targets do begin
         AddUnit('fos_firmbox_common.pas');
         AddUnit('fos_firmbox_applianceapp.pas');
-        AddUnit('fos_infrastucture_mod.pas');
+        AddUnit('fos_infrastructure_mod.pas');
         AddUnit('fos_firmbox_pool_mod');
         AddUnit('fos_firmbox_dhcp_mod.pas');
         AddUnit('fos_citycom_voip_mod.pas');
