@@ -315,7 +315,7 @@ type
   private
     FFilterKey                    : TFRE_DB_TRANS_COLL_FILTER_KEY; { summed unique filter key }
     FKeyList                      : TFPHashObjectList;
-    FFilterMiss                   : boolean;
+    FFilterHit                    : boolean;
     FFilterErr                    : int64;
     FFiltDefDBname                : TFRE_DB_NameType;
     FIsa_CP_ChildFilterContainer  : Boolean; { Child Parent (Tree) Dataset -> CHILDDATA  }
@@ -725,7 +725,6 @@ type
     function    GetCacheDataKey               : TFRE_DB_TRANS_COLL_DATA_KEY;
     function    FilterDataKey                 : TFRE_DB_CACHE_DATA_KEY;
     function    FCCheckAutoDependencyFilter   (const key_description: TFRE_DB_NameTypeRL):boolean; { comes form a notification, not a query -> check if filter needs to be rebuilt }
-    function    PurgeFilterDataDueToTimeout   : boolean;
     procedure   Checkintegrity                ;
     function    FetchDirectInFilter           (const uid:TFRE_DB_GUID ; out dbo : IFRE_DB_Object):boolean;
     property    IsAChildDataFilterDefinition  : Boolean read FFilters.FIsa_CP_ChildFilterContainer;
@@ -769,7 +768,6 @@ type
     function     GetCacheDataKey         : TFRE_DB_TRANS_COLL_DATA_KEY;
     function     GetFiltersCount         : NativeInt;
     function     GetFilledFiltersCount   : NativeInt;
-    procedure    CheckDoFilterPurge      ;
     procedure    DebugCheckintegrity     ;
   end;
 
@@ -3892,25 +3890,10 @@ begin
   result := FFilters.CheckAutoDependencyFilter(key_description);
   if result then
     begin
-      GFRE_DB.LogDebug(dblc_DBTDM,' FILTER [%s] PURGED / AUTODEPENDENCY [%s] ',[FFilters.GetFilterKey,key_description]); { dont'clear ranges we need to update the (web) store !}
+      GFRE_DB.LogDebug(dblc_DBTDM,' FILTER [%s] PURGED / AUTODEPENDENCY [%s] ',[FilterDataKey,key_description]); { dont'clear ranges we need to update the (web) store !}
       ClearDataInFilter;
       FOrdered.FillFilterContainer(Self,0,0,-1); {}
     end;
-end;
-
-function TFRE_DB_FILTER_CONTAINER.PurgeFilterDataDueToTimeout: boolean;
-var ntime : TFRE_DB_DateTime64;
-begin
-  if not FFilled then
-    exit;
-  ntime := GFRE_DT.Now_UTC;
-  if (cFRE_INT_TUNE_FILTER_PURGE_TO<>0) and ((ntime-FFCCreationTime) > cFRE_INT_TUNE_FILTER_PURGE_TO) then
-    begin
-      ClearDataInFilter;
-      GFRE_DB.LogDebug(dblc_DBTDM,' ORDER/FILTER [%s/%s] PURGED / TIMEOUT (%d ms) ',[orderKey,FFilters.GetFilterKey,cFRE_INT_TUNE_FILTER_PURGE_TO]);
-      exit(true);
-    end;
-  result := false;
 end;
 
 procedure TFRE_DB_FILTER_CONTAINER.Checkintegrity;
@@ -3971,14 +3954,14 @@ procedure TFRE_DB_DC_FILTER_DEFINITION._ForAllFilter(obj: TObject; arg: Pointer)
 var tob : TFRE_DB_Object;
     flt : TFRE_DB_FILTER_BASE;
 begin
-  if FFilterMiss=true then
+  if FFilterHit=true then
     exit;
   tob         := TFRE_DB_Object(arg);
   flt         := obj as TFRE_DB_FILTER_BASE;
   if (flt.IsARootNodeOnlyFilter and ( (FIsa_CP_ChildFilterContainer) or  (not FREDB_PP_ObjectInParentPath(tob,'')))) then
     exit;
-  FFilterMiss := not flt.CheckFilterMiss(tob,FFilterErr);
-  if (FFilterMiss) and Assigned(FTransientTraceCB) then
+  FFilterHit := not flt.CheckFilterMiss(tob,FFilterErr);
+  if (FFilterHit) and Assigned(FTransientTraceCB) then
     begin
       FTransientTraceCB(flt);
     end;
@@ -4299,7 +4282,7 @@ end;
 
 function TFRE_DB_DC_FILTER_DEFINITION.DoesObjectPassFilters(const obj: IFRE_DB_Object; const tracecb: TFRE_DB_FILTER_ITERATOR): boolean;
 begin
-  FFilterMiss := false;
+  FFilterHit := false;
   FFilterErr  := 0;
   FTransientTraceCB := tracecb;
   try
@@ -4307,7 +4290,7 @@ begin
   finally
     FTransientTraceCB:=nil;
   end;
-  result := not FFilterMiss;
+  result := not FFilterHit;
 end;
 
 function TFRE_DB_DC_FILTER_DEFINITION.CheckDBReevaluationFilters: boolean;
@@ -5033,7 +5016,7 @@ end;
 
 procedure TFRE_DB_TRANFORMED_DATA.TransformAllParallel(const startchunk, endchunk: Nativeint ; const wid : nativeint);
 begin
-  MyTransForm(startchunk,endchunk,false,trans_Insert,-1,false,[],nil,'-',wid,nil);
+  MyTransForm(startchunk,endchunk,false,trans_Insert,-1,false,[''],nil,'-',wid,nil);
 end;
 
 
@@ -5325,7 +5308,7 @@ begin
               if rooti then
                 begin
                   GFRE_DBI.LogDebug(dblc_DBTDM,' >NOTIFY INSERT OBJECT [%s] AGAINST TRANSDATA [%s] COLL [%s] IS A REFLINK UPDATE (SKIPCLASSES/ROOT)',[obj.GetDescriptionID,FKey.GetBaseDataKey,coll_name]);
-                  TransformSingleInsert(obj.CloneToNewObject(),true,[],nil,transkey);
+                  TransformSingleInsert(obj.CloneToNewObject(),true,[''],nil,transkey);
                 end
               else
                 begin
@@ -5354,7 +5337,7 @@ begin
           else
             begin
               GFRE_DBI.LogDebug(dblc_DBTDM,' >NOTIFY INSERT OBJECT [%s] AGAINST TRANSDATA [%s] COLL [%s] IS A COLLECTION UPDATE',[obj.GetDescriptionID,FKey.GetBaseDataKey,coll_name]);
-              TransformSingleInsert(obj.CloneToNewObject(),false,[],nil,transkey); { Frees the object }
+              TransformSingleInsert(obj.CloneToNewObject(),false,[''],nil,transkey); { Frees the object }
             end;
         end;
     end
@@ -5872,7 +5855,6 @@ var cnt  : NativeInt;
   begin
     cnt  := cnt  + order.GetFiltersCount;
     fcnt := fcnt + order.GetFilledFiltersCount;
-    order.CheckDoFilterPurge;
   end;
 
   procedure Debug_Checkup(const order : TFRE_DB_TRANSFORMED_ORDERED_DATA);
@@ -6247,7 +6229,7 @@ procedure TFRE_DB_TRANSDATA_MANAGER.CN_AddDirectSessionUpdateEntry(const update_
 begin
   if not assigned(FCurrentNotify) then
     raise EFRE_DB_Exception.Create(edb_ERROR,'internal/current notify gatherer not assigned / direct session update entry');
-  GFRE_DBI.LogDebug(dblc_DBTDM,'         >CN_DIRECT SESSION UPDATE',[]);
+  GFRE_DBI.LogDebug(dblc_DBTDM,'         >CN_DIRECT SESSION UPDATE');
   GFRE_DBI.LogDebug(dblc_DBTDM,'           >%s',[update_dbo.DumpToString(15)]);
   FCurrentNotify.AddDirectSessionUpdateEntry(update_dbo);
 end;
@@ -6815,19 +6797,6 @@ function TFRE_DB_TRANSFORMED_ORDERED_DATA.GetFilledFiltersCount: NativeInt;
    result := 0;
    FArtTreeFilterKey.LinearScan(@GetCount);
  end;
-
-procedure TFRE_DB_TRANSFORMED_ORDERED_DATA.CheckDoFilterPurge;
-
-  procedure CheckPurge(var f : NativeUint);
-  var filter : TFRE_DB_FILTER_CONTAINER;
-  begin
-    filter := FREDB_PtrUIntToObject(f) as TFRE_DB_FILTER_CONTAINER;
-    filter.PurgeFilterDataDueToTimeout;
-  end;
-
-begin
-  FArtTreeFilterKey.LinearScan(@CheckPurge);
-end;
 
 procedure TFRE_DB_TRANSFORMED_ORDERED_DATA.DebugCheckintegrity;
 

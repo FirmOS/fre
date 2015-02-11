@@ -1032,15 +1032,6 @@ type
     procedure  ForAllDerived                 (const func:IFRE_DB_Obj_Iterator); { honors rights and serverside filters, delivers the transformed(!) object !!}
 
     function   CollectionName                (const unique:boolean=false): TFRE_DB_NameType;
-    //procedure  TransformAllTo                (const connection : IFRE_DB_CONNECTION ; const transdata : TFRE_DB_TRANSFORMED_ARRAY_BASE ; const lazy_child_expand : boolean ; var record_cnt  : NativeInt);
-    //procedure  TransformSingleUpdate         (const connection : IFRE_DB_CONNECTION ; const in_object: IFRE_DB_Object; const transdata: TFRE_DB_TRANSFORMED_ARRAY_BASE; const lazy_child_expand: boolean; const upd_idx: NativeInt ; const parentpath_full: TFRE_DB_String ; const transkey : TFRE_DB_TransStepId);
-    //procedure  TransformSingleInsert         (const connection : IFRE_DB_CONNECTION ; const in_object: IFRE_DB_Object; const transdata: TFRE_DB_TRANSFORMED_ARRAY_BASE; const lazy_child_expand: boolean; const rl_ins: boolean; const parentpath: TFRE_DB_String ; const parent_tr_obj : IFRE_DB_Object ; const transkey : TFRE_DB_TransStepId);
-    //procedure  FinalRightTransform           (const ses : IFRE_DB_UserSession ; const transformed_filtered_cloned_obj:IFRE_DB_Object);
-    //function   HasParentChildRefRelationDefined : boolean;
-    //function   IsDependencyFilteredCollection   : boolean;
-    //function   HasReflinksInTransformation      : boolean; { a potential reflink dependency is in the transforms }
-    //function   HasStatTransforms             : Boolean;
-
     function   GetCollectionTransformKey     : TFRE_DB_NameTypeRL; { deliver a key which identifies transformed data depending on ParentCollection and Transformation}
     procedure  BindSession                   (const session : TFRE_DB_UserSession);
     procedure  SetDefaultOrderField          (const field_name:TFRE_DB_String ; const ascending : boolean);
