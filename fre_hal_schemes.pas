@@ -2855,7 +2855,7 @@ begin
 
   group:=scheme.AddInputGroup('main_hdd').Setup(GetTranslateableTextKey('scheme_main_hdd_group'));
   group.AddInput('file',GetTranslateableTextKey('scheme_hdd_file'),false,false,'',CFRE_DB_VMACHINE_HDD_CHOOSER_DC,true);
-  group.AddInput('hdd_type',GetTranslateableTextKey('scheme_hdd_type'));
+  group.AddInput('hdd_type',GetTranslateableTextKey('scheme_hdd_type'),false,false,'','',false,dh_chooser_combo,coll_NONE,true);
 
   //  https://wiki.firmos.at/display/FBX/Qemu+Parameters
   //  Parameters to configure
