@@ -1,4 +1,4 @@
-unit fos_infrastucture_mod;
+unit fos_infrastructure_mod;
 
 {
 (§LIC)
