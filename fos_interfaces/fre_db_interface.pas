@@ -212,6 +212,7 @@ const
   cFOS_IID_SCHEME_COLL      = 'ID_CSC';
 
   cFOS_WF_GROUPS_DC         = 'WF_GROUPS_DC';
+  CFOS_WF_DATA_COLLECTION   = 'WF_DATA';
 
   cFOS_RADIAL_SITEMAP_SCALE = 0.8;
 
@@ -2347,6 +2348,15 @@ end;
     property  isErrorStep       : Boolean      read getIsErrorStep write setIsErrorStep;
     property  action            : TFRE_DB_GUID read getAction      write setAction;
     property  stepId            : UInt32       read getStepId      write setStepId;
+  end;
+
+  { TFRE_DB_WORKFLOW_DATA }
+
+  TFRE_DB_WORKFLOW_DATA=class(TFRE_DB_ObjectEx)
+  public
+    class procedure  RegisterSystemScheme   (const scheme : IFRE_DB_SCHEMEOBJECT); override;
+    class procedure  InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure  InstallUserDBObjects   (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_UNCONFIGURED_MACHINE }
@@ -4843,6 +4853,34 @@ type
 
 const
   cG_Digits: array[0..15] of ansichar = '0123456789abcdef';
+
+{ TFRE_DB_WORKFLOW_DATA }
+
+class procedure TFRE_DB_WORKFLOW_DATA.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  inherited RegisterSystemScheme(scheme);
+  scheme.AddSchemeField('wf',fdbft_ObjLink).Required:=true;
+  scheme.AddSchemeField('dataObj',fdbft_ObjLink);
+end;
+
+class procedure TFRE_DB_WORKFLOW_DATA.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  inherited InstallDBObjects(conn, currentVersionId, newVersionId);
+  newVersionId:='0.1';
+  if (currentVersionId='') then begin
+    currentVersionId:='0.1';
+
+  end;
+end;
+
+class procedure TFRE_DB_WORKFLOW_DATA.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
+var
+  coll: IFRE_DB_COLLECTION;
+begin
+  if not conn.CollectionExists(CFOS_WF_DATA_COLLECTION) then begin
+    coll:=conn.CreateCollection(CFOS_WF_DATA_COLLECTION);
+  end;
+end;
 
 { TFRE_DB_SESSION_UPO }
 

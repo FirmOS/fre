@@ -104,6 +104,7 @@ begin
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_WORKFLOW);
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_WORKFLOW_STEP);
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_WORKFLOW_ACTION);
+  GFRE_DBI.RegisterObjectClassEx(TFRE_DB_WORKFLOW_DATA);
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_NOTIFICATION);
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_APPLICATION_CONFIG);
   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_AUDIT_ENTRY);

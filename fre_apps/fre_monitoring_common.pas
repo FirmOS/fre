@@ -172,7 +172,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddMultiToOnescheme(TFRE_DB_NameTypeArray.create('caption','step_caption'),'caption',FetchModuleTextShort(session,'gc_wf_caption'),dt_string,true,true);
-      AddMatchingReferencedField(['<wf','customer>'],'objname','customer','',true,dt_description);
+      AddMatchingReferencedField(['TFRE_DB_WORKFLOW_DATA<WF','DATAOBJ>','CUSTOMER>'],'objname','customer','',true,dt_description);
       AddOneToOnescheme('state','state','',dt_string,false);
       AddOneToOnescheme('stateHR','stateHR',FetchModuleTextShort(session,'gc_wf_state'));
       AddMatchingReferencedField('DESIGNATED_GROUP>TFRE_DB_GROUP','displayname','group',FetchModuleTextShort(session,'gc_wf_group'));
@@ -299,8 +299,9 @@ end;
 
 function TFRE_COMMON_WF_MOD.WEB_WFDeleteConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  wf: IFRE_DB_Object;
-  i : Integer;
+  wf  : IFRE_DB_Object;
+  i,j : Integer;
+  refs: TFRE_DB_GUIDArray;
 
   procedure _handleChildSteps(const parent: IFRE_DB_Object);
   var
@@ -322,6 +323,10 @@ begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),wf));
       _handleChildSteps(wf);
+      refs:=conn.GetReferences(wf.UID,false,'TFRE_DB_WORKFLOW_DATA','WF');
+      for j := 0 to High(refs) do begin
+        CheckDbResult(conn.Delete(refs[j]));
+      end;
       CheckDbResult(conn.Delete(wf.UID));
     end;
   end;
