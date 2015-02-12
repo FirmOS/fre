@@ -572,8 +572,8 @@ begin
   if assigned(FSSL_CTX) then
     HTTPSWSS_Listener := GFRE_SC.AddDefaultGroupListenerTCP ('*','44003','HTTPS/WSS',nil,true,true,FSSL_CTX);
 
-  FSessiontimer := GFRE_SC.AddDefaultGroupTimer('SESSION',1000,@TIM_SessionHandler);
-  FTaskerTimer  := GFRE_SC.AddDefaultGroupTimer('TASKER',1000,@TIM_TaskerHandler);
+  FSessiontimer := GFRE_SC.AddDefaultGroupTimer('SESSION',1000,@TIM_SessionHandler,true);
+  FTaskerTimer  := GFRE_SC.AddDefaultGroupTimer('TASKER',1000,@TIM_TaskerHandler,true);
   writeln('>Server is up');
 end;
 
@@ -915,10 +915,7 @@ end;
 
 function TFRE_BASE_SERVER.CheckUserNamePW(username, pass: TFRE_DB_String; const allowed_classes: TFRE_DB_StringArray): TFRE_DB_Errortype;
 begin
-  result := FSystemConnection.CheckLogin(username,pass,allowed_classes);
-  if Result=edb_OK then begin
-    FSystemConnection.ReloadUserAndRights(CFRE_DB_NullGUID);
-  end;
+  result := FSystemConnection.CheckLogin(username,pass,allowed_classes); { chel username and password as admin@system user }
 end;
 
 function TFRE_BASE_SERVER.FetchPublisherSessionLocked(const rcall, rmeth: TFRE_DB_NameType; out ses: TFRE_DB_UserSession ; out right:TFRE_DB_String): boolean;

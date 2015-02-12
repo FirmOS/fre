@@ -2305,6 +2305,7 @@ type
     function    GetCurrentUserTokenClone     : IFRE_DB_USER_RIGHT_TOKEN;override;
     function    GetCurrentUserTokenRef       : IFRE_DB_USER_RIGHT_TOKEN;override;
     function    URT                          (const clone:boolean=false) : IFRE_DB_USER_RIGHT_TOKEN; { get userright token reference or value }
+    procedure   RefreshUserRights            ;
   end;
 
 
@@ -2426,6 +2427,7 @@ type
     function    GetCurrentUserTokenClone     :IFRE_DB_USER_RIGHT_TOKEN;override;
     function    GetCurrentUserTokenRef       :IFRE_DB_USER_RIGHT_TOKEN;override;
     function    URT                          (const clone:boolean=false) : IFRE_DB_USER_RIGHT_TOKEN; { get userright token reference or value }
+    procedure   RefreshUserRights            ;
   end;
 
   TFRE_RInterfaceImplementor =record
@@ -7175,6 +7177,15 @@ begin
     result := GetCurrentUserTokenRef
   else
     result := GetCurrentUserTokenClone;
+end;
+
+procedure TFRE_DB_SYSTEM_CONNECTION.RefreshUserRights;
+begin
+  //writeln('REFRESH USER RIGHTS -- BEFORE');
+  //writeln(DumpUserRights);
+  ReloadUserandRights(CFRE_DB_NullGUID);
+  //writeln('REFRESH USER RIGHTS -- AFTER');
+  //writeln(DumpUserRights);
 end;
 
 
@@ -12548,6 +12559,11 @@ end;
 function TFRE_DB_CONNECTION.URT(const clone: boolean): IFRE_DB_USER_RIGHT_TOKEN;
 begin
   result := FSysConnection.URT(clone);
+end;
+
+procedure TFRE_DB_CONNECTION.RefreshUserRights;
+begin
+  FSysConnection.RefreshUserRights;
 end;
 
 procedure TFRE_DB_CONNECTION.DrawScheme(const datastream: TStream; const classfile: string);
@@ -20771,18 +20787,21 @@ begin
 
  if data.FieldOnlyExisting('pass',fld) then
    begin
-     opw := fld.AsObject.Field('old').AsString;
-     npw := fld.AsObject.Field('new').AsString;
-     cpw := fld.AsObject.Field('confirm').AsString;
-     if npw<>cpw then
-       exit(TFRE_DB_MESSAGE_DESC.create.Describe('TRANSLATE: Error','password confirm wrong',fdbmt_error,nil));
-     checkold := true;
+     if not fld.AsObject.Field('new').IsSpecialClearMarked then
+       begin
+         opw := fld.AsObject.Field('old').AsString;
+         npw := fld.AsObject.Field('new').AsString;
+         cpw := fld.AsObject.Field('confirm').AsString;
+         if npw<>cpw then
+           exit(TFRE_DB_MESSAGE_DESC.create.Describe('TRANSLATE: Error','password confirm wrong',fdbmt_error,nil));
+         checkold := true;
 
-     if conn.SYS.GetCurrentUserTokenRef.CheckClassRight4DomainId('resetpass',TFRE_DB_USER,DomainID) and ((l_UserO.Login<>'admin') or ((l_UserO.DomainID<>conn.SYS.GetCurrentUserTokenRef.GetSysDomainID))) then
-       checkold := false;
-     if checkold  and (not l_UserO.Checkpassword(opw)) then
-       exit(TFRE_DB_MESSAGE_DESC.create.Describe('TRANSLATE: Error','old password wrong',fdbmt_error,nil));
-     l_User.SetPassword(npw);
+         if conn.SYS.GetCurrentUserTokenRef.CheckClassRight4DomainId('resetpass',TFRE_DB_USER,DomainID) and ((l_UserO.Login<>'admin') or ((l_UserO.DomainID<>conn.SYS.GetCurrentUserTokenRef.GetSysDomainID))) then
+           checkold := false;
+         if checkold  and (not l_UserO.Checkpassword(opw)) then
+           exit(TFRE_DB_MESSAGE_DESC.create.Describe('TRANSLATE: Error','old password wrong',fdbmt_error,nil));
+         l_User.SetPassword(npw);
+       end;
    end;
 
   if data.FieldOnlyExisting('desc',fld) then

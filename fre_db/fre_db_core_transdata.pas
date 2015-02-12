@@ -519,6 +519,8 @@ type
     Fst,Fet                   : NativeInt;
     Frcnt                     : NativeInt;
     FSyncEvent                : IFOS_E;
+    FError                    : boolean;
+    FErrorString              : TFRE_DB_String;
 
      function                GetReflinkSpec        (const upper_refid : TFRE_DB_NameType):TFRE_DB_NameTypeRLArray;
      function                GetReflinkStartValues (const upper_refid : TFRE_DB_NameType):TFRE_DB_GUIDArray; { start values for the RL expansion }
@@ -4761,7 +4763,10 @@ var is_filled : boolean;
      FOrdered.GetOrCreateFiltercontainer(Filterdef,FFiltered);
      FRm.AssignFiltering(FFiltered);
      FOrdered.FillFilterContainer(FFiltered,0,0,-1);
-     FRm.FindRange4QueryAndUpdateQuerySpec(FQueryId.SessionID,FSessionRange,FStartIdx,FEndIndex,FPotentialCount); { creates a session range manager, and no range (no data) }
+     if FStartIdx>=0 then { only create a range if this isn't a "special" query (ItemCount,LAst,First) ... }
+       begin
+         FRm.FindRange4QueryAndUpdateQuerySpec(FQueryId.SessionID,FSessionRange,FStartIdx,FEndIndex,FPotentialCount); { creates a session range manager, and no range (no data) }
+       end;
      FMyComputeState := cs_NoDataAvailable;
    end;
 
@@ -4838,7 +4843,7 @@ begin
         if result=0 then
           begin
             CreateEmptyData;
-            result          := -1;
+            result := -1;
             exit;
           end
         else
@@ -4979,7 +4984,8 @@ end;
 
 procedure TFRE_DB_QUERY.ErrorOccurred_WIF(const ec: NativeInt; const em: string);
 begin
-  GFRE_BT.CriticalAbort(classname+' workable interface failed [%s]',[em]);
+  FError        := true;
+  FErrorString  := em;
 end;
 
 

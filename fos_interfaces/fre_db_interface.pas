@@ -1823,6 +1823,7 @@ type
     function    GetDefaultDomainUID         : TFRE_DB_GUID;
     function    GetCurrentUserTokenClone    : IFRE_DB_USER_RIGHT_TOKEN;
     function    GetCurrentUserTokenRef      : IFRE_DB_USER_RIGHT_TOKEN;
+    procedure   RefreshUserRights           ;
   end;
 
 
@@ -3246,7 +3247,7 @@ end;
     function      SearchSessionDC        (dc_name:TFRE_DB_String;out dc:IFRE_DB_DERIVED_COLLECTION):boolean;
     procedure     _FetchAppsFromDB       ;
     procedure     _InitApps              ;
-
+    procedure     _ReinitializeApps      ;
     procedure     AddSyncContinuationEntry (const request_id,original_req_id:Qword ; const for_session_id : String ; const callback : TFRE_DB_RemoteCB ; const expire_in : NativeUint ; const opaquedata : IFRE_DB_Object);
     procedure     INT_TimerCallBack      (const timer : IFRE_APSC_TIMER ; const flag1,flag2 : boolean);
     procedure     RemoveAllTimers        ;
@@ -6605,6 +6606,14 @@ begin
   end;
 end;
 
+procedure TFRE_DB_UserSession._ReinitializeApps;
+var i:NativeInt;
+begin
+  for i:=0 to high(FAppArray) do begin
+    (FAppArray[i].Implementor_HC as TFRE_DB_APPLICATION).SessionPromotion(self);
+  end;
+end;
+
 procedure TFRE_DB_UserSession.AddSyncContinuationEntry(const request_id, original_req_id: Qword; const for_session_id: String; const callback: TFRE_DB_RemoteCB; const expire_in: NativeUint; const opaquedata: IFRE_DB_Object);
 var i       : integer;
     send_ok : boolean;
@@ -7363,14 +7372,6 @@ var err                : TFRE_DB_Errortype;
         result[i] := uppercase(allowed_user_classes[i]);
     end;
 
-    procedure ReinitializeApps;
-    var i:NativeInt;
-    begin
-      for i:=0 to high(FAppArray) do begin
-        (FAppArray[i].Implementor_HC as TFRE_DB_APPLICATION).SessionPromotion(self);
-      end;
-    end;
-
     function TakeOver : TFRE_DB_PromoteResult;
     var tod : TCOR_TakeOverData;
     begin
@@ -7480,7 +7481,7 @@ begin
             GFRE_DBI.LogEmergency(dblc_SERVER,'LOGIN APPLICATION INITIALIZATION FAILED [%s]',[FSessionData.UID_String]);
           end;
           try
-            ReinitializeApps;
+            _ReinitializeApps;
           except
             GFRE_DBI.LogEmergency(dblc_SERVER,'LOGIN APPLICATION INITIALIZATION FAILED [%s]',[FSessionData.UID_String]);
           end;
@@ -7522,7 +7523,8 @@ var tod : TCOR_TakeOverData;
         FConnDesc := connection_desc;
         NEW_RASC.UpdateSessionBinding(self);
         FBoundSession_RA_SC := NEW_RASC;
-        DispatchCoroutine(@self.COR_FinalizeTakeOver,nil); // continue in TM of new socket binding
+        if not DispatchCoroutine(@self.COR_FinalizeTakeOver,nil) then // continue in TM of new socket binding
+          COR_FinalizeTakeOver(nil);
       end;
     end;
 
@@ -7537,6 +7539,19 @@ end;
 
 procedure TFRE_DB_UserSession.COR_FinalizeTakeOver(const data: Pointer);
 begin
+  FDBConnection.SYS.RefreshUserRights;
+  //_FetchAppsFromDB;
+  try
+    //(FLoginApp.Implementor_HC as TFRE_DB_APPLICATION).SessionInitialize(self);
+    _InitApps;
+  except
+    GFRE_DBI.LogEmergency(dblc_SERVER,'LOGIN APPLICATION INITIALIZATION FAILED [%s]',[FSessionData.UID_String]);
+  end;
+  try
+    _ReinitializeApps;
+  except
+    GFRE_DBI.LogEmergency(dblc_SERVER,'LOGIN APPLICATION INITIALIZATION FAILED [%s]',[FSessionData.UID_String]);
+  end;
   SendServerClientRequest(GFRE_DB_NIL_DESC,FSessionID);
   SendServerClientRequest(TFRE_DB_OPEN_NEW_LOCATION_DESC.create.Describe('/',false)); // OR BETTER SEND THE FULL CONTENT ...
 end;

@@ -3075,16 +3075,27 @@ begin
 
   FWork          := work;
   FWork.FWorking := 0;
-  max   := work.FWorkable.StartGetMaximumChunk_WIF;
-  if max=0 then
-    begin
-      work.FWorkable.ErrorOccurred_WIF(1,'max work chunk size must be >0');
-      exit;
-    end;
-  if max=-1 then
-    s_WorkDone(false)
-  else
-    s_CallChannelMgrsDistribute(@MyChunking,max);
+  try
+    max   := work.FWorkable.StartGetMaximumChunk_WIF;
+    if max=0 then
+      begin
+        work.FWorkable.ErrorOccurred_WIF(1,'max work chunk size must be >0');
+        exit;
+      end;
+    if max=-1 then
+      s_WorkDone(false)
+    else
+      s_CallChannelMgrsDistribute(@MyChunking,max);
+  except
+    on e:exception do
+      begin
+        try
+          work.FWorkable.ErrorOccurred_WIF(2,e.Message);
+        except
+        end;
+        s_WorkDone(false);
+      end;
+  end;
 end;
 
 procedure TFRE_APSC_CHANNELGROUP_THREAD.s_DoOrEnqueueWorkable(const work: TFRE_APS_CMD_DO_WORKABLE);
