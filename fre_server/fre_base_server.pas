@@ -1230,13 +1230,16 @@ begin
     begin
       if FetchSessionByIdLocked(old_session_id,session) then
         begin
-          GFRE_DBI.LogDebug(dblc_SESSION,'REUSING SESSION [%s]',[old_session_id]);
-          found:=true;
-          session.SetSessionState(sta_REUSED);
-          session.SetServerClientInterface(back_channel);
-          session.UnlockSession;
-          GFRE_DBI.LogDebug(dblc_SESSION,'REUSING SESSION SET [%s]',[old_session_id]);
-          exit(true);
+          try
+            GFRE_DBI.LogDebug(dblc_SESSION,'REUSING SESSION [%s]',[old_session_id]);
+            found:=true;
+            session.SetSessionState(sta_REUSED);
+            session.SetServerClientInterface(back_channel);
+            GFRE_DBI.LogDebug(dblc_SESSION,'REUSING SESSION SET [%s]',[old_session_id]);
+            exit(true);
+          finally
+            session.UnlockSession;
+          end;
         end
       else
         begin
