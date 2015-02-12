@@ -2028,6 +2028,7 @@ type
     function    GetSystemDomainID_String    : TFRE_DB_GUID_String; //inline;
     function    GetDomainID                 (const domainname:TFRE_DB_NameType):TFRE_DB_GUID;//inline;
     function    GetDomainNameByUid          (const domainid:TFRE_DB_GUID):TFRE_DB_NameType;//inline;
+    procedure   CheckDomainUid              (const domainid:TFRE_DB_GUID);//inline;
     function    _GetStdRightName            (const std_right: TFRE_DB_STANDARD_RIGHT; const rclassname: ShortString ; const domainguid : TFRE_DB_GUID): TFRE_DB_String;
     function    _GetStdRightName            (const std_right: TFRE_DB_STANDARD_RIGHT; const rclassname: ShortString): TFRE_DB_String;
     function    _GetStdRightName            (const std_right: TFRE_DB_STANDARD_RIGHT; const classtyp: TClass ; const domainguid : TFRE_DB_GUID): TFRE_DB_String;
@@ -3052,6 +3053,15 @@ begin
   raise EFRE_Exception.Create('domainid not found');
 end;
 
+procedure TFRE_DB_USER_RIGHT_TOKEN.CheckDomainUid(const domainid: TFRE_DB_GUID);
+var i  : NativeInt;
+begin
+  for i:=0 to high(FAllDomainsUids) do
+    if FAllDomainsUids[i]=domainid then
+      exit;
+  raise EFRE_Exception.Create('domainid not found');
+end;
+
 function TFRE_DB_USER_RIGHT_TOKEN._GetStdRightName(const std_right: TFRE_DB_STANDARD_RIGHT; const rclassname: ShortString; const domainguid: TFRE_DB_GUID): TFRE_DB_String;
 begin
   result:=TFRE_DB_Base.GetClassRightNameSR(rclassname,std_right)+'@'+uppercase(FREDB_G2H(domainguid));
@@ -3179,6 +3189,7 @@ end;
 
 function TFRE_DB_USER_RIGHT_TOKEN.CheckClassRight4DomainId(const right_name: TFRE_DB_String; const classtyp: TClass; const domain: TFRE_DB_GUID): boolean;
 begin
+  CheckDomainUid(domain);
   result := IsCurrentUserSystemAdmin;
   if result then
     exit;
@@ -3187,6 +3198,7 @@ end;
 
 function TFRE_DB_USER_RIGHT_TOKEN.CheckClassRight4DomainId(const right_name: TFRE_DB_String; const rclassname: ShortString; const domain: TFRE_DB_GUID): boolean;
 begin
+ CheckDomainUid(domain);
  result := IsCurrentUserSystemAdmin;
  if result then
    exit;
@@ -3195,6 +3207,7 @@ end;
 
 function TFRE_DB_USER_RIGHT_TOKEN.CheckClassRight4DomainId(const std_right: TFRE_DB_STANDARD_RIGHT; const classtyp: TClass; const domain: TFRE_DB_GUID): boolean;
 begin
+  CheckDomainUid(domain);
   result := IsCurrentUserSystemAdmin;
   if result then
     exit;
@@ -3203,6 +3216,7 @@ end;
 
 function TFRE_DB_USER_RIGHT_TOKEN.CheckClassRight4DomainId(const std_right: TFRE_DB_STANDARD_RIGHT; const rclassname: ShortString; const domain: TFRE_DB_GUID): boolean;
 begin
+  CheckDomainUid(domain);
   result := IsCurrentUserSystemAdmin;
   if result then
     exit;
