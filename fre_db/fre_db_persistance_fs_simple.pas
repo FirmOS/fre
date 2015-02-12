@@ -1121,13 +1121,26 @@ var sys_admin   : boolean;
   function _GetRightsArrayForUser(const user: IFRE_DB_USER): TFRE_DB_StringArray;
 
     function __OwnUserRights : TFRE_DB_StringArray;
-    var uid:TFRE_DB_GUID;
+    var
+      uid  :TFRE_DB_GUID;
+      ucoll: TFRE_DB_PERSISTANCE_COLLECTION;
+      tuser: IFRE_DB_Object;
     begin
       uid := (user.Implementor as TFRE_DB_Object).UID;
-      SetLength(result,3);
+      SetLength(result,4);
       result[0] := TFRE_DB_Base.GetStdObjectRightName(sr_STORE,uid);
       result[1] := TFRE_DB_Base.GetStdObjectRightName(sr_UPDATE,uid);
       result[2] := TFRE_DB_Base.GetStdObjectRightName(sr_FETCH,uid);
+      //FIXXME - check
+      G_SysMaster.MasterColls.GetCollection('SysUser',ucoll);
+      if myuser.Login='tasker' then begin
+       SetLength(Result,3);
+       exit;
+      end;
+      if not ucoll.GetIndexedObjInternal(FSysDomain.UID.AsHexString+'@tasker',tuser) then
+        GFRE_BT.CriticalAbort('tasker user not found');
+
+      result[3] := TFRE_DB_Base.GetStdObjectRightName(sr_FETCH,tuser.UID);
     end;
 
     function __GetRoleIDArray(const usergroupids: TFRE_DB_GUIDArray ; const users_domainid : TFRE_DB_GUID): TFRE_DB_GUIDArray;
