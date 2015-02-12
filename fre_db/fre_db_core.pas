@@ -1387,6 +1387,7 @@ type
     function  GetSubFormattedDisplay        (indent: integer=4): TFRE_DB_String; override;
     function  GetRightNames                 :TFRE_DB_StringArray;
     procedure AddRightsFromRole             (const role : IFRE_DB_ROLE);
+    procedure RemoveRightsOfRole            (const role : IFRE_DB_ROLE);
     procedure RemoveRights                  (const rights : TFRE_DB_StringArray);
     property  isInternal                    : Boolean read GetIsInternal write SetIsInternal;
     property  isDisabled                    : Boolean read GetIsDisabled write SetIsDisabled;
@@ -2215,6 +2216,7 @@ type
     function    NewRole                     (const rolename,txt,txt_short:TFRE_DB_String;const is_internal:Boolean;var role:TFRE_DB_ROLE):TFRE_DB_Errortype;
     function    NewGroup                    (const groupname,txt,txt_short:TFRE_DB_String;const is_protected:Boolean;const is_internal:Boolean;const is_delegation:Boolean;var user_group:TFRE_DB_GROUP):TFRE_DB_Errortype;
     function    AddRoleRightsToRole         (const rolename:TFRE_DB_String;const domainUID: TFRE_DB_GUID;const roles: TFRE_DB_StringArray):TFRE_DB_Errortype;
+    function    RemoveRoleRightsFromRole    (const rolename:TFRE_DB_String;const domainUID: TFRE_DB_GUID;const roles: TFRE_DB_StringArray):TFRE_DB_Errortype;
     function    RemoveRightsFromRole        (const rolename:TFRE_DB_String;const rights:TFRE_DB_StringArray; const domainUID: TFRE_DB_GUID):TFRE_DB_Errortype;
     function    AddRole                     (const rolename,txt,txt_short:TFRE_DB_String;const domainUID:TFRE_DB_GUID; const is_internal:Boolean=false):TFRE_DB_Errortype;
     function    AddRolesToGroupById         (const group:TFRE_DB_String;const domainUID: TFRE_DB_GUID;const role_ids: TFRE_DB_GUIDArray):TFRE_DB_Errortype;
@@ -5214,6 +5216,14 @@ begin
   //TODO: MakeRightstringsUnique
 end;
 
+procedure TFRE_DB_ROLE.RemoveRightsOfRole(const role: IFRE_DB_ROLE);
+var
+  rights : TFRE_DB_StringArray;
+begin
+  rights := role.GetRightNames;
+  RemoveRights(rights);
+end;
+
 procedure TFRE_DB_ROLE.RemoveRights(const rights: TFRE_DB_StringArray);
 var
   my_rights  : TFRE_DB_StringArray;
@@ -6066,6 +6076,26 @@ begin
       Result:=FetchRole(roles[i],domainUID,source_role);
       if Result<>edb_OK then exit;
       role.AddRightsFromRole(source_role);
+    end;
+    Result:=Update(GetUserUIDP,role);
+  except on e:exception do
+      result := FREDB_TransformException2ec(e,{$I %FILE%}+'@'+{$I %LINE%});
+  end;
+end;
+
+function TFRE_DB_SYSTEM_CONNECTION.RemoveRoleRightsFromRole(const rolename: TFRE_DB_String; const domainUID: TFRE_DB_GUID; const roles: TFRE_DB_StringArray): TFRE_DB_Errortype;
+var
+  role,source_role: TFRE_DB_ROLE;
+  i               : Integer;
+begin
+  try
+    Result:=FetchRole(rolename,domainUID,role);
+    if Result<>edb_OK then exit;
+
+    for i := 0 to High(roles) do begin
+      Result:=FetchRole(roles[i],domainUID,source_role);
+      if Result<>edb_OK then exit;
+      role.RemoveRightsOfRole(source_role);
     end;
     Result:=Update(GetUserUIDP,role);
   except on e:exception do

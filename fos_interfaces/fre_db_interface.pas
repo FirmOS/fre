@@ -1756,6 +1756,7 @@ type
     function    AddGroupsToGroupById        (const group:TFRE_DB_String;const domainUID: TFRE_DB_GUID;const group_ids: TFRE_DB_GUIDArray):TFRE_DB_Errortype;
     function    RemoveGroupsFromGroupById   (const group:TFRE_DB_String;const domainUID: TFRE_DB_GUID;const group_ids: TFRE_DB_GUIDArray; const ignore_not_set:boolean): TFRE_DB_Errortype; //TODO: Remove Ignorenotset
     function    AddRoleRightsToRole         (const rolename:TFRE_DB_String;const domainUID: TFRE_DB_GUID;const roles: TFRE_DB_StringArray):TFRE_DB_Errortype;
+    function    RemoveRoleRightsFromRole    (const rolename:TFRE_DB_String;const domainUID: TFRE_DB_GUID;const roles: TFRE_DB_StringArray):TFRE_DB_Errortype;
     function    RemoveRightsFromRole        (const rolename:TFRE_DB_String;const rights:TFRE_DB_StringArray; const domainUID: TFRE_DB_GUID):TFRE_DB_Errortype;
     function    ModifyUserGroupsById        (const user_id:TFRE_DB_GUID; const user_group_ids:TFRE_DB_GUIDArray; const keep_existing_groups:boolean=false):TFRE_DB_Errortype;
     function    RemoveUserGroupsById        (const user_id:TFRE_DB_GUID; const user_group_ids:TFRE_DB_GUIDArray):TFRE_DB_Errortype;
