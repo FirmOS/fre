@@ -5494,7 +5494,7 @@ procedure TFRE_DB_SYSTEM_CONNECTION.InternalSetupConnection;
     end;
     if not UserExists('tasker',FSysDomainUID) then begin
       GFRE_DB.LogWarning(dblc_DB,'Adding initial db takser account');
-      CheckDbResult(_AddUser('tasker',FSysDomainUID,'tasker','Initial','FRE DB Tasker',true),'initial creation of takser user failed');
+      CheckDbResult(_AddUser('tasker',FSysDomainUID,'tasker','Initial','FRE DB Tasker',true,nil,'','',true),'initial creation of takser user failed');
     end;
     if cFRE_DB_RESET_ADMIN=true then
       begin
@@ -5506,6 +5506,7 @@ procedure TFRE_DB_SYSTEM_CONNECTION.InternalSetupConnection;
         CheckDbResult(Update(Nil,upuser));
         CheckDbResult(FetchUser('tasker',FSysDomainUID,upuser));
         upuser.SetPassword(cFRE_TASKER_PASS);
+        upuser.SetIsInternal(true);
         CheckDbResult(Update(Nil,upuser));
       end;
   end;
