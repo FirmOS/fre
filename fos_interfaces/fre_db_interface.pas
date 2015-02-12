@@ -5614,9 +5614,10 @@ var
   dbo: IFRE_DB_Object;
 begin
   Result:=nil;
-  CheckDbResult(conn.Fetch(Field('menuObjGuid').AsGUID,dbo));
-  if dbo.MethodExists(Field('menuFunc').AsString) then begin
-    Result:=dbo.Invoke(Field('menuFunc').AsString,input,ses,app,conn);
+  if conn.Fetch(Field('menuObjGuid').AsGUID,dbo)=edb_OK then begin
+    if dbo.MethodExists(Field('menuFunc').AsString) then begin
+      Result:=dbo.Invoke(Field('menuFunc').AsString,input,ses,app,conn);
+    end;
   end;
 end;
 
