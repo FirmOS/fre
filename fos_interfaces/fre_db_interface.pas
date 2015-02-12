@@ -5622,8 +5622,6 @@ begin
 end;
 
 class procedure TFRE_DB_NOTIFICATION.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-var
-  u,g : IFRE_DB_FieldSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.AddSchemeField('caption',fdbft_String).required:=true;

@@ -224,6 +224,7 @@ var
       i             : integer;
       uname         : String;
       fl,fn,ln,desc : TFRE_DB_String;
+      notificationPanel: TFRE_DB_CONTENT_DESC;
 
 
   begin
@@ -236,7 +237,12 @@ var
     end else begin
       uname := '';
     end;
-    res := TFRE_DB_TOPMENU_DESC.create.Describe('','images/home.svg',48,[CWSF(@WEB_BuildSiteMap),CWSF(@WEB_BuildAppList)],'Home',['SiteMap','AppContainer'],uname,CWSF(@WEB_LoginDlg),STYLE_Get_TopMenu_SVG_Definitions,ses.FetchDerivedCollection('NOTIFICATION_GRID').GetDisplayDescription);
+    if Pos('nonotify',cFRE_CMDLINE_DEBUG)>0 then begin
+      notificationPanel:=nil;
+    end else begin
+      notificationPanel:=ses.FetchDerivedCollection('NOTIFICATION_GRID').GetDisplayDescription;
+    end;
+    res := TFRE_DB_TOPMENU_DESC.create.Describe('','images/home.svg',48,[CWSF(@WEB_BuildSiteMap),CWSF(@WEB_BuildAppList)],'Home',['SiteMap','AppContainer'],uname,CWSF(@WEB_LoginDlg),STYLE_Get_TopMenu_SVG_Definitions,notificationPanel);
     res.updateId:='FirmOSViewport';
     res.windowCaption:=app.FetchAppTextShort(ses,'window_cap');
     result :=  res;
