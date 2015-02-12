@@ -3261,11 +3261,13 @@ begin
 
   newSelIsUser:=ses.GetSessionModuleData(ClassName).FieldExists('selectedUsers');
   delUserDisabled:=true;
+
   if newSelIsUser then begin
     if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_USER,domainUid) then begin
       delUserDisabled:=false;
     end;
   end;
+
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('tb_delete_user',delUserDisabled));
   if newSelIsUser<>oldSelIsUser then begin
     if newSelIsUser then begin
@@ -3274,32 +3276,34 @@ begin
       Result:=_getNoUserDetails(input,ses,app,conn);
     end;
   end else begin
-    if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_USER,domainUid) and conn.sys.CheckClassRight4DomainId('assignGroup',TFRE_DB_GROUP,domainUid)) then begin
-      notEditable:=true;
-    end else begin
-      notEditable:=false;
-    end;
-
-    if IsContentUpdateVisible(ses,'USERMOD_GROUPIN_GRID') then begin
-      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeDrag('USERMOD_GROUPIN_GRID',notEditable));
-    end;
-    if IsContentUpdateVisible(ses,'USERMOD_GROUPOUT_GRID') then begin
-      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeDrag('USERMOD_GROUPOUT_GRID',notEditable));
-    end;
-
-    if IsContentUpdateVisible(ses,'USER_DETAILS') then begin
-      if newSelIsUser then begin
-        if IsContentUpdateVisible(ses,'USER_INFO') then begin
-          Result:=WEB_ContentInfo(input,ses,app,conn);
-        end else begin
-          if IsContentUpdateVisible(ses,'USER_NOTE') then begin
-            Result:=WEB_ContentNote(input,ses,app,conn);
-          end else begin
-            Result:=GFRE_DB_NIL_DESC;
-          end;
-        end;
+    if newSelIsUser then begin
+      if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_USER,domainUid) and conn.sys.CheckClassRight4DomainId('assignGroup',TFRE_DB_GROUP,domainUid)) then begin
+        notEditable:=true;
       end else begin
-        Result:=GFRE_DB_NIL_DESC;
+        notEditable:=false;
+      end;
+
+      if IsContentUpdateVisible(ses,'USERMOD_GROUPIN_GRID') then begin
+        ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeDrag('USERMOD_GROUPIN_GRID',notEditable));
+      end;
+      if IsContentUpdateVisible(ses,'USERMOD_GROUPOUT_GRID') then begin
+        ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeDrag('USERMOD_GROUPOUT_GRID',notEditable));
+      end;
+
+      if IsContentUpdateVisible(ses,'USER_DETAILS') then begin
+        if newSelIsUser then begin
+          if IsContentUpdateVisible(ses,'USER_INFO') then begin
+            Result:=WEB_ContentInfo(input,ses,app,conn);
+          end else begin
+            if IsContentUpdateVisible(ses,'USER_NOTE') then begin
+              Result:=WEB_ContentNote(input,ses,app,conn);
+            end else begin
+              Result:=GFRE_DB_NIL_DESC;
+            end;
+          end;
+        end else begin
+          Result:=GFRE_DB_NIL_DESC;
+        end;
       end;
     end else begin
       Result:=GFRE_DB_NIL_DESC;
