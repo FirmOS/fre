@@ -523,7 +523,6 @@ var
     begin
       //writeln('Processing ',obj.UID_String);
       if obj.FieldExists('error_idx') then begin
-        writeln('SEAS');
         refs:=conn.GetReferences(obj.UID,false,'','');
         obj.Field('error_idx').AsString:=FREDB_G2H(refs[0]) + '_wf';
         CheckDbResult(conn.Update(obj));
