@@ -1222,6 +1222,7 @@ var ws         : TFRE_WEBSOCKET_SERVERHANDLER_FIRMOS_VNC_PROXY;
     reuse_ses  : boolean;
     res        : TFRE_DB_Errortype;
 begin
+  result    := false;
   session   := nil;
   found     := false;
   reuse_ses := (old_session_id<>'NEW') and (old_session_id<>'');
