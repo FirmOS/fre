@@ -5107,14 +5107,14 @@ begin
   SessionID := GFRE_BT.SepLeft(qryid,'@');
   qryid     := GFRE_BT.SepRight(qryid,'@');
   FREDB_SeperateString(qryid,'/',parts);
-  if Length(parts)<>4 then
+  if Length(parts)<>5 then
     raise EFRE_DB_Exception.Create(edb_ERROR,'cannot setup key rm key, syntax [%s]',[qryid]);
-  //DataKey.Collname  := parts[0];
-  DataKey.DC_Name   := parts[0];
+  DataKey.Collname  := parts[0];
+  DataKey.DC_Name   := parts[1];
   //DataKey.RL_Spec   := parts[2];
-  DataKey.orderkey  := parts[1];
-  DataKey.filterkey := parts[2];
-  Parenthash        := parts[3]; // GFRE_BT.HashFast32_Hex(''); //FIXME : Need right StoreID
+  DataKey.orderkey  := parts[2];
+  DataKey.filterkey := parts[3];
+  Parenthash        := parts[4]; // GFRE_BT.HashFast32_Hex(''); //FIXME : Need right StoreID
 end;
 
 { TFRE_DB_STORE_DATA_DESC }
@@ -5145,7 +5145,7 @@ end;
 function TFRE_DB_TRANS_COLL_DATA_KEY.GetFullKeyString: TFRE_DB_CACHE_DATA_KEY;
 begin
   //result := Collname+'/'+DC_Name+'/'+RL_Spec+'/'+OrderKey+'/'+filterkey;
-  result := DC_Name+'/'+OrderKey+'/'+filterkey;
+  result :=  Collname+'/'+DC_Name+'/'+OrderKey+'/'+filterkey;
   if orderkey='' then
     raise EFRE_DB_Exception.Create(edb_ERROR,'invalid cache key usage, order part is undefined');
   if filterkey='' then
@@ -5155,7 +5155,7 @@ end;
 function TFRE_DB_TRANS_COLL_DATA_KEY.GetOrderKeyPart: TFRE_DB_CACHE_DATA_KEY;
 begin
   //result := Collname+'/'+DC_Name+'/'+RL_Spec+'/'+OrderKey;
-  result := DC_Name+'/'+OrderKey;
+  result :=  Collname+'/'+DC_Name+'/'+OrderKey;
   if orderkey='' then
     raise EFRE_DB_Exception.Create(edb_ERROR,'invalid cache key usage, order part is undefined');
 end;
@@ -5163,7 +5163,7 @@ end;
 function TFRE_DB_TRANS_COLL_DATA_KEY.GetBaseDataKey: TFRE_DB_CACHE_DATA_KEY;
 begin
   //result := Collname+'/'+DC_Name+'/'+RL_Spec;
-  result := DC_Name;
+  result :=  Collname+'/'+DC_Name;
 end;
 
 { TFRE_DB_OBJECT_PLUGIN_BASE }
