@@ -91,7 +91,7 @@ begin
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],FetchModuleTextShort(session,'grid_dhcp_services_cap'),nil,nil);//,CWSF(@WEB_ServiceSC));
+      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',nil,nil);//,CWSF(@WEB_ServiceSC));
       //SetDefaultOrderField('objname',true);
       Filters.AddSchemeObjectFilter('service',['TFRE_DB_DHCP']);
     end;
