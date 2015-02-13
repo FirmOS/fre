@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="64px" height="64px" viewBox="0 0 64 64" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <!-- Generator: Sketch 3.0.4 (8053) - http://www.bohemiancoding.com/sketch -->
+    <title>role</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Accesscontrol" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="AC" sketch:type="MSArtboardGroup" transform="translate(-225.000000, -33.000000)">
+            <g id="accesscontrol" sketch:type="MSLayerGroup" transform="translate(156.000000, 23.000000)">
+                <g id="ac" transform="translate(38.000000, 36.000000) rotate(20.000000) translate(-38.000000, -36.000000) translate(7.000000, 9.000000)"></g>
+            </g>
+            <g id="role" sketch:type="MSLayerGroup" transform="translate(225.000000, 33.000000)" fill="#FFFFFF">
+                <path d="M28.9789587,26.848606 L57.6834847,26.848606 L61.465299,30.2566148 L32.0029741,30.0826245 L30.334542,31.2706848 L60.194538,31.350343 L60.1645944,33.6661959 L56.0859715,37.8498241 L54.4753251,37.8498241 L53.0107192,35.2614563 L50.7066439,35.2268679 L49.2898425,37.8498241 L46.6595404,37.8498241 L44.133778,33.363285 L42.3702621,37.8498241 L39.2267176,37.8498241 L37.3334464,35.1817981 L33.8016868,35.1817981 L32.531451,37.1103653 L28.747131,37.0835403 C26.6546558,41.9532583 21.8207816,45.362851 16.1918367,45.362851 C8.64629836,45.362851 2.52943094,39.2361177 2.52943094,31.6784091 C2.52943094,24.1207005 8.64629836,17.9939672 16.1918367,17.9939672 C22.0399429,17.9939672 27.0298614,21.6742315 28.9789587,26.848606 Z M9.76246929,34.8982778 C11.5378901,34.8982778 12.977153,33.4566935 12.977153,31.6784091 C12.977153,29.9001247 11.5378901,28.4585404 9.76246929,28.4585404 C7.9870485,28.4585404 6.54778558,29.9001247 6.54778558,31.6784091 C6.54778558,33.4566935 7.9870485,34.8982778 9.76246929,34.8982778 Z" id="Oval-5" sketch:type="MSShapeGroup" transform="translate(31.878529, 31.690213) rotate(40.000000) translate(-31.878529, -31.690213) "></path>
+            </g>
+        </g>
+    </g>
+</svg>

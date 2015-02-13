@@ -1,0 +1,99 @@
+.firmos .dijitCalendar{border:solid 1px #5b5b5b;border-collapse:separate;-moz-border-radius:4px;border-radius:4px;background-color:#787e8b;background-image:url("images/calendar.png");background-repeat:repeat-x;background-image:-moz-linear-gradient(#ffffff 0px, rgba(255, 255, 255, 0.4) 2px, rgba(255, 255, 255, 0) 100%);background-image:-webkit-linear-gradient(#ffffff 0px, rgba(255, 255, 255, 0.4) 2px, rgba(255, 255, 255, 0) 100%);background-image:-o-linear-gradient(#ffffff 0px, rgba(255, 255, 255, 0.4) 2px, rgba(255, 255, 255, 0) 100%);background-image:linear-gradient(#ffffff 0px, rgba(255, 255, 255, 0.4) 2px, rgba(255, 255, 255, 0) 100%);text-align:center;padding:6px 5px 3px 5px;}
+.dj_ie6 .firmos .dijitCalendar{background-image:none;}
+.firmos .dijitCalendar img{border:none;}
+.firmos .dijitCalendarHover,.firmos .dijitCalendar:hover,.firmos .dijitCalendarActive{background-color:#546791;border:solid 1px #383838;}
+.firmos .dijitCalendarMonthContainer th{text-align:center;padding-bottom:4px;vertical-align:middle;}
+.firmos .dijitCalendarMonthLabel{color:#000000;font-size:1.091em;padding:0 4px;}
+.firmos .dijitCalendarIncrementControl{width:18px;height:16px;background-image:url("images/calendarArrows.png");background-repeat:no-repeat;}
+.dj_ie6 .firmos .dijitCalendarIncrementControl{background-image:url("images/calendarArrows8bit.png");}
+.firmos .dijitCalendarIncrease{background-position:-18px 0;}
+.firmos .dijitCalendarArrowHover .dijitCalendarDecrease,.firmos .dijitCalendarArrow:hover .dijitCalendarDecrease{background-position:-36px 0;}
+.firmos .dijitCalendarArrowHover .dijitCalendarIncrease,.firmos .dijitCalendarArrow:hover .dijitCalendarIncrease{background-position:-55px 0;}
+.firmos .dijitCalendarArrowActive .dijitCalendarDecrease,.firmos .dijitCalendarArrow:active .dijitCalendarDecrease{background-position:-72px 0;}
+.firmos .dijitCalendarArrowActive .dijitCalendarIncrease,.firmos .dijitCalendarArrow:active .dijitCalendarIncrease{background-position:-91px 0;}
+.firmos .dijitA11ySideArrow{display:none;}
+.firmos .dijitCalendarDayLabelTemplate{padding-bottom:0;text-align:center;border-bottom:1px solid #5b5b5b;padding:0 3px 2px;}
+.firmos .dijitCalendarDayLabel{padding:0 4px 0 4px;font-weight:bold;font-size:0.909em;text-align:center;color:#000000;}
+.firmos .dijitCalendarDateTemplate{background-color:#ffffff;border-bottom:1px solid #dddddd;padding-top:0;font-size:0.909em;font-family:Arial;font-weight:bold;letter-spacing:.05em;text-align:center;color:#000000;}
+.dj_ie6 .firmos .dijitCalendarDateTemplate{background-image:none;}
+.firmos .dijitCalendarPreviousMonth,.firmos .dijitCalendarNextMonth{background-color:#7a87a2;background-image:none;border-bottom:solid 1px #dddddd;}
+.firmos .dijitCalendarDateTemplate .dijitCalendarDateLabel{text-decoration:none;display:block;padding:3px 5px 3px 4px;border:solid 1px #ffffff;background-color:rgba(171, 212, 251, 0);-webkit-transition-property:background-color,border;-moz-transition-property:background-color,border;-o-transition-property:background-color,border;transition-property:background-color,border;-webkit-transition-duration:0.35s;-moz-transition-duration:0.35s;-o-transition-duration:0.35s;transition-duration:0.35s;}
+.firmos .dijitCalendarPreviousMonth .dijitCalendarDateLabel,.firmos .dijitCalendarNextMonth .dijitCalendarDateLabel{color:#383838;border-color:#7a87a2;}
+.firmos .dijitCalendarYearContainer{vertical-align:middle;}
+.firmos .dijitCalendarYearControl{padding:1px 2px 2px 2px;}
+.firmos .dijitCalendarYearLabel{padding:2px 0 0 0;margin:0;font-size:1.17em;}
+.firmos .dijitCalendarYearLabel span{vertical-align:middle;}
+.firmos .dijitCalendarSelectedYear{padding:0 3px;}
+.firmos .dijitCalendarNextYear,.firmos .dijitCalendarPreviousYear{padding:1px 6px 1px 6px;font-size:0.909em;}
+.firmos .dijitCalendarSelectedYear{font-size:1.091em;color:#000000;}
+.firmos .dijitCalendarHoveredDate .dijitCalendarDateLabel,.firmos .dijitCalendarLite .dijitCalendarEnabledDate:hover .dijitCalendarDateLabel{background-color:#546791;border:solid 1px #383838;color:#000000;-webkit-transition-duration:0.2s;-moz-transition-duration:0.2s;-o-transition-duration:0.2s;transition-duration:0.2s;}
+.firmos .dijitCalendarNextYearHover,.firmos .dijitCalendarNextYear:hover,.firmos .dijitCalendarPreviousYearHover,.firmos .dijitCalendarPreviousYear:hover{color:#000000;border:solid 1px #ffffff;padding:0 5px 0 5px;background-color:#7a87a2;}
+.firmos .dijitCalendarNextYearActive,.firmos .dijitCalendarNextYear:active .firmos .dijitCalendarPreviousYearActive,.firmos .dijitCalendarPreviousYear:active{border:solid 1px #383838;padding:0 5px 0 5px;background-color:#47526a;}
+.firmos .dijitCalendarActiveDate .dijitCalendarDateLabel,.firmos .dijitCalendarEnabledDate:active .dijitCalendarDateLabel{background-color:#47526a;border:solid 1px #ffffff;-webkit-transition-duration:0.1s;-moz-transition-duration:0.1s;-o-transition-duration:0.1s;transition-duration:0.1s;}
+.dj_ie6 .firmos .dijitCalendarActiveDate .dijitCalendarDateLabel{background-image:none;}
+.firmos .dijitCalendarSelectedDate .dijitCalendarDateLabel{color:#000000;background-color:#546791;border-color:#383838;}
+.firmos .dijitCalendarDisabledDate .dijitCalendarDateLabel{color:#6f6f6f;text-decoration:line-through;}
+.firmos .dijitCalendar .dijitDropDownButton{margin:0;}
+.firmos .dijitCalendar .dijitButtonText{padding:1px 0 3px;margin-right:-4px;}
+.firmos .dijitCalendar .dijitDropDownButton .dijitButtonNode{padding:0 3px 0 2px;border:solid 1px #5b5b5b;-webkit-box-shadow:0 0 0 rgba(0, 0, 0, 0);-moz-box-shadow:0 0 0 rgba(0, 0, 0, 0);box-shadow:0 0 0 rgba(0, 0, 0, 0);background-color:transparent;background-image:none;}
+.firmos .dijitCalendar .dijitDropDownButtonHover .dijitButtonNode,.firmos .dijitCalendar .dijitDropDownButton:hover .dijitButtonNode{background-color:#7a87a2;border:solid 1px #ffffff;}
+.firmos .dijitCalendarMonthMenu{border-color:#383838;background-color:#ffffff;text-align:center;background-image:none;}
+.firmos .dijitCalendarMonthMenu .dijitCalendarMonthLabel{border-top:solid 1px #ffffff;border-bottom:solid 1px #ffffff;padding:2px 0;}
+.firmos .dijitCalendarMonthMenu .dijitCalendarMonthLabelHover,.firmos .dijitCalendarMonthMenu .dijitCalendarMonthLabelActive{border-color:#383838;border-width:1px 0;background-color:#546791;background-image:-moz-linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));background-image:-webkit-linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));background-image:-o-linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));background-image:linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));filter:progid:DXImageTransform.Microsoft.gradient(startColorstr= #ffffff , endColorstr= #546791 );}
+.dojoxCalendar{width:182px;}
+.dojoxCalendarContainer{cursor:default;font-family:tahoma, verdana, helvetica;font-size:11px;padding:0px;text-align:center;width:180px;overflow:hidden;}
+.dj_ie6 .dojoxCalendarContainer{width:auto;position:relative;}
+.dojoxCalendarBody{height:138px;overflow:hidden;position:relative;margin:auto;width:180px;}
+.dojoxCalendar .no-header .dojoxCalendarBody{height:162px;}
+.dojoxCalendar .dijitCalendarDayLabels,.dojoxCalendarMonthLabels,.dojoxCalendarYearLabels,.dojoxCal-MY-labels{width:180px;height:138px;top:0px;position:absolute;left:0px;margin:auto;text-align:center;}
+.dojoxCalendar .dojoxCalendarBody>div{width:180px;}
+.dojoxCalendar .dijitCalendarDateTemplate{padding:0 1px 0 0 !important;}
+.nihilo .dojoxCalendar .dijitCalendarDateTemplate,.soria .dojoxCalendar .dijitCalendarDateTemplate{border:0px none !important;}
+.soria tr.dojoxCal-MY-btns{background:url(../dijit/themes/soria/images/tabBottomHoverC.gif) repeat-x scroll 0px -21px;}
+.dojoxCalendar .noPointer,.dojoxCalendar .noPointer *{cursor:auto;}
+.dojoxCalendarContainer table{font-size:11px;border-bottom:4px solid white;border-collapse:separate;}
+.dojoxCalendarHeader{height:20px;width:172px;padding:4px 4px 0;}
+.dojoxCalendar .no-header .dojoxCalendarHeader{display:none;}
+.soria .dojoxCalendarHeader{background:#bed7f0 url(../dijit/themes/soria/images/titleBar.png) repeat-x scroll center top;}
+.dojoxCalendarDecrease,.dojoxCalendarIncrease{height:15px;width:15px;cursor:pointer;}
+.dojoxCalendarDecrease{background:transparent url(../dijit/themes/nihilo/images/spriteRoundedIconsSmall.png) no-repeat scroll left top;float:left;}
+.dojoxCalendarIncrease{background:transparent url(../dijit/themes/nihilo/images/spriteRoundedIconsSmall.png) no-repeat scroll -30px top;float:right;}
+.dojoxCalendarMonthLabel{cursor:pointer;height:35px;width:41px;overflow:hidden;text-align:center;padding-top:10px;}
+.dojoxCalendarYearLabel{cursor:pointer;height:35px;width:41px;overflow:hidden;text-align:center;padding-top:10px;}
+.dojoxCalendarTitle{cursor:pointer;font-weight:bold;}
+.dojoxCalendar .navToPanel .dojoxCalendarDayYearLabel,.dojoxCalendar .navToPanel .dojoxCalendarYearHeader,.dojoxCalendar .navToPanel .dojoxCalendarMonthHeader{padding-right:15px;background:url(../dijit/themes/tundra/images/comboArrowDown.gif) right no-repeat;}
+.dojoxCalendar .dijitCalendarDateLabel{height:17px;width:17px;padding:1px 3px 0px 3px;text-align:center;border:1px solid white;}
+.dojoxCalendar .dijitCalendarDayLabel{cursor:pointer;height:17px;width:18px;padding:0pt 2px;text-align:center;}
+.dojoxCalendar .dojoxCalendarContainer{background-color:white;border:1px solid #656565;color:black;}
+.dojoxCalendar .dijitCalendarDisabledDate{text-decoration:line-through !important;cursor:default !important;}
+.dojoxCalendar .dojoxCalendarFooter{border-top:1px solid #F4F4F4;height:15px;padding-top:4px;cursor:pointer;}
+.soria .dojoxCalendar .dojoxCalendarFooter{border-top:0px none;padding-top:5px;background:#ffffff url(../dijit/themes/soria/images/titleBar.png) repeat-x scroll center top;}
+.dojoxCalendar .dojoxCalendarMonthLabel{border:1px solid white;}
+.dojoxCalendar .dojoxCalendarYearLabel{border:1px solid white;}
+.dojoxCalendar .dijitCalendarNextMonth .dijitCalendarDateLabel,.dojoxCalendar .dijitCalendarPreviousMonth .dijitCalendarDateLabel{border:0px;color:#646464;padding-left:0px;padding-right:0px;}
+.dojoxCalendar .dijitCalendarNextMonth,.dojoxCalendar .dijitCalendarPreviousMonth{background-color:#E4E4E4;}
+.dojoxCalendar .dijitCalendarNextMonth .dojoxCalendarYearLabel,.dojoxCalendar .dijitCalendarPreviousMonth .dojoxCalendarYearLabel{background-color:white;border-color:white;color:#646464;}
+.dojoxCalendar .dijitCalendarSelectedDate,.tundra .dojoxCalendar .dijitCalendarSelectedDate,.nihilo .dojoxCalendar .dijitCalendarSelectedDate{background-color:#ffe284 !important;color:black !important;border:#f5b93c solid 1px !important;}
+.soria .dojoxCalendar td.dijitCalendarSelectedDate{background-color:#B9CBF1 !important;color:black !important;border:1px solid #4B5AAA !important;}
+.soria .dojoxCalendar .dijitCalendarSelectedDate div{background-color:#B9CBF1 !important;border:none !important;}
+.dojoxCalendar .dijitCalendarSelectedDate div{background-color:#FFE284 !important;border:none !important;}
+div.dojoxCalendar tr.dojoxCal-MY-G-Template td.dijitCalendarSelectedDate{background-color:transparent;width:43px;}
+.dojoxCalendar tr.dojoxCal-MY-G-Template td{width:45px;}
+.dojoxCalendar .dijitCalendarSelectedDate div.dijitCalendarDateLabel{padding:1px 1px 0px 3px;}
+.dojoxCalendar .monthOnly .dijitCalendarDayLabels,.dojoxCalendar .yearOnly .dijitCalendarDayLabels,.dojoxCalendar .monthOnly .dojoxCalendarComma,.dojoxCalendar .yearOnly .dojoxCalendarComma,.dojoxCalendar .monthOnly .dojoxCalendarFooter,.dojoxCalendar .yearOnly .dojoxCalendarFooter,.dojoxCalendar .monthOnly .dojoxCalendarYearHeader,.dojoxCalendar .monthOnly .dojoxCalendarIncrease,.dojoxCalendar .monthOnly .dojoxCalendarDecrease,.dojoxCalendar .yearOnly .dojoxCalendarMonthLabelNode{display:none;}
+.dojoxCal-MY-labels .dojoxCalendarMonthLabel,.dojoxCal-MY-labels .dojoxCalendarYearLabel{height:13px;padding-top:4px;padding-bottom:3px;}
+.dojoxCal-MY-labels td.dojoxCal-MY-btns{padding-top:2px;border-top:1px solid grey;text-align:center;}
+.dojoxCal-MY-labels{background-color:white;}
+.dojoxCal-MY-labels .dojoxCalendarIncrease,.dojoxCal-MY-labels .dojoxCalendarDecrease{float:none;margin-left:14px;}
+.dojoxCal-MY-btns button{font-size:8pt;}
+.dojoxCalendar .dojoxCal-MY-btns .dijitDisabled button{color:#999;}
+.dojoxCal-hidden{visibility:hidden;}
+.dojoxCalendar .dojoxCal-MY-labels{height:164px;}
+.dojoxCalendar .dojoxCal-MY-labels .dijitCalendarSelectedDate div{padding-top:3px;padding-bottom:2px;}
+.soria .dojoxCal-MY-labels .dijitCalendarSelectedDate div{padding-top:4px;padding-bottom:3px;}
+.dojoxCal-MY-labels .dojoxCalendarMonthLabel{width:38px;}
+.dojoxCal-MY-labels .dojoxCal-MY-M-last{border-right:1px grey solid;}
+.soria .dojoxCal-MY-labels .dojoxCal-MY-M-last{border-right:1px #B9CBF1 solid;}
+.dojoxCal-MY-labels .dojoxCal-MY-M-last .dojoxCalendarMonthLabel,.dojoxCal-MY-labels .dojoxCal-MY-G-Template div.dojoxCalendarYearLabel{width:42px;}
+.dojoxCalendar .cancel-btn{margin-left:11px;}
+.dojoxCalendar .ok-btn{margin-left:15px;}

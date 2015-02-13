@@ -1,0 +1,103 @@
+/* ########################################################*/
+/* ##################  Top Menu Styling  ##################*/
+/* ########################################################*/
+
+@import "variables";
+
+/*topmenu_home_enabled1*/
+#topmenu_home_enabled1_stop1 {
+  stop-color: #57A4DA;
+  stop-opacity: 0.2;
+}
+#topmenu_home_enabled1_stop2 {
+  stop-color: #56A1D6;
+  stop-opacity: 0.5203;
+}
+#topmenu_home_enabled1_stop3 {
+  stop-color: #5499CB;
+  stop-opacity: 0.6357;
+}
+#topmenu_home_enabled1_stop4 {
+  stop-color: #508DBC;
+  stop-opacity: 0.718;
+}
+#topmenu_home_enabled1_stop5 {
+  stop-color: #4A7DA9;
+  stop-opacity: 0.7845;
+}
+#topmenu_home_enabled1_stop6 {
+  stop-color: #426A92;
+  stop-opacity: 0.8415;
+}
+#topmenu_home_enabled1_stop7 {
+  stop-color: #375479;
+  stop-opacity: 0.8919;
+}
+#topmenu_home_enabled1_stop8 {
+  stop-color: #2A3C5F;
+  stop-opacity: 0.9375;
+}
+#topmenu_home_enabled1_stop9 {
+  stop-color: #1C2245;
+  stop-opacity: 0.9781;
+}
+#topmenu_home_enabled1_stop10 {
+  stop-color: #121037;
+}
+
+/*topmenu_home_enabled2*/
+#topmenu_home_enabled2_stop1 {
+  stop-color: #B6BEC8;
+  stop-opacity: 0.2;
+}
+#topmenu_home_enabled2_stop2 {
+  stop-color: #B6BEC8;
+}
+#topmenu_home_enabled2_stop3 {
+  stop-color: #7D888F;
+  stop-opacity: 0.2;
+}
+
+.@{themename} .topMenu {
+  float: left;
+  width: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;   
+  overflow: hidden;
+}
+
+.@{themename} .topMenu .buttonListWrapper {
+  clear:left;
+  float:left;
+  margin:0;
+  padding:0;
+  position:relative;
+  left:50%;
+  text-align:center;
+}
+
+.@{themename} .topMenu .buttonListWrapper .buttonListItem {
+  float:left;
+  position:relative;
+  right:50%;
+}
+
+.@{themename} .firmosTopMenuHome {
+  fill: black;//#26255D;
+  fill-opacity: 1;
+  stroke: url("/#sm_pressed1");
+  //fill: #26255D;
+  //fill-opacity: 1;
+  //stroke: url("/#topmenu_home_enabled1");
+  //stroke-width: 3;
+  //stroke-miterlimit: 10;
+  //stroke-opacity: 1;
+}
+
+.@{themename} .firmosTopMenuHome2 {
+  fill-opacity: 0.2;
+  fill: url("/#sm_disabled2");
+  //fill: url("/#topmenu_home_enabled2");
+  //fill-opacity: 0.2;
+}
+
