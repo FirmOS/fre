@@ -1856,7 +1856,7 @@ begin
   if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFOS_DB_CITYCOM_VOIP_EXTENSION,extDBO.DomainID) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  input.Field('data').AsObject.ForAllFields(@handleField,false,true);
+  input.Field('data').AsObject.ForAllFields(@handleField,true);
   CheckDbResult(conn.Update(extDBO));
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();

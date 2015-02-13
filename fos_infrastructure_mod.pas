@@ -1411,7 +1411,7 @@ begin
 
   if input.FieldPathExists('data.config') then begin
     SetLength(errorClasses,0);
-    input.FieldPath('data.config').AsObject.ForAllFields(@_handleService,true,true);
+    input.FieldPath('data.config').AsObject.ForAllFields(@_handleService,true);
 
     if Length(errorClasses)=0 then begin
       CheckDbResult(conn.Update(zone));
