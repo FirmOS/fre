@@ -179,14 +179,13 @@ type
     property  MachineID               : TFRE_DB_GUID read GetMachineID write SetMachineID;
 
   published
-    procedure _getStatusIcon             (const calc: IFRE_DB_CALCFIELD_SETTER);
-    procedure _getDnDClass               (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
-    procedure _getIcon                   (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
-    procedure _getChildrenString         (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER);
-    procedure _getDisableDrag            (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
-    procedure _getDisableDrop            (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
-    procedure _getCaption                (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
-    procedure _getMOSCaption             (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
+    //procedure _getDnDClass               (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
+    //procedure _getIcon                   (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
+    //procedure _getChildrenString         (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER);
+    //procedure _getDisableDrag            (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
+    //procedure _getDisableDrop            (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
+    //procedure _getCaption                (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
+    //procedure _getMOSCaption             (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
     function  WEB_MOSChildStatusChanged  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_MOSStatus              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
@@ -219,12 +218,12 @@ type
     property  DeviceName        : TFRE_DB_String read getDeviceName write setDeviceName;
     property  IsUnassigned      : Boolean read getisUnassigned write setIsUnassgined;
   published
-    procedure _getDnDClass                (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
-    procedure _getIcon                    (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
-    procedure _getDisableDrag             (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
-    procedure _getDisableDrop             (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
-    procedure _getMachineDevicename       (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
-    procedure _getMachineDeviceIdentifier (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
+    //procedure _getDnDClass                (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
+    //procedure _getIcon                    (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
+    //procedure _getDisableDrag             (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
+    //procedure _getDisableDrop             (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
+    //procedure _getMachineDevicename       (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
+    //procedure _getMachineDeviceIdentifier (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); virtual;
     function  WEB_GetDefaultCollection   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     class procedure STAT_TRANSFORM              (const transformed_output : IFRE_DB_Object ; const stat_data : IFRE_DB_Object ; const statfieldname : TFRE_DB_Nametype);
   end;
@@ -414,7 +413,6 @@ type
     function  WEB_MOSContent                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_ZFSContent                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   published
-    procedure _getMOSCaption                         (const calcfieldsetter : IFRE_DB_CALCFIELD_SETTER); override;
     function  WEB_GetDefaultCollection               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     class procedure STAT_TRANSFORM                   (const transformed_output : IFRE_DB_Object ; const stat_data : IFRE_DB_Object ; const statfieldname : TFRE_DB_Nametype);
   end;
@@ -526,7 +524,6 @@ type
     class procedure RegisterSystemScheme  (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects      (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   published
-    procedure CALC_GetDisplayName         (const setter : IFRE_DB_CALCFIELD_SETTER);
     function  GetFullDatasetname          (const conn:IFRE_DB_CONNECTION): TFRE_DB_String;
   end;
 
@@ -1236,15 +1233,14 @@ begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
 
   scheme.GetSchemeField('objname').required:=true;
-  scheme.AddCalcSchemeField('dndclass',fdbft_String,@_getDnDClass);
-  scheme.AddCalcSchemeField('icon',fdbft_String,@_getIcon);
-  scheme.AddCalcSchemeField('caption',fdbft_String,@_getCaption);
-  scheme.AddCalcSchemeField('caption_mos',fdbft_String,@_getMOSCaption);
-  scheme.AddCalcSchemeField('children',fdbft_String,@_getChildrenString);
-  scheme.AddCalcSchemeField('_disabledrop_',fdbft_Boolean,@_getDisableDrop);
-  scheme.AddCalcSchemeField('_disabledrag_',fdbft_Boolean,@_getDisableDrag);
+  //scheme.AddCalcSchemeField('dndclass',fdbft_String,@_getDnDClass);
+  //scheme.AddCalcSchemeField('icon',fdbft_String,@_getIcon);
+  //scheme.AddCalcSchemeField('caption',fdbft_String,@_getCaption);
+  //scheme.AddCalcSchemeField('caption_mos',fdbft_String,@_getMOSCaption);
+  //scheme.AddCalcSchemeField('children',fdbft_String,@_getChildrenString);
+  //scheme.AddCalcSchemeField('_disabledrop_',fdbft_Boolean,@_getDisableDrop);
+  //scheme.AddCalcSchemeField('_disabledrag_',fdbft_Boolean,@_getDisableDrag);
   scheme.AddSchemeField('status_mos',fdbft_String);
-  scheme.AddCalcSchemeField('status_icon_mos',fdbft_String,@_getStatusIcon);
 
   scheme.AddSchemeField('state',fdbft_String);
 
@@ -1349,62 +1345,53 @@ begin
    result := CFRE_DB_NullGUID;
 end;
 
-procedure TFRE_DB_ZFS_OBJ._getDnDClass(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  calcfieldsetter.SetAsString(ClassName);
-end;
 
-procedure TFRE_DB_ZFS_OBJ._getIcon(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-   if getIsNew then begin
-     calcfieldsetter.SetAsString(FREDB_getThemedResource('images_apps/firmbox_storage/'+ClassName+'_new.png'));
-   end else begin
-     if getIsModified then begin
-       calcfieldsetter.SetAsString(FREDB_getThemedResource('images_apps/firmbox_storage/'+ClassName+'_mod.png'));
-     end else begin
-       calcfieldsetter.SetAsString(FREDB_getThemedResource('images_apps/firmbox_storage/'+ClassName+'.png'));
-     end;
-   end;
-end;
+//procedure TFRE_DB_ZFS_OBJ._getIcon(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//   if getIsNew then begin
+//     calcfieldsetter.SetAsString(FREDB_getThemedResource('images_apps/firmbox_storage/'+ClassName+'_new.png'));
+//   end else begin
+//     if getIsModified then begin
+//       calcfieldsetter.SetAsString(FREDB_getThemedResource('images_apps/firmbox_storage/'+ClassName+'_mod.png'));
+//     end else begin
+//       calcfieldsetter.SetAsString(FREDB_getThemedResource('images_apps/firmbox_storage/'+ClassName+'.png'));
+//     end;
+//   end;
+//end;
 
-procedure TFRE_DB_ZFS_OBJ._getChildrenString(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  if mayHaveZFSChildren then begin
-    calcfieldsetter.SetAsString('UNCHECKED');
-  end else begin
-    calcfieldsetter.SetAsString('');
-  end;
-end;
+//procedure TFRE_DB_ZFS_OBJ._getChildrenString(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  if mayHaveZFSChildren then begin
+//    calcfieldsetter.SetAsString('UNCHECKED');
+//  end else begin
+//    calcfieldsetter.SetAsString('');
+//  end;
+//end;
 
-procedure TFRE_DB_ZFS_OBJ._getDisableDrag(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  calcfieldsetter.SetAsBoolean(true);
-end;
+//procedure TFRE_DB_ZFS_OBJ._getDisableDrag(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  calcfieldsetter.SetAsBoolean(true);
+//end;
 
-procedure TFRE_DB_ZFS_OBJ._getDisableDrop(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  if mayHaveZFSChildren then begin
-    calcfieldsetter.SetAsBoolean(false);
-  end else begin
-    calcfieldsetter.SetAsBoolean(true);
-  end;
-end;
+//procedure TFRE_DB_ZFS_OBJ._getDisableDrop(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  if mayHaveZFSChildren then begin
+//    calcfieldsetter.SetAsBoolean(false);
+//  end else begin
+//    calcfieldsetter.SetAsBoolean(true);
+//  end;
+//end;
 
-procedure TFRE_DB_ZFS_OBJ._getCaption(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  calcfieldsetter.SetAsString(caption);
-end;
+//procedure TFRE_DB_ZFS_OBJ._getCaption(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  calcfieldsetter.SetAsString(caption);
+//end;
+//
+//procedure TFRE_DB_ZFS_OBJ._getMOSCaption(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  calcfieldsetter.SetAsString(caption);
+//end;
 
-procedure TFRE_DB_ZFS_OBJ._getMOSCaption(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  calcfieldsetter.SetAsString(caption);
-end;
-
-
-procedure TFRE_DB_ZFS_OBJ._getStatusIcon(const calc: IFRE_DB_CALCFIELD_SETTER);
-begin
-  GFRE_MOS_GetStatusIcon(GetMOSStatus,calc);
-end;
 
 function TFRE_DB_ZFS_OBJ.getId: TFRE_DB_String;
 begin
@@ -1776,55 +1763,55 @@ begin
   Field('devicename').AsString := AValue;
 end;
 
-procedure TFRE_DB_ZFS_BLOCKDEVICE._getDnDClass(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  calcfieldsetter.SetAsString('TFRE_DB_ZFS_BLOCKDEVICE');
-end;
+//procedure TFRE_DB_ZFS_BLOCKDEVICE._getDnDClass(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  calcfieldsetter.SetAsString('TFRE_DB_ZFS_BLOCKDEVICE');
+//end;
 
-procedure TFRE_DB_ZFS_BLOCKDEVICE._getIcon(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  if getIsNew then begin
-    calcfieldsetter.SetAsString('images_apps/firmbox_storage/'+ClassName+'_new.png');
-  end else begin
-    if getIsModified then begin
-      calcfieldsetter.SetAsString('images_apps/firmbox_storage/'+ClassName+'_mod.png');
-    end else begin
-      if isOffline then begin
-        calcfieldsetter.SetAsString('images_apps/firmbox_storage/'+ClassName+'_offline.png');
-      end else begin
-        calcfieldsetter.SetAsString('images_apps/firmbox_storage/'+ClassName+'.png');
-      end;
-    end;
-  end;
-end;
+//procedure TFRE_DB_ZFS_BLOCKDEVICE._getIcon(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  if getIsNew then begin
+//    calcfieldsetter.SetAsString('images_apps/firmbox_storage/'+ClassName+'_new.png');
+//  end else begin
+//    if getIsModified then begin
+//      calcfieldsetter.SetAsString('images_apps/firmbox_storage/'+ClassName+'_mod.png');
+//    end else begin
+//      if isOffline then begin
+//        calcfieldsetter.SetAsString('images_apps/firmbox_storage/'+ClassName+'_offline.png');
+//      end else begin
+//        calcfieldsetter.SetAsString('images_apps/firmbox_storage/'+ClassName+'.png');
+//      end;
+//    end;
+//  end;
+//end;
 
-procedure TFRE_DB_ZFS_BLOCKDEVICE._getDisableDrag(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  if IsUnassigned or getIsNew then begin
-    calcfieldsetter.SetAsBoolean(false);
-  end else begin
-    calcfieldsetter.SetAsBoolean(true);
-  end;
-end;
+//procedure TFRE_DB_ZFS_BLOCKDEVICE._getDisableDrag(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  if IsUnassigned or getIsNew then begin
+//    calcfieldsetter.SetAsBoolean(false);
+//  end else begin
+//    calcfieldsetter.SetAsBoolean(true);
+//  end;
+//end;
 
-procedure TFRE_DB_ZFS_BLOCKDEVICE._getDisableDrop(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  if IsUnassigned then begin
-    calcfieldsetter.SetAsBoolean(true);
-  end else begin
-    calcfieldsetter.SetAsBoolean(false);
-  end;
-end;
+//procedure TFRE_DB_ZFS_BLOCKDEVICE._getDisableDrop(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  if IsUnassigned then begin
+//    calcfieldsetter.SetAsBoolean(true);
+//  end else begin
+//    calcfieldsetter.SetAsBoolean(false);
+//  end;
+//end;
 
-procedure TFRE_DB_ZFS_BLOCKDEVICE._getMachineDevicename(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
- calcfieldsetter.SetAsString(TFRE_DB_ZFS_BLOCKDEVICE.GetMachineDeviceName(MachineID,DeviceName));
-end;
-
-procedure TFRE_DB_ZFS_BLOCKDEVICE._getMachineDeviceIdentifier(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
- calcfieldsetter.SetAsString(TFRE_DB_ZFS_BLOCKDEVICE.GetMachineDeviceIdentifier(MachineID,DeviceIdentifier));
-end;
+//procedure TFRE_DB_ZFS_BLOCKDEVICE._getMachineDevicename(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+// calcfieldsetter.SetAsString(TFRE_DB_ZFS_BLOCKDEVICE.GetMachineDeviceName(MachineID,DeviceName));
+//end;
+//
+//procedure TFRE_DB_ZFS_BLOCKDEVICE._getMachineDeviceIdentifier(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+// calcfieldsetter.SetAsString(TFRE_DB_ZFS_BLOCKDEVICE.GetMachineDeviceIdentifier(MachineID,DeviceIdentifier));
+//end;
 
 
 function TFRE_DB_ZFS_BLOCKDEVICE.getDeviceIdentifier: TFRE_DB_String;
@@ -1861,9 +1848,6 @@ begin
   scheme.AddSchemeField('machineid',fdbft_String).SetupFieldDef(true);
   scheme.AddSchemeField('deviceidentifier',fdbft_String).SetupFieldDef(true);
   scheme.AddSchemeField('devicename',fdbft_String).SetupFieldDef(true);
-
-  scheme.AddCalcSchemeField('machinedevicename',fdbft_String,@_getMachineDevicename);
-  scheme.AddCalcSchemeField('machinedeviceidentifier',fdbft_String,@_getMachineDeviceidentifier);
 end;
 
 class procedure TFRE_DB_ZFS_BLOCKDEVICE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -2017,10 +2001,10 @@ begin
  end;
 end;
 
-procedure TFRE_DB_ZFS_POOL._getMOSCaption(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
-begin
- calcfieldsetter.SetAsString('Zpool '+caption+' '+Field('state').asstring);
-end;
+//procedure TFRE_DB_ZFS_POOL._getMOSCaption(const calcfieldsetter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+// calcfieldsetter.SetAsString('Zpool '+caption+' '+Field('state').asstring);
+//end;
 
 class function TFRE_DB_ZFS_POOL.CreateEmbeddedPoolObjectfromDB(const conn: IFRE_DB_CONNECTION; const db_zfs_pool_id: TFRE_DB_GUID; const include_os_blockdevices: boolean): TFRE_DB_ZFS_POOL;
 var
@@ -4074,7 +4058,6 @@ begin
   scheme.AddSchemeField('copies',fdbft_String).SetupFieldDef(true,false,'copies');
   scheme.AddSchemeField('sync',fdbft_String).SetupFieldDef(true,false,'sync');
   scheme.AddSchemeField('fileservername',fdbft_String);
-  scheme.AddCalcSchemeField ('displayname',fdbft_String,@CALC_GetDisplayName);
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
@@ -4137,11 +4120,6 @@ begin
     StoreTranslateableText(conn,'enum_sync_disabled','Disabled');
   end;
 
-end;
-
-procedure TFRE_DB_ZFS_DATASET.CALC_GetDisplayName(const setter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  setter.SetAsString(Field('fileservername').AsString+'/'+Field('objname').AsString);
 end;
 
 function TFRE_DB_ZFS_DATASET.GetFullDatasetname(const conn: IFRE_DB_CONNECTION): TFRE_DB_String;

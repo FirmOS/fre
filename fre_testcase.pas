@@ -89,7 +89,6 @@ type
     function        IMI_ClearStatus             (const input:IFRE_DB_Object):IFRE_DB_Object;
     function        WEB_UpdateActualStatus      (const input:IFRE_DB_Object ; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
     function        IMI_CheckActuality          (const input:IFRE_DB_Object):IFRE_DB_Object;
-    procedure       CALC_StatusIcon             (const setter: IFRE_DB_CALCFIELD_SETTER);
   end;
 
 
@@ -658,7 +657,6 @@ begin
   scheme.AddSchemeField('statussummary',fdbft_String);
   scheme.AddSchemeField('testcase',fdbft_Objlink).required:=true;
   scheme.AddSchemeField('actual',fdbft_Boolean);
-  scheme.AddCalcSchemeField('status_icon',fdbft_String,@CALC_StatusIcon);
 end;
 
 class procedure TFRE_DB_TestcaseStatus.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -730,10 +728,10 @@ begin
  end;
 end;
 
-procedure TFRE_DB_TestcaseStatus.CALC_StatusIcon(const setter: IFRE_DB_CALCFIELD_SETTER);
-begin
-  setter.SetAsString(GetStatusIconURI(Field('status').asstring));
-end;
+//procedure TFRE_DB_TestcaseStatus.CALC_StatusIcon(const setter: IFRE_DB_CALCFIELD_SETTER);
+//begin
+//  setter.SetAsString(GetStatusIconURI(Field('status').asstring));
+//end;
 
 { TFRE_DB_MailCheckTestcase }
 

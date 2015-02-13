@@ -47,7 +47,6 @@ type
    procedure SetMOSKey                  (const avalue: TFRE_DB_String);
    function  GetMOSKey                  : TFRE_DB_String;
  published
-   procedure _getStatusIcon             (const calc: IFRE_DB_CALCFIELD_SETTER);
    function  WEB_MOSChildStatusChanged  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
    function  WEB_MOSStatus              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
    function  WEB_MOSContent             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;virtual;abstract;
@@ -59,7 +58,6 @@ type
 
   procedure GFRE_MOS_SetMOSStatusandUpdate          (const mosobject:IFRE_DB_Object;const status: TFRE_DB_MOS_STATUS_TYPE; const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION);
   function  GFRE_MOS_MOSChildStatusChanged          (const mos_UID: TFRE_DB_GUID;const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):TFRE_DB_MOS_STATUS_TYPE;
-  procedure GFRE_MOS_GetStatusIcon                  (const status:TFRE_DB_MOS_STATUS_TYPE;const calc: IFRE_DB_CALCFIELD_SETTER);
   function  String2DBMOSStatus                  (const fts: string): TFRE_DB_MOS_STATUS_TYPE;
   procedure CreateMonitoringCollections         (const conn: IFRE_DB_COnnection);
 
@@ -113,18 +111,6 @@ begin
     end;
   end;
   result := newStatus;
-end;
-
-procedure GFRE_MOS_GetStatusIcon(const status: TFRE_DB_MOS_STATUS_TYPE; const calc: IFRE_DB_CALCFIELD_SETTER);
-begin
-  case status of
-    fdbstat_ok     : calc.SetAsString('images_apps/citycom_monitoring/status_ok.png');
-    fdbstat_warning: calc.SetAsString('images_apps/citycom_monitoring/status_warning.png');
-    fdbstat_error  : calc.SetAsString('images_apps/citycom_monitoring/status_error.png');
-    fdbstat_unknown: calc.SetAsString('images_apps/citycom_monitoring/status_unknown.png');
-  else begin
-     calc.SetAsString('images_apps/citycom_monitoring/status_unknown.png');
-  end; end;
 end;
 
 
@@ -183,10 +169,6 @@ begin
   GFRE_MOS_SetMOSStatusandUpdate(self,status,input,ses,app,conn);
 end;
 
-procedure TFRE_DB_VIRTUALMOSOBJECT._getStatusIcon(const calc: IFRE_DB_CALCFIELD_SETTER);
-begin
-  GFRE_MOS_GetStatusIcon(GetMOSStatus,calc);
-end;
 
 class procedure TFRE_DB_VIRTUALMOSOBJECT.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
@@ -196,7 +178,6 @@ begin
   scheme.AddSchemeField('caption_mos',fdbft_String);
   scheme.AddSchemeField('status_mos',fdbft_String);
   scheme.AddSchemeField('key_mos',fdbft_String);
-  scheme.AddCalcSchemeField('status_icon_mos',fdbft_String,@_getStatusIcon);
 end;
 
 class procedure TFRE_DB_VIRTUALMOSOBJECT.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
