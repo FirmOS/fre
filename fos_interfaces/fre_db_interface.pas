@@ -1022,7 +1022,8 @@ type
     //  or all Objects which point to the the input "Dependency" object,
     //  via a schemelinkdefinition chain : Outbound ['TFRE_DB_SCHEME>DOMAINDILINK', ... ] or Inbound (common) ['TFRE_DB_USER<DOMAINIDLINK']
     //}
-    procedure  SetUseDependencyAsRefLinkFilter (const scheme_and_field_constraint : Array of TFRE_DB_NameTypeRL ; const negate : boolean ; const dependency_reference : string = 'uids');
+    procedure  SetUseDependencyAsRefLinkFilter (const scheme_and_field_constraint : Array of TFRE_DB_NameTypeRL ; const negate : boolean ; const dependency_reference : string = 'uids'); deprecated; { bad performance impact / soes not sit on transform layer but on filter layer (-) }
+    procedure  SetUseDependencyAsUidFilter     (const field_to_filter : TFRE_DB_NameType ; const negate : boolean=false ; const dependency_reference : string = 'uids');
 
     procedure  SetDisplayType                   (const CollectionDisplayType : TFRE_COLLECTION_DISPLAY_TYPE ; const Flags:TFRE_COLLECTION_GRID_DISPLAY_FLAGS;const title:TFRE_DB_String;const item_menu_func: TFRE_DB_SERVER_FUNC_DESC=nil;const item_details_func: TFRE_DB_SERVER_FUNC_DESC=nil; const grid_item_notification: TFRE_DB_SERVER_FUNC_DESC=nil; const tree_menu_func: TFRE_DB_SERVER_FUNC_DESC=nil; const drop_func: TFRE_DB_SERVER_FUNC_DESC=nil; const drag_func: TFRE_DB_SERVER_FUNC_DESC=nil);
     procedure  SetParentToChildLinkField        (const fieldname : TFRE_DB_NameTypeRL); { Define a Child/Parent Parent/Child relation via Reflinks syntax is FROMFIELD>TOSCHEME or FROMSCHEME<FROMFIELD, the scheme could be empty }
@@ -1061,7 +1062,7 @@ type
 
   IFRE_DB_SIMPLE_TRANSFORM=interface(IFRE_DB_TRANSFORMOBJECT)
     ['IFDBST']
-    procedure SetSimpleFuncTransformNested    (const callback : IFRE_DB_OBJECT_SIMPLE_CALLBACK_NESTED;const langres: array of TFRE_DB_String);
+    procedure SetSimpleFuncTransformNested    (const callback : IFRE_DB_OBJECT_SIMPLE_CALLBACK_NESTED;const langres: array of TFRE_DB_String); { may also be used for static methods }
     procedure SetSimpleFuncTransform          (const callback : IFRE_DB_OBJECT_SIMPLE_CALLBACK;const langres: array of TFRE_DB_String);
     procedure AddCollectorscheme              (const format:TFRE_DB_String;const in_fieldlist:TFRE_DB_NameTypeArray;const out_field:TFRE_DB_String;const output_title:TFRE_DB_String='';const display:Boolean=true;const sortable:Boolean=false; const filterable:Boolean=false;const gui_display_type:TFRE_DB_DISPLAY_TYPE=dt_string;const fieldSize: Integer=1;const hide_in_output : boolean=false);
     procedure AddFulltextFilterOnTransformed  (const fieldlist:array of TFRE_DB_NameType);  { takes the text rep of the fields (asstring), concatenates them into 'FTX_SEARCH' }

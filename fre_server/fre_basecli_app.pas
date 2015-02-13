@@ -125,7 +125,7 @@ type
     procedure   ShowRights              ;
     procedure   ShowApps                ;
     procedure   ShowDeploy              ;
-    procedure   DumpScheme              ;
+    procedure   DumpScheme              (const scheme:shortstring);
     procedure   RemoveExtensions        ;
     procedure   RegisterExtensions      ;
     procedure   DeployDatabaseScheme    (deploy_revision : string);
@@ -383,7 +383,7 @@ begin
   AddCheckOption('*'  ,'showdeploy'    ,'                | --showdeploy                   : show the deployment information');
   AddCheckOption('*'  ,'filterapps:'   ,'                | --filterapps=class,class       : allow only the specified apps');
   AddCheckOption('A'  ,'adduser:'      ,'                | --adduser=name@dom,pass,class  : add a user with a specified class (WEBUSER,FEEDER),password and domain (SYSTEM)');
-  AddCheckOption('*'  ,'showscheme'    ,'                | --showscheme                   : dump the whole database scheme definition');
+  AddCheckOption('*'  ,'showscheme::'  ,'                | --showscheme [CLASS]           : dump the whole database scheme definition, or a specific schemeclass');
   AddCheckOption('*'  ,'backupdb:'     ,'                | --backupdb=</path2/dir>        : backup database interactive');
   AddCheckOption('*'  ,'restoredb:'    ,'                | --restoredb=</path2/dir>       : restore database interactive');
   AddCheckOption('*'  ,'restoredbsch:' ,'                | --restoredbsch=</path2/dir>    : restore database interactive, but ignore backup schemes and use live schemes');
@@ -856,7 +856,7 @@ begin
   if HasOption('*','showscheme') then
     begin
       result := true;
-      DumpScheme;
+      DumpScheme(GetOptionValue('*','showscheme'));
     end;
   if HasOption('*','showdeploy') then
     begin
@@ -1471,9 +1471,20 @@ begin
   exit; { deploy info is written on start in any case }
 end;
 
-procedure TFRE_CLISRV_APP.DumpScheme;
+procedure TFRE_CLISRV_APP.DumpScheme(const scheme: shortstring);
+var so : TFRE_DB_SchemeObject;
 begin
-  writeln(GFRE_DB.GetDatabasescheme.DumpToString);
+  if scheme='' then
+   begin
+     writeln(GFRE_DB.GetDatabasescheme.DumpToString);
+   end
+  else
+   begin
+     if GFRE_DB.GetSysScheme(scheme,so) then
+       writeln(so.DumpToString)
+     else
+       writeln('Scheme [',scheme,'] not found');
+   end;
 end;
 
 
