@@ -14,6 +14,20 @@ uses
 
 
 { ----------------------------------- }
+{ ethernet.h from uts/common/sys/ethernet.h}
+{ ----------------------------------- }
+
+const
+  ETHERADDRL=6;
+
+{ END ----------------------------------- }
+{ END ethernet.h from uts/common/sys/ethernet.h}
+{ END ----------------------------------- }
+
+
+
+
+{ ----------------------------------- }
 { socket.h from uts/common/sys/socket.h}
 { ----------------------------------- }
 
@@ -21,6 +35,7 @@ const
   External_library_illusock=''; {Setup as you need}
 
 Type
+
   //Plongint    = ^longint;
   //Pmsghdr    = ^msghdr;
   //Psockaddr  = ^sockaddr;
@@ -909,6 +924,228 @@ type
 { END vnic.h from uts/common/sys/vnic.h}
 { END ----------------------------------- }
 
+{ ----------------------------------- }
+{ aggr.h from uts/common/sys/aggr.h}
+{ ----------------------------------- }
+
+  const
+    AGGR_POLICY_L2 = $01;
+    AGGR_POLICY_L3 = $02;
+    AGGR_POLICY_L4 = $04;
+  {
+   * LACP mode and timer.
+    }
+
+  type
+    aggr_lacp_mode_t = (AGGR_LACP_OFF := 0,AGGR_LACP_ACTIVE := 1,
+      AGGR_LACP_PASSIVE := 2);
+
+    aggr_lacp_timer_t = (AGGR_LACP_TIMER_LONG := 0,AGGR_LACP_TIMER_SHORT := 1
+      );
+  {
+   * MAC port state.
+    }
+
+    aggr_port_state_t = (AGGR_PORT_STATE_STANDBY := 1,AGGR_PORT_STATE_ATTACHED := 2
+      );
+  { Maximum number of ports per aggregation.  }
+
+  const
+    AGGR_MAX_PORTS = 256;
+  {
+   * The largest configurable aggregation key.  Because by default the key is
+   * used as the DLPI device PPA and default VLAN PPA's are calculated as
+   * ((1000 * vid) + PPA), the largest key can't be > 999.
+    }
+    AGGR_MAX_KEY = 999;
+  {
+   * LACP port state.
+    }
+
+  //{$if defined(_BIT_FIELDS_HTOL)}
+  //(*** was #elif ****){$else defined(_BIT_FIELDS_LTOH)}
+  //{$else}
+  //{$error "unknown bit fields ordering"}
+  //{$endif}
+
+  type
+    aggr_lacp_state_t = record
+        case longint of
+          0 : ( bit : record
+              flag0 : word;
+            end );
+          1 : ( state : uint8_t );
+        end;
+
+  //const
+  //  bm_aggr_lacp_state_t_expired = $1;
+  //  bp_aggr_lacp_state_t_expired = 0;
+  //  bm_aggr_lacp_state_t_defaulted = $2;
+  //  bp_aggr_lacp_state_t_defaulted = 1;
+  //  bm_aggr_lacp_state_t_distributing = $4;
+  //  bp_aggr_lacp_state_t_distributing = 2;
+  //  bm_aggr_lacp_state_t_collecting = $8;
+  //  bp_aggr_lacp_state_t_collecting = 3;
+  //  bm_aggr_lacp_state_t_sync = $10;
+  //  bp_aggr_lacp_state_t_sync = 4;
+  //  bm_aggr_lacp_state_t_aggregation = $20;
+  //  bp_aggr_lacp_state_t_aggregation = 5;
+  //  bm_aggr_lacp_state_t_timeout = $40;
+  //  bp_aggr_lacp_state_t_timeout = 6;
+  //  bm_aggr_lacp_state_t_activity = $80;
+  //  bp_aggr_lacp_state_t_activity = 7;
+  //  bm_aggr_lacp_state_t_activity = $100;
+  //  bp_aggr_lacp_state_t_activity = 8;
+  //  bm_aggr_lacp_state_t_timeout = $200;
+  //  bp_aggr_lacp_state_t_timeout = 9;
+  //  bm_aggr_lacp_state_t_aggregation = $400;
+  //  bp_aggr_lacp_state_t_aggregation = 10;
+  //  bm_aggr_lacp_state_t_sync = $800;
+  //  bp_aggr_lacp_state_t_sync = 11;
+  //  bm_aggr_lacp_state_t_collecting = $1000;
+  //  bp_aggr_lacp_state_t_collecting = 12;
+  //  bm_aggr_lacp_state_t_distributing = $2000;
+  //  bp_aggr_lacp_state_t_distributing = 13;
+  //  bm_aggr_lacp_state_t_defaulted = $4000;
+  //  bp_aggr_lacp_state_t_defaulted = 14;
+  //  bm_aggr_lacp_state_t_expired = $8000;
+  //  bp_aggr_lacp_state_t_expired = 15;
+
+  { one of the ports of a link aggregation group  }
+
+  type
+    laioc_port = record
+        lp_linkid : datalink_id_t;
+      end;
+    laioc_port_t = laioc_port;
+
+  { was #define dname def_expr }
+//  function LAIOC_CREATE : longint; { return type might be wrong }
+
+
+  type
+    laioc_create = record
+        lc_linkid : datalink_id_t;
+        lc_key : uint32_t;
+        lc_nports : uint32_t;
+        lc_policy : uint32_t;
+        lc_mac : array[0..(ETHERADDRL)-1] of uchar_t;
+        lc_lacp_mode : aggr_lacp_mode_t;
+        lc_lacp_timer : aggr_lacp_timer_t;
+        flag0 : longint;
+      end;
+    laioc_create_t = laioc_create;
+
+  const
+    bm_laioc_create_lc_mac_fixed = $1;
+    bp_laioc_create_lc_mac_fixed = 0;
+    bm_laioc_create_lc_force = $2;
+    bp_laioc_create_lc_force = 1;
+    bm_laioc_create_lc_pad_bits = $FFFFFFFC;
+    bp_laioc_create_lc_pad_bits = 2;
+
+  function lc_mac_fixed(var a : laioc_create) : uint32_t;
+  procedure set_lc_mac_fixed(var a : laioc_create; __lc_mac_fixed : uint32_t);
+  function lc_force(var a : laioc_create) : uint32_t;
+  procedure set_lc_force(var a : laioc_create; __lc_force : uint32_t);
+  function lc_pad_bits(var a : laioc_create) : uint32_t;
+  procedure set_lc_pad_bits(var a : laioc_create; __lc_pad_bits : uint32_t);
+
+  { was #define dname def_expr }
+//  function LAIOC_DELETE : longint; { return type might be wrong }
+
+
+  type
+    laioc_delete = record
+        ld_linkid : datalink_id_t;
+      end;
+    laioc_delete_t = laioc_delete;
+
+  { was #define dname def_expr }
+//  function LAIOC_INFO : longint; { return type might be wrong }
+
+
+  type
+    aggr_link_duplex = (AGGR_LINK_DUPLEX_FULL := 1,AGGR_LINK_DUPLEX_HALF := 2,
+      AGGR_LINK_DUPLEX_UNKNOWN := 3);
+    aggr_link_duplex_t = aggr_link_duplex;
+
+    aggr_link_state = (AGGR_LINK_STATE_UP := 1,AGGR_LINK_STATE_DOWN := 2,
+      AGGR_LINK_STATE_UNKNOWN := 3);
+    aggr_link_state_t = aggr_link_state;
+
+    laioc_info_port = record
+        lp_linkid : datalink_id_t;
+        lp_mac : array[0..(ETHERADDRL)-1] of uchar_t;
+        lp_state : aggr_port_state_t;
+        lp_lacp_state : aggr_lacp_state_t;
+      end;
+    laioc_info_port_t = laioc_info_port;
+
+    laioc_info_group = record
+        lg_linkid : datalink_id_t;
+        lg_key : uint32_t;
+        lg_mac : array[0..(ETHERADDRL)-1] of uchar_t;
+        lg_mac_fixed : boolean_t;
+        lg_force : boolean_t;
+        lg_policy : uint32_t;
+        lg_nports : uint32_t;
+        lg_lacp_mode : aggr_lacp_mode_t;
+        lg_lacp_timer : aggr_lacp_timer_t;
+      end;
+    laioc_info_group_t = laioc_info_group;
+  { Must not be DLADM_INVALID_LINKID  }
+
+    laioc_info = record
+        li_group_linkid : datalink_id_t;
+        li_bufsize : uint32_t;
+      end;
+    laioc_info_t = laioc_info;
+
+  { was #define dname def_expr }
+//  function LAIOC_ADD : longint; { return type might be wrong }
+
+  { was #define dname def_expr }
+//  function LAIOC_REMOVE : longint; { return type might be wrong }
+
+
+  type
+    laioc_add_rem = record
+        la_linkid : datalink_id_t;
+        la_nports : uint32_t;
+        la_force : uint32_t;
+      end;
+    laioc_add_rem_t = laioc_add_rem;
+
+  { was #define dname def_expr }
+//  function LAIOC_MODIFY : longint; { return type might be wrong }
+
+  const
+    LAIOC_MODIFY_POLICY = $01;
+    LAIOC_MODIFY_MAC = $02;
+    LAIOC_MODIFY_LACP_MODE = $04;
+    LAIOC_MODIFY_LACP_TIMER = $08;
+
+  type
+    laioc_modify = record
+        lu_linkid : datalink_id_t;
+        lu_modify_mask : uint8_t;
+        lu_policy : uint32_t;
+        lu_mac : array[0..(ETHERADDRL)-1] of uchar_t;
+        lu_mac_fixed : boolean_t;
+        lu_lacp_mode : aggr_lacp_mode_t;
+        lu_lacp_timer : aggr_lacp_timer_t;
+      end;
+    laioc_modify_t = laioc_modify;
+
+
+{ END ----------------------------------- }
+{ END aggr.h from uts/common/sys/aggr.h}
+{ END ----------------------------------- }
+
+
+
+
 
 { ----------------------------------- }
 { dls_mgmt.h from uts/common/sys/mac.h}
@@ -938,7 +1175,8 @@ type
     datalink_media_t = uint64_t;
 
   { was #define dname def_expr }
-  //function DATALINK_ANY_MEDIATYPE : datalink_media_t;
+  function DATALINK_ANY_MEDIATYPE : datalink_media_t;
+
 
   { was #define dname(params) para_def_expr }
   { argument types are unknown }
@@ -1117,10 +1355,6 @@ typedef struct dlmgmt_linkid_retval_s	dlmgmt_create_retval_t,
 //implementation
 //
 //  { was #define dname def_expr }
-//  function DATALINK_ANY_MEDIATYPE : datalink_media_t;
-//    begin
-//      DATALINK_ANY_MEDIATYPE:=datalink_media_t((datalink_media_t($01)) shl 32);
-//    end;
 //
 //  { was #define dname(params) para_def_expr }
 //  { argument types are unknown }
@@ -3729,6 +3963,12 @@ const
 
 implementation
 
+function DATALINK_ANY_MEDIATYPE: datalink_media_t;
+begin
+  DATALINK_ANY_MEDIATYPE:=datalink_media_t((datalink_media_t($01)) shl 32);
+end;
+
+
 
 {  ----------------------------------- }
 {  in.h macros }
@@ -3979,6 +4219,81 @@ implementation
 { END in.h macros }
 { END  ----------------------------------- }
 
+
+{ ----------------------------------- }
+{ aggr.h from uts/common/sys/aggr.h}
+{ ----------------------------------- }
+
+
+//{ was #define dname def_expr }
+//function LAIOC_CREATE : longint; { return type might be wrong }
+//  begin
+//    LAIOC_CREATE:=AGGRIOC(1);
+//  end;
+
+function lc_mac_fixed(var a : laioc_create) : uint32_t;
+  begin
+    lc_mac_fixed:=(a.flag0 and bm_laioc_create_lc_mac_fixed) shr bp_laioc_create_lc_mac_fixed;
+  end;
+
+procedure set_lc_mac_fixed(var a : laioc_create; __lc_mac_fixed : uint32_t);
+  begin
+    a.flag0:=a.flag0 or ((__lc_mac_fixed shl bp_laioc_create_lc_mac_fixed) and bm_laioc_create_lc_mac_fixed);
+  end;
+
+function lc_force(var a : laioc_create) : uint32_t;
+  begin
+    lc_force:=(a.flag0 and bm_laioc_create_lc_force) shr bp_laioc_create_lc_force;
+  end;
+
+procedure set_lc_force(var a : laioc_create; __lc_force : uint32_t);
+  begin
+    a.flag0:=a.flag0 or ((__lc_force shl bp_laioc_create_lc_force) and bm_laioc_create_lc_force);
+  end;
+
+function lc_pad_bits(var a : laioc_create) : uint32_t;
+  begin
+    lc_pad_bits:=(a.flag0 and bm_laioc_create_lc_pad_bits) shr bp_laioc_create_lc_pad_bits;
+  end;
+
+procedure set_lc_pad_bits(var a : laioc_create; __lc_pad_bits : uint32_t);
+  begin
+    a.flag0:=a.flag0 or ((__lc_pad_bits shl bp_laioc_create_lc_pad_bits) and bm_laioc_create_lc_pad_bits);
+  end;
+
+//{ was #define dname def_expr }
+//function LAIOC_DELETE : longint; { return type might be wrong }
+//  begin
+//    LAIOC_DELETE:=AGGRIOC(2);
+//  end;
+//
+//{ was #define dname def_expr }
+//function LAIOC_INFO : longint; { return type might be wrong }
+//  begin
+//    LAIOC_INFO:=AGGRIOC(3);
+//  end;
+//
+//{ was #define dname def_expr }
+//function LAIOC_ADD : longint; { return type might be wrong }
+//  begin
+//    LAIOC_ADD:=AGGRIOC(4);
+//  end;
+//
+//{ was #define dname def_expr }
+//function LAIOC_REMOVE : longint; { return type might be wrong }
+//  begin
+//    LAIOC_REMOVE:=AGGRIOC(5);
+//  end;
+//
+//{ was #define dname def_expr }
+//function LAIOC_MODIFY : longint; { return type might be wrong }
+//  begin
+//    LAIOC_MODIFY:=AGGRIOC(6);
+//  end;
+
+{ END ----------------------------------- }
+{ END aggr.h from uts/common/sys/aggr.h}
+{ END ----------------------------------- }
 
 
 end.
