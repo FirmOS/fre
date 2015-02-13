@@ -52,10 +52,8 @@ uses
   classes,contnrs,fre_db_interface,fre_system,fre_db_core,
   FRE_DBTEST,
   fos_firmbox_common,
-  fos_artemes_common,
   fos_citycom_common,
   fre_certificate_common,
-  fos_artemes_testapp,
   fos_monitoring_app,
   fos_captiveportal_app,
   fre_basecli_app,
@@ -3242,8 +3240,8 @@ begin
   mdatan:=GFRE_DBI.CreateFromFile('mdatasnb02.dbo');
 //  writeln(mdata1.DumpToString());
   mdata := mdatan;
-  mdata.Field('enclosures').AsObject.ForAllObjects(@enciter,true);
-  mdata.Field('disks').AsObject.ForAllObjects(@diskiter,true);
+  mdata.Field('enclosures').AsObject.ForAllObjects(@enciter);
+  mdata.Field('disks').AsObject.ForAllObjects(@diskiter);
 
   cl.SaveToFile('create_lun_snb02.sh');
   al.SaveToFile('add_view_snb02.sh');
@@ -3259,8 +3257,8 @@ begin
   mdatas:=GFRE_DBI.CreateFromFile('mdatassb02.dbo');
 //  writeln(mdata1.DumpToString());
   mdata := mdatas;
-  mdata.Field('enclosures').AsObject.ForAllObjects(@enciter,true);
-  mdata.Field('disks').AsObject.ForAllObjects(@diskiter,true);
+  mdata.Field('enclosures').AsObject.ForAllObjects(@enciter);
+  mdata.Field('disks').AsObject.ForAllObjects(@diskiter);
   //  writeln(ds);
   cl.SaveToFile('create_lun_ssb02.sh');
   al.SaveToFile('add_view_ssb02.sh');

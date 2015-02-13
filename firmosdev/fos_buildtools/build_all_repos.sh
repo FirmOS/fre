@@ -23,13 +23,13 @@ if [ $? != 0 ] ; then
   echo "Aborted."
   exit 99
 fi
-echo "artemes"
-cd ../../artemes/fos_buildtools
-./matrix_build.sh $1
-if [ $? != 0 ] ; then
-  echo "Aborted."
-  exit 99
-fi
+#echo "artemes"
+#cd ../../artemes/fos_buildtools
+#./matrix_build.sh $1
+#if [ $? != 0 ] ; then
+#  echo "Aborted."
+#  exit 99
+#fi
 echo "firmbox"
 cd ../../firmbox/fos_buildtools
 ./matrix_build.sh $1
