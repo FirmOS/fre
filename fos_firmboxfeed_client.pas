@@ -50,7 +50,7 @@ uses
   fre_system,fos_stats_control_interface, fre_hal_disk_enclosure_pool_mangement,fre_dbbase,fre_zfs,fre_scsi,fre_hal_schemes,fre_dbbusiness,
   fre_diff_transport,fre_process,fre_mysql_ll,sqldb
   {$IFDEF SOLARIS}
-  ,fosillu_hal_zonectrl,fosillu_hal_dbo_common,fosillu_libzonecfg,fosillu_hal_svcctrl
+  ,fosillu_hal_zonectrl,fosillu_hal_dbo_common,fosillu_libzonecfg,fosillu_hal_svcctrl,fosillu_dladm
   {$ENDIF}
   ;
 
@@ -94,6 +94,7 @@ type
     procedure  UpdateandSendZoneData;
     procedure  TestzoneEnum;
     procedure  TestSvcZone;
+    procedure  TestDatalink;
   public
     procedure  MySessionEstablished    (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
     procedure  MySessionDisconnected   (const chanman : IFRE_APSC_CHANNEL_MANAGER); override;
@@ -518,6 +519,39 @@ begin
   abort;
 end;
 
+procedure TFRE_BOX_FEED_CLIENT.TestDatalink;
+var error:string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('GET DL');
+//  get_datalink_dbo;
+//  writeln('CREATESIM');
+////  get_datalink_dbo;
+//  create_simnet('simsn8',error);
+//  writeln(error);
+//  create_simnet('simsn9',error);
+//  writeln(error);
+//  writeln('GET DL');
+  writeln('CREATE BRIDGE');
+//  create_bridge('brna',TFRE_DB_StringArray.Create,error);
+//  writeln('SWL CREATE BRIDGE --------------- ',error);
+//  readln;
+  add_to_bridge('brna',TFRE_DB_StringArray.Create('ss2'),error);
+  writeln('SWL ADD TO BRIDGE --------------- ',error);
+//  create_bridge('brnb',TFRE_DB_StringArray.Create,error);
+//  writeln('SWL CREATE BRIDGE --------------- ',error);
+//  delete_bridge('brb',error);
+//  writeln('SWL DELETE BRIDGE',error);
+//  get_datalink_dbo;
+  abort;
+  delete_simnet('simsn1',error);
+  writeln(error);
+  delete_simnet('simsn2',error);
+  writeln(error);
+  {$ENDIF}
+
+end;
+
 procedure TFRE_BOX_FEED_CLIENT.MySessionEstablished(const chanman: IFRE_APSC_CHANNEL_MANAGER);
 var i           : integer;
     machineUIDS : TFRE_DB_GUIDArray;
@@ -590,10 +624,12 @@ begin
 
   {$IFDEF SOLARIS}
   InitIllumosLibraryHandles;
+
   {$ENDIF}
 
 //  TestzoneEnum;
 //  TestSvcZone;
+  TestDatalink;
 
   GFRE_TF.Get_Lock(liveupdate_lock);
   live_all := GFRE_DBI.NewObject;
