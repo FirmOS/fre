@@ -1,0 +1,6 @@
+msgid  "Out of memory"
+msgstr
+# msgid  "Out of memory"
+# msgstr
+msgid  "unrecognized character %s\n"
+msgstr

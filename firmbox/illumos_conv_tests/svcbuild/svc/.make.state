@@ -1,0 +1,41 @@
+.MAKE_VERSION:	VERSION-1.0
+/root/smartos-live/proto/usr/sadm/install/scripts/i.manifest:
+	/usr/bin/rm -f /root/smartos-live/proto/usr/sadm/install/scripts/i.manifest; install -s -m 0555 -f /root/smartos-live/proto/usr/sadm/install/scripts common/i.manifest
+/root/smartos-live/proto/usr/sadm/install/scripts/r.manifest:
+	/usr/bin/rm -f /root/smartos-live/proto/usr/sadm/install/scripts/r.manifest; install -s -m 0555 -f /root/smartos-live/proto/usr/sadm/install/scripts common/r.manifest
+/root/smartos-live/proto/usr/share/lib/xml/dtd/service_bundle.dtd.1:
+	/usr/bin/rm -f /root/smartos-live/proto/usr/share/lib/xml/dtd/service_bundle.dtd.1; install -s -m 444 -f /root/smartos-live/proto/usr/share/lib/xml/dtd dtd/service_bundle.dtd.1
+configd:
+	cd configd; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek install
+.BUILT_LAST_MAKE_RUN:
+lsvcrun:
+	cd lsvcrun; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek _msg
+.BUILT_LAST_MAKE_RUN:
+mfstscan:
+	cd mfstscan; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek _msg
+milestone:
+	cd milestone; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek install
+profile:
+	cd profile; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek install
+seed:
+	cd seed; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek install
+.BUILT_LAST_MAKE_RUN:
+servinfo:
+	cd servinfo; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek _msg
+shell:
+	cd shell; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek install
+.BUILT_LAST_MAKE_RUN:
+startd:
+	cd startd; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek _msg
+.BUILT_LAST_MAKE_RUN:
+svcadm:
+	cd svcadm; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek _msg
+.BUILT_LAST_MAKE_RUN:
+svccfg:
+	cd svccfg; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek _msg
+.BUILT_LAST_MAKE_RUN:
+svcprop:
+	cd svcprop; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek _msg
+.BUILT_LAST_MAKE_RUN:
+svcs:
+	cd svcs; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek _msg

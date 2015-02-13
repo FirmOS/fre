@@ -1,0 +1,457 @@
+msgid  "%s:%d: Unexpected libscf error: %s.  Exiting.\n"
+msgstr
+msgid  "Out of memory"
+msgstr
+msgid  "Out of memory.\n"
+msgstr
+msgid  "Property \"%s\" is misconfigured.\n"
+msgstr
+msgid  "Could not read status of contract "
+       "%ld: %s.\n"
+msgstr
+# msgid  "Out of memory"
+# msgstr
+msgid  "Unable to read contract ids for %s -- "
+       "FMRI is too long\n"
+msgstr
+msgid  "%s:%d: gen_filenms_from_fmri() failed with "
+       "unknown error %d\n"
+msgstr
+msgid  "Unable to read ctid file for %s"
+msgstr
+msgid  "Unable to open ctid file for %s"
+msgstr
+msgid  "ctid file for %s has corrupt data"
+msgstr
+# msgid  "Unable to read ctid file for %s"
+# msgstr
+msgid  "Could not read info for process %lu"
+msgstr
+msgid  "%k:%M:%S"
+msgstr
+msgid  "%b_%d  "
+msgstr
+msgid  "%Y    "
+msgstr
+msgid  "could not determine zone name"
+msgstr
+msgid  "contract ID for service (see contract(4))"
+msgstr
+msgid  "human-readable description of the service"
+msgstr
+msgid  "Fault Managed Resource Identifier for service"
+msgstr
+msgid  "portion of the FMRI indicating service instance"
+msgstr
+msgid  "abbreviation for next state (if in transition)"
+msgstr
+# msgid  "abbreviation for next state (if in transition)"
+# msgstr
+msgid  "name for next state (if in transition)"
+msgstr
+msgid  "abbreviation for current state"
+msgstr
+msgid  "name for scope associated with service"
+msgstr
+msgid  "abbreviation for current state and next state"
+msgstr
+msgid  "portion of the FMRI representing service name"
+msgstr
+# msgid  "abbreviation for current state"
+# msgstr
+msgid  "name for current state"
+msgstr
+msgid  "time of last state change"
+msgstr
+msgid  "name of zone"
+msgstr
+msgid  "Usage: %1$s [-aHpv] [-o col[,col ... ]] [-R restarter] "
+       "[-sS col] [-Z | -z zone ]\n            [<service> ...]\n"
+       "       %1$s -d | -D [-Hpv] [-o col[,col ... ]] [-sS col] "
+       "[-Z | -z zone ]\n            [<service> ...]\n"
+       "       %1$s [-l | -L] [-Z | -z zone] <service> ...\n"
+       "       %1$s -x [-v] [-Z | -z zone] [<service> ...]\n"
+       "       %1$s -?\n"
+msgstr
+msgid  "\n"
+       "\t-a  list all service instances rather than "
+       "only those that are enabled\n"
+       "\t-d  list dependencies of the specified service(s)\n"
+       "\t-D  list dependents of the specified service(s)\n"
+       "\t-H  omit header line from output\n"
+       "\t-l  list detailed information about the specified service(s)\n"
+       "\t-L  list the log file associated with the specified service(s)\n"
+       "\t-o  list only the specified columns in the output\n"
+       "\t-p  list process IDs and names associated with each service\n"
+       "\t-R  list only those services with the specified restarter\n"
+       "\t-s  sort output in ascending order by the specified column(s)\n"
+       "\t-S  sort output in descending order by the specified column(s)\n"
+       "\t-v  list verbose information appropriate to the type of output\n"
+       "\t-x  explain the status of services that might require maintenance,\n"
+       "\t    or explain the status of the specified service(s)\n"
+       "\t-z  from global zone, show services in a specified zone\n"
+       "\t-Z  from global zone, show services in all zones\n"
+       "\n\t"
+       "Services can be specified using an FMRI, abbreviation, or fnmatch(5)\n"
+       "\tpattern, as shown in these examples for svc:/network/smtp:sendmail\n"
+       "\n"
+       "\t%1$s [opts] svc:/network/smtp:sendmail\n"
+       "\t%1$s [opts] network/smtp:sendmail\n"
+       "\t%1$s [opts] network/*mail\n"
+       "\t%1$s [opts] network/smtp\n"
+       "\t%1$s [opts] smtp:sendmail\n"
+       "\t%1$s [opts] smtp\n"
+       "\t%1$s [opts] sendmail\n"
+       "\n\t"
+       "Columns for output or sorting can be specified using these names:\n"
+       "\n"
+msgstr
+msgid  "process"
+msgstr
+msgid  "dependency"
+msgstr
+msgid  "name"
+msgstr
+# msgid  "name"
+# msgstr
+msgid  "zone"
+msgstr
+msgid  "%-*s%s (temporary)\n"
+msgstr
+msgid  "enabled"
+msgstr
+msgid  "true"
+msgstr
+msgid  "false"
+msgstr
+# msgid  "enabled"
+# msgstr
+# msgid  "true"
+# msgstr
+# msgid  "false"
+# msgstr
+# msgid  "enabled"
+# msgstr
+# msgid  "true"
+# msgstr
+# msgid  "false"
+# msgstr
+msgid  "state"
+msgstr
+msgid  "next_state"
+msgstr
+msgid  "state_time"
+msgstr
+msgid  "alt_logfile"
+msgstr
+msgid  "logfile"
+msgstr
+msgid  "restarter"
+msgstr
+# msgid  "restarter"
+# msgstr
+msgid  "Unable to get restarter for %s"
+msgstr
+msgid  "Failed object creation: %s\n"
+msgstr
+msgid  "Failed to decode %s: %s\n"
+msgstr
+msgid  "Failed to get snapshot: %s\n"
+msgstr
+msgid  "Failed to get base snaplevel: %s\n"
+msgstr
+msgid  "Failed to get iterator: %s\n"
+msgstr
+msgid  "Failed to get pg name: %s\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Failed to iterate pgs: %s\n"
+msgstr
+msgid  "Failed get_fma_notify_params %s\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Failed _scf_get_svc_notify_params: %s\n"
+msgstr
+msgid  "System wide notification parameters:\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "%k:%M:%S"
+# msgstr
+# msgid  "%b_%d  "
+# msgstr
+# msgid  "%Y    "
+# msgstr
+msgid  "FMRI \"%s\" is invalid.\n"
+msgstr
+msgid  "FMRI \"%s\" does not designate a "
+       "service or instance.\n"
+msgstr
+msgid  "Instance \"%s\" does not exist.\n"
+msgstr
+msgid  "Service \"%s\" does not exist.\n"
+msgstr
+msgid  "Too many sort criteria: out of memory.\n"
+msgstr
+msgid  "Unrecognized sort column \"%s\".\n"
+msgstr
+msgid  "Restarter FMRI \"%s\" is invalid.\n"
+msgstr
+msgid  "Restarter FMRI \"%s\" does not designate an "
+       "instance.\n"
+msgstr
+msgid  "svcs -z may only be used from "
+       "the global zone\n"
+msgstr
+msgid  "svcs -Z may only be used from "
+       "the global zone\n"
+msgstr
+msgid  "-a ignored when used with arguments.\n"
+msgstr
+msgid  "could not get number of zones"
+msgstr
+msgid  "could not allocate array for "
+       "%d zone IDs"
+msgstr
+msgid  "could not get zone list"
+msgstr
+msgid  "could not get name for "
+       "zone %d; ignoring"
+msgstr
+msgid  "invalid zone '%s'\n"
+msgstr
+msgid  "Could not bind to repository "
+       "server for zone %s: %s\n"
+msgstr
+msgid  "Could not bind to repository server: %s.  "
+       "Exiting.\n"
+msgstr
+msgid  "failed to iterate over "
+       "instances: %s\n"
+msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+msgid  "Too many columns.\n"
+msgstr
+msgid  "Unknown column \"%s\".\n"
+msgstr
+msgid  "Unexpected libuutil error: %s\n"
+msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+# msgid  "failed to iterate over "
+#        "instances: %s\n"
+# msgstr
+msgid  "Out of memory.\n"
+msgstr
+msgid  "svc:/%s:%s has invalid dependency \"%s\".\n"
+msgstr
+msgid  "svc:/%s:%s has "
+       "dependency with unknown type \"%s\".\n"
+msgstr
+msgid  "svc:/%s:%s has "
+       "dependency without an entities "
+       "property.\n"
+msgstr
+msgid  "svc:/%s:%s has no "
+       "\"%s\" property group; ignoring.\n"
+msgstr
+msgid  "Dependency cycle detected:\n"
+       "  svc:/%s:%s\n"
+msgstr
+msgid  "svc:/%s:%s has invalid state \"%s\".\n"
+msgstr
+msgid  "svc:/%s:%s has "
+       "dependency group with invalid type \"%s\".\n"
+msgstr
+# msgid  "Dependency cycle detected:\n"
+#        "  svc:/%s:%s\n"
+# msgstr
+msgid  "is running."
+msgstr
+msgid  "is uninitialized."
+msgstr
+msgid  "is disabled."
+msgstr
+msgid  "is temporarily disabled."
+msgstr
+msgid  "has missing dependencies."
+msgstr
+msgid  "is starting."
+msgstr
+msgid  "is offline."
+msgstr
+msgid  "was taken down for maintenace "
+       "by an administrator."
+msgstr
+msgid  "completed a dependency cycle."
+msgstr
+msgid  "is not running because "
+       "a method failed repeatedly."
+msgstr
+msgid  "has an invalid dependency."
+msgstr
+msgid  "has an invalid restarter."
+msgstr
+msgid  "is not running because "
+       "a method failed."
+msgstr
+msgid  "is not running for an unknown reason."
+msgstr
+msgid  "was restarting too quickly."
+msgstr
+msgid  "requires maintenance."
+msgstr
+msgid  "is in an invalid state."
+msgstr
+msgid  "exited with $SMF_EXIT_ERR_CONFIG"
+msgstr
+msgid  "exited with $SMF_EXIT_ERR_FATAL"
+msgstr
+msgid  "exited with status %d"
+msgstr
+msgid  "dumped core on %s (%d)"
+msgstr
+msgid  "dumped core signal %d"
+msgstr
+msgid  "died on %s (%d)"
+msgstr
+msgid  "died on signal %d"
+msgstr
+msgid  "Reason: Start method %s.\n"
+msgstr
+msgid  "Reason: "
+       "Start method failed repeatedly, last %s.\n"
+msgstr
+msgid  "Reason: Method failed repeatedly."
+msgstr
+msgid  "Reason: Method failed."
+msgstr
+msgid  "Reason: Unknown."
+msgstr
+msgid  "Reason: "
+       "Restarter \"%s\" is invalid.\n"
+msgstr
+msgid  "Reason: "
+       "Restarter \"%s\" does not exist.\n"
+msgstr
+msgid  "   See: %s%s\n"
+msgstr
+msgid  "Reason: Dependency %s is absent.\n"
+msgstr
+# msgid  "   See: %s%s\n"
+# msgstr
+msgid  "Reason: "
+       "Service svc:/%s:%s is running.\n"
+msgstr
+msgid  "Reason: Service svc:/%s:%s %s"
+msgstr
+msgid  "Reason: Service svc:/%s:%s %s\n"
+msgstr
+msgid  "Reason: Service svc:/%s:%s\n"
+       "        %s\n"
+msgstr
+# msgid  "   See: %s%s\n"
+# msgstr
+msgid  "  Path: svc:/%s:%s\n"
+msgstr
+msgid  "%6s  %*ssvc:/%s:%s\n"
+msgstr
+msgid  "   See: %s\n"
+msgstr
+# msgid  "   See: %s\n"
+# msgstr
+# msgid  "Reason: "
+#        "Restarter \"%s\" is invalid.\n"
+# msgstr
+# msgid  "Reason: "
+#        "Restarter \"%s\" does not exist.\n"
+# msgstr
+msgid  "Reason: Restarter %s "
+       "has not initialized service state.\n"
+msgstr
+msgid  "Reason: Restarter %s is not running.\n"
+msgstr
+msgid  "Reason: Disabled by an administrator."
+msgstr
+msgid  "Reason: "
+       "Temporarily disabled by an administrator."
+msgstr
+msgid  "Reason: "
+       "Maintenance requested by an administrator."
+msgstr
+msgid  "Reason: Completes a dependency cycle."
+msgstr
+msgid  "Reason: Maintenance "
+       "requested by \"%s\"\n"
+msgstr
+msgid  "Reason: Maintenance "
+       "requested by another service."
+msgstr
+msgid  "Reason: Has invalid dependency."
+msgstr
+# msgid  "Reason: Restarter \"%s\" is "
+#        "invalid.\n"
+# msgstr
+msgid  "Reason: Restarting too quickly."
+msgstr
+msgid  "Reason: Restarter %s gave no explanation.\n"
+msgstr
+# msgid  "Reason: Unknown."
+# msgstr
+msgid  "Reason: Start method is running."
+msgstr
+msgid  "Reason: Transitioning to state %s.\n"
+msgstr
+msgid  "Reason: Degraded by an administrator."
+msgstr
+msgid  "Reason: Not in valid state (%s).\n"
+msgstr
+# msgid  "   See: %s%s\n"
+# msgstr
+msgid  "   See: %s(%s)\n"
+msgstr
+msgid  "   See: man -M %s -s %s %s\n"
+msgstr
+# msgid  "   See: %s\n"
+# msgstr
+msgid  "svc:/%s:%s"
+msgstr
+msgid  " (%s)\n"
+msgstr
+msgid  "  Zone: %s\n"
+msgstr
+msgid  " Alias: %s\n"
+msgstr
+msgid  " State: %s since %s\n"
+msgstr
+msgid  "Impact: None."
+msgstr
+msgid  "Impact: This service is not running."
+msgstr
+msgid  "Impact: 1 dependent service "
+       "is not running.  (Use -v for list.)"
+msgstr
+msgid  "Impact: 1 dependent service is not running:"
+msgstr
+msgid  "Impact: %d dependent services "
+       "are not running.  (Use -v for list.)\n"
+msgstr
+msgid  "Impact: %d dependent services are not running:\n"
+msgstr
+msgid  "        svc:/%s:%s\n"
+msgstr
+msgid  "failed to iterate over instances: %s\n"
+msgstr

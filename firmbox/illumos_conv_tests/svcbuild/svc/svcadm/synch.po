@@ -1,0 +1,2 @@
+msgid  "Unable to access \"%s\".\n"
+msgstr

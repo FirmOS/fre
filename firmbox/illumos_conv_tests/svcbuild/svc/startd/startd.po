@@ -1,0 +1,4 @@
+msgid  "usage: %s [-n]\n"
+msgstr
+msgid  "can't connect stdin to /dev/null"
+msgstr

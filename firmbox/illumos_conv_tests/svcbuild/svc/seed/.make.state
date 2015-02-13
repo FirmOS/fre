@@ -1,0 +1,75 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../configd/svc.configd-native:
+	cd ../configd; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek native
+../milestone/console-login.xml:
+	cd ../milestone; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek console-login.xml
+.BUILT_LAST_MAKE_RUN:
+../svccfg/svccfg-native:
+	cd ../svccfg; pwd; /root/smartos-live/proto.strap/usr/bin/dmake -ek native
+/root/smartos-live/proto/usr/sadm/install:
+	install -s -d -m 755 /root/smartos-live/proto/usr/sadm/install
+common.db:
+	/usr/bin/rm -f -f common.db common.db-journal
+	for m in ../milestone/boot-archive.xml  ../milestone/devices-local.xml  ../milestone/global.xml  ../milestone/identity.xml  ../milestone/local-fs.xml  ../milestone/manifest-import.xml  ../milestone/minimal-fs.xml  ../milestone/multi-user.xml  ../milestone/name-services.xml  ../milestone/network-initial.xml  ../milestone/network-loopback.xml  ../milestone/network-netcfg.xml  ../milestone/network-physical.xml  ../milestone/restarter.xml  ../milestone/root-fs.xml  ../milestone/single-user.xml  ../milestone/usr-fs.xml  ../../dlmgmtd/dlmgmt.xml  ../../cmd-inet/lib/ipmgmtd/network-ipmgmt.xml  ../../rpcbind/bind.xml; do \
+		echo $m; \
+		SVCCFG_DTD=../dtd/service_bundle.dtd.1 \
+		SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/common.db \
+		SVCCFG_CONFIGD_PATH=../configd/svc.configd-native \
+		../svccfg/svccfg-native import $m; \
+	done
+global.db:
+	/usr/bin/rm -f -f global.db global.db-journal
+	/usr/bin/cp -f common.db global.db
+	for m in ../milestone/console-login.xml  ../milestone/multi-user-server.xml  ../../cmd-inet/usr.lib/inetd/inetd-upgrade.xml  ../../utmpd/utmp.xml  ../../lvm/util/metainit.xml; do \
+		echo $m; \
+		SVCCFG_DTD=../dtd/service_bundle.dtd.1 \
+		SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db \
+		SVCCFG_CONFIGD_PATH=../configd/svc.configd-native \
+		../svccfg/svccfg-native import $m; \
+	done
+install_global:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/seed/global.db
+	install -f /root/smartos-live/proto/lib/svc/seed -m 0444 -s global.db
+install_miniroot:
+	/usr/bin/rm -f /root/smartos-live/proto/usr/sadm/install/miniroot.db
+	install -f /root/smartos-live/proto/usr/sadm/install -m 0444 -s miniroot.db
+install_nonglobal:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/seed/nonglobal.db
+	install -f /root/smartos-live/proto/lib/svc/seed -m 0444 -s nonglobal.db
+miniroot.db:
+	/usr/bin/rm -f -f miniroot.db miniroot.db-journal
+	/usr/bin/cp -f common.db miniroot.db
+	for m in ../milestone/sysconfig.xml  ../../cmd-inet/usr.lib/inetd/inetd.xml  ../../cmd-inet/usr.sbin/login.xml  ../milestone/network-service.xml  ../../cmd-inet/usr.sbin/telnet.xml  ../../../lib/libresolv2/client.xml  ../../ldapcachemgr/client.xml  ../../ypcmd/client.xml  ../../ypcmd/server.xml  ../../keyserv/keyserv.xml  ../../cmd-crypto/scripts/cryptosvc.xml  ../../nscd/name-service-cache.xml  ../../syslogd/system-log.xml; do \
+		echo $m; \
+		SVCCFG_DTD=../dtd/service_bundle.dtd.1 \
+		SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/miniroot.db \
+		SVCCFG_CONFIGD_PATH=../configd/svc.configd-native \
+		../svccfg/svccfg-native import $m; \
+	done
+	#
+	# Make sure the miniroot's syslogd and rpcbind do not respond
+	# to packets from outside the machine. Since we cannot set property
+	# values by applying a profile yet, we need to set them explicitly
+	# with svccfg commands.
+	#
+	SVCCFG_DTD=../dtd/service_bundle.dtd.1 \
+	SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/miniroot.db \
+	SVCCFG_CONFIGD_PATH=../configd/svc.configd-native \
+	../svccfg/svccfg-native -s svc:/system/system-log \
+	    setprop config/log_from_remote = false
+	#
+	SVCCFG_DTD=../dtd/service_bundle.dtd.1 \
+	SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/miniroot.db \
+	SVCCFG_CONFIGD_PATH=../configd/svc.configd-native \
+	../svccfg/svccfg-native -s svc:/network/rpc/bind setprop config/local_only = true
+nonglobal.db:
+	/usr/bin/rm -f -f nonglobal.db nonglobal.db-journal
+	/usr/bin/cp -f common.db nonglobal.db
+	for m in ../milestone/console-login.xml  ../milestone/multi-user-server.xml  ../../utmpd/utmp.xml; do \
+		echo $m; \
+		SVCCFG_DTD=../dtd/service_bundle.dtd.1 \
+		SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/nonglobal.db \
+		SVCCFG_CONFIGD_PATH=../configd/svc.configd-native \
+		../svccfg/svccfg-native import $m; \
+	done

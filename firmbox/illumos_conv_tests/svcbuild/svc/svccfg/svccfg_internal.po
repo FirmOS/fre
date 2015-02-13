@@ -1,0 +1,104 @@
+msgid  "entity list pool creation failed: %s\n"
+msgstr
+msgid  "property group list pool creation failed: %s\n"
+msgstr
+msgid  "property list pool creation failed: %s\n"
+msgstr
+msgid  "property value list pool creation failed: %s\n"
+msgstr
+msgid  "unknown value type (%d)\n"
+msgstr
+msgid  "couldn't allocate memory"
+msgstr
+msgid  "Unable to create list for bundle services.  "
+       "%s\n"
+msgstr
+# msgid  "couldn't allocate memory"
+# msgstr
+msgid  "Unable to create list for entity property "
+       "groups.  %s\n"
+msgstr
+# msgid  "couldn't allocate memory"
+# msgstr
+msgid  "Unable to create list for service dependents.  "
+       "%s\n"
+msgstr
+msgid  "Unable to create list for service instances.  "
+       "%s\n"
+msgstr
+msgid  "Unable to create list for instance "
+       "dependents.  %s\n"
+msgstr
+# msgid  "couldn't allocate memory"
+# msgstr
+msgid  "Unable to create list for properties.  %s\n"
+msgstr
+msgid  "Could not duplicate string"
+msgstr
+# msgid  "couldn't allocate memory"
+# msgstr
+msgid  "Unable to create list for property values.  "
+       "%s\n"
+msgstr
+# msgid  "couldn't allocate memory"
+# msgstr
+msgid  "unknown property type (%d)\n"
+msgstr
+msgid  "Multiple definitions for service %s in "
+       "bundle %s.\n"
+msgstr
+msgid  "bad entity attach: %s is not a service\n"
+msgstr
+msgid  "Multiple definitions of entity %s in service "
+       "%s.\n"
+msgstr
+# msgid  "couldn't allocate memory"
+# msgstr
+msgid  "Multiple definitions of property group %s in "
+       "entity %s.\n"
+msgstr
+msgid  "Multiple definitions of dependent %s in "
+       "entity %s.\n"
+msgstr
+msgid  "Multiple definitions for property %s in "
+       "property group %s.\n"
+msgstr
+msgid  "Property group \"%s\" of "
+       "%s has multiple definitions of "
+       "property \"%s\".\n"
+msgstr
+msgid  "Property group \"%s\" of "
+       "the \"%s\" snapshot of %s has "
+       "multiple definitions of property "
+       "\"%s\".\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(property \"%s/%s\" has different values).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(new property \"%s/%s\" has different values).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(new property \"%s/%s\" has different "
+       "type).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(property \"%s/%s\" has different "
+       "type).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(new property group \"%s\" has different "
+       "flags).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(property group \"%s\" has different "
+       "flags).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(new property group \"%s\" has different "
+       "type).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(property group \"%s\" has different "
+       "type).\n"
+msgstr

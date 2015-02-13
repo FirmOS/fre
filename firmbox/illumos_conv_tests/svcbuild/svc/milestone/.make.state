@@ -1,0 +1,213 @@
+.MAKE_VERSION:	VERSION-1.0
+/root/smartos-live/proto/lib/svc/manifest/milestone/multi-user-server.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/milestone/multi-user-server.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/milestone multi-user-server.xml
+/root/smartos-live/proto/lib/svc/manifest/milestone/multi-user.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/milestone/multi-user.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/milestone multi-user.xml
+/root/smartos-live/proto/lib/svc/manifest/milestone/name-services.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/milestone/name-services.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/milestone name-services.xml
+/root/smartos-live/proto/lib/svc/manifest/milestone/network.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/milestone/network.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/milestone network.xml
+/root/smartos-live/proto/lib/svc/manifest/milestone/single-user.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/milestone/single-user.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/milestone single-user.xml
+/root/smartos-live/proto/lib/svc/manifest/milestone/sysconfig.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/milestone/sysconfig.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/milestone sysconfig.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-initial.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-initial.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-initial.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-install.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-install.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-install.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-ipqos.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-ipqos.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-ipqos.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-iptun.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-iptun.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-iptun.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-location.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-location.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-location.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-loopback.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-loopback.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-loopback.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-netcfg.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-netcfg.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-netcfg.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-netmask.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-netmask.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-netmask.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-physical.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-physical.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-physical.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-routing-setup.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-routing-setup.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-routing-setup.xml
+/root/smartos-live/proto/lib/svc/manifest/network/network-service.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/network/network-service.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/network network-service.xml
+/root/smartos-live/proto/lib/svc/manifest/system/boot-archive.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/boot-archive.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system boot-archive.xml
+/root/smartos-live/proto/lib/svc/manifest/system/console-login.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/console-login.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system console-login.xml
+/root/smartos-live/proto/lib/svc/manifest/system/device/devices-audio.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/device/devices-audio.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system/device devices-audio.xml
+/root/smartos-live/proto/lib/svc/manifest/system/device/devices-local.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/device/devices-local.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system/device devices-local.xml
+/root/smartos-live/proto/lib/svc/manifest/system/early-manifest-import.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/early-manifest-import.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system early-manifest-import.xml
+/root/smartos-live/proto/lib/svc/manifest/system/filesystem/local-fs.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/filesystem/local-fs.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system/filesystem local-fs.xml
+/root/smartos-live/proto/lib/svc/manifest/system/filesystem/minimal-fs.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/filesystem/minimal-fs.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system/filesystem minimal-fs.xml
+/root/smartos-live/proto/lib/svc/manifest/system/filesystem/root-fs.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/filesystem/root-fs.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system/filesystem root-fs.xml
+/root/smartos-live/proto/lib/svc/manifest/system/filesystem/usr-fs.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/filesystem/usr-fs.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system/filesystem usr-fs.xml
+/root/smartos-live/proto/lib/svc/manifest/system/identity.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/identity.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system identity.xml
+/root/smartos-live/proto/lib/svc/manifest/system/manifest-import.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/manifest-import.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system manifest-import.xml
+/root/smartos-live/proto/lib/svc/manifest/system/rmtmpfiles.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/rmtmpfiles.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system rmtmpfiles.xml
+/root/smartos-live/proto/lib/svc/manifest/system/svc/global.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/svc/global.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system/svc global.xml
+/root/smartos-live/proto/lib/svc/manifest/system/svc/restarter.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/svc/restarter.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system/svc restarter.xml
+/root/smartos-live/proto/lib/svc/manifest/system/vtdaemon.xml:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/manifest/system/vtdaemon.xml; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/manifest/system vtdaemon.xml
+/root/smartos-live/proto/lib/svc/method/boot-archive:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/boot-archive; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method boot-archive
+/root/smartos-live/proto/lib/svc/method/console-login:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/console-login; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method console-login
+/root/smartos-live/proto/lib/svc/method/devices-audio:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/devices-audio; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method devices-audio
+/root/smartos-live/proto/lib/svc/method/devices-local:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/devices-local; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method devices-local
+/root/smartos-live/proto/lib/svc/method/fs-local:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/fs-local; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method fs-local
+/root/smartos-live/proto/lib/svc/method/fs-minimal:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/fs-minimal; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method fs-minimal
+/root/smartos-live/proto/lib/svc/method/fs-root:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/fs-root; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method fs-root
+/root/smartos-live/proto/lib/svc/method/fs-usr:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/fs-usr; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method fs-usr
+/root/smartos-live/proto/lib/svc/method/identity-domain:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/identity-domain; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method identity-domain
+/root/smartos-live/proto/lib/svc/method/identity-node:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/identity-node; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method identity-node
+/root/smartos-live/proto/lib/svc/method/manifest-import:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/manifest-import; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method manifest-import
+/root/smartos-live/proto/lib/svc/method/net-init:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-init; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-init
+/root/smartos-live/proto/lib/svc/method/net-install:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-install; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-install
+/root/smartos-live/proto/lib/svc/method/net-ipqos:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-ipqos; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-ipqos
+/root/smartos-live/proto/lib/svc/method/net-iptun:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-iptun; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-iptun
+/root/smartos-live/proto/lib/svc/method/net-loc:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-loc; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-loc
+/root/smartos-live/proto/lib/svc/method/net-loopback:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-loopback; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-loopback
+/root/smartos-live/proto/lib/svc/method/net-netmask:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-netmask; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-netmask
+/root/smartos-live/proto/lib/svc/method/net-nwam:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-nwam; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-nwam
+/root/smartos-live/proto/lib/svc/method/net-physical:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-physical; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-physical
+/root/smartos-live/proto/lib/svc/method/net-routing-setup:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-routing-setup; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-routing-setup
+/root/smartos-live/proto/lib/svc/method/net-svc:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/net-svc; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method net-svc
+/root/smartos-live/proto/lib/svc/method/rmtmpfiles:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/rmtmpfiles; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method rmtmpfiles
+/root/smartos-live/proto/lib/svc/method/vtdaemon:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/method/vtdaemon; install -s -m 0555 -f /root/smartos-live/proto/lib/svc/method vtdaemon
+/root/smartos-live/proto/lib/svc/share/README:
+	/usr/bin/rm -f /root/smartos-live/proto/lib/svc/share/README; install -s -m 0444 -f /root/smartos-live/proto/lib/svc/share README.share; /usr/bin/mv -f /root/smartos-live/proto/lib/svc/share/README.share /root/smartos-live/proto/lib/svc/share/README
+.BUILT_LAST_MAKE_RUN:
+boot-archive.xmlchk:
+	echo "checking boot-archive.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate boot-archive.xml
+console-login.xml:
+	sh ./make-console-login-xml
+.BUILT_LAST_MAKE_RUN:
+console-login.xmlchk:
+	echo "checking console-login.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate console-login.xml
+.BUILT_LAST_MAKE_RUN:
+devices-audio.xmlchk:
+	echo "checking devices-audio.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate devices-audio.xml
+.BUILT_LAST_MAKE_RUN:
+devices-local.xmlchk:
+	echo "checking devices-local.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate devices-local.xml
+.BUILT_LAST_MAKE_RUN:
+early-manifest-import.xmlchk:
+	echo "checking early-manifest-import.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate early-manifest-import.xml
+.BUILT_LAST_MAKE_RUN:
+global.xmlchk:
+	echo "checking global.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate global.xml
+.BUILT_LAST_MAKE_RUN:
+identity.xmlchk:
+	echo "checking identity.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate identity.xml
+.BUILT_LAST_MAKE_RUN:
+local-fs.xmlchk:
+	echo "checking local-fs.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate local-fs.xml
+.BUILT_LAST_MAKE_RUN:
+manifest-import.xmlchk:
+	echo "checking manifest-import.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate manifest-import.xml
+.BUILT_LAST_MAKE_RUN:
+minimal-fs.xmlchk:
+	echo "checking minimal-fs.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate minimal-fs.xml
+.BUILT_LAST_MAKE_RUN:
+multi-user-server.xmlchk:
+	echo "checking multi-user-server.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate multi-user-server.xml
+.BUILT_LAST_MAKE_RUN:
+multi-user.xmlchk:
+	echo "checking multi-user.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate multi-user.xml
+.BUILT_LAST_MAKE_RUN:
+name-services.xmlchk:
+	echo "checking name-services.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate name-services.xml
+.BUILT_LAST_MAKE_RUN:
+network-initial.xmlchk:
+	echo "checking network-initial.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-initial.xml
+.BUILT_LAST_MAKE_RUN:
+network-install.xmlchk:
+	echo "checking network-install.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-install.xml
+.BUILT_LAST_MAKE_RUN:
+network-ipqos.xmlchk:
+	echo "checking network-ipqos.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-ipqos.xml
+.BUILT_LAST_MAKE_RUN:
+network-iptun.xmlchk:
+	echo "checking network-iptun.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-iptun.xml
+.BUILT_LAST_MAKE_RUN:
+network-location.xmlchk:
+	echo "checking network-location.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-location.xml
+.BUILT_LAST_MAKE_RUN:
+network-loopback.xmlchk:
+	echo "checking network-loopback.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-loopback.xml
+.BUILT_LAST_MAKE_RUN:
+network-netcfg.xmlchk:
+	echo "checking network-netcfg.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-netcfg.xml
+.BUILT_LAST_MAKE_RUN:
+network-netmask.xmlchk:
+	echo "checking network-netmask.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-netmask.xml
+.BUILT_LAST_MAKE_RUN:
+network-physical.xmlchk:
+	echo "checking network-physical.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-physical.xml
+.BUILT_LAST_MAKE_RUN:
+network-routing-setup.xmlchk:
+	echo "checking network-routing-setup.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-routing-setup.xml
+.BUILT_LAST_MAKE_RUN:
+network-service.xmlchk:
+	echo "checking network-service.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network-service.xml
+.BUILT_LAST_MAKE_RUN:
+network.xmlchk:
+	echo "checking network.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate network.xml
+.BUILT_LAST_MAKE_RUN:
+restarter.xmlchk:
+	echo "checking restarter.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate restarter.xml
+.BUILT_LAST_MAKE_RUN:
+rmtmpfiles.xmlchk:
+	echo "checking rmtmpfiles.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate rmtmpfiles.xml
+.BUILT_LAST_MAKE_RUN:
+root-fs.xmlchk:
+	echo "checking root-fs.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate root-fs.xml
+.BUILT_LAST_MAKE_RUN:
+single-user.xmlchk:
+	echo "checking single-user.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate single-user.xml
+.BUILT_LAST_MAKE_RUN:
+sysconfig.xmlchk:
+	echo "checking sysconfig.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate sysconfig.xml
+.BUILT_LAST_MAKE_RUN:
+usr-fs.xmlchk:
+	echo "checking usr-fs.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate usr-fs.xml
+.BUILT_LAST_MAKE_RUN:
+vtdaemon.xmlchk:
+	echo "checking vtdaemon.xml";  SVCCFG_DTD=/root/smartos-live/projects/illumos/usr/src/cmd/svc/dtd/service_bundle.dtd.1  SVCCFG_REPOSITORY=/root/smartos-live/projects/illumos/usr/src/cmd/svc/seed/global.db  SVCCFG_CONFIGD_PATH=/root/smartos-live/projects/illumos/usr/src/cmd/svc/configd/svc.configd-native  /root/smartos-live/projects/illumos/usr/src/cmd/svc/svccfg/svccfg-native validate vtdaemon.xml

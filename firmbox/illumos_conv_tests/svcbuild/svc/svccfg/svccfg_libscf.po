@@ -1,0 +1,1015 @@
+msgid  "Repository connection broken.  Exiting.\n"
+msgstr
+msgid  "Unexpected libscf error on line %d of "
+       "svccfg_libscf.c"
+       ": %s.\n"
+msgstr
+msgid  "Unexpected libscf error: %s.\n"
+msgstr
+msgid  "Could not close temporary file"
+msgstr
+msgid  "Could not remove temporary file"
+msgstr
+msgid  "Could not acquire temporary filename"
+msgstr
+msgid  "Could not create temporary file for "
+       "repository server"
+msgstr
+msgid  "Could not execute %s"
+msgstr
+msgid  "Attempt to fork failed"
+msgstr
+msgid  "Could not waitpid() for repository server"
+msgstr
+msgid  "Repository server failed (status %d).\n"
+msgstr
+msgid  "Repository server failed (exit %d).\n"
+msgstr
+msgid  "Could not open door \"%s\""
+msgstr
+msgid  "Unexpected door_info() error"
+msgstr
+msgid  "Could not close repository door"
+msgstr
+msgid  "Could not connect to repository server: %s.\n"
+msgstr
+msgid  "Cannot access \"%s\": %s\n"
+msgstr
+msgid  "Could not register atexit() function"
+msgstr
+msgid  "An entity is not selected.\n"
+msgstr
+msgid  "Permission denied.\n"
+msgstr
+msgid  "Could not create XML node.\n"
+msgstr
+msgid  "Cannot modify snapshots.\n"
+msgstr
+msgid  "Invalid operation on a snapshot.\n"
+msgstr
+msgid  "Backend read-only.\n"
+msgstr
+msgid  "Current selection has been deleted.\n"
+msgstr
+msgid  "Invalid property group name \"%s\".\n"
+msgstr
+msgid  "Invalid property name \"%s\".\n"
+msgstr
+msgid  "No such property group \"%s\".\n"
+msgstr
+msgid  "Service %s has property group "
+       "with invalid name \"%s\".\n"
+msgstr
+msgid  "Service %s has property "
+       "group with invalid name \"%s\" or type \"%s\".\n"
+msgstr
+msgid  "%s changed unexpectedly "
+       "(property group \"%s\" added).\n"
+msgstr
+msgid  "%s changed unexpectedly "
+       "(property group \"%s\" changed).\n"
+msgstr
+msgid  "%s changed unexpectedly "
+       "(property group \"%s\" or an ancestor was deleted).\n"
+msgstr
+msgid  "Could not modify property group \"%s\" "
+       "in %s (permission denied).\n"
+msgstr
+msgid  "Could not create property group \"%s\" "
+       "in %s (permission denied).\n"
+msgstr
+msgid  "Could not delete property group \"%s\" "
+       "in %s (permission denied).\n"
+msgstr
+msgid  "Could not take \"%s\" snapshot of %s "
+       "(permission denied).\n"
+msgstr
+msgid  "Conflict upgrading %s (not importing "
+       "new dependent \"%s\" because it already exists).  Warning: The "
+       "current dependent's target (%s) does not exist.\n"
+msgstr
+msgid  "Conflict upgrading %s (not importing new "
+       "dependent \"%s\" because it already exists).  Warning: The "
+       "current dependent's target (%s) does not have a dependency named "
+       "\"%s\" as expected.\n"
+msgstr
+msgid  "Multiple string values or string values "
+       "with spaces must be quoted with '\"'.\n"
+msgstr
+msgid  "Invalid \"%s\" value \"%s\".\n"
+msgstr
+msgid  "Expected property %s of property group %s is "
+       "missing.\n"
+msgstr
+msgid  "Property %s is not of expected type %s.\n"
+msgstr
+msgid  "Property %s has no values; expected "
+       "one.\n"
+msgstr
+msgid  "Property %s has multiple values; "
+       "expected one.\n"
+msgstr
+msgid  "No permission to read property %s.\n"
+msgstr
+msgid  "Refreshed %s.\n"
+msgstr
+msgid  "Refreshed %s:%s.\n"
+msgstr
+msgid  "Refresh of %s:%s failed: %s.\n"
+msgstr
+msgid  "Could not refresh %s "
+       "(repository connection broken).\n"
+msgstr
+msgid  "Could not refresh %s "
+       "(permission denied).\n"
+msgstr
+msgid  "Could not refresh %s "
+       "(repository server out of resources).\n"
+msgstr
+msgid  "Unable to create the property to attempt and "
+       "find a missing type.\n"
+msgstr
+msgid  "Unable to create property group to "
+       "find a missing property type.\n"
+msgstr
+msgid  "Unable to create template "
+       "property group to find a property "
+       "type.\n"
+msgstr
+# msgid  "Unable to create template "
+#        "property group to find a property "
+#        "type.\n"
+# msgstr
+msgid  "Could not create internal property group "
+       "to find a missing type."
+msgstr
+msgid  "Could not get a service for the instance "
+       "to find a missing type."
+msgstr
+msgid  "Could not find property type for \"%s\" "
+       "from \"%s\"\n"
+msgstr
+msgid  "Unable to create property group to attempt "
+       "and find a missing type.\n"
+msgstr
+msgid  "Could not find property group type for "
+       "\"%s\" from \"%s\"\n"
+msgstr
+msgid  "Value \"%s\" is not a valid "
+       "%s.\n"
+msgstr
+msgid  "%s changed unexpectedly "
+       "(new property group \"%s\" changed).\n"
+msgstr
+msgid  "Could not take %s snapshot on import "
+       "(repository connection broken).\n"
+msgstr
+msgid  "Could not take %s snapshot "
+       "(permission denied).\n"
+msgstr
+msgid  "Could not take %s snapshot"
+       "(repository server out of resources).\n"
+msgstr
+msgid  "lscf_import_service_pgs : "
+       "Unknown op stored in the service entity\n"
+msgstr
+msgid  "lscf_import_instance_pgs : "
+       "Unknown op stored in the instance entity\n"
+msgstr
+msgid  "Conflict upgrading %s (new property "
+       "group \"%s\" is missing property \"%s\").\n"
+msgstr
+msgid  "Conflict upgrading %s (property "
+       "\"%s/%s\" is missing).\n"
+msgstr
+# msgid  "Conflict upgrading %s "
+#        "(property \"%s/%s\" is missing).\n"
+# msgstr
+msgid  "%s: Refusing to upgrade "
+       "\"%s/%s\" (live property).\n"
+msgstr
+msgid  "%s: Deleting property \"%s/%s\".\n"
+msgstr
+msgid  "%s: Upgrading property \"%s/%s\".\n"
+msgstr
+msgid  "The FMRI for the \"%s\" dependent is "
+       "invalid.\n"
+msgstr
+msgid  "The FMRI \"%s\" for the \"%s\" dependent "
+       "specifies neither a service nor an instance.\n"
+msgstr
+msgid  "The scope in FMRI \"%s\" for the "
+       "\"%s\" dependent does not exist.\n"
+msgstr
+msgid  "Could not create %s (permission denied).\n"
+msgstr
+msgid  "Dependent of %s has invalid name "
+       "\"%s\".\n"
+msgstr
+msgid  "%s deleted unexpectedly.\n"
+msgstr
+msgid  "Could not create \"%s\" dependency in %s "
+       "(already exists).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(dependent \"%s\" has invalid dependents property).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(dependent \"%s\" is missing).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(dependent \"%s\" has new dependency property group).\n"
+msgstr
+msgid  "Conflict upgrading %s "
+       "(dependent \"%s\" has new target).\n"
+msgstr
+msgid  "%s: \"last-import\" snapshot is corrupt.\n"
+msgstr
+msgid  "%s: Upgrading dependent \"%s\".\n"
+msgstr
+msgid  "%s: \"running\" snapshot is "
+       "corrupt (missing snaplevel).\n"
+msgstr
+msgid  "%s: Deleting dependent \"%s\".\n"
+msgstr
+msgid  "libuutil error: %s\n"
+msgstr
+# msgid  "libuutil error: %s\n"
+# msgstr
+msgid  "Dependent \"%s\" has invalid target \"%s\".\n"
+msgstr
+msgid  "Conflict upgrading %s (not importing "
+       "dependent \"%s\" because it already exists.)  "
+       "Warning: The \"%s/%2$s\" property has more or "
+       "fewer than one value)).\n"
+msgstr
+msgid  "Conflict upgrading %s (not importing dependent "
+       "\"%s\" because it already exists).  Warning: The "
+       "\"%s/%s\" property has unexpected type \"%s\")).\n"
+msgstr
+msgid  "Conflict upgrading %s (not importing dependent "
+       "\"%s\" (target \"%s\") because it already exists with "
+       "target \"%s\").\n"
+msgstr
+msgid  "Conflict upgrading %s (not importing dependent "
+       "\"%s\" because it already exists).  Warning: The current "
+       "dependent's target (%s) is invalid.\n"
+msgstr
+msgid  "Dependent \"%s\" of %s has invalid target "
+       "\"%s\".\n"
+msgstr
+msgid  "%s has an instance with a \"%s\" "
+       "snapshot which is missing a snaplevel.\n"
+msgstr
+msgid  "%s has a \"%s\" snapshot which is "
+       "missing a snaplevel.\n"
+msgstr
+msgid  "Conflict upgrading %s (property group %s is missing)\n"
+msgstr
+msgid  "%s: Deleting property group \"%s\".\n"
+msgstr
+msgid  "%s: Upgrading property group \"%s\".\n"
+msgstr
+msgid  "Temporary instance svc:/%s:%s was deleted.\n"
+msgstr
+msgid  "Temporary instance svc:/%s:%s "
+       "changed unexpectedly.\n"
+msgstr
+msgid  "%s changed unexpectedly "
+       "(instance \"%s\" was deleted.)\n"
+msgstr
+msgid  "\"%s\" snapshot of %s is corrupt (missing a snaplevel).\n"
+msgstr
+msgid  "Temporary service svc:/%s "
+       "changed unexpectedly (instance \"%s\" added).\n"
+msgstr
+msgid  "Temporary service svc:/%s "
+       "was deleted unexpectedly.\n"
+msgstr
+msgid  "Invalid instance name \"%s\".\n"
+msgstr
+msgid  "Could not create temporary instance "
+       "\"%s\" in svc:/%s (permission denied).\n"
+msgstr
+# msgid  "Could not take \"%s\" snapshot of %s "
+#        "(permission denied).\n"
+# msgstr
+msgid  "%s changed unexpectedly "
+       "(instance \"%s\" added).\n"
+msgstr
+msgid  "Could not create \"%s\" instance "
+       "in %s (permission denied).\n"
+msgstr
+msgid  "%s changed unexpectedly "
+       "(snapshot \"%s\" added).\n"
+msgstr
+# msgid  "Could not take \"%s\" snapshot "
+#        "of %s (permission denied).\n"
+# msgstr
+msgid  "%s changed unexpectedly "
+       "(instance \"%s\" deleted).\n"
+msgstr
+msgid  "%s changed unexpectedly "
+       "(property group added).\n"
+msgstr
+msgid  "Taking \"%s\" snapshot for %s.\n"
+msgstr
+msgid  "%s changed unexpectedly "
+       "(instance %s deleted).\n"
+msgstr
+# msgid  "Taking \"%s\" snapshot for %s.\n"
+# msgstr
+msgid  "Could not take \"%s\" snapshot for %s "
+       "(permission denied).\n"
+msgstr
+msgid  "Could not delete svc:/%s:%s "
+       "(repository connection broken).\n"
+msgstr
+msgid  "Not validating instance %s:%s because EMI's "
+       "state is %s\n"
+msgstr
+msgid  "Failed to look up service: %s\n"
+msgstr
+msgid  "Failed to verify instance: %s\n"
+msgstr
+msgid  "Lost repository connection\n"
+msgstr
+msgid  "Instance \"%s\" disappeared out from "
+       "under us.\n"
+msgstr
+msgid  "Failed to get restarter property "
+       "group for instance: %s\n"
+msgstr
+# msgid  "Lost repository connection\n"
+# msgstr
+msgid  "Failed to get property %s from the "
+       "restarter property group of instance %s\n"
+msgstr
+# msgid  "Lost repository connection\n"
+# msgstr
+# msgid  "Failed to get restarter property "
+#        "group for instance: %s\n"
+# msgstr
+# msgid  "Lost repository connection\n"
+# msgstr
+# msgid  "Temporary service svc:/%s "
+#        "was deleted unexpectedly.\n"
+# msgstr
+msgid  "Temporary service svc:/%s "
+       "changed unexpectedly (property group added).\n"
+msgstr
+msgid  "%s was deleted unexpectedly.\n"
+msgstr
+# msgid  "%s changed unexpectedly (instance \"%s\" deleted).\n"
+# msgstr
+msgid  "\"%s\" snapshot of svc:/%s:%s "
+       "is corrupt (missing service snaplevel).\n"
+msgstr
+msgid  "Unable to update the manifest file connection "
+       "for %s\n"
+msgstr
+msgid  "\"%s\" is an invalid service name.  "
+       "Cannot import.\n"
+msgstr
+msgid  "Service name \"%s\" is too long.  Cannot import.\n"
+msgstr
+msgid  "Temporary service \"%s\" must be deleted before "
+       "this manifest can be imported.\n"
+msgstr
+msgid  "Could not create temporary service "
+       "\"%s\" (permission denied).\n"
+msgstr
+msgid  "Scope \"%s\" changed unexpectedly"
+       " (service \"%s\" added).\n"
+msgstr
+msgid  "Could not create service \"%s\" "
+       "(permission denied).\n"
+msgstr
+# msgid  "%s changed unexpectedly "
+#        "(property group added).\n"
+# msgstr
+msgid  "Taking \"%s\" snapshot for svc:/%s:%s.\n"
+msgstr
+msgid  "Could not take \"%s\" snapshot of "
+       "svc:/%s:%s (permission denied).\n"
+msgstr
+# msgid  "%s changed unexpectedly "
+#        "(instance \"%s\" added).\n"
+# msgstr
+msgid  "Service \"%s\" has instance with "
+       "invalid name \"%s\".\n"
+msgstr
+msgid  "Could not create instance \"%s\" "
+       "in %s (permission denied).\n"
+msgstr
+msgid  "Taking \"%s\" snapshot for "
+       "new service %s.\n"
+msgstr
+msgid  "Upgrading properties of %s according to "
+       "instance \"%s\".\n"
+msgstr
+msgid  "Could not delete svc:/%s (instances exist).\n"
+msgstr
+msgid  "Could not delete svc:/%s "
+       "(repository connection broken).\n"
+msgstr
+msgid  "not reached."
+msgstr
+msgid  "previous snapshot taken."
+msgstr
+msgid  "some properties imported."
+msgstr
+msgid  "properties imported."
+msgstr
+msgid  "imported."
+msgstr
+msgid  "refresh requested."
+msgstr
+msgid  "Could not refresh %s (deleted).\n"
+msgstr
+msgid  "Could not refresh %s "
+       "(dependent \"%s\" of %s) (deleted).\n"
+msgstr
+msgid  "Could not refresh %s (out of memory).\n"
+msgstr
+msgid  "Could not refresh %s "
+       "(dependent \"%s\" of %s) (out of memory).\n"
+msgstr
+msgid  "Could not refresh %s "
+       "(dependent \"%s\" of %s) "
+       "(repository connection broken).\n"
+msgstr
+msgid  "Could not refresh %s "
+       "(backend access denied).\n"
+msgstr
+msgid  "Could not refresh %s "
+       "(dependent \"%s\" of %s) "
+       "(backend access denied).\n"
+msgstr
+# msgid  "Could not refresh %s "
+#        "(permission denied).\n"
+# msgstr
+msgid  "Could not refresh %s "
+       "(dependent \"%s\" of %s) "
+       "(permission denied).\n"
+msgstr
+# msgid  "Could not refresh %s "
+#        "(repository server out of resources).\n"
+# msgstr
+msgid  "Could not refresh %s "
+       "(dependent \"%s\" of %s) "
+       "(repository server out of resources).\n"
+msgstr
+msgid  "Out of memory.\n"
+msgstr
+msgid  "svc.configd is out of resources.\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "svc.configd is out of resources.\n"
+# msgstr
+msgid  "Repository connection broken.\n"
+msgstr
+# msgid  "Repository connection broken.\n"
+# msgstr
+msgid  "_scf_set_annotation() unexpectedly "
+       "failed with return code of %d\n"
+msgstr
+# msgid  "Repository connection broken.\n"
+# msgstr
+msgid  "Repository is read-only.\n"
+msgstr
+msgid  "Repository backend denied access.\n"
+msgstr
+msgid  "Import of %s failed.  Progress:\n"
+msgstr
+msgid  "  Service \"%s\": %s\n"
+msgstr
+msgid  "    Instance \"%s\": %s\n"
+msgstr
+msgid  "%s updated.\n"
+msgstr
+msgid  "Could not update %s "
+       "(repository connection broken).\n"
+msgstr
+msgid  "Could not update %s (out of memory).\n"
+msgstr
+msgid  "Could not update %s "
+       "(repository server out of resources).\n"
+msgstr
+msgid  "Could not update %s (deleted).\n"
+msgstr
+msgid  "Could not update %s (repository read-only).\n"
+msgstr
+msgid  "Could not update %s "
+       "(backend access denied).\n"
+msgstr
+# msgid  "libuutil error: %s\n"
+# msgstr
+msgid  "Unable to refresh \"%s\"\n"
+msgstr
+# msgid  "Repository connection broken.\n"
+# msgstr
+# msgid  "_scf_set_annotation() unexpectedly "
+#        "failed with return code of %d\n"
+# msgstr
+msgid  "Ignoring nonexistent "
+       "service %s.\n"
+msgstr
+msgid  "Ignoring instance "
+       "%s:%s with missing types\n"
+msgstr
+msgid  "Ignoring "
+       "nonexistant instance "
+       "%s:%s.\n"
+msgstr
+msgid  "Ignoreing "
+       "partial instance "
+       "%s:%s.\n"
+msgstr
+# msgid  "Unable to refresh \"%s\"\n"
+# msgstr
+msgid  "Could not set XML property.\n"
+msgstr
+msgid  "Could not dump XML tree.\n"
+msgstr
+msgid  "Can't export property %s: unknown type.\n"
+msgstr
+msgid  "Could not create string"
+msgstr
+msgid  "Invalid environment variable \"%s\".\n"
+msgstr
+msgid  "Invalid environment variable \"%s\"; "
+       "\"SMF_\" prefix is reserved.\n"
+msgstr
+# msgid  "Could not create string"
+# msgstr
+msgid  "Dependent \"%s\" cannot be exported "
+       "properly because the \"%s\" property of the "
+       "\"%s\" dependency of %s is not set to true.\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "The value of %s is not a valid "
+       "FMRI.\n"
+msgstr
+msgid  "The value of %s does not specify "
+       "a service or an instance.\n"
+msgstr
+msgid  "The entity specified by %s does "
+       "not exist.\n"
+msgstr
+msgid  "Entity %s is missing dependency property "
+       "group %s.\n"
+msgstr
+msgid  "Property group %s is not of "
+       "expected type %s.\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Instance %s has no general property "
+       "group; it will be marked disabled.\n"
+msgstr
+msgid  "Property group %s is not of type "
+       "framework; the instance will be marked "
+       "disabled.\n"
+msgstr
+msgid  "Could not open \"%s\": no free "
+       "stdio streams.\n"
+msgstr
+msgid  "Could not open \"%s\""
+msgstr
+msgid  "Could not create XML document.\n"
+msgstr
+msgid  "Only services may be exported; ignoring "
+       "instance portion of argument.\n"
+msgstr
+msgid  "Failed to walk instances: %s\n"
+msgstr
+# msgid  "Could not open \"%s\": no free "
+#        "stdio streams.\n"
+# msgstr
+# msgid  "Could not open \"%s\""
+# msgstr
+# msgid  "Could not create XML document.\n"
+# msgstr
+# msgid  "Could not open \"%s\": no "
+#        "free stdio streams.\n"
+# msgstr
+# msgid  "Could not open \"%s\""
+# msgstr
+# msgid  "Could not create XML document.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "No instance selected\n"
+msgstr
+msgid  "Unexpected error! file %s, line %d\n"
+msgstr
+msgid  "Template data for %s is invalid. "
+       "Consider reverting to a previous snapshot or "
+       "restoring original configuration.\n"
+msgstr
+msgid  "Error validating the instance"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Validation failed.\n"
+msgstr
+msgid  "No children.\n"
+msgstr
+msgid  "No such child.\n"
+msgstr
+msgid  ":properties is not an entity.  Try 'listprop' "
+       "to list properties.\n"
+msgstr
+# msgid  "Failed to walk instances: %s\n"
+# msgstr
+msgid  "No parent levels.\n"
+msgstr
+msgid  "Cannot unselect at scope level.\n"
+msgstr
+msgid  "Cannot add entities to an instance.\n"
+msgstr
+msgid  "Invalid name.\n"
+msgstr
+msgid  "Instance already exists.\n"
+msgstr
+# msgid  "Invalid name.\n"
+# msgstr
+msgid  "Service already exists.\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Property group %s is not of expected "
+#        "type %s.\n"
+# msgstr
+msgid  "Value of %s is not a valid FMRI.\n"
+msgstr
+msgid  "Property group \"%s\" of entity \"%s\" "
+       "does not have dependency type.\n"
+msgstr
+msgid  "Could not delete property group \"%s\" "
+       "of entity \"%s\" (permission denied).\n"
+msgstr
+msgid  "Instance %s may be running.  "
+       "Use delete -f if it is not.\n"
+msgstr
+# msgid  "Failed to walk instances: %s\n"
+# msgstr
+msgid  "Error writing to stdout.\n"
+msgstr
+msgid  "Could not output newline"
+msgstr
+msgid  "stability"
+msgstr
+msgid  "name"
+msgstr
+msgid  "type"
+msgstr
+msgid  "required"
+msgstr
+msgid  "target"
+msgstr
+msgid  "common name"
+msgstr
+msgid  "description"
+msgstr
+msgid  "value common name"
+msgstr
+msgid  "value description"
+msgstr
+msgid  "value"
+msgstr
+msgid  "value constraints"
+msgstr
+msgid  "value name"
+msgstr
+# msgid  "value constraints"
+# msgstr
+msgid  "range"
+msgstr
+# msgid  "value constraints"
+# msgstr
+# msgid  "range"
+# msgstr
+# msgid  "value constraints"
+# msgstr
+# msgid  "value name"
+# msgstr
+msgid  "value choices"
+msgstr
+# msgid  "range"
+# msgstr
+# msgid  "value choices"
+# msgstr
+# msgid  "range"
+# msgstr
+# msgid  "name"
+# msgstr
+msgid  "any"
+msgstr
+# msgid  "type"
+# msgstr
+# msgid  "any"
+# msgstr
+# msgid  "required"
+# msgstr
+# msgid  "common name"
+# msgstr
+msgid  "units"
+msgstr
+msgid  "visibility"
+msgstr
+msgid  "minimum number of values"
+msgstr
+msgid  "maximum number of values"
+msgstr
+msgid  "unlimited"
+msgstr
+# msgid  "maximum number of values"
+# msgstr
+msgid  "internal separators"
+msgstr
+msgid  "doc_link"
+msgstr
+# msgid  "name"
+# msgstr
+msgid  "uri"
+msgstr
+msgid  "manpage"
+msgstr
+msgid  "title"
+msgstr
+msgid  "section"
+msgstr
+msgid  "manpath"
+msgstr
+# msgid  "common name"
+# msgstr
+# msgid  "description"
+# msgstr
+msgid  "Out of memory"
+msgstr
+# msgid  "Out of memory"
+# msgstr
+msgid  "Invalid property group flag "
+       "%c."
+msgstr
+msgid  "Name, type, or flags are invalid.\n"
+msgstr
+msgid  "Property group already exists.\n"
+msgstr
+msgid  "Backend refused access.\n"
+msgstr
+msgid  "error, an entity is selected\n"
+msgstr
+msgid  "cannot resolve pathname for %s\n"
+msgstr
+msgid  "Property names must contain a `/'.\n"
+msgstr
+msgid  "Unknown type \"%s\".\n"
+msgstr
+msgid  "Type required for new "
+       "properties.\n"
+msgstr
+msgid  "Could not walk list"
+msgstr
+msgid  "No such property %s/%s.\n"
+msgstr
+msgid  "Error writing temoprary file: %s.\n"
+msgstr
+msgid  "Could not create temporary file.\n"
+msgstr
+# msgid  "Could not create temporary file.\n"
+# msgstr
+msgid  "Could not close temporary file: %s.\n"
+msgstr
+msgid  "Error creating editor command"
+msgstr
+msgid  "Could not launch editor %s: %s\n"
+msgstr
+# msgid  "libuutil error: %s\n"
+# msgstr
+msgid  "Could not create property list: %s\n"
+msgstr
+# msgid  "Property names must contain a `/'.\n"
+# msgstr
+# msgid  "Unknown type \"%s\".\n"
+# msgstr
+msgid  "Property \"%s\" is not "
+       "of type \"%s\".\n"
+msgstr
+# msgid  "Type required "
+#        "for new properties.\n"
+# msgstr
+# msgid  "No such property %s/%s.\n"
+# msgstr
+msgid  "Could not walk property list.\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "No instance is selected.\n"
+msgstr
+msgid  "No service is selected.\n"
+msgstr
+msgid  "Couldn't find start method; please "
+       "specify a method with '-m'.\n"
+msgstr
+msgid  "Couldn't find the method "
+       "\"%s\".\n"
+msgstr
+msgid  "Invalid method name \"%s\".\n"
+msgstr
+msgid  "Property group \"%s\" is not of type "
+       "\"method\".\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Instance not selected.\n"
+msgstr
+# msgid  "Instance not selected.\n"
+# msgstr
+msgid  "Invalid name \"%s\".\n"
+msgstr
+msgid  "No such snapshot \"%s\".\n"
+msgstr
+msgid  "Could not create list: %s\n"
+msgstr
+msgid  "Snapshot has no snaplevels.\n"
+msgstr
+# msgid  "libuutil error: %s\n"
+# msgstr
+# msgid  "Instance not selected.\n"
+# msgstr
+msgid  "Invalid snapshot name "
+       "\"%s\".\n"
+msgstr
+msgid  "No such snapshot.\n"
+msgstr
+msgid  "No snapshot selected.\n"
+msgstr
+msgid  "Interrupted by another change.\n"
+msgstr
+# msgid  "Instance not selected.\n"
+# msgstr
+# msgid  "Could not refresh %s "
+#        "(repository connection broken).\n"
+# msgstr
+# msgid  "Could not refresh %s "
+#        "(permission denied).\n"
+# msgstr
+# msgid  "Could not refresh %s "
+#        "(repository server out of resources).\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Out of memory"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Failed smf_notify_del_params: %s\n"
+msgstr
+msgid  "Can't use option '-g' with FMA event "
+       "definitions\n"
+msgstr
+msgid  "Failed for \"%s\": %s\n"
+msgstr
+msgid  "Can't mix SMF and FMA event definitions\n"
+msgstr
+msgid  "Invalid input.\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Failed listnotify: %s\n"
+msgstr
+# msgid  "Can't use option '-g' with FMA event "
+#        "definitions\n"
+# msgstr
+# msgid  "Failed listnotify: %s\n"
+# msgstr
+# msgid  "Can't mix SMF and FMA event definitions\n"
+# msgstr
+# msgid  "Invalid input.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "'%s' is not an URI\n"
+msgstr
+msgid  "Unkown URI scheme: %s\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Not valid parameters: '%s'\n"
+msgstr
+# msgid  "Not valid parameters: '%s'\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Failed smf_notify_set_params(3SCF): %s\n"
+msgstr
+# msgid  "Can't use option '-g' with FMA event "
+#        "definitions\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Failed smf_notify_set_params(3SCF) for "
+       "event %s: %s\n"
+msgstr
+# msgid  "Can't mix SMF and FMA event definitions\n"
+# msgstr
+# msgid  "Invalid input.\n"
+# msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Could not create instance or iterator\n"
+msgstr
+msgid  "Unable to iterate through "
+       "instances to create instance list : %s\n"
+msgstr
+msgid  "Unable to create snapshot "
+       "entity\n"
+msgstr
+# msgid  "Could not create property "
+#        "list: %s\n"
+# msgstr
+msgid  "service_manifest pool creation failed: %s\n"
+msgstr
+msgid  "service_manifest tree creation failed: %s\n"
+msgstr
+msgid  "file tree walk of %s encountered "
+       "error %s\n"
+msgstr
+msgid  "Unable to open the history file\n"
+msgstr
+msgid  "Unable to stat the history file\n"
+msgstr
+# msgid  "Out of memory"
+# msgstr
+msgid  "Delete service %s as there are no "
+       "supporting manifests\n"
+msgstr
+msgid  "Unable to create supporting entities to "
+       "teardown the service\n"
+msgstr
+msgid  "scf error is : %s\n"
+msgstr
+msgid  "Error - %s\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Unable to create instance list %s\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+msgid  "Unable to create the supporting entities\n"
+msgstr
+# msgid  "scf error is : %s\n"
+# msgstr
+msgid  "Unable to iterate through "
+       "manifestfiles properties : %s"
+msgstr
+msgid  "Unable to get manifest file "
+       "property : %s\n"
+msgstr
+msgid  "Unable to get the manifest "
+       "support value: %s\n"
+msgstr
+msgid  "Unable to get the manifest file "
+       "value: %s\n"
+msgstr
+msgid  "Unable to get the manifest "
+       "file : %s\n"
+msgstr
+# msgid  "Out of memory.\n"
+# msgstr
+# msgid  "Unable to create instance list %s\n"
+# msgstr
+msgid  "Delete instance %s from "
+       "service %s\n"
+msgstr
+msgid  "Unable to create a property group, or "
+       "property\n"
+msgstr
+# msgid  "scf error is : %s\n"
+# msgstr
+msgid  "Unable to process the hash service, %s\n"
+msgstr
+msgid  "Unable to cleanup smf hash table : %s\n"
+msgstr
+msgid  "Unable to get value from %s\n"
+msgstr
+msgid  "Unable to get astring from %s : %s\n"
+msgstr

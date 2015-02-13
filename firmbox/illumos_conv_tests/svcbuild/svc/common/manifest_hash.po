@@ -1,0 +1,59 @@
+msgid  "Could not create scf objects"
+msgstr
+msgid  "Could not get local scope"
+msgstr
+msgid  "Could not get manifest hash "
+       "service"
+msgstr
+msgid  "Could not store file hash: "
+       "permission denied.\n"
+msgstr
+msgid  "Could not add manifest hash "
+       "service"
+msgstr
+msgid  "Could not store file hash: "
+       "service addition contention.\n"
+msgstr
+msgid  "Could not get service's "
+       "hash record)"
+msgstr
+# msgid  "Could not store file hash: "
+#        "permission denied.\n"
+# msgstr
+msgid  "Could not store file hash"
+msgstr
+msgid  "Could not store file hash: "
+       "property group addition contention.\n"
+msgstr
+# msgid  "Could not store file hash: "
+#        "permission denied.\n"
+# msgstr
+msgid  "Could not create transaction"
+msgstr
+msgid  "Could not update hash "
+       "entry"
+msgstr
+msgid  "Could not start "
+       "hash transaction.\n"
+msgstr
+# msgid  "Could not store file hash: "
+#        "permission denied.\n"
+# msgstr
+msgid  "Could not modify hash "
+       "entry"
+msgstr
+msgid  "Could not modify file "
+       "entry"
+msgstr
+msgid  "Could not "
+       "delete apply_late "
+       "property"
+msgstr
+msgid  "Could not modify "
+       "apply_late property"
+msgstr
+# msgid  "Could not store file hash: "
+#        "permission denied.\n"
+# msgstr
+msgid  "Could not commit transaction"
+msgstr

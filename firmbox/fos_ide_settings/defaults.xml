@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <Mouse>
+    <Main Count="12">
+      <M0 Shift="" ShiftMask="ssShift,ssAlt" Button="mbLeft" ClickCount="ccSingle" ClickDir="cdDown" Command="1" MoveCaret="True" Option="0" Priority="0"/>
+      <M1 Shift="ssShift" ShiftMask="ssShift,ssAlt" Button="mbLeft" ClickCount="ccSingle" ClickDir="cdDown" Command="1" MoveCaret="True" Option="1" Priority="0"/>
+      <M2 Shift="ssAlt" ShiftMask="ssShift,ssAlt" Button="mbLeft" ClickCount="ccSingle" ClickDir="cdDown" Command="3" MoveCaret="True" Option="0" Priority="0"/>
+      <M3 Shift="ssShift,ssAlt" ShiftMask="ssShift,ssAlt" Button="mbLeft" ClickCount="ccSingle" ClickDir="cdDown" Command="3" MoveCaret="True" Option="1" Priority="0"/>
+      <M4 Shift="" ShiftMask="" Button="mbLeft" ClickCount="ccDouble" ClickDir="cdDown" Command="6" MoveCaret="True" Option="0" Priority="0"/>
+      <M5 Shift="" ShiftMask="" Button="mbLeft" ClickCount="ccTriple" ClickDir="cdDown" Command="7" MoveCaret="True" Option="0" Priority="0"/>
+      <M6 Shift="" ShiftMask="" Button="mbLeft" ClickCount="ccQuad" ClickDir="cdDown" Command="8" MoveCaret="True" Option="0" Priority="0"/>
+      <M7 Shift="" ShiftMask="" Button="mbMiddle" ClickCount="ccSingle" ClickDir="cdDown" Command="10" MoveCaret="True" Option="0" Priority="0"/>
+      <M8 Shift="" ShiftMask="" Button="mbRight" ClickCount="ccSingle" ClickDir="cdUp" Command="12" MoveCaret="False" Option="0" Priority="0"/>
+      <M9 Shift="ssCtrl" ShiftMask="ssShift,ssAlt,ssCtrl" Button="mbLeft" ClickCount="ccSingle" ClickDir="cdUp" Command="11" MoveCaret="False" Option="0" Priority="0"/>
+      <M10 Shift="" ShiftMask="" Button="mbExtra1" ClickCount="ccAny" ClickDir="cdDown" Command="17" MoveCaret="False" Option="Jump back" Priority="0"/>
+      <M11 Shift="" ShiftMask="" Button="mbExtra2" ClickCount="ccAny" ClickDir="cdDown" Command="17" MoveCaret="False" Option="Jump forward" Priority="0"/>
+    </Main>
+    <MainSel Count="1">
+      <M0 Shift="" ShiftMask="" Button="mbLeft" ClickCount="ccSingle" ClickDir="cdDown" Command="9" MoveCaret="False" Option="0" Priority="0"/>
+    </MainSel>
+    <Gutter Count="2">
+      <M0 Shift="" ShiftMask="" Button="mbRight" ClickCount="ccSingle" ClickDir="cdUp" Command="12" MoveCaret="False" Option="0" Priority="0"/>
+      <M1 Shift="" ShiftMask="" Button="mbLeft" ClickCount="ccAny" ClickDir="cdDown" Command="13" MoveCaret="False" Option="0" Priority="0"/>
+    </Gutter>
+    <GutterFold Count="2">
+      <M0 Shift="" ShiftMask="" Button="mbRight" ClickCount="ccSingle" ClickDir="cdUp" Command="16" MoveCaret="False" Option="0" Priority="0"/>
+      <M1 Shift="" ShiftMask="" Button="mbLeft" ClickCount="ccAny" ClickDir="cdDown" Command="0" MoveCaret="False" Option="0" Priority="0"/>
+    </GutterFold>
+    <GutterFoldExp Count="3">
+      <M0 Shift="" ShiftMask="ssCtrl" Button="mbLeft" ClickCount="ccAny" ClickDir="cdDown" Command="14" MoveCaret="False" Option="0" Priority="0"/>
+      <M1 Shift="ssCtrl" ShiftMask="ssCtrl" Button="mbLeft" ClickCount="ccAny" ClickDir="cdDown" Command="14" MoveCaret="False" Option="1" Priority="0"/>
+      <M2 Shift="" ShiftMask="" Button="mbMiddle" ClickCount="ccAny" ClickDir="cdDown" Command="14" MoveCaret="False" Option="0" Priority="0"/>
+    </GutterFoldExp>
+    <GutterFoldCol Count="4">
+      <M0 Shift="ssAlt" ShiftMask="ssAlt,ssCtrl" Button="mbLeft" ClickCount="ccAny" ClickDir="cdDown" Command="14" MoveCaret="False" Option="0" Priority="0"/>
+      <M1 Shift="ssCtrl" ShiftMask="ssAlt,ssCtrl" Button="mbLeft" ClickCount="ccAny" ClickDir="cdDown" Command="15" MoveCaret="False" Option="1" Priority="0"/>
+      <M2 Shift="" ShiftMask="" Button="mbLeft" ClickCount="ccAny" ClickDir="cdDown" Command="15" MoveCaret="False" Option="0" Priority="0"/>
+      <M3 Shift="" ShiftMask="" Button="mbMiddle" ClickCount="ccAny" ClickDir="cdDown" Command="14" MoveCaret="False" Option="0" Priority="0"/>
+    </GutterFoldCol>
+    <GutterLineNum Count="0"/>
+  </Mouse>
+</CONFIG>
