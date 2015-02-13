@@ -8306,7 +8306,7 @@ end;
        sl.add('-pidfile '+pidfile+' \');
        // #-no-acpi
 
-       ForAllObjects(@ConfigureComponents,true);
+       ForAllObjects(@ConfigureComponents);
        writeln('SWL VM COMPONENTS DONE');
 
        sl.savetofile('/opt/local/etc/kvm/start_qemu_'+UID.AsHexString);
