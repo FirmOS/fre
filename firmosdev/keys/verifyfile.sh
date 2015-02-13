@@ -1,0 +1,1 @@
+openssl dgst -sha512  -verify  firmos_signcert.pub -signature $1.sha512 $1
