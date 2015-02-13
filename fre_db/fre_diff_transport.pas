@@ -421,7 +421,7 @@ var
 
   begin
     can_insert :=true;
-    o.ForAllFields(@checklinks,true,true);
+    o.ForAllFields(@checklinks,true);
     result := can_insert;
   end;
 
@@ -554,11 +554,11 @@ begin
 
   // mark all in waiting list as already inserted, because they have not been in the bulk insert list, so they must be in the db
 
-  waiting_list.ForAllFields(@CleanupWaitingList,true,true);;
+  waiting_list.ForAllFields(@CleanupWaitingList,true);
 
   // try to insert all in backlog, run till all remaining objects are inserted (needed if they are referring to another object in the backlog)
 
-  while backlog_list.FieldCount(true,true)>0 do
+  while backlog_list.FieldCount(true)>0 do
     begin
 //      writeln('SWL: BACKLOG FOR ALL FIELDS');
       backlog_list.ForAllFields(@CleanupBacklog);

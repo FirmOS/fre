@@ -124,7 +124,7 @@ type
   PFRE_DB_FieldData = ^TFRE_DB_FieldData;
 
   { TFRE_DB_FIELD }
-  TFRE_DB_FIELD=class(TFOS_BASE,IFRE_DB_Field,IFRE_DB_CALCFIELD_SETTER) {TODO:Idea / SPLIT IN FIELDTYPES / CLASSES streamfields realfields calcfields ...}
+  TFRE_DB_FIELD=class(TFOS_BASE,IFRE_DB_Field) {TODO:Idea / SPLIT IN FIELDTYPES / CLASSES streamfields realfields calcfields ...}
   protected
     FFieldData         : TFRE_DB_FieldData;
     FFieldName         : PFRE_DB_NameType;
@@ -137,7 +137,6 @@ type
     FIsUidField        : Boolean;
     FIsSchemeField     : Boolean;
     FIsDomainIDField   : Boolean;
-    FCalcMethod        : IFRE_DB_CalcMethod;
   private
     procedure  Finalize;
     procedure _InAccessibleFieldCheck  ; inline;
@@ -296,7 +295,6 @@ type
     procedure SetAsStringList        (idx: Integer; const AValue: TFRE_DB_String);
     procedure SetAsBooleanList       (idx: Integer; const AValue: Boolean);
     procedure SetAsObjectLinkList    (idx: Integer; const AValue: TFRE_DB_GUID);
-    procedure CalculateValue         ; // (re)calculate the value of the field
 
     procedure   IntfCast                      (const InterfaceSpec:ShortString ; out Intf) ; // Interpret as Object and then -> IntfCast throws an Exception if not succesful
     function    _FieldType        : TFRE_DB_FIELDTYPE;
@@ -313,7 +311,7 @@ type
     function    GetFieldPath            : TFRE_DB_StringArray;
     function    GetFieldPathAsString    : TFRE_DB_String;
 
-    constructor Create           (const obj:TFRE_DB_Object; const FieldType:TFRE_DB_FIELDTYPE ; const ManualFieldName : string='' ; const calcmethod : IFRE_DB_CalcMethod=nil);reintroduce;
+    constructor Create           (const obj:TFRE_DB_Object;const ManualFieldName : string='');reintroduce;
     destructor  Destroy          ;override;
     function    FieldType         : TFRE_DB_FIELDTYPE;
     function    FieldTypeAsString : TFRE_DB_String;
@@ -325,7 +323,6 @@ type
     function    IsSystemField     : boolean;
     function    IsObjectField     : boolean;
     function    IsObjectArray     : boolean;
-    function    IsFieldCalculated : boolean;
 
     procedure   CloneFromField    (const Field:TFRE_DB_FIELD); // Value 0 = Fieldclone
     procedure   CloneFromFieldI   (const Field:IFRE_DB_FIELD);
@@ -478,7 +475,6 @@ type
     function  IFRE_DB_Field.SetAsObjectList         = SetAsObjectListI;
     function  IFRE_DB_Field.AddObject               = AddObjectI;
     function  IFRE_DB_Field.ParentObject            = ParentObjectI;
-    function  IFRE_DB_CALCFIELD_SETTER.SetAsObject  = SetAsObjectI;
 
     property  AsObjectI                     : IFRE_DB_Object read GetAsObjectI write SetAsObjectI;
     function  IsSpecialClearMarked          : Boolean;               { if a string field and has special clear string mark set => true (usefull for json web interface) }
@@ -519,8 +515,8 @@ type
     FExtensionTag      : Pointer;
 
     procedure      _RestoreReservedFields              ; { uid, domainid, schemeclass(read only) }
-    procedure      ForAll                              (const iter:TFRE_DB_FieldIterator ;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
-    procedure      ForAllBrk                           (const iter:TFRE_DB_FieldIteratorBrk;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
+    procedure      ForAll                              (const iter:TFRE_DB_FieldIterator ; const without_system_fields:boolean=false);
+    procedure      ForAllBrk                           (const iter:TFRE_DB_FieldIteratorBrk ; const without_system_fields:boolean=false);
     function       _Field                              (name:TFRE_DB_NameType):TFRE_DB_FIELD;
     function       _FieldOnlyExisting                  (name:TFRE_DB_NameType):TFRE_DB_FIELD;
     procedure      _ParentCheck                        (const newdbo : TFRE_DB_Object);
@@ -533,7 +529,6 @@ type
     function        _ObjectIsCodeclassOnlyAndHasNoScheme: boolean;virtual;
     procedure       SetScheme                          (const scheme_obj:TFRE_DB_SchemeObject);
     procedure       SchemeFieldAccessCheck             (const name:TFRE_DB_NameType);virtual;
-    function        CalcFieldExists                    (const name:TFRE_DB_NameType;var calculated_field_type:TFRE_DB_FIELDTYPE ; out calcmethod : IFRE_DB_CalcMethod):boolean;
     procedure       InternalSetup                      ; virtual;
     procedure       InternalFinalize                   ; virtual;
     procedure       CopyToMem                          (var mempointer:Pointer);
@@ -599,12 +594,12 @@ type
     procedure       Assert_CheckStoreLocked            ;
     procedure       Assert_CheckStoreUnLocked          ;
     procedure       Free                               ;
-    procedure       ForAllFields                       (const iter:TFRE_DB_FieldIterator;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
-    procedure       ForAllFieldsBreak                  (const iter:TFRE_DB_FieldIteratorBrk;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
-    procedure       ForAllFields                       (const iter:IFRE_DB_FieldIterator;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
-    procedure       ForAllFieldsBreak                  (const iter:IFRE_DB_FieldIteratorBrk;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
-    procedure       ForAllObjects                      (const iter:IFRE_DB_Obj_Iterator;const without_calcfields:boolean=false);
-    procedure       ForAllObjectsBreak                 (const iter:IFRE_DB_ObjectIteratorBrk;const without_calcfields:boolean=false);
+    procedure       ForAllFields                       (const iter:TFRE_DB_FieldIterator;const without_system_fields:boolean=false);
+    procedure       ForAllFieldsBreak                  (const iter:TFRE_DB_FieldIteratorBrk;const without_system_fields:boolean=false);
+    procedure       ForAllFields                       (const iter:IFRE_DB_FieldIterator;const without_system_fields:boolean=false);
+    procedure       ForAllFieldsBreak                  (const iter:IFRE_DB_FieldIteratorBrk;const without_system_fields:boolean=false);
+    procedure       ForAllObjects                      (const iter:IFRE_DB_Obj_Iterator);
+    procedure       ForAllObjectsBreak                 (const iter:IFRE_DB_ObjectIteratorBrk);
 
     procedure       ForAllObjectsFieldName             (const iter:IFRE_DB_Obj_NameIterator);
 
@@ -652,7 +647,7 @@ type
     function        FieldPathCreateI                   (const name:TFRE_DB_String):IFRE_DB_FIELD;
     function        FieldPathExists                    (const name: TFRE_DB_String): Boolean;
     function        FieldPathListFormat                (const field_list:TFRE_DB_NameTypeArray;const formats : TFRE_DB_String;const empty_val: TFRE_DB_String) : TFRE_DB_String;
-    function        FieldCount                         (const without_calcfields,without_system_fields:boolean): SizeInt;
+    function        FieldCount                         (const without_system_fields:boolean): SizeInt;
     function        DeleteField                        (const name:TFRE_DB_String):Boolean;
     procedure       ClearAllFields                     ;
     function        FieldExists                        (const name:TFRE_DB_String):boolean;
@@ -908,7 +903,6 @@ type
     FSubSchemeObj    : TFRE_DB_SchemeObject;         { Cache, not owned }
     FEnum            : TFRE_DB_Enum;                 { Cache, not owned }
     FValidator       : TFRE_DB_ClientFieldValidator; { Cache, not owned }
-    FCalcMethod      : IFRE_DB_CalcMethod;           { cache }
 
     function   GetAddConfirm       : Boolean;
     function   GetEnum             : TFRE_DB_Enum;
@@ -941,7 +935,6 @@ type
     procedure  SetSubschemeName    (AValue: TFRE_DB_NameType);
     procedure  setValidator        (AValue: TFRE_DB_ClientFieldValidator);
     function   GetParentScheme     : TFRE_DB_SchemeObject;
-    procedure  CheckCalcResolved   ;
   protected
     function   _ObjectIsCodeclassOnlyAndHasNoScheme :boolean;override;
     procedure  InternalSetup; override;
@@ -961,7 +954,6 @@ type
     function    SetupFieldDefI     (const is_required:boolean;const is_multivalue:boolean=false;const enum_key:TFRE_DB_NameType='';const validator_key:TFRE_DB_NameType='';const is_pass:Boolean=false; const add_confirm:Boolean=false ; const validator_params : IFRE_DB_Object=nil):IFRE_DB_FieldSchemeDefinition;
     function    SetupFieldDefNum   (const is_required: boolean; const min_value: Int64; const max_value: Int64): TFRE_DB_FieldSchemeDefinition;
     function    SetupFieldDefNumI  (const is_required: boolean; const min_value: Int64; const max_value: Int64): IFRE_DB_FieldSchemeDefinition;
-    procedure   SetCalcMethod      (const calc_method:IFRE_DB_CalcMethod);
     procedure   AddDepField        (const fieldName: TFRE_DB_String;const disablesField: Boolean=true);
     procedure   ForAllDepfields    (const depfielditerator : TFRE_DB_Depfielditerator);
     procedure   AddEnumDepField    (const fieldName: TFRE_DB_String;const enumValue:String;const visible:TFRE_DB_FieldDepVisibility=fdv_none;const cap_trans_key: String='';const validator_key:TFRE_DB_NameType='';const validator_params: TFRE_DB_Object=nil);
@@ -1103,10 +1095,6 @@ type
     function       Implementor: TObject;
   protected
 
-    function  CalcFieldExists           (const name: TFRE_DB_NameType; var calculated_field_type : TFRE_DB_FIELDTYPE ; out calcmethod : IFRE_DB_CalcMethod): boolean;
-    procedure ForAllCalculatedFields    (const iter:TFRE_DB_FieldIterator ; const obj: TFRE_DB_Object);
-    procedure ForAllCalculatedFieldsBrk (const iter:TFRE_DB_FieldIteratorBrk ; const obj : TFRE_DB_Object);
-
     function  ConstructNewInstance      (const fail_on_no_cc:boolean=true):TFRE_DB_Object;
     function  HasHardCodeClass          : Boolean;
 
@@ -1148,7 +1136,6 @@ type
     function  MethodExists              (const name:TFRE_DB_String):boolean;
     function  AddSchemeField            (const newfieldname:TFRE_DB_NameType ; const newfieldtype:TFRE_DB_FIELDTYPE ; const sub_scheme:TFRE_DB_NameType ):TFRE_DB_FieldSchemeDefinition;
     function  AddSchemeFieldI           (const newfieldname:TFRE_DB_NameType ; const newfieldtype:TFRE_DB_FIELDTYPE):IFRE_DB_FieldSchemeDefinition;
-    function  AddCalcSchemeField        (const newfieldname:TFRE_DB_NameType ; const newfieldtype:TFRE_DB_FIELDTYPE ; const calc_method  : IFRE_DB_CalcMethod):IFRE_DB_FieldSchemeDefinition;
     function  AddSchemeFieldSubscheme   (const newfieldname:TFRE_DB_NameType ; const sub_scheme:TFRE_DB_NameType):TFRE_DB_FieldSchemeDefinition;
     function  AddSchemeFieldSubschemeI  (const newfieldname:TFRE_DB_NameType ; const sub_scheme:TFRE_DB_NameType):IFRE_DB_FieldSchemeDefinition;
     function  GetSchemeField            (const fieldname   :TFRE_DB_NameType ; var fieldschemedef:TFRE_DB_FieldSchemeDefinition): boolean;
@@ -1290,7 +1277,6 @@ type
     property  isInternal                       :Boolean read GetIsInternal write SetIsInternal;
     property  Userclass                        :TFRE_DB_String read GetUserclass write SetUserclass;  { Every User has one defined class WEBUSER, FEEDER, (MIGHTYFEEDER), right checks can be OVERLAYED by the CLASS and the special class ALL }
   published
-    procedure _calcDisplayName                 (const calc : IFRE_DB_CALCFIELD_SETTER);
     class     function  WBC_NewUserOperation   (const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
     function  WEB_SaveOperation                (const input:IFRE_DB_Object ; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
   end;
@@ -1315,8 +1301,6 @@ type
     property        isInternal                : Boolean read GetIsInternal write SetIsInternal;
     property        Suspended                 : boolean read GetSuspended write SetSuspended;
     property        IsDefaultDomain           : boolean read GetIsDefaultDomain write SetIsDefaultDomain;
-  published
-    procedure _calcDisplayName       (const calc : IFRE_DB_CALCFIELD_SETTER);
   end;
 
   { TFRE_DB_GROUP }
@@ -1357,8 +1341,6 @@ type
     property  isInternal                   :Boolean read GetIsInternal write SetIsInternal;
     property  isDelegation                 :Boolean read GetIsDelegation write SetIsDelegation;
     property  isDisabled                   :Boolean read GetIsDisabled write SetIsDisabled;
-  published
-    procedure _calcDisplayName       (const calc : IFRE_DB_CALCFIELD_SETTER);
   end;
 
   { TFRE_DB_ROLE }
@@ -1391,8 +1373,6 @@ type
     procedure RemoveRights                  (const rights : TFRE_DB_StringArray);
     property  isInternal                    : Boolean read GetIsInternal write SetIsInternal;
     property  isDisabled                    : Boolean read GetIsDisabled write SetIsDisabled;
-  published
-    procedure _calcDisplayName       (const calc : IFRE_DB_CALCFIELD_SETTER);
   end;
 
   procedure          ForAllObjectsDo (const object_array:TFRE_DB_ObjectArray ; const iterator:TFRE_DB_Obj_Iterator);
@@ -4071,17 +4051,6 @@ begin
   Field('suspended').AsBoolean:=AValue;
 end;
 
-procedure TFRE_DB_DOMAIN._calcDisplayName(const calc: IFRE_DB_CALCFIELD_SETTER);
-var
-  dname: String;
-begin
-  dname:=Field('objname').AsString;
-  if FieldPathExists('desc.txt') and (FieldPath('desc.txt').AsString<>'') then begin
-    dname:=dname+' ('+FieldPath('desc.txt').AsString+')';
-  end;
-  calc.SetAsString(dname);
-end;
-
 class procedure TFRE_DB_DOMAIN.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
@@ -4102,7 +4071,6 @@ begin
   Scheme.SetParentSchemeByName(TFRE_DB_NAMED_OBJECT.ClassName);
   scheme.GetSchemeField('objname').required:=true;
   Scheme.SetSysDisplayField(TFRE_DB_NameTypeArray.Create('objname','$DBTEXT:desc'),'%s - (%s)');
-  scheme.AddCalcSchemeField('displayname',fdbft_String,@_calcDisplayName);
 
   input_group:=scheme.AddInputGroup('main').Setup('$TFRE_DB_DOMAIN_scheme_group');
   input_group.AddInput('objname','$TFRE_DB_DOMAIN_scheme_name');
@@ -4373,7 +4341,7 @@ begin
     fdg.FValParams.AsObject := validator_params;
   end;
 
-  fcount := FInputs.FieldCount(true,true);
+  fcount := FInputs.FieldCount(true);
   FInputs.Field('IN'+inttostr(fcount)).AsObject := fdg;
 end;
 
@@ -4433,7 +4401,7 @@ begin
     Include(props,gfp_Collapsed);
   fdg.FieldProperties := props;
 
-  fcount := FInputs.FieldCount(true,true);
+  fcount := FInputs.FieldCount(true);
   FInputs.Field('IN'+inttostr(fcount)).AsObject := fdg;
 end;
 
@@ -4451,7 +4419,7 @@ begin
   fdg.FGroup.AsString   := uppercase(group);
   fdg.FieldProperties := props;
 
-  fcount := FInputs.FieldCount(true,true);
+  fcount := FInputs.FieldCount(true);
   FInputs.Field('IN'+inttostr(fcount)).AsObject := fdg;
 end;
 
@@ -4465,10 +4433,10 @@ var cnt : NativeInt;
   end;
 
 begin
-  cnt := FInputs.FieldCount(true,true);
+  cnt := FInputs.FieldCount(true);
   setlength(result,cnt);
   cnt := 0;
-  FInputs.ForAllObjects(@iterate,true);
+  FInputs.ForAllObjects(@iterate);
 end;
 
 function TFRE_DB_InputGroupSchemeDefinition.GetParentSchemeI: IFRE_DB_SchemeObject;
@@ -4833,17 +4801,6 @@ begin
   field('domaingroupkey').AsString := GetDomainGroupKey(ObjectName,domainid);
 end;
 
-procedure TFRE_DB_GROUP._calcDisplayName(const calc: IFRE_DB_CALCFIELD_SETTER);
-var
-  dname: String;
-begin
-  if FieldPathExists('desc.txt') and (FieldPath('desc.txt').AsString<>'') then begin
-    dname:=FieldPath('desc.txt').AsString+' ('+Field('objname').AsString+')';
-  end else begin
-    dname:=Field('objname').AsString;
-  end;
-  calc.SetAsString(dname);
-end;
 
 class procedure TFRE_DB_GROUP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 var input_group : IFRE_DB_InputGroupSchemeDefinition;
@@ -4852,7 +4809,6 @@ begin
   Scheme.Strict(false);
   Scheme.SetParentSchemeByName(TFRE_DB_NAMED_OBJECT.ClassName);
   scheme.GetSchemeField('objname').required:=true;
-  scheme.AddCalcSchemeField('displayname',fdbft_String,@_calcDisplayName);
   scheme.AddSchemeField('roleids',fdbft_ObjLink).SetupFieldDef(false,true);
   scheme.AddSchemeField('appdataid',fdbft_ObjLink);
   scheme.AddSchemeField('domainidlink',fdbft_ObjLink).SetupFieldDef(true,false);
@@ -5123,17 +5079,6 @@ begin
   Field('domainrolekey').AsString := GetDomainRoleKey(ObjectName,domainid);
 end;
 
-procedure TFRE_DB_ROLE._calcDisplayName(const calc: IFRE_DB_CALCFIELD_SETTER);
-var
-  dname: String;
-begin
-  if FieldPathExists('desc.txt') then begin
-    dname:=FieldPath('desc.txt').AsString;
-  end else begin
-    dname:=Field('objname').AsString;
-  end;
-  calc.SetAsString(dname);
-end;
 
 class procedure TFRE_DB_ROLE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
@@ -5256,7 +5201,6 @@ begin
 //  scheme.AddSchemeFieldSubscheme('rights','TFRE_DB_RIGHT').multiValues:=true;
   scheme.AddSchemeField('domainidlink',fdbft_ObjLink).SetupFieldDef(false,false);
   scheme.AddSchemeField('domainrolekey',fdbft_String).SetupFieldDef(false,false);
-  scheme.AddCalcSchemeField('displayname',fdbft_String,@_calcDisplayName);
   Scheme.SetSysDisplayField(TFRE_DB_NameTypeArray.Create('objname','$DBTEXT:desc'),'%s - (%s)');
 end;
 
@@ -9056,7 +9000,7 @@ procedure TFRE_DB_FieldSchemeDefinition.ForAllDepfields(const depfielditerator: 
   end;
 
 begin
-  FDepFields.ForAllFields(@iterate,true,true);
+  FDepFields.ForAllFields(@iterate,true);
 end;
 
 procedure TFRE_DB_FieldSchemeDefinition.AddEnumDepField(const fieldName: TFRE_DB_String; const enumValue: String; const visible: TFRE_DB_FieldDepVisibility; const cap_trans_key: String; const validator_key: TFRE_DB_NameType; const validator_params: TFRE_DB_Object);
@@ -9121,32 +9065,12 @@ procedure TFRE_DB_FieldSchemeDefinition.ForAllEnumDepfields(const depfielditerat
   end;
 
 begin
-  FEnumDepFields.ForAllObjects(@iterate,true);
+  FEnumDepFields.ForAllObjects(@iterate);
 end;
 
 function TFRE_DB_FieldSchemeDefinition.GetParentScheme: TFRE_DB_SchemeObject;
 begin
   result := Parent.Parent as TFRE_DB_SchemeObject;
-end;
-
-procedure TFRE_DB_FieldSchemeDefinition.CheckCalcResolved;
-
-  procedure Resolve;
-   var hc  : TClass;
-       fcn : ShortString;
-   begin
-      hc := GetParentScheme.GetHardcodeClass;
-      if not assigned(hc) then
-        raise EFRE_DB_Exception.Create(edb_ERROR,'could not get hardcode class of scheme, while resolving calc method');
-      fcn := FCalcmethodName.AsString;
-      TMethod(FCalcMethod).Code := hc.MethodAddress(fcn);
-      if not assigned(TMethod(FCalcMethod).Code) then
-        raise EFRE_DB_Exception.Create(edb_ERROR,'could not get classmethod address while resolving calc method');
-   end;
-
-begin
-  if not Assigned(FCalcMethod) then
-    Resolve;
 end;
 
 function TFRE_DB_FieldSchemeDefinition._ObjectIsCodeclassOnlyAndHasNoScheme: boolean;
@@ -9225,20 +9149,6 @@ end;
 function TFRE_DB_FieldSchemeDefinition.SetupFieldDefNumI(const is_required: boolean; const min_value: Int64; const max_value: Int64): IFRE_DB_FieldSchemeDefinition;
 begin
   Result:=SetupFieldDefNum(is_required,min_value,max_value);
-end;
-
-procedure TFRE_DB_FieldSchemeDefinition.SetCalcMethod(const calc_method: IFRE_DB_CalcMethod);
-var hc    : TClass;
-    mname : ShortString;
-begin
-  hc := GetParentScheme.GetHardcodeClass;
-  if not assigned(hc) then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'could not get hardcode class of scheme');
-  mname := hc.MethodName(TMethod(calc_method).Code);
-  if mname='' then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'could not get hardcode methodname of class [%s], maybe you forgot to publish your calcmethod/override missing ?',[hc.ClassName]);
-  FCalcMethod              := calc_method;
-  FCalcmethodName.AsString := mname;
 end;
 
 function TFRE_DB_FieldSchemeDefinition.GetSubScheme: TFRE_DB_SchemeObject;
@@ -9391,14 +9301,6 @@ function TFRE_DB_SchemeObject.AddSchemeFieldI(const newfieldname: TFRE_DB_NameTy
 begin
   result := AddSchemeField(newfieldname,newfieldtype,'');
 end;
-
-function TFRE_DB_SchemeObject.AddCalcSchemeField(const newfieldname: TFRE_DB_NameType; const newfieldtype: TFRE_DB_FIELDTYPE; const calc_method: IFRE_DB_CalcMethod): IFRE_DB_FieldSchemeDefinition;
-begin
-   result := AddSchemeField(newfieldname,newfieldtype,'');
-   result.SetCalcMethod(calc_method);
-end;
-
-
 
 function TFRE_DB_SchemeObject.AddSchemeFieldSubschemeI(const newfieldname: TFRE_DB_NameType; const sub_scheme: TFRE_DB_NameType): IFRE_DB_FieldSchemeDefinition;
 begin
@@ -9913,7 +9815,6 @@ var failure:boolean;
   function CheckField(const field_to_check:TFRE_DB_FIELD):boolean;
   var field_to_check_fieldName : TFRE_DB_String;
       field_definition         : TFRE_DB_FieldSchemeDefinition;
-      calc_field               : TFRE_DB_FIELD;
   begin
     result:=false;
     field_to_check_fieldName := field_to_check.FieldName;
@@ -9978,48 +9879,6 @@ end;
 function TFRE_DB_SchemeObject.ValidateObjectI(const dbo: IFRE_DB_Object; const raise_errors: boolean): boolean;
 begin
   result := ValidateObject(dbo.Implementor as TFRE_DB_Object,raise_errors);
-end;
-
-
-function TFRE_DB_SchemeObject.CalcFieldExists(const name: TFRE_DB_NameType; var calculated_field_type: TFRE_DB_FIELDTYPE; out calcmethod: IFRE_DB_CalcMethod): boolean;
-var lFieldSchemeDefinition : TFRE_DB_FieldSchemeDefinition;
-begin
-  result                := GetSchemeField(name,lFieldSchemeDefinition);
-  calculated_field_type := fdbft_NotFound;
-  calcmethod            := nil;
-  if result then begin
-    result := lFieldSchemeDefinition.IsACalcField;
-    if result then
-      begin
-        lFieldSchemeDefinition.CheckCalcResolved;
-        calcmethod            := lFieldSchemeDefinition.FCalcMethod;
-        calculated_field_type := lFieldSchemeDefinition.FieldType;
-      end;
-  end;
-end;
-
-procedure TFRE_DB_SchemeObject.ForAllCalculatedFields(const iter: TFRE_DB_FieldIterator ; const obj: TFRE_DB_Object);
-
-  procedure CalcIterator(const fielddef  : TFRE_DB_FieldSchemeDefinition);
-  begin
-    if fielddef.IsACalcField then
-      iter(obj._Field(fielddef.FieldName));
-  end;
-
-begin
-  ForAllFieldSchemeDefinitions(@CalcIterator);
-end;
-
-procedure TFRE_DB_SchemeObject.ForAllCalculatedFieldsBrk(const iter: TFRE_DB_FieldIteratorBrk; const obj: TFRE_DB_Object);
-
- procedure CalcIterator(const fielddef : TFRE_DB_FieldSchemeDefinition; var halt_flag:boolean);
- begin
-   if fielddef.IsACalcField then
-     halt_flag := iter(obj._field(fielddef.FieldName));
- end;
-
-begin
-  ForAllFieldSchemeDefinitionsBreak(@CalcIterator);
 end;
 
 
@@ -10302,7 +10161,7 @@ procedure TFRE_DB_SchemeObject.ForAllFieldSchemeDefinitions(const iterator: TFRE
   end;
 
 begin
-  FFieldDefs.ForAllObjects(@Iterate,true);
+  FFieldDefs.ForAllObjects(@Iterate);
 end;
 
 procedure TFRE_DB_SchemeObject.ForAllFieldSchemeDefinitionsBreak(const iterator: TFRE_DB_SchemeFieldDefIteratorBrk);
@@ -10315,8 +10174,8 @@ var fcnt : NativeInt;
   end;
 
 begin
-  fcnt := FFieldDefs.FieldCount(false,false);
-  FFieldDefs.ForAllObjectsBreak(@iterate,true);
+  fcnt := FFieldDefs.FieldCount(false);
+  FFieldDefs.ForAllObjectsBreak(@iterate);
 end;
 
 
@@ -14158,7 +14017,7 @@ var  i,c : NativeInt;
      ocl : TFRE_DB_ObjectClassEx;
 begin
   abort;
-  FDatabaseScheme.FieldCount(true,true);
+  FDatabaseScheme.FieldCount(true);
   //SetLength(result,Length(FSysSchemes));
   //c:=0;
   //for i := 0 to high(FSysSchemes) do
@@ -14200,37 +14059,25 @@ procedure TFRE_DB.ForAllSchemes(const iterator: TFRE_DB_Scheme_Iterator);
   end;
 
 begin
- FDatabaseSchemeSchemes.ForAllObjects(@iter,true);
-  //abort;
-  //for i := 0 to high(FSysSchemes) do begin
-  //  iterator(FSysSchemes[i]);
-  //end;
+  FDatabaseSchemeSchemes.ForAllObjects(@iter);
 end;
 
 procedure TFRE_DB.ForAllEnums(const iterator: TFRE_DB_Enum_Iterator);
-//var  i: Integer;
   procedure Iter(const obj : IFRE_DB_Object);
   begin
     iterator(obj.Implementor as TFRE_DB_Enum);
   end;
 begin
-   FDatabaseEnums.ForAllObjects(@iter,true);
-  //for i := 0 to high(FSysEnums) do begin
-  //  iterator(FSysEnums[i]);
-  //end;
+   FDatabaseEnums.ForAllObjects(@iter);
 end;
 
 procedure TFRE_DB.ForAllClientFieldValidators(const iterator: TFRE_DB_ClientFieldValidator_Iterator);
-//var i: Integer;
   procedure Iter(const obj : IFRE_DB_Object);
   begin
     iterator(obj.Implementor as TFRE_DB_ClientFieldValidator);
   end;
 begin
-  FDatabaseValidators.ForAllObjects(@iter,true);
-  //for i := 0 to high(FSysClientFieldValidators) do begin
-  //  iterator(FSysClientFieldValidators[i]);
-  //end;
+  FDatabaseValidators.ForAllObjects(@iter);
 end;
 
 procedure TFRE_DB.ForAllApps(const iterator: TFRE_DB_Apps_Iterator);
@@ -14345,10 +14192,8 @@ var size   : NativeInt;
 
 begin
   size := 0;
-  ForAll(@CountFieldStreamingSize,true);
+  ForAll(@CountFieldStreamingSize);
   clname := SchemeClass;
-  //if assigned(FMediatorExtention) then
-  //  clname := FMediatorExtention.SchemeClass;
   result := CFRE_DB_SIZE_ENCODING_SIZE+length(clname)+size;
 end;
 
@@ -14390,7 +14235,7 @@ var plugins : TFRE_DB_Field;
 begin
   if not FieldOnlyExisting('_$PLG',plugins) then { no plugins }
     exit;
-  plugins.AsObject.ForAllFields(@Iterate,true,true);
+  plugins.AsObject.ForAllFields(@Iterate,true);
 end;
 
 function TFRE_DB_Object.HasPlugin(const pluginclass: TFRE_DB_OBJECT_PLUGIN_CLASS): boolean;
@@ -14646,19 +14491,19 @@ begin
 end;
 
 
-procedure TFRE_DB_Object.ForAllFields(const iter: TFRE_DB_FieldIterator;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
+procedure TFRE_DB_Object.ForAllFields(const iter: TFRE_DB_FieldIterator;const without_system_fields:boolean=false);
 begin
  _InAccessibleCheck;
-  ForAll(iter,without_calcfields,without_system_fields);
+  ForAll(iter,without_system_fields);
 end;
 
-procedure TFRE_DB_Object.ForAllFieldsBreak(const iter: TFRE_DB_FieldIteratorBrk;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
+procedure TFRE_DB_Object.ForAllFieldsBreak(const iter: TFRE_DB_FieldIteratorBrk;const without_system_fields:boolean=false);
 begin
  _InAccessibleCheck;
-  ForAllBrk(iter,without_calcfields,without_system_fields);
+  ForAllBrk(iter,without_system_fields);
 end;
 
-procedure TFRE_DB_Object.ForAllFields(const iter: IFRE_DB_FieldIterator;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
+procedure TFRE_DB_Object.ForAllFields(const iter: IFRE_DB_FieldIterator;const without_system_fields:boolean=false);
 
   procedure lForAll(const field:TFRE_DB_FIELD);
   begin
@@ -14667,20 +14512,20 @@ procedure TFRE_DB_Object.ForAllFields(const iter: IFRE_DB_FieldIterator;const wi
 
 begin
   _InAccessibleCheck;
-   ForAll(@lForAll,without_calcfields,without_system_fields);
+   ForAll(@lForAll,without_system_fields);
 end;
 
-procedure TFRE_DB_Object.ForAllFieldsBreak(const iter: IFRE_DB_FieldIteratorBrk;const without_calcfields:boolean=false;const without_system_fields:boolean=false);
+procedure TFRE_DB_Object.ForAllFieldsBreak(const iter: IFRE_DB_FieldIteratorBrk ; const without_system_fields:boolean=false);
   function lForAll(const field:TFRE_DB_FIELD):boolean;
   begin
     result := iter(field);
   end;
 begin
   _InAccessibleCheck;
-  ForAllBrk(@lForAll,without_calcfields,without_system_fields);
+  ForAllBrk(@lForAll,without_system_fields);
 end;
 
-procedure TFRE_DB_Object.ForAllObjects(const iter: IFRE_DB_Obj_Iterator; const without_calcfields: boolean);
+procedure TFRE_DB_Object.ForAllObjects(const iter: IFRE_DB_Obj_Iterator);
   procedure Iterate(const fld:IFRE_DB_Field);
   begin
      if fld.FieldType=fdbft_Object then
@@ -14688,10 +14533,10 @@ procedure TFRE_DB_Object.ForAllObjects(const iter: IFRE_DB_Obj_Iterator; const w
   end;
 
 begin
-  ForAllFields(@Iterate,without_calcfields,true);
+  ForAllFields(@Iterate,true);
 end;
 
-procedure TFRE_DB_Object.ForAllObjectsBreak(const iter: IFRE_DB_ObjectIteratorBrk; const without_calcfields: boolean);
+procedure TFRE_DB_Object.ForAllObjectsBreak(const iter: IFRE_DB_ObjectIteratorBrk);
 var halt : boolean;
 
   function lForAll(const field:TFRE_DB_FIELD):boolean;
@@ -14705,7 +14550,7 @@ var halt : boolean;
 begin
   _InAccessibleCheck;
   halt := false;
-  ForAllBrk(@lForAll,without_calcfields,true);
+  ForAllBrk(@lForAll,true);
 end;
 
 procedure TFRE_DB_Object.ForAllObjectsFieldName(const iter: IFRE_DB_Obj_NameIterator);
@@ -14736,7 +14581,7 @@ function TFRE_DB_Object.ForAllObjectsBreakHierarchic(const iter: TFRE_DB_ObjectI
       exit;
     iter(obj,halt);
     if not halt then
-      obj.ForAllBrk(@IterateField,true,true);
+      obj.ForAllBrk(@IterateField,true);
   end;
 
 begin
@@ -14952,7 +14797,7 @@ begin
   Move(CFRE_DB_ObjectHdr,memory^,Sizeof(CFRE_DB_ObjectHdr));           //     HEADER
   Inc(PByte(memory),Sizeof(CFRE_DB_ObjectHdr));                        //     HEADER
 
-  sz_field := TFRE_DB_SIZE_TYPE(FieldCount(true,false));               //     FIELDCOUNT
+  sz_field := TFRE_DB_SIZE_TYPE(FieldCount(false));                    //     FIELDCOUNT
   dec(sz_field); { remove schemecalss field, which does not get streamed }
   Move     (sz_field,memory^,CFRE_DB_SIZE_ENCODING_SIZE);              // 1 x FIELDCOUNT
   inc      (memory,CFRE_DB_SIZE_ENCODING_SIZE);                        //     FIELDCOUNT
@@ -14988,8 +14833,7 @@ begin
   _Field('Schemeclass');
 end;
 
-procedure TFRE_DB_Object.ForAll(const iter: TFRE_DB_FieldIterator; const without_calcfields: boolean; const without_system_fields: boolean);
-var scheme_object:TFRE_DB_SchemeObject;
+procedure TFRE_DB_Object.ForAll(const iter: TFRE_DB_FieldIterator; const without_system_fields: boolean);
    procedure Iterate(const db:TFRE_DB_FIELD);
    begin
      if (db.FieldType<>fdbft_NotFound) then
@@ -14997,27 +14841,15 @@ var scheme_object:TFRE_DB_SchemeObject;
          if (without_system_fields)
             and (db.IsSystemField) then
               exit;
-           { FIXXM : overlay field hack - need to check first point in time whean a scheme is availlable }
-           if without_calcfields and
-              db.IsFieldCalculated then
-                begin
-                  exit;
-                end;
            iter(db);
        end;
    end;
 begin
   _InAccessibleCheck;
   FFieldStore.ForAllItems(@Iterate);
-  scheme_object := GetScheme;
-  if (not without_calcfields) and assigned(GetScheme) then
-    begin
-      scheme_object.ForAllCalculatedFields(@Iterate,self);
-    end;
 end;
 
-procedure TFRE_DB_Object.ForAllBrk(const iter: TFRE_DB_FieldIteratorBrk; const without_calcfields: boolean; const without_system_fields: boolean);
-var scheme_object:TFRE_DB_SchemeObject;
+procedure TFRE_DB_Object.ForAllBrk(const iter: TFRE_DB_FieldIteratorBrk; const without_system_fields: boolean);
 
    function Iterate(const db:TFRE_DB_FIELD):boolean;
    begin
@@ -15027,22 +14859,12 @@ var scheme_object:TFRE_DB_SchemeObject;
          if (without_system_fields)
            and (db.IsSystemField) then
              exit;
-         { FIXXM : overlay field hack - need to check first point in time whean a scheme is availlable }
-         if without_calcfields and
-            db.IsFieldCalculated then
-              begin
-                exit;
-              end;
          result := iter(db);
        end;
    end;
 
 begin
   FFieldStore.ForAllItemsBrk(@Iterate);
-  scheme_object := GetScheme;
-  if (not without_calcfields) and assigned(GetScheme) then begin
-    scheme_object.ForAllCalculatedFieldsBrk(@Iterate,self);
-  end;
 end;
 
 function TFRE_DB_Object.AsString: TFRE_DB_String;
@@ -15075,22 +14897,14 @@ function TFRE_DB_Object._Field(name: TFRE_DB_NameType): TFRE_DB_FIELD;
 var lfield    : TFRE_DB_Field;
     keyp      : PFRE_DB_NameType;
     storep    : ^TFRE_DB_Field;
-    calcexist : boolean;
-    lcalctyp  : TFRE_DB_FIELDTYPE;
-    lcalcm    : IFRE_DB_CalcMethod;
 begin
   name := UpperCase(name);
   if Pos('.',name)>0 then raise EFRE_DB_Exception.Create(' "." character is not allowed in fieldnames');
   result:=nil;
-  //SchemeFieldAccessCheck(name);
   if FFieldStore.Find(name,lfield) then begin
     result := lfield;
   end else begin
-    calcexist := CalcFieldExists(name,lcalctyp,lcalcm);
-    if calcexist then
-      lfield  := TFRE_DB_Field.Create(self,lcalctyp,'',lcalcm)
-    else
-      lfield  := TFRE_DB_Field.Create(self,fdbft_NotFound);
+    lfield  := TFRE_DB_Field.Create(self);
     if not FFieldStore.AddCheckEx(name,lfield,false,keyp,storep) then raise EFRE_DB_Exception.create(edb_INTERNAL,'fieldstore');
     lfield.FFieldname := keyp;
     if name='UID' then
@@ -15104,8 +14918,6 @@ begin
       end;
     result := lfield;
   end;
-  if lfield.IsFieldCalculated then
-    lfield.CalculateValue;
 end;
 
 function TFRE_DB_Object._FieldOnlyExisting(name: TFRE_DB_NameType): TFRE_DB_FIELD;
@@ -15180,7 +14992,7 @@ end;
 function TFRE_DB_Object._InternalDecodeAsField: IFRE_DB_Field;
 var new_fld : TFRE_DB_FIELD;
 begin
- new_fld := TFRE_DB_FIELD.Create(nil,fdbft_NotFound,Field('FN').AsString,nil);
+ new_fld := TFRE_DB_FIELD.Create(nil,Field('FN').AsString);
  new_fld.CloneFromField(Field('F'));
  new_fld.FObjUidPath         := Field('FUP').AsGUIDArr;
  new_fld.FInCollectionArray  := Field('FIC').AsStringArr;
@@ -15306,8 +15118,8 @@ procedure TFRE_DB_Object.__InternalCompareToObj(const compare_obj: TFRE_DB_Objec
 
 
 begin
-  ForAllFields(@BaseFields,true,false);
-  compare_obj.ForAllFields(@CompareFields,True,False);
+  ForAllFields(@BaseFields,false);
+  compare_obj.ForAllFields(@CompareFields,False);
 end;
 
 procedure TFRE_DB_Object.Set_ReadOnly;
@@ -15382,36 +15194,6 @@ begin
   if scheme_obj.DefinedSchemeName<>SchemeClass then
     raise EFRE_DB_Exception.Create(edb_ERROR,'definedschemeclass and codeclass does not match');
   FCacheSchemeObj    := scheme_obj;
-  //if assigned(scheme_obj) and (scheme_obj is TFRE_DB_SchemeObject) then begin
-  //  FSchemeName     := scheme_obj.DefinedSchemeName;
-  //  FCacheSchemeObj :=
-  //end;
-end;
-
-
-function TFRE_DB_Object.CalcFieldExists(const name: TFRE_DB_NameType; var calculated_field_type: TFRE_DB_FIELDTYPE; out calcmethod: IFRE_DB_CalcMethod): boolean;
-var scheme:TFRE_DB_SchemeObject;
-begin
-  result:=false;
-  calcmethod            := nil;
-  calculated_field_type := fdbft_NotFound;
-  if not ReservedFieldName(uppercase(name)) then
-    begin
-      scheme:=GetScheme;
-      if assigned(scheme) then
-        begin
-          try
-            result:=scheme.CalcFieldExists(name,calculated_field_type,calcmethod);
-            if Result and not assigned(calcmethod) then
-              raise EFRE_DB_Exception.Create(edb_INTERNAL,'bug- calc method not assigned but should be');
-          except
-            FCacheSchemeObj := nil;
-            scheme:=GetScheme;
-            if assigned(scheme) then
-              result:=scheme.CalcFieldExists(name,calculated_field_type,calcmethod);
-          end;
-        end;
-    end;
 end;
 
 procedure TFRE_DB_Object.InternalSetup;
@@ -15491,7 +15273,7 @@ begin
   //Move (FSchemeName[1],mempointer^,size);
   //inc  (mempointer,size);
 
-  ForAll(@LocalCopyToMem,true); { ignore calculated fields on copy }
+  ForAll(@LocalCopyToMem); { ignore calculated fields on copy }
   //writeln('<--SZ  ',FStreamingSize);
   AfterSave;
   res := mempointer-oldp;
@@ -15540,21 +15322,15 @@ var i:Integer;
     field_name  : TFRE_DB_NameType;
     jo          : TJSONObject;
     cft         : TFRE_DB_FIELDTYPE;
-    cm          : IFRE_DB_CalcMethod;
 begin
   if field_count>0 then begin
     for i := 0 to field_count-1 do begin
       jo         := JSON.Items[i+1] as TJSONObject;
       field_name := jo.Elements['N'].AsString;
       field_type := FieldtypeShortString2Fieldtype(jo.Elements['T'].AsString);
-      if not CalcFieldExists(field_name,cft,cm) then
-        begin
-          if uppercase(field_name)='SCHEMECLASS' then { do not set special read only field schemeclass }
-            continue;
-          _Field(field_name).SetFromJSON(field_type,jo.Elements['D'] as TJSONArray,stream_cb)
-        end
-      else
-        ; // skip calculated fields
+      if uppercase(field_name)='SCHEMECLASS' then { do not set special read only field schemeclass }
+        continue;
+      _Field(field_name).SetFromJSON(field_type,jo.Elements['D'] as TJSONArray,stream_cb)
     end;
   end;
 end;
@@ -15804,12 +15580,10 @@ begin
   end;end;
 end;
 
-function TFRE_DB_Object.FieldCount(const without_calcfields, without_system_fields: boolean): SizeInt;
+function TFRE_DB_Object.FieldCount(const without_system_fields: boolean): SizeInt;
   procedure LocalCount(const F:TFRE_DB_FIELD);
   begin
     if f.FieldType<>fdbft_NotFound then begin
-      if without_calcfields and (f.IsFieldCalculated) then
-        exit;
       if without_system_fields and (f.IsSystemField) then
         exit;
       inc(result);
@@ -15818,7 +15592,7 @@ function TFRE_DB_Object.FieldCount(const without_calcfields, without_system_fiel
 begin
   _InAccessibleCheck;
   result:=0;
-  ForAll(@LocalCount,without_calcfields);
+  ForAll(@LocalCount,without_system_fields);
 end;
 
 function TFRE_DB_Object.DeleteField(const name: TFRE_DB_String): Boolean;
@@ -15849,14 +15623,11 @@ end;
 function TFRE_DB_Object.FieldExists(const name: TFRE_DB_String): boolean;
 var l_field : TFRE_DB_FIELD;
     l_ft    : TFRE_DB_FIELDTYPE;
-    l_cm    : IFRE_DB_CalcMethod;
 begin
   _InAccessibleCheck;
   result := FFieldStore.Find(uppercase(name),l_field);
   if result then begin
     result := l_field.FieldType<>fdbft_NotFound;
-  end else begin
-    result := CalcFieldExists(uppercase(name),l_ft,l_cm);
   end;
 end;
 
@@ -15869,28 +15640,14 @@ var idents : TFRE_DB_String;
    begin
      if (Field.FieldType<>fdbft_Object) then
        begin
-         if not Field.IsFieldCalculated then
-           begin
-             strings.Add(idents+Field.AsStringDump);
-           end
-         else
-           begin
-             strings.Add(idents+'CALCFIELD: '+Field.AsStringDump);
-           end;
+         strings.Add(idents+Field.AsStringDump);
        end
      else
        begin
-         if field.IsFieldCalculated then
-           begin
-             strings.Add(idents+'CALCFIELD: '+Field.AsStringDump);
-           end
-         else
-           begin
-             strings.Add(Format('%s%s (%s) : ',[idents,Field.FieldName,CFRE_DB_FIELDTYPE[Field.FieldType]]));
-             strings.Add(idents+'{ ');
-               Field.AsObject.DumpToStrings(strings,indent+2);
-             strings.Add(idents+'}');
-           end;
+         strings.Add(Format('%s%s (%s) : ',[idents,Field.FieldName,CFRE_DB_FIELDTYPE[Field.FieldType]]));
+         strings.Add(idents+'{ ');
+           Field.AsObject.DumpToStrings(strings,indent+2);
+         strings.Add(idents+'}');
        end;
      end;
 
@@ -16135,7 +15892,7 @@ begin
   _InAccessibleCheck;
   cnt  := 0;
   mysn := SchemeClass;
-  ForAll(@SearchObjectLinkField,true,true);
+  ForAll(@SearchObjectLinkField,true);
   SetLength(result,cnt);
   for i:=0 to high(Result) do
     if Result[i].linked_uid=CFRE_DB_NullGUID then
@@ -16169,7 +15926,7 @@ var cnt,i:NativeInt;
     end;
 begin
   _InAccessibleCheck;
-  SetLength(Result,FieldCount(false,false));
+  SetLength(Result,FieldCount(false));
   cnt:=0;
   ForAllFields(@gather);
   SetLength(Result,cnt);
@@ -16318,6 +16075,7 @@ end;
 
 function TFRE_DB_Object.FetchObjByUIDNonHierarchic(const childuid: TFRE_DB_GUID; out found_fieldname: TFRE_DB_NameType; out child: TFRE_DB_Object): boolean;
 var fnd:boolean;
+
  function Search(const field: TFRE_DB_FIELD):Boolean;
   begin
     if field.FieldType=fdbft_Object then begin
@@ -16336,7 +16094,7 @@ begin
   fnd             := false;
   found_fieldname := '';
   child           := nil;
-  ForAllFieldsBreak(@Search,true,true);
+  ForAllFieldsBreak(@Search,true);
   result := fnd;
 end;
 
@@ -16428,7 +16186,7 @@ begin
   if generate_new_uids then
     raise EFRE_DB_Exception.Create(edb_ERROR,'not implemented');
   result := CloneToNewObject;
-  result.ForAllFields(@Iterate,true,true);
+  result.ForAllFields(@Iterate,true);
 end;
 
 function TFRE_DB_Object.CloneToNewObjectWithoutSubobjectsI(const generate_new_uids: boolean): IFRE_DB_Object;
@@ -17037,11 +16795,6 @@ function TFRE_DB_FIELD._StreamingSize: TFRE_DB_SIZE_TYPE; //Streamed as FieldTyp
  end;
 
 begin
-  //if FFieldStreamSize<>-1 then begin
-  //  exit(FFieldStreamSize);
-  //end;
-  if IsFieldCalculated then
-    exit(0);
   if IsSchemeField then
     exit(0);
   case FFieldData.FieldType of
@@ -17227,21 +16980,6 @@ begin
   FFieldData.obl^[idx] := AValue;
 end;
 
-procedure TFRE_DB_FIELD.CalculateValue;
-begin
-  if not assigned(FCalcMethod) then
-    raise EFRE_DB_Exception.Create(edb_INTERNAL,'calcfield but no function assigned?');
-  TMethod(FCalcMethod).Data:=Fobj.Implementor_HC;
-  try
-    FCalcMethod(self);
-  except
-    on E:Exception do
-      begin
-        GFRE_DBI.LogError(dblc_APPLICATION,'calculate value of field ['+FieldName+'] failed for : '+e.Message);
-      end;
-  end;
-end;
-
 procedure TFRE_DB_FIELD.SetAsEmptyStringArray;
 var sa:TFRE_DB_StringArray;
 begin
@@ -17387,7 +17125,7 @@ end;
 function TFRE_DB_FIELD.CloneToNewStreamable: IFRE_DB_Field;
 var new_fld : TFRE_DB_FIELD;
 begin
-  new_fld := TFRE_DB_FIELD.Create(nil,fdbft_NotFound,FieldName,nil);
+  new_fld := TFRE_DB_FIELD.Create(nil,FieldName);
   new_fld.CloneFromField(self);
   new_fld.FObjUidPath := ParentObject.GetUIDPathUA;
   new_fld.FInCollectionArray := ParentObject.__InternalGetCollectionListUSL;
@@ -18089,7 +17827,7 @@ var startp,oldp : PByte;
     end;
     procedure _StoreObjects;
     begin
-      sz_field := TFRE_DB_SIZE_TYPE(FFieldData.obj.FieldCount(true,false));
+      sz_field := TFRE_DB_SIZE_TYPE(FFieldData.obj.FieldCount(false));
       dec(sz_field); { Schemeclass, which is ommited }
       _StoreSzField;
       FFieldData.obj.CopyToMem(startp);
@@ -18098,7 +17836,6 @@ var startp,oldp : PByte;
 begin
   result:=0;
   if (FFieldData.FieldType = fdbft_NotFound)
-       or (IsFieldCalculated)
          or (IsSchemeField) then
            exit;
   startp     := mempointer;
@@ -18909,103 +18646,11 @@ begin
 end;
 
 
-constructor TFRE_DB_FIELD.Create(const obj: TFRE_DB_Object; const FieldType: TFRE_DB_FIELDTYPE; const ManualFieldName: string; const calcmethod: IFRE_DB_CalcMethod);
+constructor TFRE_DB_FIELD.Create(const obj: TFRE_DB_Object ; const ManualFieldName: string);
 begin
-  FFieldData.FieldType := FieldType;
+  FFieldData.FieldType := fdbft_NotFound;
   Fobj                 := obj;
   FManualFieldName     := ManualFieldName;
-  FCalcMethod          := calcmethod;
-  if FieldType<>fdbft_NotFound then
-    begin
-      if not assigned(calcmethod) then
-        raise EFRE_DB_Exception.Create(edb_INTERNAL,'only calcfields can be created with a fieldtype, because they are set on access!');
-      case FieldType of
-        fdbft_GUID:
-          begin
-            New(FFieldData.guid);
-            SetLength(FFieldData.strg^,1);
-          end;
-        fdbft_Byte:
-          begin
-            New(FFieldData.byte);
-            SetLength(FFieldData.byte^,1);
-          end;
-        fdbft_Int16:
-          begin
-            New(FFieldData.in16);
-            SetLength(FFieldData.in16^,1);
-          end;
-        fdbft_UInt16:
-          begin
-            New(FFieldData.ui16);
-            SetLength(FFieldData.ui16^,1);
-          end;
-        fdbft_Int32:
-          begin
-            New(FFieldData.in32);
-            SetLength(FFieldData.in32^,1);
-          end;
-        fdbft_UInt32:
-          begin
-            New(FFieldData.ui32);
-            SetLength(FFieldData.ui32^,1);
-          end;
-        fdbft_Int64:
-          begin
-            New(FFieldData.in64);
-            SetLength(FFieldData.in64^,1);
-          end;
-        fdbft_UInt64:
-          begin
-            New(FFieldData.ui64);
-            SetLength(FFieldData.ui64^,1);
-          end;
-        fdbft_Real32:
-          begin
-            New(FFieldData.re32);
-            SetLength(FFieldData.re32^,1);
-          end;
-        fdbft_Real64:
-          begin
-            New(FFieldData.re64);
-            SetLength(FFieldData.re64^,1);
-          end;
-        fdbft_Currency:
-          begin
-            New(FFieldData.curr);
-            SetLength(FFieldData.curr^,1);
-          end;
-        fdbft_String:
-          begin
-            New(FFieldData.strg);
-            SetLength(FFieldData.strg^,1);
-          end;
-        fdbft_Boolean:
-          begin
-            New(FFieldData.bool);
-            SetLength(FFieldData.bool^,1);
-          end;
-        fdbft_DateTimeUTC:
-          begin
-            New(FFieldData.date);
-            SetLength(FFieldData.date^,1);
-          end;
-        fdbft_Stream:
-          begin
-            New(FFieldData.strm);
-            SetLength(FFieldData.strm^,1);
-          end;
-        fdbft_Object:
-          begin
-            FFieldData.obj:=nil;
-          end;
-        fdbft_ObjLink:
-        begin
-          New(FFieldData.in32);
-          SetLength(FFieldData.in32^,1);
-        end;
-      end;
-    end;
 end;
 
 destructor TFRE_DB_FIELD.Destroy;
@@ -19108,11 +18753,6 @@ function TFRE_DB_FIELD.IsObjectArray: boolean;
 begin
   result := (FieldType=fdbft_Object) and
      (FFieldData.obj is TFRE_DB_OBJECTLIST);
-end;
-
-function TFRE_DB_FIELD.IsFieldCalculated: boolean;
-begin
-  result := assigned(FCalcMethod);
 end;
 
 
@@ -20268,8 +19908,6 @@ end;
 procedure TFRE_DB_FIELD.RemoveIndex(const idx: integer);
 var hi:integer;
 begin
-  if IsFieldCalculated then
-    raise EFRE_DB_Exception.Create(edb_ERROR,'cannot remove indices for calculated fields');
   _InAccessibleFieldCheck;
   _GetHigh(hi);
   if (idx>=0) and (idx<=hi) then begin
@@ -20495,26 +20133,6 @@ begin
   field('domainloginkey').AsString := GetDomainLoginKey(login,GetDomainIDLink);
 end;
 
-procedure TFRE_DB_USER._calcDisplayName(const calc: IFRE_DB_CALCFIELD_SETTER);
-var
-  dname:String;
-begin
-  dname:=Field('login').AsString;
-  if Field('lastname').AsString<>'' then begin
-    dname:=dname+' ('+Field('lastname').AsString;
-    if Field('firstname').AsString<>'' then begin
-      dname:=dname+' '+Field('firstname').AsString+')';
-    end else begin
-      dname:=dname+')';
-    end;
-  end else begin
-    if Field('firstname').AsString<>'' then begin
-      dname:=dname+' ('+Field('firstname').AsString+')';
-    end;
-  end;
-  calc.SetAsString(dname);
-end;
-
 function TFRE_DB_USER.SubFormattedDisplayAvailable: boolean;
 begin
   result := true;
@@ -20581,7 +20199,6 @@ begin
   scheme.AddSchemeField('login',fdbft_String).SetupFieldDef(true);
   scheme.AddSchemeField('firstname',fdbft_String);
   scheme.AddSchemeField('lastname',fdbft_String);
-  scheme.AddCalcSchemeField('displayname',fdbft_String,@_calcDisplayName);
   scheme.AddSchemeField('passwordMD5',fdbft_String).SetupFieldDef(true,false,'','',true,true);
   scheme.AddSchemeField('usergroupids',fdbft_ObjLink).SetupFieldDef(false,true);
   scheme.AddSchemeField('domainidlink',fdbft_ObjLink).SetupFieldDef(true,false);

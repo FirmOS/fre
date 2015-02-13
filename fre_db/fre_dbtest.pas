@@ -68,7 +68,6 @@ type
     class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects(const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   published
-    procedure   CALC_CalcIconStatus(const calc : IFRE_DB_CALCFIELD_SETTER);
   end;
 
   { TFRE_DB_TEST_B }
@@ -90,8 +89,6 @@ type
     class procedure RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT); override;
     procedure   Gamble(const id:int64);
   published
-    procedure   CALC_Uint32 (const calc : IFRE_DB_CALCFIELD_SETTER);
-    procedure   CALC_String (const calc : IFRE_DB_CALCFIELD_SETTER);
     function  WEB_GetIcon   (const input:IFRE_DB_Object ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function  WEB_Content   (const input:IFRE_DB_Object ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
@@ -1843,8 +1840,6 @@ begin
   scheme.AddSchemeField         ('fdbft_Stream',fdbft_Stream);
   scheme.AddSchemeField         ('fdbft_ObjLink',fdbft_ObjLink);
   scheme.AddSchemeFieldSubscheme('dbText','TFRE_DB_TEXT');
-  scheme.AddCalcSchemeField     ('calc_string',fdbft_String,@CALC_String);
-  scheme.AddCalcSchemeField     ('calc_Uint32',fdbft_UInt32,@CALC_Uint32);
 
   input_group:=scheme.AddInputGroup('main').Setup('$scheme_TFRE_DB_TEST_ALL_TYPES');
   input_group.AddInput('fdbft_GUID');
@@ -1915,24 +1910,6 @@ begin
   Field('MYID').AsInt64                    := id;
   Field('fdbft_String').AsString           := Field('MYID').AsString+'_'+GetRandstring;
   Field('dbText').AsDBText.SetupText('KEY'+ids,'Short_'+ids,'Long_'+ids,'Hint_'+ids);  // This works only if the type of an implicitly created subobject is known, by defining the field in the scheme !
-end;
-
-procedure TFRE_DB_TEST_ALL_TYPES.CALC_Uint32(const calc: IFRE_DB_CALCFIELD_SETTER);
-var fld : IFRE_DB_Field;
-begin
-  if FieldOnlyExisting('fdbft_Byte',fld) then
-    begin
-      calc.SetAsUInt32((Field('fdbft_Byte').AsByte+1)*111);
-    end
-  else
-    begin
-      calc.SetAsUInt32(0);
-    end;
-end;
-
-procedure TFRE_DB_TEST_ALL_TYPES.CALC_String(const calc: IFRE_DB_CALCFIELD_SETTER);
-begin
-  calc.SetAsString('CALC + '+Field('fdbft_Byte').AsString+' '+Field('myid').AsString);
 end;
 
 
@@ -2785,7 +2762,6 @@ begin
   scheme.AddSchemeField       ('string',fdbft_String);
   scheme.AddSchemeField       ('boolean',fdbft_Boolean);
   scheme.AddSchemeField       ('status',fdbft_String);
-  scheme.AddCalcSchemeField   ('icon',fdbft_String,@CALC_CalcIconStatus);
 end;
 
 class procedure TFRE_DB_TEST_A.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -2795,40 +2771,6 @@ begin
     currentVersionId := '1.0';
   end;
 end;
-
-procedure TFRE_DB_TEST_A.CALC_CalcIconStatus(const calc: IFRE_DB_CALCFIELD_SETTER);
-var    lstatus_icon : TFRE_DB_String;
-       lstatus      : TFRE_DB_String;
-begin
-  lstatus    := Field('status').AsString;
-  case lstatus of
-    'OK'      : lstatus_icon := 'images_apps/test/signal_ok.png';
-    'WARNING' : lstatus_icon := 'images_apps/test/signal_warning.png';
-    'FAILURE' : lstatus_icon := 'images_apps/test/signal_failure.png';
-    'UNKNOWN' : lstatus_icon := 'images_apps/test/signal_unknown.png';
-    'NEW'     : lstatus_icon := 'images_apps/test/signal_unknown.png';
-    else
-      lstatus_icon := 'images_apps/test/signal_unknown.png';//raise EFRE_DB_Exception.Create(edb_ERROR,'UNKNOWN ENUM FIELD VALUE SiGNaL Status');
-  end;
-  calc.SetAsString(lstatus_icon);
-end;
-
-//function TFRE_DB_TEST_A.WEB_GetIcon(const input:IFRE_DB_Object ; const ses: IFRE_DB_Usersession ; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-//var    lstatus_icon : TFRE_DB_String;
-//       lstatus      : TFRE_DB_String;
-//begin
-  //lstatus    := Field('status').AsString;
-  //case lstatus of
-  //  'OK'      : lstatus_icon := getThemedResource('images_apps/test/signal_ok.png');
-  //  'WARNING' : lstatus_icon := getThemedResource('images_apps/test/signal_warning.png');
-  //  'FAILURE' : lstatus_icon := getThemedResource('images_apps/test/signal_failure.png');
-  //  'UNKNOWN' : lstatus_icon := getThemedResource('images_apps/test/signal_unknown.png');
-  //  'NEW'     : lstatus_icon := getThemedResource('images_apps/test/signal_unknown.png');
-  //  else raise EFRE_DB_Exception.Create(edb_ERROR,'UNKNOWN ENUM FIELD VALUE SiGNaL Status');
-  //end;
-  //result := GFRE_DBI.NewObject;
-  //result.Field(CalcFieldResultKey(fdbft_String)).AsString:=lstatus_icon;
-//end;
 
 
 procedure CreateTestdata(const dbname: string; const user, pass: string);
