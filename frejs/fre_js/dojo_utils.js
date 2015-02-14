@@ -4384,11 +4384,13 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
             doHide = (fielddef[i].visible=='HIDDEN');
           }
           if (fielddef[i].caption!='') { //CAPTION
-            if (!labelElem._orgLabel) {
-              labelElem._orgLabel = labelElem.innerHTML;
+            if (labelElem) {
+              if (!labelElem._orgLabel) {
+                labelElem._orgLabel = labelElem.innerHTML;
+              }
+              labelElem.innerHTML = fielddef[i].caption + ': ';
+              resetLabel = false;
             }
-            labelElem.innerHTML = fielddef[i].caption + ': ';
-            resetLabel = false;
           }
           if (fielddef[i].pattern) { //VALIDATOR
             if (!elem.isInstanceOf(FIRMOS.ValidationTextBox)) {
