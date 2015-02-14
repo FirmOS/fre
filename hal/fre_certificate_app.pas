@@ -116,11 +116,12 @@ begin
       AddOneToOnescheme('email','email',app.FetchAppTextShort(session,'crt_email'));
       AddOneToOnescheme('issued','issued',app.FetchAppTextShort(session,'crt_issued'),dt_date);
       AddOneToOnescheme('revoked','revoked',app.FetchAppTextShort(session,'crt_revoked'),dt_date);
+      AddMatchingReferencedFieldArray(['CA>TFRE_DB_CA'],'uid','ca_uid','',false);
     end;
     dc_crt := session.NewDerivedCollection('crt_grid');
     with dc_crt do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_CERTIFICATE_COLLECTION));
-      SetUseDependencyAsRefLinkFilter(['TFRE_DB_CERTIFICATE<CA'],false);
+      SetUseDependencyAsUidFilter('ca_uid');
       SetDeriveTransformation(crt_Grid);
       SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_CrtMenu),nil,CWSF(@WEB_CrtContent));
     end;

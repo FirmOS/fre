@@ -770,13 +770,14 @@ begin
       AddOneToOnescheme('value','value',FetchModuleTextShort(session,'grid_records_value'),dt_string);
       AddOneToOnescheme('ttl','ttl',FetchModuleTextShort(session,'grid_records_ttl'),dt_number);
       AddOneToOnescheme('type','type_native','',dt_string,false);
+      AddMatchingReferencedFieldArray(['NETWORK_DOMAIN>'],'uid','nd_uid','',false);
       AddFulltextFilterOnTransformed(['host','value']);
     end;
 
     records_grid := session.NewDerivedCollection('DNS_RECORDS_GRID');
     with records_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
-      SetUseDependencyAsRefLinkFilter(['<NETWORK_DOMAIN'],false,'uid');
+      SetUseDependencyAsUidFilter('nd_uid',false,'uid');
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_ResourceRecordsMenu),nil,CWSF(@WEB_ResourceRecordsSC));
       SetDefaultOrderField('host',true);
@@ -806,6 +807,7 @@ begin
       AddOneToOnescheme('type','type','',dt_string,false);
       AddOneToOnescheme('icon','icon','',dt_string,false);
       AddOneToOnescheme('default','default','',dt_number,false);
+      AddMatchingReferencedFieldArray(['<RECORDS'],'uid','nd_uid','',false);
       SetFinalRightTransformFunction(@CalculateNameserverGridFields,[]);
     end;
 
@@ -814,7 +816,7 @@ begin
     records_grid := session.NewDerivedCollection('GLOBAL_NAMESERVER_RECORDS_GRID');
     with records_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
-      SetUseDependencyAsRefLinkFilter(['RECORDS>'],false,'uid');
+      SetUseDependencyAsUidFilter('nd_uid');
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_NameserverMenu));
       SetDefaultOrderField('host',true);
@@ -831,13 +833,14 @@ begin
       AddOneToOnescheme('type','type','',dt_string,false);
       AddOneToOnescheme('icon','icon','',dt_string,false);
       AddOneToOnescheme('default','default','',dt_number,false);
+      AddMatchingReferencedFieldArray(['<RECORDS'],'uid','nd_uid','',false);
       SetFinalRightTransformFunction(@CalculateNameserverGridFields,[]);
     end;
 
     records_grid := session.NewDerivedCollection('NAMESERVER_RECORDS_GRID');
     with records_grid do begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_DNS_RECORDS_COLLECTION));
-      SetUseDependencyAsRefLinkFilter(['RECORDS>'],false,'uid');
+      SetUseDependencyAsUidFilter('nd_uid');
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_NameserverMenu));
       if multidomain then begin

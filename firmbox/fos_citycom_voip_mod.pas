@@ -541,12 +541,11 @@ begin
       customers.AddButton.Describe(CWSF(@WEB_AddService),'',FetchModuleTextShort(ses,'tb_add_service'),FetchModuleTextHint(ses,'tb_add_service'));
     end;
 
-    ext_admin_Grid.SetUseDependencyAsRefLinkFilter(['TFOS_DB_CITYCOM_VOIP_EXTENSION<VOIP_SERVICE'],false,'uid');
+    ext_admin_Grid.SetUseDependencyAsUidFilter('vs_uid',false,'uid');
     customers.AddFilterEvent(ext_admin_Grid.getDescriptionStoreId(),'uid');
-    ext_Grid.SetUseDependencyAsRefLinkFilter(['TFOS_DB_CITYCOM_VOIP_EXTENSION<VOIP_SERVICE'],false,'uid');
+    ext_Grid.SetUseDependencyAsUidFilter('vs_uid',false,'uid');
     customers.AddFilterEvent(ext_Grid.getDescriptionStoreId(),'uid');
-
-    pb_Grid.SetUseDependencyAsRefLinkFilter(['TFOS_DB_CITYCOM_VOIP_PHONEBOOK_ENTRY<VOIP_SERVICE'],false,'uid');
+    pb_Grid.SetUseDependencyAsUidFilter('vs_uid',false,'uid');
     customers.AddFilterEvent(pb_Grid.getDescriptionStoreId(),'uid');
 
     Result:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(customers,subsec.Implementor_HC as TFRE_DB_CONTENT_DESC);
@@ -1461,6 +1460,7 @@ begin
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_ext_name'),dt_string,true,true,false,2);
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'grid_ext_number'),dt_number,true,true,false,1);
+      AddMatchingReferencedFieldArray(['VOIP_SERVICE>TFOS_DB_CITYCOM_VOIP_SERVICE'],'uid','vs_uid','',false);
       AddFulltextFilterOnTransformed(['objname','number']);
     end;
 
@@ -1489,6 +1489,7 @@ begin
       AddOneToOnescheme('real_number','','',dt_string,false);
       AddOneToOnescheme('filename','','',dt_string,false);
       AddOneToOnescheme('email','','',dt_string,false);
+      AddMatchingReferencedFieldArray(['VOIP_SERVICE>TFOS_DB_CITYCOM_VOIP_SERVICE'],'uid','vs_uid','',false);
       AddFulltextFilterOnTransformed(['objname','number']);
       SetFinalRightTransformFunction(@CalculateDescription,[FetchModuleTextShort(session,'grid_ext_ip_mac_pass'),FetchModuleTextShort(session,'grid_ext_real_number'),FetchModuleTextShort(session,'grid_ext_filename'),FetchModuleTextShort(session,'grid_ext_email')]);
     end;
@@ -2251,6 +2252,7 @@ begin
       AddOneToOnescheme('landline','',FetchModuleTextShort(session,'grid_pb_landline'),dt_string);
       AddOneToOnescheme('mobile','',FetchModuleTextShort(session,'grid_pb_mobile'),dt_string);
       AddOneToOnescheme('internal','',FetchModuleTextShort(session,'grid_pb_internal'),dt_boolean,true,true,true);
+      AddMatchingReferencedFieldArray(['VOIP_SERVICE>TFOS_DB_CITYCOM_VOIP_SERVICE'],'uid','vs_uid','',false);
       AddFulltextFilterOnTransformed(['lastname','firstname','landline','mobile']);
     end;
 

@@ -205,13 +205,14 @@ begin
       AddOneToOnescheme('used_mb','used',FetchModuleTextShort(session,'vfs_share_used'));
       AddOneToOnescheme('refer_mb','refer',FetchModuleTextShort(session,'vfs_share_refer'));
       AddOneToOnescheme('quota_mb','quota',FetchModuleTextShort(session,'vfs_share_quota'));
+      AddMatchingReferencedFieldArray(['FILESERVER>TFRE_DB_VIRTUAL_FILESERVER'],'uid','vfs_uid','',false);
       AddFulltextFilterOnTransformed(['objname']);
     end;
     share_dc := session.NewDerivedCollection('VIRTUAL_FILESERVER_MOD_SHARE_GRID');
     with share_dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FILESHARE_COLLECTION));
       Filters.AddSchemeObjectFilter('service',['TFRE_DB_VIRTUAL_FILESHARE']);
-      SetUseDependencyAsRefLinkFilter(['TFRE_DB_VIRTUAL_FILESHARE<FILESERVER'],false,'uid');
+      SetUseDependencyAsUidFilter('vfs_uid',false,'uid');
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_VFSShareMenu),nil,CWSF(@WEB_VFSShareSC));
     end;
