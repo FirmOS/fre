@@ -175,7 +175,7 @@ begin
       AddMatchingReferencedField(['TFRE_DB_WORKFLOW_DATA<WF','DATAOBJ>','CUSTOMER>'],'objname','customer','',true,dt_description);
       AddOneToOnescheme('state','state','',dt_string,false);
       AddOneToOnescheme('stateHR','stateHR',FetchModuleTextShort(session,'gc_wf_state'));
-      AddMatchingReferencedField('DESIGNATED_GROUP>TFRE_DB_GROUP','displayname','group',FetchModuleTextShort(session,'gc_wf_group'));
+      AddMatchingReferencedField('DESIGNATED_GROUP>TFRE_DB_GROUP','objname','objname',FetchModuleTextShort(session,'gc_wf_group'));
       AddOneToOnescheme('step_id','step_id',FetchModuleTextShort(session,'gc_wf_id'));
       SetFinalRightTransformFunction(@getHRState,[FetchModuleTextShort(session,'wf_state_waiting'),FetchModuleTextShort(session,'wf_state_child_in_progress'),FetchModuleTextShort(session,'wf_state_in_progress'),FetchModuleTextShort(session,'wf_state_done'),FetchModuleTextShort(session,'wf_state_faild')]);
     end;

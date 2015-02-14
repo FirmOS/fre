@@ -196,18 +196,6 @@ procedure Register_DB_Extensions;
 
 implementation
 
-procedure  G_setDisplaynameGRD(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
-var
-  dname: String;
-begin
-  if input.FieldPathExists('desc.txt') and (input.FieldPath('desc.txt').AsString<>'') then begin
-    dname:=input.FieldPath('desc.txt').AsString;
-  end else begin
-    dname:=input.Field('objname').AsString;
-  end;
-  transformed_object.Field('displayname').AsString := dname;
-end;
-
 procedure  G_setDisplaynameUser(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
 var
   dname:String;

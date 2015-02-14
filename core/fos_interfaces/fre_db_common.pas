@@ -738,15 +738,28 @@ type
     function  Describe  (const svgId,elementId,attrName,attrValue:String): TFRE_DB_UPDATE_SVG_DESC;
   end;
 
-  function String2DBChooserDH(const fts: string): TFRE_DB_CHOOSER_DH;
-  function String2DBLayoutPos(const fts: string): TFRE_DB_LAYOUT_POS;
-  function String2DBSubSecDisplayType(const fts: string): TFRE_DB_SUBSEC_DISPLAY_TYPE;
-  function String2DBMessageType(const fts: string): TFRE_DB_MESSAGE_TYPE;
-  function String2DBButtonType(const fts: string): TFRE_DB_BUTTON_TYPE;
-  function String2DBGridButtonDep(const fts: string): TFRE_DB_GRID_BUTTON_DEP;
-  function String2DBContent(const fts: string): TFRE_DB_CONTENT_TYPE;
+  function  String2DBChooserDH(const fts: string): TFRE_DB_CHOOSER_DH;
+  function  String2DBLayoutPos(const fts: string): TFRE_DB_LAYOUT_POS;
+  function  String2DBSubSecDisplayType(const fts: string): TFRE_DB_SUBSEC_DISPLAY_TYPE;
+  function  String2DBMessageType(const fts: string): TFRE_DB_MESSAGE_TYPE;
+  function  String2DBButtonType(const fts: string): TFRE_DB_BUTTON_TYPE;
+  function  String2DBGridButtonDep(const fts: string): TFRE_DB_GRID_BUTTON_DEP;
+  function  String2DBContent(const fts: string): TFRE_DB_CONTENT_TYPE;
+  procedure G_setDisplaynameGRD(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
 
 implementation
+
+  procedure  G_setDisplaynameGRD(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    dname: String;
+  begin
+    if input.FieldPathExists('desc.txt') and (input.FieldPath('desc.txt').AsString<>'') then begin
+      dname:=input.FieldPath('desc.txt').AsString;
+    end else begin
+      dname:=input.Field('objname').AsString;
+    end;
+    transformed_object.Field('displayname').AsString := dname;
+  end;
 
   function String2DBChooserDH(const fts: string): TFRE_DB_CHOOSER_DH;
   begin
