@@ -1146,10 +1146,9 @@ type
     function        GenerateIPFRulesIPv6 : string;
     function        GenerateIPFPools     : string;
     function        GenerateIPFNatRules  : string;
-  protected
+  public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  public
     function        GetFMRI              : TFRE_DB_STRING; override;
     procedure       Embed                (const conn: IFRE_DB_CONNECTION); override;
   published
@@ -1160,10 +1159,9 @@ type
   { TFRE_DB_FIREWALL_RULE }
 
   TFRE_DB_FIREWALL_RULE=class(TFRE_DB_ObjectEx)
-  protected
+public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  public
     procedure       Embed                (const conn: IFRE_DB_CONNECTION);
     function        GetIPFLineText       : string;
   end;
@@ -1171,10 +1169,9 @@ type
   { TFRE_DB_FIREWALL_POOL }
 
   TFRE_DB_FIREWALL_POOL=class(TFRE_DB_ObjectEx)
-  protected
+  public
     class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects           (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  public
     procedure       Embed                         (const conn: IFRE_DB_CONNECTION);
     procedure       AddIPFPoolandEntryDefinition  (const sl:TStringList);
   end;
@@ -1182,10 +1179,9 @@ type
   { TFRE_DB_FIREWALL_POOLENTRY }
 
   TFRE_DB_FIREWALL_POOLENTRY=class(TFRE_DB_ObjectEx)
-  protected
+  public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  public
     procedure       Embed                   (const conn: IFRE_DB_CONNECTION);
     function        GetIPFPoolEntryString   :string;
   end;
@@ -1193,7 +1189,7 @@ type
   { TFRE_DB_FIREWALL_POOLENTRY_TABLE }
 
   TFRE_DB_FIREWALL_POOLENTRY_TABLE=class(TFRE_DB_FIREWALL_POOLENTRY)
-  protected
+  public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
@@ -1201,7 +1197,7 @@ type
   { TFRE_DB_FIREWALL_POOLENTRY_GROUP }
 
   TFRE_DB_FIREWALL_POOLENTRY_GROUP=class(TFRE_DB_FIREWALL_POOLENTRY)
-  protected
+  public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
@@ -1209,10 +1205,9 @@ type
   { TFRE_DB_FIREWALL_NAT }
 
   TFRE_DB_FIREWALL_NAT=class(TFRE_DB_ObjectEx)
-  protected
+  public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  public
     procedure       Embed                (const conn: IFRE_DB_CONNECTION);
     function        GetIPFLineText       : string;
   end;
@@ -1479,6 +1474,8 @@ implementation
 { TFRE_DB_FIREWALL_NAT }
 
 class procedure TFRE_DB_FIREWALL_NAT.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group: IFRE_DB_InputGroupSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
@@ -1511,6 +1508,8 @@ begin
   scheme.AddSchemeField('proxy_name',fdbft_string);                   // show only with command map,bimap
   scheme.AddSchemeField('proxy_port',fdbft_Uint16);                   // show only with command map,bimap
 
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('number',GetTranslateableTextKey('scheme_number'));
 end;
 
 class procedure TFRE_DB_FIREWALL_NAT.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -1518,6 +1517,9 @@ begin
   newVersionId:='0.1';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_number','Number');
   end;
 end;
 
@@ -1773,6 +1775,8 @@ end;
 { TFRE_DB_FIREWALL_POOL }
 
 class procedure TFRE_DB_FIREWALL_POOL.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group: IFRE_DB_InputGroupSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
@@ -1788,6 +1792,8 @@ begin
   scheme.AddSchemeField('hash_size',fdbft_Uint32);                         // show only with type hash
   scheme.AddSchemeField('hash_seed',fdbft_Uint32);                         // show only with type hash
 
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('number',GetTranslateableTextKey('scheme_number'));
 end;
 
 class procedure TFRE_DB_FIREWALL_POOL.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -1795,6 +1801,9 @@ begin
   newVersionId:='0.1';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_number','Number');
   end;
 end;
 
@@ -1872,6 +1881,8 @@ end;
 { TFRE_DB_FIREWALL_RULE }
 
 class procedure TFRE_DB_FIREWALL_RULE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group: IFRE_DB_InputGroupSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
@@ -1953,6 +1964,8 @@ begin
   scheme.AddSchemeField('set_tag_nat',fdbft_string);
   scheme.AddSchemeField('set_tag_log',fdbft_int32);
 
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('number',GetTranslateableTextKey('scheme_number'));
 end;
 
 class procedure TFRE_DB_FIREWALL_RULE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -1960,6 +1973,9 @@ begin
   newVersionId:='0.1';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_number','Number');
   end;
 end;
 
