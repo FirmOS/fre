@@ -85,6 +85,7 @@ var
   diagCap   : TFRE_DB_String;
   dbo       : IFRE_DB_Object;
   poolDBO   : IFRE_DB_Object;
+  service   : IFRE_DB_Object;
 begin
   sf:=CWSF(@WEB_StorePool);
   if isModify then begin
@@ -96,14 +97,16 @@ begin
     sf.AddParam.Describe('poolId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'pool_modify_diag_cap');
   end else begin
-    //CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('dependency.uid_ref.filtervalues').AsStringItem[0]),dbo));
+    if input.FieldPathExists('dependency.uids_ref.filtervalues') then begin
+      CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('dependency.uids_ref.filtervalues').AsStringItem[0]),service));
+    end else begin
+      CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID,service));
+    end;
 
-    //if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOL,dbo.DomainID) then
-    //  raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-    if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_FIREWALL_POOL) then
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOL,service.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-    //sf.AddParam.Describe('firewallId',dbo.UID_String);
+    sf.AddParam.Describe('firewallId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'pool_create_diag_cap');
   end;
   GetSystemScheme(TFRE_DB_FIREWALL_POOL,scheme);
@@ -133,6 +136,7 @@ var
   diagCap   : TFRE_DB_String;
   dbo       : IFRE_DB_Object;
   ruleDBO   : IFRE_DB_Object;
+  service   : IFRE_DB_Object;
 begin
   sf:=CWSF(@WEB_StoreRule);
   if isModify then begin
@@ -144,14 +148,16 @@ begin
     sf.AddParam.Describe('ruleId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'rule_modify_diag_cap');
   end else begin
-    //CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('dependency.uid_ref.filtervalues').AsStringItem[0]),dbo));
+    if input.FieldPathExists('dependency.uids_ref.filtervalues') then begin
+      CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('dependency.uids_ref.filtervalues').AsStringItem[0]),service));
+    end else begin
+      CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID,service));
+    end;
 
-    //if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_RULE,dbo.DomainID) then
-    //  raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-    if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_FIREWALL_RULE) then
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_RULE,service.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-    //sf.AddParam.Describe('firewallId',dbo.UID_String);
+    sf.AddParam.Describe('firewallId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'rule_create_diag_cap');
   end;
   GetSystemScheme(TFRE_DB_FIREWALL_RULE,scheme);
@@ -181,6 +187,7 @@ var
   diagCap   : TFRE_DB_String;
   dbo       : IFRE_DB_Object;
   natDBO    : IFRE_DB_Object;
+  service   : IFRE_DB_Object;
 begin
   sf:=CWSF(@WEB_StoreNAT);
   if isModify then begin
@@ -192,14 +199,16 @@ begin
     sf.AddParam.Describe('natId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'nat_modify_diag_cap');
   end else begin
-    //CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('dependency.uid_ref.filtervalues').AsStringItem[0]),dbo));
+    if input.FieldPathExists('dependency.uids_ref.filtervalues') then begin
+      CheckDbResult(conn.Fetch(FREDB_H2G(input.FieldPath('dependency.uids_ref.filtervalues').AsStringItem[0]),service));
+    end else begin
+      CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID,service));
+    end;
 
-    //if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_NAT,dbo.DomainID) then
-    //  raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-    if not conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_FIREWALL_NAT) then
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_NAT,service.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-    //sf.AddParam.Describe('firewallId',dbo.UID_String);
+    sf.AddParam.Describe('firewallId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'nat_create_diag_cap');
   end;
   GetSystemScheme(TFRE_DB_FIREWALL_NAT,scheme);
@@ -418,12 +427,24 @@ end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  subs      : TFRE_DB_SUBSECTIONS_DESC;
-  layout    : TFRE_DB_LAYOUT_DESC;
-  servicesDC: IFRE_DB_DERIVED_COLLECTION;
+  subs        : TFRE_DB_SUBSECTIONS_DESC;
+  layout      : TFRE_DB_LAYOUT_DESC;
+  servicesDC  : IFRE_DB_DERIVED_COLLECTION;
   servicesGrid: TFRE_DB_VIEW_LIST_DESC;
+  service     : IFRE_DB_Object;
+  frg         : IFRE_DB_DERIVED_COLLECTION;
+  fng         : IFRE_DB_DERIVED_COLLECTION;
+  fpg         : IFRE_DB_DERIVED_COLLECTION;
 begin
   CheckClassVisibility4AnyDomain(ses);
+
+  frg:=ses.FetchDerivedCollection('FIREWALL_RULES_GRID');
+  frg.Filters.RemoveFilter('service');
+  fng:=ses.FetchDerivedCollection('FIREWALL_NAT_GRID');
+  fng.Filters.RemoveFilter('service');
+  fpg:=ses.FetchDerivedCollection('FIREWALL_POOLS_GRID');
+  fpg.Filters.RemoveFilter('service');
+  ses.GetSessionModuleData(ClassName).DeleteField('selectedFirewall');
 
   subs:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
   subs.AddSection.Describe(CWSF(@WEB_ContentRules),FetchModuleTextShort(ses,'rules_tab'),1);
@@ -441,7 +462,17 @@ begin
     layout.SetLayout(servicesGrid,subs);
     Result:=layout;
   end else begin
-    //get service if exists - set defaults
+    if servicesDC.ItemCount=1 then begin //set service filters
+      service:=servicesDC.First;
+      ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID:=service.UID;
+      frg.Filters.AddUIDFieldFilter('service','fw_uid',[service.UID],dbnf_OneValueFromFilter);
+      fng.Filters.AddUIDFieldFilter('service','fw_uid',[service.UID],dbnf_OneValueFromFilter);
+      fpg.Filters.AddUIDFieldFilter('service','fw_uid',[service.UID],dbnf_OneValueFromFilter);
+    end else begin
+      frg.Filters.AddUIDFieldFilter('service','fw_uid',[CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
+      fng.Filters.AddUIDFieldFilter('service','fw_uid',[CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
+      fpg.Filters.AddUIDFieldFilter('service','fw_uid',[CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
+    end;
     Result:=subs;
   end;
 end;
@@ -583,8 +614,40 @@ begin
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_StorePool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme   : IFRE_DB_SchemeObject;
+  poolObj  : TFRE_DB_FIREWALL_POOL;
+  isNew    : Boolean;
+  service  : IFRE_DB_Object;
 begin
-  Result:=GFRE_DB_NIL_DESC;
+  GetSystemScheme(TFRE_DB_FIREWALL_POOL,scheme);
+
+  if input.FieldExists('poolId') then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('poolId').AsString),TFRE_DB_FIREWALL_POOL,poolObj));
+    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_POOL,poolObj.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    isNew:=false;
+  end else begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('firewallId').AsString),service));
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOL,service.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    poolObj:=TFRE_DB_FIREWALL_POOL.CreateForDB;
+    poolObj.SetDomainID(service.DomainID);
+    poolObj.Field('firewall_id').AsObjectLink:=service.UID;
+    isNew:=true;
+  end;
+
+  scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,poolObj,isNew,conn);
+
+  if isNew then begin
+    CheckDbResult(conn.GetCollection(CFRE_DB_FIREWALL_POOL_COLLECTION).Store(poolObj));
+  end else begin
+    CheckDbResult(conn.Update(poolObj));
+  end;
+
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_DeletePool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -714,8 +777,40 @@ begin
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_StoreRule(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme   : IFRE_DB_SchemeObject;
+  ruleObj  : TFRE_DB_FIREWALL_RULE;
+  isNew    : Boolean;
+  service  : IFRE_DB_Object;
 begin
-  Result:=GFRE_DB_NIL_DESC;
+  GetSystemScheme(TFRE_DB_FIREWALL_RULE,scheme);
+
+  if input.FieldExists('ruleId') then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('ruleId').AsString),TFRE_DB_FIREWALL_RULE,ruleObj));
+    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_RULE,ruleObj.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    isNew:=false;
+  end else begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('firewallId').AsString),service));
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_RULE,service.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    ruleObj:=TFRE_DB_FIREWALL_RULE.CreateForDB;
+    ruleObj.SetDomainID(service.DomainID);
+    ruleObj.Field('firewall_id').AsObjectLink:=service.UID;
+    isNew:=true;
+  end;
+
+  scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,ruleObj,isNew,conn);
+
+  if isNew then begin
+    CheckDbResult(conn.GetCollection(CFRE_DB_FIREWALL_RULE_COLLECTION).Store(ruleObj));
+  end else begin
+    CheckDbResult(conn.Update(ruleObj));
+  end;
+
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_DeleteRule(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -820,8 +915,40 @@ begin
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_StoreNAT(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme   : IFRE_DB_SchemeObject;
+  natObj   : TFRE_DB_FIREWALL_NAT;
+  isNew    : Boolean;
+  service  : IFRE_DB_Object;
 begin
-  Result:=GFRE_DB_NIL_DESC;
+  GetSystemScheme(TFRE_DB_FIREWALL_NAT,scheme);
+
+  if input.FieldExists('natId') then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('natId').AsString),TFRE_DB_FIREWALL_NAT,natObj));
+    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_NAT,natObj.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    isNew:=false;
+  end else begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('firewallId').AsString),service));
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_NAT,service.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    natObj:=TFRE_DB_FIREWALL_NAT.CreateForDB;
+    natObj.SetDomainID(service.DomainID);
+    natObj.Field('firewall_id').AsObjectLink:=service.UID;
+    isNew:=true;
+  end;
+
+  scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,natObj,isNew,conn);
+
+  if isNew then begin
+    CheckDbResult(conn.GetCollection(CFRE_DB_FIREWALL_NAT_COLLECTION).Store(natObj));
+  end else begin
+    CheckDbResult(conn.Update(natObj));
+  end;
+
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_DeleteNAT(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
