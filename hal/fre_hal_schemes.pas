@@ -1147,11 +1147,13 @@ type
     function        GenerateIPFPools     : string;
     function        GenerateIPFNatRules  : string;
   public
+    class function  OnlyOneServicePerZone : boolean; override;
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     function        GetFMRI              : TFRE_DB_STRING; override;
     procedure       Embed                (const conn: IFRE_DB_CONNECTION); override;
   published
+    class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
     function        RIF_EnableService    (const runnning_ctx : TObject) : IFRE_DB_Object; virtual;
     function        RIF_DisableService   (const runnning_ctx : TObject) : IFRE_DB_Object; virtual;
    end;
@@ -2409,6 +2411,11 @@ begin
   end;
 end;
 
+class function TFRE_DB_FIREWALL_SERVICE.OnlyOneServicePerZone: boolean;
+begin
+  Result:=true;
+end;
+
 class procedure TFRE_DB_FIREWALL_SERVICE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 begin
   scheme.SetParentSchemeByName(TFRE_DB_SERVICE.ClassName);
@@ -2417,9 +2424,16 @@ end;
 
 class procedure TFRE_DB_FIREWALL_SERVICE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='0.1';
+  newVersionId:='0.2';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+  end;
+  if currentVersionId='0.1' then begin
+    currentVersionId := '0.2';
+    StoreTranslateableText(conn,'caption','Firewall');
+
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_objname','Name');
   end;
 end;
 
@@ -2476,6 +2490,11 @@ begin
           else
             obj.Finalize;
     end;
+end;
+
+class function TFRE_DB_FIREWALL_SERVICE.GetCaption(const conn: IFRE_DB_CONNECTION): String;
+begin
+  Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
 

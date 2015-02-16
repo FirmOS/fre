@@ -30,11 +30,15 @@ type
     class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects           (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
+    function        canAddFirewall             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const zone: TFRE_DB_ZONE): Boolean;
   published
     function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     function        WEB_ContentPools           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentRules           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentNAT             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+
+    function        WEB_AddFirewall            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CreateFirewall         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
     function        WEB_AddPool                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ModifyPool             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -277,16 +281,38 @@ begin
     CreateModuleText(conn,'cm_modify_nat','Modify');
     CreateModuleText(conn,'cm_delete_nat','Delete');
 
+    CreateModuleText(conn,'tb_create_firewall','Add');
+
     CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
+
+    CreateModuleText(conn,'firewall_new_caption','New Firewall');
+    CreateModuleText(conn,'zone_chooser_label','Zone');
+    CreateModuleText(conn,'zone_chooser_value','%zone_str% (%customer_str%)');
+    CreateModuleText(conn,'zone_chooser_value_no_customer','%zone_str%');
   end;
 end;
 
 procedure TFRE_FIRMBOX_FIREWALL_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
-  app      : TFRE_DB_APPLICATION;
-  conn     : IFRE_DB_CONNECTION;
-  transform: IFRE_DB_SIMPLE_TRANSFORM;
-  dc       : IFRE_DB_DERIVED_COLLECTION;
+  app         : TFRE_DB_APPLICATION;
+  conn        : IFRE_DB_CONNECTION;
+  transform   : IFRE_DB_SIMPLE_TRANSFORM;
+  dc          : IFRE_DB_DERIVED_COLLECTION;
+  servicesGrid: IFRE_DB_DERIVED_COLLECTION;
+
+  procedure _setCaption(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    str: String;
+  begin
+    if transformed_object.Field('customer').AsString<>'' then begin
+      str:=StringReplace(langres[0],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+      str:=StringReplace(str,'%customer_str%',transformed_object.Field('customer').AsString,[rfReplaceAll]);
+    end else begin
+      str:=StringReplace(langres[1],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
+    end;
+    transformed_object.Field('label').AsString:=str;
+  end;
+
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -295,7 +321,46 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
+      AddOneToOnescheme('objname','','OBJNAME');
+      AddMatchingReferencedFieldArray(['SERVICEPARENT>TFRE_DB_ZONE'],'objname','zone','ZONE');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
+    end;
+
+    servicesGrid := session.NewDerivedCollection('FIREWALL_SERVICES_GRID');
+    with servicesGrid do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Listview,[],'');
+      Filters.AddSchemeObjectFilter('service',[TFRE_DB_FIREWALL_SERVICE.ClassName]);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddOneToOnescheme('label');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_string,true,true,1,'','',nil,false,'domainid');
+      AddMatchingReferencedField(['TEMPLATEID>TFRE_DB_FBZ_TEMPLATE'],'serviceclasses');
+      AddMatchingReferencedField(['TFRE_DB_FIREWALL_SERVICE<SERVICEPARENT'],'uid','firewall','',false,dt_string,false,false,1,'','OK');
+      AddOneToOnescheme('disabledSCs');
+      SetSimpleFuncTransformNested(@_setCaption,[FetchModuleTextShort(session,'zone_chooser_value'),FetchModuleTextShort(session,'zone_chooser_value_no_customer')]);
+    end;
+
+    dc := session.NewDerivedCollection('FIREWALL_ZONE_CHOOSER');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_ZONES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      SetDefaultOrderField('objname',true);
+      Filters.AddStdClassRightFilter('rights','domainid','','',TFRE_DB_FIREWALL_SERVICE.ClassName,[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
+      Filters.AddStringFieldFilter('serviceclasses','serviceclasses',TFRE_DB_FIREWALL_SERVICE.ClassName,dbft_EXACTVALUEINARRAY);
+      Filters.AddStringFieldFilter('disabledSCs','disabledSCs',TFRE_DB_FIREWALL_SERVICE.ClassName,dbft_EXACTVALUEINARRAY,false,true);
+      Filters.AddStringFieldFilter('used','firewall','OK',dbft_EXACT);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
       AddOneToOnescheme('number','','NUMBER');
+      AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
       AddFulltextFilterOnTransformed(['number']);
     end;
 
@@ -304,12 +369,15 @@ begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_RULE_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_RulesMenu),nil,CWSF(@WEB_RulesSC));
+      SetUseDependencyAsUidFilter('fw_uid');
+      servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','','NUMBER');
+      AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
       AddFulltextFilterOnTransformed(['number']);
     end;
 
@@ -318,12 +386,15 @@ begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_NAT_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_NATMenu),nil,CWSF(@WEB_NATSC));
+      SetUseDependencyAsUidFilter('fw_uid');
+      servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','','NUMBER');
+      AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
       AddFulltextFilterOnTransformed(['number']);
     end;
 
@@ -332,23 +403,47 @@ begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_POOL_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_PoolsMenu),nil,CWSF(@WEB_PoolsSC));
+      SetUseDependencyAsUidFilter('fw_uid');
+      servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);
     end;
 
   end;
 end;
 
+function TFRE_FIRMBOX_FIREWALL_MOD.canAddFirewall(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const zone: TFRE_DB_ZONE): Boolean;
+begin
+  Result:=conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_SERVICE,zone.DomainID);
+end;
+
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_Content(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res: TFRE_DB_SUBSECTIONS_DESC;
+  subs      : TFRE_DB_SUBSECTIONS_DESC;
+  layout    : TFRE_DB_LAYOUT_DESC;
+  servicesDC: IFRE_DB_DERIVED_COLLECTION;
+  servicesGrid: TFRE_DB_VIEW_LIST_DESC;
 begin
   CheckClassVisibility4AnyDomain(ses);
 
-  res:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
-  res.AddSection.Describe(CWSF(@WEB_ContentRules),FetchModuleTextShort(ses,'rules_tab'),1);
-  res.AddSection.Describe(CWSF(@WEB_ContentNAT),FetchModuleTextShort(ses,'nat_tab'),2);
-  res.AddSection.Describe(CWSF(@WEB_ContentPools),FetchModuleTextShort(ses,'pools_tab'),3);
-  Result:=res;
+  subs:=TFRE_DB_SUBSECTIONS_DESC.Create.Describe();
+  subs.AddSection.Describe(CWSF(@WEB_ContentRules),FetchModuleTextShort(ses,'rules_tab'),1);
+  subs.AddSection.Describe(CWSF(@WEB_ContentNAT),FetchModuleTextShort(ses,'nat_tab'),2);
+  subs.AddSection.Describe(CWSF(@WEB_ContentPools),FetchModuleTextShort(ses,'pools_tab'),3);
+  servicesDC:=ses.FetchDerivedCollection('FIREWALL_SERVICES_GRID');
+  if (Length(conn.sys.GetDomainsForClassRight(sr_FETCH,TFRE_DB_FIREWALL_SERVICE))>1) or //multidomain
+     conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_FIREWALL_SERVICE) or           //can add service
+     (servicesDC.ItemCount>1) then begin                                                //has more than one service
+    layout:=TFRE_DB_LAYOUT_DESC.create.Describe();
+    servicesGrid:=servicesDC.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
+    if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_FIREWALL_SERVICE) then begin
+      servicesGrid.AddButton.Describe(CWSF(@WEB_AddFirewall),'',FetchModuleTextShort(ses,'tb_create_firewall'));
+    end;
+    layout.SetLayout(servicesGrid,subs);
+    Result:=layout;
+  end else begin
+    //get service if exists - set defaults
+    Result:=subs;
+  end;
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_ContentPools(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -408,6 +503,73 @@ begin
     res.AddButton.DescribeManualType('delete_nat',CWSF(@WEB_DeleteNAT),'',FetchModuleTextShort(ses,'tb_delete_nat'),FetchModuleTextHint(ses,'tb_delete_nat'),true);
   end;
   Result:=res;
+end;
+
+function TFRE_FIRMBOX_FIREWALL_MOD.WEB_AddFirewall(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res   : TFRE_DB_FORM_DIALOG_DESC;
+  sf    : TFRE_DB_SERVER_FUNC_DESC;
+  zoneId: TFRE_DB_String;
+  zone  : TFRE_DB_ZONE;
+  scheme: IFRE_DB_SchemeObject;
+begin
+  CheckClassVisibility4MyDomain(ses);
+
+  GetSystemScheme(TFRE_DB_FIREWALL_SERVICE,scheme);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'firewall_new_caption'),600,true,true,false);
+
+  sf:=CWSF(@WEB_CreateFirewall);
+
+  if input.FieldPathExists('data.zone') then begin
+    zoneId:=input.FieldPath('data.zone').AsString;
+  end else begin
+    if input.FieldExists('zoneId') then begin
+      zoneId:=input.Field('zoneId').AsString;
+      sf.AddParam.Describe('zoneId',zoneId);
+
+      CheckDbResult(conn.FetchAs(FREDB_H2G(zoneId),TFRE_DB_ZONE,zone));
+      if not canAddFirewall(input,ses,app,conn,zone) then
+        raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+    end else begin
+      res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'zone',ses.FetchDerivedCollection('FIREWALL_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
+    end;
+  end;
+  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'',true,true);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_FIREWALL_MOD.WEB_CreateFirewall(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  zoneId  : TFRE_DB_String;
+  zone    : TFRE_DB_ZONE;
+  scheme  : IFRE_DB_SchemeObject;
+  firewall: TFRE_DB_FIREWALL_SERVICE;
+begin
+  if input.FieldPathExists('data.zone') then begin
+    zoneId:=input.FieldPath('data.zone').AsString;
+    input.Field('data').AsObject.DeleteField('zone');
+  end else begin
+    if input.FieldExists('zoneId') then begin
+      zoneId:=input.Field('zoneId').AsString;
+    end else begin
+      raise EFRE_DB_Exception.Create('Missing parameter: data.zone or zoneId');
+    end;
+  end;
+
+  CheckDbResult(conn.FetchAs(FREDB_H2G(zoneId),TFRE_DB_ZONE,zone));
+  if not canAddFirewall(input,ses,app,conn,zone) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  GetSystemScheme(TFRE_DB_FIREWALL_SERVICE,scheme);
+  firewall:=TFRE_DB_FIREWALL_SERVICE.CreateForDB;
+  firewall.SetDomainID(zone.DomainID);
+  firewall.Field('serviceParent').AsObjectLink:=zone.UID;
+  firewall.Field('uniquephysicalid').AsString:=TFRE_DB_FIREWALL_SERVICE.ClassName + '@' + zone.UID_String;
+  scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,firewall,true,conn);
+
+  CheckDbResult(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION).Store(firewall));
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_AddPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
