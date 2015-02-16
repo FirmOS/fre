@@ -1778,24 +1778,52 @@ end;
 
 class procedure TFRE_DB_FIREWALL_POOL.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 var
-  group: IFRE_DB_InputGroupSchemeDefinition;
+  group  : IFRE_DB_InputGroupSchemeDefinition;
+  enum   : IFRE_DB_Enum;
+  fd_map : IFRE_DB_FieldSchemeDefinition;
+  fd_type: IFRE_DB_FieldSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
 
+  enum:=GFRE_DBI.NewEnum('fw_pool_mapping').Setup(GFRE_DBI.CreateText('$enum_fw_pool_mapping','Firewall Pool Mapping'));
+  enum.addEntry('TABLE',GetTranslateableTextKey('enum_fw_pool_mapping_table'));
+  enum.addEntry('GROUP-MAP',GetTranslateableTextKey('enum_fw_pool_mappping_group_map'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_pool_type').Setup(GFRE_DBI.CreateText('$enum_fw_pool_type','Firewall Pool Types'));
+  enum.addEntry('TREE',GetTranslateableTextKey('enum_fw_pool_type_tree'));
+  enum.addEntry('HASH',GetTranslateableTextKey('enum_fw_pool_type_hash'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_pool_direction').Setup(GFRE_DBI.CreateText('$enum_fw_pool_direction','Firewall Pool Direction'));
+  enum.addEntry('IN',GetTranslateableTextKey('enum_fw_pool_direction_in'));
+  enum.addEntry('OUT',GetTranslateableTextKey('enum_fw_pool_direction_out'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
-  scheme.AddSchemeField('mapping',fdbft_String).Required:=true;       // enum
-  scheme.AddSchemeField('type',fdbft_String).Required:=true;         // enum, show only with mapping group-map
-  scheme.AddSchemeField('direction',fdbft_String).Required:=true;          // enum, show only with mapping group-map
-  scheme.AddSchemeField('default_group',fdbft_UInt32);                     // show only with mapping group-map
+  fd_map:=scheme.AddSchemeField('mapping',fdbft_String).SetupFieldDef(true,false,'fw_pool_mapping');
+  fd_type:=scheme.AddSchemeField('type',fdbft_String).SetupFieldDef(true,false,'fw_pool_type');
+  scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(true,false,'fw_pool_direction');
+  scheme.AddSchemeField('default_group',fdbft_UInt32);
+  fd_map.addEnumDepField('type','GROUP-MAP',fdv_visible);
+  fd_map.addEnumDepField('direction','GROUP-MAP',fdv_visible);
+  fd_map.addEnumDepField('default_group','GROUP-MAP',fdv_visible);
 
-  // expert mode
-  scheme.AddSchemeField('hash_size',fdbft_Uint32);                         // show only with type hash
-  scheme.AddSchemeField('hash_seed',fdbft_Uint32);                         // show only with type hash
+  scheme.AddSchemeField('hash_size',fdbft_Uint32);
+  scheme.AddSchemeField('hash_seed',fdbft_Uint32);
+  fd_type.addEnumDepField('hash_size','HASH',fdv_visible);
+  fd_type.addEnumDepField('hash_seed','HASH',fdv_visible);
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
+  group.AddInput('mapping',GetTranslateableTextKey('scheme_mapping'),false,false,'','',false,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('type',GetTranslateableTextKey('scheme_type'),false,false,'','',false,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('direction',GetTranslateableTextKey('scheme_direction'),false,false,'','',false,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('default_group',GetTranslateableTextKey('scheme_default_group'));
+  group.AddInput('hash_size',GetTranslateableTextKey('scheme_hash_size'));
+  group.AddInput('hash_seed',GetTranslateableTextKey('scheme_hash_seed'));
 end;
 
 class procedure TFRE_DB_FIREWALL_POOL.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -1804,8 +1832,21 @@ begin
   if currentVersionId='' then begin
     currentVersionId := '0.1';
 
+    StoreTranslateableText(conn,'enum_fw_pool_mapping_table','Table');
+    StoreTranslateableText(conn,'enum_fw_pool_mappping_group_map','Group-Map');
+    StoreTranslateableText(conn,'enum_fw_pool_type_tree','Tree');
+    StoreTranslateableText(conn,'enum_fw_pool_type_hash','Hash');
+    StoreTranslateableText(conn,'enum_fw_pool_direction_in','In');
+    StoreTranslateableText(conn,'enum_fw_pool_direction_out','Out');
+
     StoreTranslateableText(conn,'scheme_main_group','General Information');
     StoreTranslateableText(conn,'scheme_number','Number');
+    StoreTranslateableText(conn,'scheme_mapping','Mapping');
+    StoreTranslateableText(conn,'scheme_type','Type');
+    StoreTranslateableText(conn,'scheme_direction','Direction');
+    StoreTranslateableText(conn,'scheme_default_group','Default group');
+    StoreTranslateableText(conn,'scheme_hash_size','Hash size');
+    StoreTranslateableText(conn,'scheme_hash_seed','Hash seed');
   end;
 end;
 
