@@ -1478,16 +1478,35 @@ implementation
 class procedure TFRE_DB_FIREWALL_NAT.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 var
   group: IFRE_DB_InputGroupSchemeDefinition;
+  enum : IFRE_DB_Enum;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
 
+  enum:=GFRE_DBI.NewEnum('fw_nat_command').Setup(GFRE_DBI.CreateText('$enum_fw_nat_command','Firewall NAT Command'));
+  enum.addEntry('MAP',GetTranslateableTextKey('enum_fw_nat_command_map'));
+  enum.addEntry('BIMAP',GetTranslateableTextKey('enum_fw_nat_command_bimap'));
+  enum.addEntry('RDR',GetTranslateableTextKey('enum_fw_nat_command_rdr'));
+  enum.addEntry('MAP-BLOCK',GetTranslateableTextKey('enum_fw_nat_command_map_block'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_nat_protocol').Setup(GFRE_DBI.CreateText('$enum_fw_nat_protocol','Firewall NAT Protocol'));
+  enum.addEntry('TCP',GetTranslateableTextKey('enum_fw_nat_protocol_tcp'));
+  enum.addEntry('UDP',GetTranslateableTextKey('enum_fw_nat_protocol_udp'));
+  enum.addEntry('TCP_UDP',GetTranslateableTextKey('enum_fw_nat_protocol_tcp_udp'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_nat_dst_port_mode').Setup(GFRE_DBI.CreateText('$enum_fw_nat_dst_port_mode','Firewall NAT Dest Port Mode'));
+  enum.addEntry('DEFAULT',GetTranslateableTextKey('enum_fw_nat_dst_port_mode_default'));
+  enum.addEntry('AUTO',GetTranslateableTextKey('enum_fw_nat_dst_port_mode_auto'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
-  scheme.AddSchemeField('command',fdbft_String).Required:=true;       // enum
+  scheme.AddSchemeField('command',fdbft_String).SetupFieldDef(true,false,'fw_nat_command');
 
   scheme.AddSchemeField('interface',fdbft_ObjLink).Required:=true;    // datalink of the zone
-  scheme.AddSchemeField('protocol',fdbft_String);                     // enum
+  scheme.AddSchemeField('protocol',fdbft_String).SetupFieldDef(false,false,'fw_nat_protocol');
 
   scheme.AddSchemeField('src_addr',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('src_addr_host',fdbft_boolean);
@@ -1496,7 +1515,7 @@ begin
   scheme.AddSchemeField('dst_addr',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('dst_addr_host',fdbft_boolean);
   scheme.AddSchemeField('dst_port_1',fdbft_UInt16);
-  scheme.AddSchemeField('dst_port_mode',fdbft_String);                // enum, default ":"
+  scheme.AddSchemeField('dst_port_mode',fdbft_String).SetupFieldDef(false,false,'fw_nat_dst_port_mode');
   scheme.AddSchemeField('dst_port_2',fdbft_UInt16);                   // show only if dst_port_mode is ":"
 
   // expert mode
@@ -1512,13 +1531,30 @@ begin
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
+  group.AddInput('command',GetTranslateableTextKey('scheme_command'));
+  group.AddInput('protocol',GetTranslateableTextKey('scheme_command'));
 end;
 
 class procedure TFRE_DB_FIREWALL_NAT.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='0.1';
+  newVersionId:='0.2';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+  end;
+  if currentVersionId='0.1' then begin
+    currentVersionId := '0.2';
+
+    StoreTranslateableText(conn,'enum_fw_nat_command_map','Map');
+    StoreTranslateableText(conn,'enum_fw_nat_command_bimap','Bimap');
+    StoreTranslateableText(conn,'enum_fw_nat_command_rdr','Rdr');
+    StoreTranslateableText(conn,'enum_fw_nat_command_map_block','Map-Block');
+
+    StoreTranslateableText(conn,'enum_fw_nat_protocol_tcp','TCP');
+    StoreTranslateableText(conn,'enum_fw_nat_protocol_udp','UDP');
+    StoreTranslateableText(conn,'enum_fw_nat_protocol_tcp_udp','TCP/UDP');
+
+    StoreTranslateableText(conn,'enum_fw_nat_dst_port_mode_default',':');
+    StoreTranslateableText(conn,'enum_fw_nat_dst_port_mode_auto','auto');
 
     StoreTranslateableText(conn,'scheme_main_group','General Information');
     StoreTranslateableText(conn,'scheme_number','Number');
@@ -1828,9 +1864,12 @@ end;
 
 class procedure TFRE_DB_FIREWALL_POOL.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='0.1';
+  newVersionId:='0.2';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+  end;
+  if currentVersionId='0.1' then begin
+    currentVersionId := '0.2';
 
     StoreTranslateableText(conn,'enum_fw_pool_mapping_table','Table');
     StoreTranslateableText(conn,'enum_fw_pool_mappping_group_map','Group-Map');
@@ -8086,6 +8125,12 @@ end;
    scheme.AddSchemeField('no_kvm_pit_reinjection',fdbft_Boolean);
    scheme.AddSchemeField('balloon',fdbft_String).SetupFieldDef(true,false,'qemu_balloon');
    scheme.AddSchemeField('emulator',fdbft_String).SetupFieldDef(true,false,'qemu_emulator');
+
+   scheme.AddSchemeField('interface',fdbft_ObjLink).SetupFieldDef(false,true);
+   scheme.AddSchemeField('hdd',fdbft_ObjLink).SetupFieldDef(false,true);
+   scheme.AddSchemeField('cd',fdbft_ObjLink).SetupFieldDef(false,true);
+   scheme.AddSchemeField('usb',fdbft_ObjLink).SetupFieldDef(false,true);
+   scheme.AddSchemeField('floppy',fdbft_ObjLink).SetupFieldDef(false,true);
 
    group:=scheme.AddInputGroup('cpu_config').Setup(GetTranslateableTextKey('scheme_cpu_config_group'));
    group.AddInput('cores',GetTranslateableTextKey('scheme_cores'));

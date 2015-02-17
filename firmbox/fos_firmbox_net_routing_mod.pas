@@ -1566,7 +1566,7 @@ var
   i       : Integer;
   datalink: IFRE_DB_Object;
 
-  procedure _handleHostnets(const parentDbo: IFRE_DB_Object; const newDomainId: TFRE_DB_GUID);
+  procedure _handleHostnets(const parentDbo: IFRE_DB_Object; const zone: TFRE_DB_ZONE);
   var
     i      : Integer;
     hostnet: IFRE_DB_Object;
@@ -1575,7 +1575,8 @@ var
     refs:=conn.GetReferences(parentDbo.UID,false,'',CFOS_DATALINK_PARENT_FIELD);
     for i := 0 to High(refs) do begin
       CheckDbResult(conn.Fetch(refs[i],hostnet));
-      hostnet.SetDomainID(newDomainId);
+      hostnet.SetDomainID(zone.DomainID);
+      hostnet.Field('zoneId').AsObjectLink:=zone.UID;
       CheckDbResult(conn.Update(hostnet));
     end;
   end;
@@ -1597,10 +1598,10 @@ begin
         CheckDbResult(conn.Fetch(refs[i],datalink));
         datalink.SetDomainID(zone.DomainID);
         CheckDbResult(conn.Update(datalink.CloneToNewObject()));
-        _handleHostnets(datalink,zone.DomainID);
+        _handleHostnets(datalink,zone);
       end;
     end else begin
-      _handleHostnets(dbo,zone.DomainID);
+      _handleHostnets(dbo,zone);
     end;
   end;
   dbo.Field(CFOS_DATALINK_PARENT_FIELD).AddObjectLink(zone.UID);
@@ -1710,6 +1711,7 @@ var
   serviceClass: TFRE_DB_String;
   idx         : String;
   hostnet     : IFRE_DB_Object;
+  zone        : TFRE_DB_ZONE;
 begin
   _canAddHostnet(input,conn,ipv4Enabled,ipv6Enabled,dbo);
 
@@ -1734,6 +1736,8 @@ begin
 
   hostnet.Field('serviceParent').AsObjectLink:=dbo.UID;
   hostnet.Field(CFOS_DATALINK_PARENT_FIELD).AsObjectLink:=dbo.UID;
+  zone:=_getZone(dbo,conn,false);
+  hostnet.Field('zoneId').AsObjectLink:=zone.UID;
   hostnet.Field('uniquephysicalid').AsString:=idx;
   hostnet.SetDomainID(dbo.DomainID);
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,hostnet,true,conn);
