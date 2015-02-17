@@ -3668,8 +3668,10 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
           //'root' element => set required
           children[i].set('required',true);
           var labelElem = dojo.byId(children[i].id+'_label');
-          dojo.removeClass(labelElem,"firmosFormLabel");
-          dojo.addClass(labelElem,"firmosFormLabelRequired");
+          if (labelElem) {
+            dojo.removeClass(labelElem,"firmosFormLabel");
+            dojo.addClass(labelElem,"firmosFormLabelRequired");
+          }
         }
       } else {
         var path = pathArray.join('.');
@@ -3709,12 +3711,14 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
       var elem = dijit.byId(this.groupRequiredFields[path].grf[i]);
       elem.set('required',required);
       var labelElem = dojo.byId(this.groupRequiredFields[path].grf[i]+'_label');
-      if (required) {
-        dojo.removeClass(labelElem,"firmosFormLabel");
-        dojo.addClass(labelElem,"firmosFormLabelRequired");
-      } else {
-        dojo.removeClass(labelElem,"firmosFormLabelRequired");
-        dojo.addClass(labelElem,"firmosFormLabel");
+      if (labelElem) {
+        if (required) {
+          dojo.removeClass(labelElem,"firmosFormLabel");
+          dojo.addClass(labelElem,"firmosFormLabelRequired");
+        } else {
+          dojo.removeClass(labelElem,"firmosFormLabelRequired");
+          dojo.addClass(labelElem,"firmosFormLabel");
+        }
       }
     }
     this.groupRequiredFields[path].required = required;
