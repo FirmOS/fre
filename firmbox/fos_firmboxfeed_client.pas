@@ -521,10 +521,12 @@ end;
 
 procedure TFRE_BOX_FEED_CLIENT.TestDatalink;
 var error:string;
+    dbo  :IFRE_DB_Object;
 begin
   {$IFDEF SOLARIS}
   writeln('GET DL');
-//  get_datalink_dbo;
+  dbo := get_datalink_dbo;
+  writeln('DATALINK DBO:',dbo.DumpToString);
 //  writeln('CREATESIM');
 ////  get_datalink_dbo;
 //  create_simnet('simsn8',error);
@@ -532,22 +534,22 @@ begin
 //  create_simnet('simsn9',error);
 //  writeln(error);
 //  writeln('GET DL');
-  writeln('CREATE BRIDGE');
+//  writeln('CREATE BRIDGE');
 //  create_bridge('brna',TFRE_DB_StringArray.Create,error);
 //  writeln('SWL CREATE BRIDGE --------------- ',error);
 //  readln;
-  add_to_bridge('brna',TFRE_DB_StringArray.Create('ss2'),error);
-  writeln('SWL ADD TO BRIDGE --------------- ',error);
+//  add_to_bridge('brna',TFRE_DB_StringArray.Create('ss2'),error);
+//  writeln('SWL ADD TO BRIDGE --------------- ',error);
 //  create_bridge('brnb',TFRE_DB_StringArray.Create,error);
 //  writeln('SWL CREATE BRIDGE --------------- ',error);
 //  delete_bridge('brb',error);
 //  writeln('SWL DELETE BRIDGE',error);
 //  get_datalink_dbo;
   abort;
-  delete_simnet('simsn1',error);
-  writeln(error);
-  delete_simnet('simsn2',error);
-  writeln(error);
+  //delete_simnet('simsn1',error);
+  //writeln(error);
+  //delete_simnet('simsn2',error);
+  //writeln(error);
   {$ENDIF}
 
 end;

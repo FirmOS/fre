@@ -128,7 +128,7 @@ var
       begin
         writeln('SWL: NOW DATALINK ',dl.ObjectName,' ',obj.UID.AsHexString);
         resdbo := dl.RIF_CreateOrUpdateServices;
-        resdbo.ForAllFields(@_RemoveIPHostnetService,true,true);
+        resdbo.ForAllFields(@_RemoveIPHostnetService,true);
 //        writeln(resdbo.DumpToString());
       end
     else

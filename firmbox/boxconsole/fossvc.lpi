@@ -37,12 +37,10 @@
       <Unit1>
         <Filename Value="../../hal/fosillu_ipadm.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fosillu_ipadm"/>
       </Unit1>
       <Unit2>
         <Filename Value="../../hal/fosillu_hal_svcctrl.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fosillu_hal_svcctrl"/>
       </Unit2>
     </Units>
   </ProjectOptions>

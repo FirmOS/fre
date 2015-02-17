@@ -11,7 +11,7 @@ uses
   fosillu_libzfs, fosillu_zfs,
   fosillu_mnttab,fosillu_libzonecfg,
   fosillu_libdladm,
-  ctypes, sysutils, strutils, fosillu_sysnet_common, fosillu_dladm;
+  ctypes, sysutils, strutils, fosillu_sysnet_common, fosillu_dladm,fre_db_core;
 
 {$LINKLIB libdladm}
 
@@ -25,10 +25,20 @@ var res,status  : dladm_status_t;
     linkname    : string;
     bridgename  : string;
     aggrname    : string;
+    propval     : string;
+    zonename    : string;
+    linkprops   : IFRE_DB_Object;
+    dldbo       : IFRE_DB_Object;
+    ttype       : string;
+    localip     : string;
+    remoteip    : string;
 
 begin
   paramst := ParamStr(1);
   res := dladm_open(@GILLU_DLADM);
+
+
+  InitMinimal(true);
 
   if res=DLADM_STATUS_OK then
     begin
@@ -58,7 +68,12 @@ begin
         writeln('DELETE VNIC ZONED ',delete_vnic('hugovn1',err,'demo'),' ',err)
       else
       if paramst='glp' then
-        writeln('get linkprops',get_linkprops('hugovn1',err),' ',err)
+        begin
+          linkname := PAramstr(2);
+          zonename := Paramstr(3);
+          writeln('get linkprops',get_linkprops(linkname,err,linkprops,zonename),' ',err);
+          writeln('linkprops:',linkprops.DumpToString);
+        end
       else
       if paramst='addbridge' then
         begin
@@ -136,6 +151,55 @@ begin
          aggrname := PAramstr(2);
          linkname := PAramstr(3);
          writeln('connect sim',connect_simnet(aggrname,linkname,err),' ',err);
+        end
+      else
+      if paramst='setlinkprop' then
+        begin
+         linkname := PAramstr(2);
+         propval  := Paramstr(3);
+         zonename := Paramstr(4);
+         writeln('set linkprop',set_linkprops(linkname,TFRE_DB_StringArray.Create(propval),err,zonename),' ',err);
+        end
+      else
+      if paramst='createtun' then
+        begin
+         linkname := PAramstr(2);
+         ttype    := Paramstr(3);
+         localip  := Paramstr(4);
+         remoteip := Paramstr(5);
+         writeln('create iptun',create_iptun(linkname,ttype,localip,remoteip,err),' ',err);
+        end
+      else
+      if paramst='deletetun' then
+        begin
+         linkname := PAramstr(2);
+         writeln('delete iptun',delete_iptun(linkname,err),' ',err);
+        end
+      else
+      if paramst='createipmp' then
+        begin
+         linkname := PAramstr(2);
+         writeln('create ipmp',create_ipmp(linkname,err),' ',err);
+        end
+      else
+      if paramst='deleteipmp' then
+        begin
+         linkname := PAramstr(2);
+         writeln('delete ipmp',delete_ipmp(linkname,err),' ',err);
+        end
+      else
+      if paramst='addipmp' then
+        begin
+          aggrname := PAramstr(2);
+          linkname := PAramstr(3);
+          writeln('add to ipmp',add_to_ipmp(aggrname,linkname,true,err),' ',err);
+        end
+      else
+      if paramst='removeipmp' then
+        begin
+          aggrname := PAramstr(2);
+          linkname := PAramstr(3);
+          writeln('remove from ipmp',remove_from_ipmp(aggrname,linkname,err),' ',err);
         end
       else
         writeln('SCHEI* PARAMETER');

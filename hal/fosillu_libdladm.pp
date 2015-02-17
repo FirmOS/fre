@@ -781,6 +781,60 @@ type
 
 // end libdlbridge
 
+// libdliptun.h
+
+const NI_MAXHOST=1025;
+
+type
+  iptun_params = record
+      iptun_param_linkid : datalink_id_t;
+      iptun_param_flags : uint_t;
+      iptun_param_type : iptun_type_t;
+      iptun_param_laddr : array[0..(NI_MAXHOST)-1] of char;
+      iptun_param_raddr : array[0..(NI_MAXHOST)-1] of char;
+      iptun_param_secinfo : ipsec_req_t;
+    end;
+  iptun_params_t = iptun_params;
+
+  Piptun_params_t =^iptun_params_t;
+
+{ iptun_param_flags  }
+{ itp_type is set  }
+
+const
+  IPTUN_PARAM_TYPE = $00000001;
+{ itp_laddr is set  }
+  IPTUN_PARAM_LADDR = $00000002;
+{ itp_raddr is set  }
+  IPTUN_PARAM_RADDR = $00000004;
+{ itp_secinfo is set  }
+  IPTUN_PARAM_SECINFO = $00000008;
+{ implicitly created IP tunnel  }
+  IPTUN_PARAM_IMPLICIT = $00000010;
+{ IPsec policy exists  }
+  IPTUN_PARAM_IPSECPOL = $00000020;
+(* Const before type ignored *)
+
+function dladm_iptun_create(_para1:dladm_handle_t; _para2:Pchar; _para3:Piptun_params_t; _para4:uint_t):dladm_status_t;cdecl;external External_library name 'dladm_iptun_create';
+
+function dladm_iptun_delete(_para1:dladm_handle_t; _para2:datalink_id_t; _para3:uint_t):dladm_status_t;cdecl;external External_library name 'dladm_iptun_delete';
+
+(* Const before type ignored *)
+function dladm_iptun_modify(_para1:dladm_handle_t; _para2:Piptun_params_t; _para3:uint_t):dladm_status_t;cdecl;external External_library name 'dladm_iptun_modify';
+
+function dladm_iptun_getparams(_para1:dladm_handle_t; _para2:Piptun_params_t; _para3:uint_t):dladm_status_t;cdecl;external External_library name 'dladm_iptun_getparams';
+
+function dladm_iptun_up(_para1:dladm_handle_t; _para2:datalink_id_t):dladm_status_t;cdecl;external External_library name 'dladm_iptun_up';
+
+function dladm_iptun_down(_para1:dladm_handle_t; _para2:datalink_id_t):dladm_status_t;cdecl;external External_library name 'dladm_iptun_down';
+
+function dladm_iptun_set6to4relay(_para1:dladm_handle_t; _para2:Pin_addr):dladm_status_t;cdecl;external External_library name 'dladm_iptun_set6to4relay';
+
+function dladm_iptun_get6to4relay(_para1:dladm_handle_t; _para2:Pin_addr):dladm_status_t;cdecl;external External_library name 'dladm_iptun_get6to4relay';
+
+// libdliptun.h
+
+
 implementation
 
 procedure InitdladmStatusCodes;

@@ -13,7 +13,8 @@ uses
   fosillu_nvpair,
   fosillu_libdladm,
   fosillu_libdlaggr,
-  ctypes, fosillu_sysnet_common;
+  ctypes, fosillu_sysnet_common,
+  fre_process;
 
 var GILLU_DLADM : dladm_handle_t;
 
@@ -43,9 +44,19 @@ function  modify_aggr       (const aggrname  : string; const aggr_policy: string
 function  create_vnic       (const vnic, for_linkname: string ; var macaddr: TFOS_MAC_ADDR; out error: String ; const for_zone:string='' ; const vid : cint = 0 ;const vrid : vrid_t = VRRP_VRID_NONE ; linkprops:string=''): boolean;
 function  delete_vnic       (const linkname : string ; out error : string;const zonename:string=''):boolean;
 function  rename_vnic       (const from_linkname,to_linkname : string ; out error:string ; for_zone : string=''):boolean;
-function  vnic_set_linkprop (const linkname: string; out error: string; prop,val: string; const zonename: string): boolean;
-function  get_linkprops     (const linkname : string ; out error:string ; for_zone : string=''):boolean;
+
+function  create_iptun      (const linkname: string; const tunnel_type:string; const local_addr:string; const remote_addr:string; out error : string) : boolean;
+function  delete_iptun      (const linkname: string; out error : string) : boolean;
+
+function  set_linkprops     (const linkname: string; const props :TFRE_DB_StringArray;out error:string; const zonename: string=''): boolean;
+function  get_linkprops     (const linkname : string ; out error:string ; out linkprops: IFRE_DB_Object; const zonename : string=''):boolean;
+function  get_linkpropsbyid (const linkid: datalink_id_t;out error:string; out linkprops: IFRE_DB_Object):boolean;
 function  get_datalink_dbo  : IFRE_DB_Object;
+
+function  create_ipmp       (const ipmpname: string; out error: string) : boolean;
+function  add_to_ipmp       (const ipmpname: string; const linkname : string; const is_active:boolean; out error: string) : boolean;
+function  remove_from_ipmp  (const ipmpname: string; const linkname : string; out error : string) : boolean;
+function  delete_ipmp       (const ipmpname: string; out error: string) : boolean;
 
 implementation
 
@@ -94,14 +105,236 @@ begin
     end;
 end;
 
-function vnic_set_linkprop(const linkname: string; out error: string; prop,val: string; const zonename: string): boolean;
+function create_iptun(const linkname: string; const tunnel_type: string;const local_addr: string; const remote_addr: string; out error: string): boolean;
+var
+    params            : iptun_params_t;
+    status            : dladm_status_t;
+    flags             : uint32_t = DLADM_OPT_ACTIVE + DLADM_OPT_PERSIST;
+
 begin
-  abort;
+
+  FillByte(params,sizeof(params),0);
+
+  if (Length(linkname)>MAXLINKNAMELEN) or (dladm_valid_linkname(Pchar(linkname))<>B_TRUE) then
+    begin
+      error := 'CREATE IPTUN: invalid link name ['+linkname+']';
+      exit(false);
+    end;
+
+
+  case tunnel_type of
+   'ipv4' : params.iptun_param_type:=IPTUN_TYPE_IPV4;
+   'ipv6' : params.iptun_param_type:=IPTUN_TYPE_IPV6;
+   '6to4' : params.iptun_param_type:=IPTUN_TYPE_6TO4;
+  else
+    begin
+      error := 'CREATE IPTUN: INVALID TUNNEL TYPE ['+tunnel_type+']';
+      exit(false);
+    end;
+  end;
+
+  StrPLCopy(PChar(@params.iptun_param_laddr),local_addr,sizeof(params.iptun_param_laddr));
+  StrPLCopy(PChar(@params.iptun_param_raddr),remote_addr,sizeof(params.iptun_param_raddr));
+
+  params.iptun_param_flags := params.iptun_param_flags + IPTUN_PARAM_TYPE + IPTUN_PARAM_LADDR + IPTUN_PARAM_RADDR;
+
+  writeln('SWL IPTUN MODE:',params.iptun_param_type,' L:',params.iptun_param_laddr,' R:',params.iptun_param_raddr);
+  status := dladm_iptun_create(GILLU_DLADM,Pchar(linkname),@params,flags);
+  if (status<>DLADM_STATUS_OK) then
+    begin
+      error := 'CREATE IPTUN: Create iptun ['+linkname+'] failed ['+CDLADM_STATUS_CODES[status]+']';
+      exit(false);
+    end;
+  result :=true;
 end;
 
-function get_linkprops(const linkname: string; out error: string; for_zone: string): boolean;
+function delete_iptun(const linkname: string; out error: string): boolean;
+var
+    params            : iptun_params_t;
+    status            : dladm_status_t;
+    flags             : uint32_t = DLADM_OPT_ACTIVE + DLADM_OPT_PERSIST;
+    linkid            : datalink_id_t;
+
 begin
-  abort;
+  status := dladm_name2info(GILLU_DLADM,PChar(linkname),@linkid,nil,nil,nil);
+  if status<>DLADM_STATUS_OK then
+    begin
+      error := 'DELETE IPTUN: not found ['+linkname+'] ['+CDLADM_STATUS_CODES[status]+']';
+      exit(false);
+    end;
+
+  status := dladm_iptun_delete(GILLU_DLADM,linkid,flags);
+  if (status<>DLADM_STATUS_OK) then
+    begin
+      error := 'DELETE IPTUN: Delete iptun ['+linkname+'] ['+CDLADM_STATUS_CODES[status]+']';
+      exit(false);
+    end;
+
+  result := true;
+end;
+
+
+function set_linkprops(const linkname: string;const props: TFRE_DB_StringArray; out error: string; const zonename: string): boolean;
+var
+    status            : dladm_status_t;
+    linkid            : datalink_id_t;
+    n                 : NativeInt;
+    reset             : boolean_t = B_FALSE;
+    prop              : string;
+    value             : string;
+    val1              : Pchar;
+    zname             : Pchar=nil;
+begin
+  prop :='';
+  for n:=0 to High(props) do
+    begin
+      prop := prop + props[n];
+      if n<high(props) then prop := prop+',';
+    end;
+
+  if length(props)=0 then
+    begin
+      error := 'SETLINKPROP: no linkprops set';
+      exit(false);
+    end;
+
+
+  if zonename<>'' then
+    zname := PChar(zonename);
+
+  status := dladm_zname2info(GILLU_DLADM,zname,pchar(linkname),@linkid,nil,nil,nil);
+  if status<>DLADM_STATUS_OK then
+    begin
+      error := 'SETLINKPROP: link ['+linkname+'] invalid ['+CDLADM_STATUS_CODES[status]+']';
+      exit(false);
+    end;
+
+  writeln('SWL LINKID :',linkid);
+  for n:=0 to high(props) do
+    begin
+      prop   := Copy(props[n],1,Pos('=',props[n])-1);
+      value  := Copy(props[n],Pos('=',props[n])+1,maxint);
+      val1   := Pchar(value);
+      status := dladm_set_linkprop(GILLU_DLADM, linkid, Pchar(prop), @val1, 1, DLADM_OPT_ACTIVE);
+      if status<>DLADM_STATUS_OK then
+        begin
+          error := 'SETLINKPROP: link ['+linkname+'] property ['+prop+'] value ['+value+'] failed ['+CDLADM_STATUS_CODES[status]+']';
+          exit(false);
+        end;
+    end;
+
+  result := true;
+end;
+
+function WalkLinkPropCB(handle:dladm_handle_t; _para2:datalink_id_t; _propname:Pchar; _ldbo:pointer):longint; cdecl;
+var
+  ldbo        : IFRE_DB_Object;
+  valcnt      : uint_t = DLADM_MAX_PROP_VALCNT;
+  status      : dladm_status_t;
+  propvals    : Array[0..DLADM_MAX_PROP_VALCNT-1] of PChar;
+  n           : NativeInt;
+  error       : string;
+  lprop       : IFRE_DB_Object;
+
+begin
+//  writeln('SWL WALK LINKPROP: ',_propname);
+  ldbo  := IFRE_DB_Object(_ldbo);
+  lprop := GFRE_DBI.NewObject;
+  ldbo.Field(_propname).asobject := lprop;
+
+  for n  := 0 to high(propvals) do
+    begin
+      propvals[n] := GetMem(DLADM_PROP_VAL_MAX*sizeof(Char));
+    end;
+
+  status := dladm_get_linkprop(handle,_para2,DLADM_PROP_VAL_DEFAULT,_propname,@propvals,@valcnt);
+  if status=DLADM_STATUS_OK then
+    begin
+      for n:=0 to valcnt-1 do
+        begin
+          lprop.Field('default').addstring(propvals[n]);
+        end;
+    end;
+
+  valcnt := DLADM_MAX_PROP_VALCNT;
+  status := dladm_get_linkprop(handle,_para2,DLADM_PROP_VAL_CURRENT,_propname,@propvals,@valcnt);
+  if status=DLADM_STATUS_OK then
+    begin
+      for n:=0 to valcnt-1 do
+        begin
+//          writeln('SWL CURRENT');
+          lprop.Field('current').addstring(propvals[n]);
+        end;
+    end;
+
+  valcnt := DLADM_MAX_PROP_VALCNT;
+  status := dladm_get_linkprop(handle,_para2,DLADM_PROP_VAL_PERM,_propname,@propvals,@valcnt);
+  if status=DLADM_STATUS_OK then
+    begin
+      for n:=0 to valcnt-1 do
+        begin
+          lprop.Field('perm').addstring(propvals[n]);
+        end;
+    end;
+
+  valcnt := DLADM_MAX_PROP_VALCNT;
+  status := dladm_get_linkprop(handle,_para2,DLADM_PROP_VAL_PERSISTENT,_propname,@propvals,@valcnt);
+  if status=DLADM_STATUS_OK then
+    begin
+      for n:=0 to valcnt-1 do
+        begin
+          lprop.Field('persistent').addstring(propvals[n]);
+        end;
+    end;
+
+  valcnt := DLADM_MAX_PROP_VALCNT;
+  status := dladm_get_linkprop(handle,_para2,DLADM_PROP_VAL_MODIFIABLE,_propname,@propvals,@valcnt);
+  if status=DLADM_STATUS_OK then
+    begin
+      for n:=0 to valcnt-1 do
+        begin
+          lprop.Field('mod').addstring(propvals[n]);
+        end;
+    end;
+
+  for n  := 0 to high(propvals) do
+    begin
+      FreeMem(propvals[n]);
+    end;
+
+  result := DLADM_WALK_CONTINUE;
+end;
+
+function get_linkpropsbyid(const linkid: datalink_id_t;out error:string; out linkprops: IFRE_DB_Object):boolean;
+begin
+  linkprops:=GFRE_DBI.NewObject;
+
+  dladm_walk_linkprop(GILLU_DLADM,linkid,linkprops,@WalkLinkPropCB);
+
+  result:=true;
+end;
+
+function get_linkprops(const linkname: string; out error: string; out linkprops: IFRE_DB_Object; const zonename: string): boolean;
+var
+    status            : dladm_status_t;
+    linkid            : datalink_id_t;
+    zname             : Pchar=nil;
+    res               : Nativeint;
+begin
+  writeln('SWL GET LINK PROPS');
+
+  if zonename<>'' then
+    zname := PChar(zonename);
+
+  status := dladm_zname2info(GILLU_DLADM,zname,pchar(linkname),@linkid,nil,nil,nil);
+  if status<>DLADM_STATUS_OK then
+    begin
+      error := 'GETLINKPROPS: link ['+linkname+'] invalid ['+CDLADM_STATUS_CODES[status]+']';
+      exit(false);
+    end;
+
+  result := get_linkpropsbyid(linkid,error,linkprops);
+
 end;
 
 //function
@@ -144,6 +377,7 @@ var dbo    : IFRE_DB_Object;
     error  : string;
     dldbo  : IFRE_DB_Object;
     dbocl  : string;
+    lprops : IFRE_DB_Object;
     res    : NativeInt;
 begin
   dbo := IFRE_DB_Object(_dbo);
@@ -187,6 +421,15 @@ begin
       writeln('SWL :',error);
 //      raise EFRE_DB_Exception.Create(error);
     end;
+
+  if get_linkpropsbyid(_dl_id,error,lprops) then
+    begin
+      dldbo.Field('props').asobject:=lprops;
+    end
+  else
+    begin
+      writeln('SWL :',error);
+    end;
   result := DLADM_WALK_CONTINUE;
 end;
 
@@ -215,6 +458,93 @@ begin
    end;
 
    writeln('SWL DBO',result.DumpToString);
+end;
+
+function create_ipmp(const ipmpname: string; out error: string): boolean;
+var
+  res       : integer;
+  outstring : string;
+begin
+  res := FRE_ProcessCMD('ifconfig '+ipmpname+' ipmp up',outstring,error);
+  if res<>0 then
+    begin
+      error := 'CREATE IPMP ['+ipmpname+'] FAILED :'+error;
+      exit(false);
+    end;
+  result := true;
+
+  //78  dladm create-vnic -l e1000g0 vinic0
+  //79  dladm create-vnic -l e1000g1 vinic1
+  //80  ifconfig vinic0 plumb -failover group ipmp0 up
+  //81  ifconfig vinic1 plumb -failover standby group ipmp0 up
+
+  //86  ifconfig ipmp0:1 10.1.0.188/24
+  //87  ifconfig ipmp0:1 plumb 10.1.0.188/24 up
+  //94  ifconfig vinic0 10.1.0.187/24
+  //95  ifconfig vinic0 10.1.0.187/24 up
+  //96  ifconfig vinic1 10.1.0.186/24 up
+end;
+
+function add_to_ipmp(const ipmpname: string; const linkname: string; const is_active: boolean; out error: string): boolean;
+var
+  res       : integer;
+  outstring : string;
+  cmd       : string;
+begin
+  cmd := 'ifconfig '+linkname+' plumb -failover';
+  if not is_active then
+    cmd := cmd +' standby';
+  cmd := cmd +' group '+ipmpname;
+
+  res := FRE_ProcessCMD(cmd,outstring,error);
+  if res<>0 then
+    begin
+      error := 'ADD LINK ['+linkname+'] TO IPMP ['+ipmpname+'] FAILED :'+error;
+      exit(false);
+    end;
+  result := true;
+end;
+
+function remove_from_ipmp(const ipmpname: string; const linkname: string; out error: string): boolean;
+var
+  res       : integer;
+  outstring : string;
+  cmd       : string;
+  prc       : TFRE_Process;
+begin
+  cmd := 'ifconfig';
+  prc      := TFRE_Process.Create(nil);
+  try
+    res    := prc.ExecutePiped(cmd,TFRE_DB_StringArray.Create(linkname,'group','""'),'',outstring,error);
+  finally
+    prc.free;
+  end;
+  if res<>0 then
+    begin
+      error := 'REMOVE LINK ['+linkname+'] FROM IPMP ['+ipmpname+'] FAILED :'+error;
+      exit(false);
+    end;
+  res := FRE_ProcessCMD('ifconfig '+linkname+' unplumb',outstring,error);
+  if res<>0 then
+    begin
+      error := 'REMOVE LINK ['+ipmpname+'] FAILED :'+error;
+      exit(false);
+    end;
+  result := true;
+end;
+
+function delete_ipmp(const ipmpname: string; out error: string): boolean;
+var
+  res       : integer;
+  outstring : string;
+begin
+  res := FRE_ProcessCMD('ifconfig '+ipmpname+' unplumb',outstring,error);
+  if res<>0 then
+    begin
+      error := 'DELETE IPMP ['+ipmpname+'] FAILED :'+error;
+      exit(false);
+    end;
+  result := true;
 end;
 
 

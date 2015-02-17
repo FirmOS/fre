@@ -13,28 +13,29 @@ uses
 {$ENDIF}
 
 
-{ ----------------------------------- }
-{ ethernet.h from uts/common/sys/ethernet.h}
-{ ----------------------------------- }
-
-const
-  ETHERADDRL=6;
-
-{ END ----------------------------------- }
-{ END ethernet.h from uts/common/sys/ethernet.h}
-{ END ----------------------------------- }
 
 
-
-
-{ ----------------------------------- }
-{ socket.h from uts/common/sys/socket.h}
-{ ----------------------------------- }
 
 const
   External_library_illusock=''; {Setup as you need}
 
-Type
+  { ----------------------------------- }
+  { ethernet.h from uts/common/sys/ethernet.h}
+  { ----------------------------------- }
+
+  const
+    ETHERADDRL=6;
+
+  { END ----------------------------------- }
+  { END ethernet.h from uts/common/sys/ethernet.h}
+  { END ----------------------------------- }
+
+
+  { ----------------------------------- }
+  { socket.h from uts/common/sys/socket.h}
+  { ----------------------------------- }
+
+type
 
   //Plongint    = ^longint;
   //Pmsghdr    = ^msghdr;
@@ -3958,6 +3959,62 @@ const
 
 { END ----------------------------------- }
 { END mac_flow from uts/common/mac_flow.h }
+{ END ----------------------------------- }
+
+{ ----------------------------------- }
+{ iptun.h from uts/common/inet/iptun.h }
+{ ----------------------------------- }
+
+const
+  IPTUN_DEFAULT_HOPLIMIT = 64;
+{ from RFC 2473  }
+  IPTUN_DEFAULT_ENCAPLIMIT = 4;
+
+
+type
+  iptun_type_t = (IPTUN_TYPE_UNKNOWN := 0,IPTUN_TYPE_IPV4,
+    IPTUN_TYPE_IPV6,IPTUN_TYPE_6TO4);
+{
+ * To maintain proper alignment of fields between 32bit user-land and 64bit
+ * kernel, all fields in iptun_kparams_t after itk_fields must be in
+ * descending order of size.  Due to strict structure size checks done in the
+ * iptun ioctl processing, the structure size must be the same on 32 and 64
+ * bit.  amd64 will pad the end of the structure to make the end 64bit
+ * aligned, so we must add explicit padding to make sure that it's similarly
+ * aligned when compiled in 32 bit mode.
+  }
+{ local address  }
+{ remote address  }
+
+  iptun_kparams = record
+      iptun_kparam_linkid : datalink_id_t;
+      iptun_kparam_flags : uint32_t;
+      iptun_kparam_laddr : sockaddr_storage;
+      iptun_kparam_raddr : sockaddr_storage;
+      iptun_kparam_secinfo : ipsec_req_t;
+      iptun_kparam_type : iptun_type_t;
+      _iptun_kparam_padding : uint32_t;
+    end;
+  iptun_kparams_t = iptun_kparams;
+{ itk_flags  }
+{ itk_type is set  }
+
+const
+  IPTUN_KPARAM_TYPE = $00000001;
+{ itk_laddr is set  }
+  IPTUN_KPARAM_LADDR = $00000002;
+{ itk_raddr is set  }
+  IPTUN_KPARAM_RADDR = $00000004;
+{ itk_secinfo is set  }
+  IPTUN_KPARAM_SECINFO = $00000008;
+{ implicitly created IP tunnel  }
+  IPTUN_KPARAM_IMPLICIT = $00000010;
+{ ipsecconf(1M) policy present  }
+  IPTUN_KPARAM_IPSECPOL = $00000020;
+{ C++ end of extern C conditionnal removed }
+
+{ END ----------------------------------- }
+{ END iptun.h from uts/common/inet/iptun.h }
 { END ----------------------------------- }
 
 
