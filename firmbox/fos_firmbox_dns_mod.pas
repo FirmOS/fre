@@ -37,24 +37,25 @@ type
   { TFOS_FIRMBOX_DNS_MOD }
 
   TFOS_FIRMBOX_DNS_MOD = class (TFRE_DB_APPLICATION_MODULE)
-  protected
-    class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    procedure       SetupAppModuleStructure             ; override;
-    class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
+  private
     function        _AddModifyResourceRecord            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
     function        _AddModifyNameserver                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
 
     procedure       _getClasses                         (const global:Boolean; var networkDomainClass,resourceRecordClass,nameserverClass: TFRE_DB_ObjectClassEx);
     procedure       _showGlobal                         (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; var domains,nameserver:Boolean);
     procedure       _showLocal                          (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION; var domains,nameserver:Boolean);
+  protected
+    procedure       SetupAppModuleStructure             ; override;
   public
+    class procedure RegisterSystemScheme                (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects                (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
     procedure       MySessionInitializeModule           (const session : TFRE_DB_UserSession);override;
     procedure       CalculateDescription                (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     procedure       CalculateNameserverGridFields       (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
     function        isEnabled                           (const ses: IFRE_DB_Usersession; const conn: IFRE_DB_CONNECTION): Boolean;
   published
-    function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content                         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
 
     function        WEB_DomainsContent                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_DomainDetailsContent            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
