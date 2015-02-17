@@ -35,34 +35,36 @@ type
     function  getRAMSteps               :Integer;
     function  getAvailableCPU           :Integer;
     function  _addVMChooseZone          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    procedure _cleanupAddVMTmpData      (const ses: IFRE_DB_Usersession);
+    procedure _cleanupAddModifyVMTmpData(const ses: IFRE_DB_Usersession);
+    function  _addModifyVM              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; isModify: Boolean):IFRE_DB_Object;
   protected
-    procedure       SetupAppModuleStructure   ; override;
+    procedure       SetupAppModuleStructure         ; override;
   public
-    class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    class procedure InstallUserDBObjects      (const conn:IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
-    function  canAddVM                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const zone: TFRE_DB_ZONE): Boolean;
+    class procedure InstallDBObjects                (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    class procedure InstallUserDBObjects            (const conn:IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
+    function  canAddVM                              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const zone: TFRE_DB_ZONE): Boolean;
+    function  canModifyVM                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const service: TFRE_DB_VMACHINE): Boolean;
   published
-    class procedure RegisterSystemScheme      (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
-    procedure       MySessionInitializeModule (const session   : TFRE_DB_UserSession);override;
-    function  WEB_VM_Feed_Update              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_Content                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
-    function  WEB_VM_ShowInfo                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_VM_ShowVNC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_VM_ShowPerf                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_ContentNote                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_VMSC                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_VM_Details                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_AddVM                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_AddVMCleanup                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_AddVMConfigureDrives        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_AddVMConfigureNetwork       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_AddVMConfigureNetworkStore  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_AddVMConfigureNetworkCleanup(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_CreateVM                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_StartVM                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_StopVM                      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function  WEB_StopVMF                     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    class procedure RegisterSystemScheme            (const scheme    : IFRE_DB_SCHEMEOBJECT); override;
+    procedure       MySessionInitializeModule       (const session   : TFRE_DB_UserSession);override;
+    function  WEB_VM_Feed_Update                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_Content                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
+    function  WEB_VM_ShowInfo                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_VM_ShowVNC                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_VM_ShowPerf                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_ContentNote                       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_VMSC                              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_VM_Details                        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddVM                             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_ModifyVM                          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddModifyVMCleanup                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddModifyVMConfigureNetwork       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddModifyVMConfigureNetworkStore  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_AddModifyVMConfigureNetworkCleanup(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_StoreVM                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_StartVM                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_StopVM                            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function  WEB_StopVMF                           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
   { TFRE_FIRMBOX_VM_RESOURCES_MOD }
@@ -76,7 +78,7 @@ type
     class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     class procedure InstallUserDBObjects      (const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType); override;
   published
-    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
     function        WEB_ContentDisks          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentISOs           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_CreateDisk            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -593,7 +595,7 @@ begin
       AddOneToOnescheme('PERFRSS','',FetchModuleTextShort(session,'gc_vm_paged_mem'),dt_number,true,false,false,2);
       AddOneToOnescheme('PERFVSZ','',FetchModuleTextShort(session,'gc_vm_virtual_mem'),dt_number,true,false,false,2);
     end;
-    vmc  := session.NewDerivedCollection('VMC');
+    vmc  := session.NewDerivedCollection('VM_GRID');
     with VMC do begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ColumnResizeable],'',nil,nil,CWSF(@WEB_VMSC));
@@ -625,7 +627,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname');
-      AddMatchingReferencedField(['TFRE_DB_VMACHINE_NIC<NIC'],'uid','vmid','',false,dt_string,false,false,1,'','OK');
+      AddMatchingReferencedField(['TFRE_DB_VMACHINE_NIC<NIC','TFRE_DB_VMACHINE<INTERFACE'],'uid','vmid','',false,dt_string,false,false,1,'',FREDB_G2H(CFRE_DB_NullGUID));
       AddMatchingReferencedFieldArray(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
     end;
     dc := session.NewDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC);
@@ -634,7 +636,6 @@ begin
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Chooser,[],'');
       Filters.AddSchemeObjectFilter('type',[TFRE_DB_DATALINK_VNIC.ClassName]);
-      Filters.AddStringFieldFilter('used','vmid','OK',dbft_EXACT);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -654,7 +655,7 @@ end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-   newVersionId:='0.9.1';
+   newVersionId:='0.9.2';
    if currentVersionId='' then begin
      currentVersionId:='0.9';
 
@@ -784,6 +785,10 @@ begin
      CreateModuleText(conn,'vm_form_floppy1','Floppy A');
      CreateModuleText(conn,'vm_form_floppy2','Floppy B');
    end;
+   if currentVersionId='0.9.1' then begin
+     currentVersionId:='0.9.2';
+     CreateModuleText(conn,'machines_modify_vm','Modify','','Modify VM');
+   end;
 end;
 
 class procedure TFRE_FIRMBOX_VM_MACHINES_MOD.InstallUserDBObjects(const conn: IFRE_DB_CONNECTION; currentVersionId: TFRE_DB_NameType);
@@ -815,26 +820,20 @@ function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_Content(const input:IFRE_DB_Object; co
 var
   coll   : IFRE_DB_DERIVED_COLLECTION;
   list   : TFRE_DB_VIEW_LIST_DESC;
-  text   : IFRE_DB_TEXT;
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  coll := ses.FetchDerivedCollection('VMC');
+  coll := ses.FetchDerivedCollection('VM_GRID');
   list := coll.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4MyDomain(sr_STORE,TFRE_DB_VMACHINE) then begin
-    text:=FetchModuleTextFull(ses,'machines_new_vm');
-    list.AddButton.Describe(CWSF(@WEB_AddVM)         , '',text.Getshort,text.GetHint);
-    text.Finalize;
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_VMACHINE) then begin
+    list.AddButton.Describe(CWSF(@WEB_AddVM), '',FetchModuleTextShort(ses,'machines_new_vm'),FetchModuleTextHint(ses,'machines_new_vm'));
   end;
-  text:=FetchModuleTextFull(ses,'machines_start');
-  list.AddButton.Describe(CWSF(@WEB_StartVM)       , '',text.Getshort,text.GetHint,fdgbd_single);
-  text.Finalize;
-  text:=FetchModuleTextFull(ses,'machines_stop');
-  list.AddButton.Describe(CWSF(@WEB_StopVM)        , '',text.Getshort,text.GetHint,fdgbd_single);
-  text.Finalize;
-  text:=FetchModuleTextFull(ses,'machines_kill');
-  list.AddButton.Describe(CWSF(@WEB_StopVMF)       , '',text.Getshort,text.GetHint,fdgbd_single);
-  text.Finalize;
+  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_VMACHINE) then begin
+    list.AddButton.DescribeManualType('modify_vm',CWSF(@WEB_ModifyVM)         , '',FetchModuleTextShort(ses,'machines_modify_vm'),FetchModuleTextHint(ses,'machines_modify_vm'),true);
+    list.AddButton.DescribeManualType('start_vm',CWSF(@WEB_StartVM)       , '',FetchModuleTextShort(ses,'machines_start'),FetchModuleTextHint(ses,'machines_start'),true);
+    list.AddButton.DescribeManualType('stop_vm',CWSF(@WEB_StopVM)        , '',FetchModuleTextShort(ses,'machines_stop'),FetchModuleTextHint(ses,'machines_stop'),true);
+    list.AddButton.DescribeManualType('kill_vm',CWSF(@WEB_StopVMF)       , '',FetchModuleTextShort(ses,'machines_kill'),FetchModuleTextHint(ses,'machines_kill'),true);
+  end;
   Result := TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(list,nil,nil,nil,nil,true,2);
 end;
 
@@ -933,11 +932,38 @@ begin
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_VMSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  startDisabled : Boolean;
+  stopDisabled  : Boolean;
+  killDisabled  : Boolean;
+  modifyDisabled: Boolean;
+  service       : TFRE_DB_VMACHINE;
 begin
   if not conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_VMACHINE) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  input.Field('selectedVM').AsStringArr:=input.Field('selected').AsStringArr;
+  startDisabled:=true;
+  stopDisabled:=true;
+  killDisabled:=true;
+  modifyDisabled:=true;
+  ses.GetSessionModuleData(ClassName).Field('selectedVM').AsStringArr:=input.Field('selected').AsStringArr;
+  if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selected').AsString),TFRE_DB_VMACHINE,service));
+    if canModifyVM(input,ses,app,conn,service) then begin
+      modifyDisabled:=false;
+    end;
+    if conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_VMACHINE,service.DomainID) then begin
+      startDisabled:=false;
+      stopDisabled:=false;
+      killDisabled:=false;
+    end;
+  end;
+
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('modify_vm',modifyDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('start_vm',startDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('stop_vm',stopDisabled));
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('kill_vm',killDisabled));
+
   Result:=WEB_VM_Details(input,ses,app,conn);
 end;
 
@@ -949,8 +975,8 @@ begin
   if not conn.sys.CheckClassRight4MyDomain(sr_FETCH,TFRE_DB_VMACHINE) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  if input.FieldExists('selectedVM') and (input.Field('selectedVM').ValueCount>0)  then begin
-    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('selectedVM').AsString),TFRE_DB_VMACHINE,vmo));
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedVM') and (ses.GetSessionModuleData(ClassName).Field('selectedVM').ValueCount=1)  then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedVM').AsString),TFRE_DB_VMACHINE,vmo));
     vm_sub := TFRE_DB_SUBSECTIONS_DESC.Create.Describe(sec_dt_tab);
     sf := CWSF(@WEB_VM_ShowInfo); sf.AddParam.Describe('uniquephysicalid',vmo.Field('uniquephysicalid').AsString);
     vm_sub.AddSection.Describe(sf,FetchModuleTextShort(ses,'vm_details_config'),2);
@@ -960,7 +986,7 @@ begin
         vm_sub.AddSection.Describe(sf,FetchModuleTextShort(ses,'vm_details_console'),1);
       end;
     vm_sub.AddSection.Describe(CWSF(@WEB_VM_ShowPerf),FetchModuleTextShort(ses,'vm_details_perf'),3);
-    sf := CWSF(@WEB_ContentNote); sf.AddParam.Describe('linkid',input.Field('selectedVM').asstring);
+    sf := CWSF(@WEB_ContentNote); sf.AddParam.Describe('linkid',ses.GetSessionModuleData(ClassName).Field('selectedVM').AsString);
     vm_sub.AddSection.Describe(sf,FetchModuleTextShort(ses,'vm_details_note'),4);
     result := vm_sub;
   end else begin
@@ -969,13 +995,52 @@ begin
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVM(const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+begin
+  Result:=_addModifyVM(input,ses,app,conn,false);
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_ModifyVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=_addModifyVM(input,ses,app,conn,true);
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddModifyVMCleanup(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  CheckClassVisibility4MyDomain(ses);
+  _cleanupAddModifyVMTmpData(ses);
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD._addVMChooseZone(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res: TFRE_DB_FORM_DIALOG_DESC;
+  sf : TFRE_DB_SERVER_FUNC_DESC;
+begin
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_new_caption'),600,true,true,false);
+
+  sf:=CWSF(@WEB_AddVM);
+
+  res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'zone',ses.FetchDerivedCollection('VM_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  Result:=res;
+end;
+
+procedure TFRE_FIRMBOX_VM_MACHINES_MOD._cleanupAddModifyVMTmpData(const ses: IFRE_DB_Usersession);
+var
+  i: Integer;
+begin
+  for i := 1 to 4 do begin
+    ses.GetSessionModuleData(ClassName).DeleteField('AddVMNC_net' + IntToStr(i));
+  end;
+end;
+
+function TFRE_FIRMBOX_VM_MACHINES_MOD._addModifyVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; isModify: Boolean): IFRE_DB_Object;
 var
   group                : TFRE_DB_INPUT_GROUP_DESC;
   sf,cusf              : TFRE_DB_SERVER_FUNC_DESC;
   scheme               : IFRE_DB_SchemeObject;
   res                  : TFRE_DB_FORM_DIALOG_DESC;
   dc                   : IFRE_DB_DERIVED_COLLECTION;
-  zoneId               : TFRE_DB_String;
   ch                   : TFRE_DB_INPUT_CHOOSER_DESC;
   block                : TFRE_DB_INPUT_BLOCK_DESC;
   nicScheme            : IFRE_DB_SchemeObject;
@@ -984,50 +1049,65 @@ var
   diskScheme           : IFRE_DB_SchemeObject;
   i                    : Integer;
   idx_str              : String;
+  service              : TFRE_DB_VMACHINE;
+  zoneId               : TFRE_DB_GUID;
+  netObj               : IFRE_DB_Object;
+  cdbo                 : IFRE_DB_Object;
+  diskObj              : IFRE_DB_Object;
 begin
   CheckClassVisibility4MyDomain(ses);
 
-  _cleanupAddVMTmpData(ses);
+  _cleanupAddModifyVMTmpData(ses);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_new_caption'),600,false,true,false);
 
-  sf:=CWSF(@WEB_CreateVM);
+  sf:=CWSF(@WEB_StoreVM);
 
-  if input.FieldPathExists('data.zone') then begin
-    zoneId:=input.FieldPath('data.zone').AsString;
+  dc:=ses.FetchDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC);
+  if isModify then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(ses.GetSessionModuleData(ClassName).Field('selectedVM').AsString),TFRE_DB_VMACHINE,service));
+
+    if not canModifyVM(input,ses,app,conn,service) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    zoneId:=service.Field('zoneid').AsObjectLink;
+
+    dc.Filters.RemoveFilter('used');
+    dc.Filters.AddUIDFieldFilter('used','vmid',[service.UID,CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
+    sf.AddParam.Describe('serviceId',service.UID_String);
   end else begin
-    if input.FieldExists('zoneId') then begin
-      zoneId:=input.Field('zoneId').AsString;
+    if input.FieldPathExists('data.zone') then begin
+      zoneId:=FREDB_H2G(input.FieldPath('data.zone').AsString);
     end else begin
-      Result:=_addVMChooseZone(input,ses,app,conn);
-      exit;
+      if input.FieldExists('zoneId') then begin
+        zoneId:=FREDB_H2G(input.Field('zoneId').AsString);
+      end else begin
+        Result:=_addVMChooseZone(input,ses,app,conn);
+        exit;
+      end;
+      sf.AddParam.Describe('zoneId',FREDB_G2H(zoneId));
     end;
-  end;
-  sf.AddParam.Describe('zoneId',zoneId);
-  CheckDbResult(conn.FetchAs(FREDB_H2G(zoneId),TFRE_DB_ZONE,zone));
+    CheckDbResult(conn.FetchAs(zoneId,TFRE_DB_ZONE,zone));
 
-  if not canAddVM(input,ses,app,conn,zone) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+    if not canAddVM(input,ses,app,conn,zone) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    dc.Filters.RemoveFilter('used');
+    dc.Filters.AddUIDFieldFilter('used','vmid',[CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
+  end;
+  dc.Filters.RemoveFilter('zone');
+  dc.Filters.AddUIDFieldFilter('zone','zid',[zoneId],dbnf_OneValueFromFilter);
+  dc:=ses.FetchDerivedCollection(CFRE_DB_VMACHINE_HDD_CHOOSER_DC);
+  dc.Filters.RemoveFilter('zone');
+  dc.Filters.AddUIDFieldFilter('zone','zid',[zoneId],dbnf_OneValueFromFilter);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
-  sf:=CWSF(@WEB_AddVMCleanup);
+  sf:=CWSF(@WEB_AddModifyVMCleanup);
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('close')),sf,fdbbt_close);
 
   GetSystemScheme(TFRE_DB_VMACHINE,scheme);
   GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
   GetSystemScheme(TFRE_DB_VMACHINE_DISK,diskScheme);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,true,false);
-  res.SetElementValue('cores','1');
-  res.SetElementValue('threads','1');
-  res.SetElementValue('sockets','1');
-  (res.GetFormElement('ram').Implementor_HC as TFRE_DB_INPUT_NUMBER_DESC).setMinMax(getMinimumRAM,getAvailableRAM);
-  res.SetElementValue('ram',IntToStr(getMinimumRAM));
-
-  dc:=ses.FetchDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC);
-  dc.Filters.RemoveFilter('zone');
-  dc.Filters.AddUIDFieldFilter('zone','zid',[FREDB_H2G(zoneId)],dbnf_OneValueFromFilter);
-  dc:=ses.FetchDerivedCollection(CFRE_DB_VMACHINE_HDD_CHOOSER_DC);
-  //dc.Filters.RemoveFilter('zone');
-  //dc.Filters.AddUIDFieldFilter('zone','zid',[FREDB_H2G(zoneId)],dbnf_OneValueFromFilter);
 
   //NETWORK
   group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'vm_form_network_group'),true,false);
@@ -1036,9 +1116,9 @@ begin
     idx_str:=IntToStr(i+1);
     block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_'+idx_str),'net'+idx_str);
     block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net'+idx_str,false);
-    sf:=CWSF(@WEB_AddVMConfigureNetwork);
+    sf:=CWSF(@WEB_AddModifyVMConfigureNetwork);
     sf.AddParam.Describe('id','net'+idx_str);
-    cusf:=CWSF(@WEB_AddVMConfigureNetworkCleanup);
+    cusf:=CWSF(@WEB_AddModifyVMConfigureNetworkCleanup);
     cusf.AddParam.Describe('id','net'+idx_str);
     button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
     ch:=(block.GetFormElement('net'+idx_str+'.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
@@ -1094,37 +1174,64 @@ begin
   //ADVANCED
   res.AddSchemeFormGroup(scheme.GetInputGroup('advanced'),ses,true,true);
 
-  Result:=res;
-end;
+  //FILL
+  if isModify then begin
+    res.FillWithObjectValues(service,ses);
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMCleanup(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-begin
-  CheckClassVisibility4MyDomain(ses);
-  _cleanupAddVMTmpData(ses);
-  Result:=GFRE_DB_NIL_DESC;
-end;
+    //NETWORK
+    for i := 0 to service.Field('interface').ValueCount - 1 do begin
+      CheckDbResult(conn.Fetch(service.Field('interface').AsObjectLinkItem[i],netObj));
+      idx_str:=IntToStr(i+1);
+      res.FillWithObjectValues(netObj,ses,'net'+idx_str);
+      ses.GetSessionModuleData(ClassName).FieldPathCreate('AddVMNC_net' + idx_str+'.hostname').AsString:=netObj.Field('hostname').AsString;
+      if netObj.FieldExists('ip') then begin
+        conn.Fetch(netObj.Field('ip').AsObjectLink,cdbo);
+        ses.GetSessionModuleData(ClassName).FieldPathCreate('AddVMNC_net' + idx_str+'.ip_net').AsObject:=cdbo.CloneToNewObject;
+      end;
+      if netObj.FieldExists('gateway') then begin
+        conn.Fetch(netObj.Field('gateway').AsObjectLink,cdbo);
+        ses.GetSessionModuleData(ClassName).FieldPathCreate('AddVMNC_net' + idx_str+'.gateway').AsString:=cdbo.Field('ip').AsString;
+      end;
+      if netObj.FieldExists('dns1') then begin
+        conn.Fetch(netObj.Field('dns1').AsObjectLink,cdbo);
+        ses.GetSessionModuleData(ClassName).FieldPathCreate('AddVMNC_net' + idx_str+'.dns1').AsString:=cdbo.Field('ip').AsString;
+      end;
+      if netObj.FieldExists('dns2') then begin
+        conn.Fetch(netObj.Field('dns2').AsObjectLink,cdbo);
+        ses.GetSessionModuleData(ClassName).FieldPathCreate('AddVMNC_net' + idx_str+'.dns2').AsString:=cdbo.Field('ip').AsString;
+      end;
+    end;
+    //DRIVES
+    for i := 0 to service.Field('hdd').ValueCount - 1 do begin
+      CheckDbResult(conn.Fetch(service.Field('hdd').AsObjectLinkItem[i],diskObj));
+      idx_str:=IntToStr(i+1);
+      res.FillWithObjectValues(diskObj,ses,'hdd'+idx_str);
+    end;
+    for i := 0 to service.Field('cd').ValueCount - 1 do begin
+      CheckDbResult(conn.Fetch(service.Field('cd').AsObjectLinkItem[i],diskObj));
+      idx_str:=IntToStr(i+1);
+      res.FillWithObjectValues(diskObj,ses,'cd'+idx_str);
+    end;
+    for i := 0 to service.Field('usb').ValueCount - 1 do begin
+      CheckDbResult(conn.Fetch(service.Field('usb').AsObjectLinkItem[i],diskObj));
+      idx_str:=IntToStr(i+1);
+      res.FillWithObjectValues(diskObj,ses,'usb'+idx_str);
+    end;
+    for i := 0 to service.Field('floppy').ValueCount - 1 do begin
+      CheckDbResult(conn.Fetch(service.Field('floppy').AsObjectLinkItem[i],diskObj));
+      idx_str:=IntToStr(i+1);
+      res.FillWithObjectValues(diskObj,ses,'floppy'+idx_str);
+    end;
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD._addVMChooseZone(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
-var
-  res: TFRE_DB_FORM_DIALOG_DESC;
-  sf : TFRE_DB_SERVER_FUNC_DESC;
-begin
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_new_caption'),600,true,true,false);
-
-  sf:=CWSF(@WEB_AddVM);
-
-  res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'zone',ses.FetchDerivedCollection('VM_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
-  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
-  Result:=res;
-end;
-
-procedure TFRE_FIRMBOX_VM_MACHINES_MOD._cleanupAddVMTmpData(const ses: IFRE_DB_Usersession);
-var
-  i: Integer;
-begin
-  for i := 1 to 4 do begin
-    ses.GetSessionModuleData(ClassName).DeleteField('AddVMNC_net' + IntToStr(i));
+  end else begin
+    res.SetElementValue('cores','1');
+    res.SetElementValue('threads','1');
+    res.SetElementValue('sockets','1');
+    (res.GetFormElement('ram').Implementor_HC as TFRE_DB_INPUT_NUMBER_DESC).setMinMax(getMinimumRAM,getAvailableRAM);
+    res.SetElementValue('ram',IntToStr(getMinimumRAM));
   end;
+
+  Result:=res;
 end;
 
 function TFRE_FIRMBOX_VM_MACHINES_MOD.canAddVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const zone: TFRE_DB_ZONE): Boolean;
@@ -1135,12 +1242,18 @@ begin
            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE_DISK,zone.DomainID));
 end;
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureDrives(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.canModifyVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const service: TFRE_DB_VMACHINE): Boolean;
 begin
-  Result:=GFRE_DB_NIL_DESC;
+  Result:=(conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_VMACHINE,service.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE_NIC,service.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_VMACHINE_NIC,service.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,service.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_IPV4_HOSTNET,service.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE_DISK,service.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_VMACHINE_DISK,service.DomainID));
 end;
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureNetwork(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddModifyVMConfigureNetwork(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   res      : TFRE_DB_FORM_DIALOG_DESC;
   scheme   : IFRE_DB_SchemeObject;
@@ -1161,7 +1274,7 @@ begin
   res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_dns1'),'dns1',false,false,false,false,'',validator);
   res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_dns2'),'dns2',false,false,false,false,'',validator);
 
-  sf:=CWSF(@WEB_AddVMConfigureNetworkStore);
+  sf:=CWSF(@WEB_AddModifyVMConfigureNetworkStore);
   sf.AddParam.Describe('id',input.Field('id').AsString);
   res.AddButton.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_diag_ok'),sf,fdbbt_submit);
 
@@ -1172,21 +1285,20 @@ begin
   Result:=res;
 end;
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureNetworkStore(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddModifyVMConfigureNetworkStore(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   ses.GetSessionModuleData(ClassName).Field('AddVMNC_' + input.Field('id').AsString).AsObject:=input.Field('data').AsObject.CloneToNewObject();
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
 end;
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddVMConfigureNetworkCleanup(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_AddModifyVMConfigureNetworkCleanup(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
   ses.GetSessionModuleData(ClassName).DeleteField('AddVMNC_' + input.Field('id').AsString);
   Result:=GFRE_DB_NIL_DESC;
 end;
 
-function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_CreateVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_VM_MACHINES_MOD.WEB_StoreVM(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  sdomain          : TFRE_DB_GUID;
   coll,compsColl   : IFRE_DB_COLLECTION;
   vmService        : TFRE_DB_VMACHINE;
   zone             : TFRE_DB_ZONE;
@@ -1201,7 +1313,6 @@ var
   netObj           : IFRE_DB_Object;
   nicScheme        : IFRE_DB_SchemeObject;
   nicObj           : TFRE_DB_VMACHINE_NIC;
-  vnic             : IFRE_DB_Object;
   configObj        : IFRE_DB_Object;
   hostnet          : TFRE_DB_IPV4_HOSTNET;
   hnScheme         : IFRE_DB_SchemeObject;
@@ -1209,35 +1320,63 @@ var
   idx_str          : String;
   diskObj          : TFRE_DB_VMACHINE_DISK;
   diskScheme       : IFRE_DB_SchemeObject;
+  isModify         : Boolean;
+  linkId           : TFRE_DB_GUID;
+  newConf          : Boolean;
+  vnic             : IFRE_DB_Object;
+  refs             : TFRE_DB_GUIDArray;
+  vnicConf         : IFRE_DB_ObjectArray;
 begin
-  if input.FieldPathExists('data.zone') then begin
-    CheckDbResult(conn.FetchAs(FREDB_H2G(input.FieldPath('data.zone').AsString),TFRE_DB_ZONE,zone));
-    input.Field('data').AsObject.DeleteField('zone');
+  coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
+  data:=input.Field('data').AsObject;
+  if input.FieldExists('serviceId') then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('serviceId').AsString),TFRE_DB_ZONE,vmService));
+
+    if not canModifyVM(input,ses,app,conn,vmService) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    if data.FieldExists('objname') and (data.Field('objname').AsString<>vmService.ObjectName) then begin
+      idx:=TFRE_DB_VMACHINE.ClassName + '_' + data.Field('objname').AsString + '@' + FREDB_G2H(vmService.Field('zoneId').AsObjectLink);
+      vmService.Field('uniquephysicalid').asstring := idx;
+      if coll.ExistsIndexedText(idx)<>0 then begin
+        Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_exists_cap'),FetchModuleTextShort(ses,'vm_create_error_exists_msg'),fdbmt_error);
+        exit;
+      end;
+    end;
+
+    isModify:=true;
   end else begin
     if input.FieldExists('zoneId') then begin
       CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('zoneId').AsString),TFRE_DB_ZONE,zone));
+
+      if not canAddVM(input,ses,app,conn,zone) then
+        raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+      vmService:=TFRE_DB_VMACHINE.CreateForDB;
+      vmService.SetDomainID(zone.DomainID);
+      vmService.Field('serviceParent').AsObjectLink:=zone.UID;
+      vmService.Field('zoneid').AsObjectLink:=zone.UID;
+      idx:=TFRE_DB_VMACHINE.ClassName + '_' + data.Field('objname').AsString + '@' + zone.UID_String;
+      vmService.Field('uniquephysicalid').asstring := idx;
+      if coll.ExistsIndexedText(idx)<>0 then begin
+        Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_exists_cap'),FetchModuleTextShort(ses,'vm_create_error_exists_msg'),fdbmt_error);
+        exit;
+      end;
+
+      isModify:=false;
     end else begin
-      raise EFRE_DB_Exception.Create(edb_ERROR,'No domain Id given for new VM Service');
+      raise EFRE_DB_Exception.Create(edb_ERROR,'Missing required parameter serviceId or zoneId');
     end;
   end;
-  sdomain:=zone.DomainID;
+  GetSystemScheme(TFRE_DB_VMACHINE,schemeObject);
 
-  if not canAddVM(input,ses,app,conn,zone) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
-
-  coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   compsColl:=conn.GetCollection(CFRE_DB_VM_COMPONENTS_COLLECTION);
   hnColl:=conn.GetCollection(CFRE_DB_IP_COLLECTION);
 
-  GetSystemScheme(TFRE_DB_VMACHINE,schemeObject);
   GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
   GetSystemScheme(TFRE_DB_VMACHINE_DISK,diskScheme);
   GetSystemScheme(TFRE_DB_IPV4_HOSTNET,hnScheme);
 
-  vmService:=TFRE_DB_VMACHINE.CreateForDB;
-  vmService.SetDomainID(sdomain);
-
-  data:=input.Field('data').AsObject;
   //check cpu config
   if (data.Field('cores').AsInt16 * data.Field('threads').AsInt16 * data.Field('sockets').AsInt16>64) then begin
     Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),FetchModuleTextShort(ses,'vm_create_error_msg_cpu_config'),fdbmt_error);
@@ -1247,22 +1386,40 @@ begin
   SetLength(netInterfaces,0);
   SetLength(netInterfaceObjs,4);
   SetLength(diskObjs,0);
-  for i := 1 to 4 do begin
-    netObj:=data.Field('net'+IntToStr(i)).AsObject;
-    if netObj.FieldExists('nic') and (netObj.Field('nic').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
-      //check if already used
-      interfaceGuid:=FREDB_H2G(netObj.Field('nic').AsString);
-      for j := 0 to High(netInterfaces) do begin
-        if netInterfaces[j]=interfaceGuid then begin
-          Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used'),fdbmt_error);
-          exit;
+  for i := 0 to 3 do begin
+    netObj:=data.Field('net'+IntToStr(i+1)).AsObject;
+    if netObj.FieldExists('nic') then begin
+      if netObj.Field('nic').IsSpecialClearMarked then begin
+        if isModify then begin
+          linkId:=vmService.Field('interface').AsObjectLinkItem[i];
+          vmService.Field('interface').RemoveObjectLink(i);
+          CheckDbResult(conn.Delete(linkId));
         end;
+      end else begin
+        //check if already used
+        interfaceGuid:=FREDB_H2G(netObj.Field('nic').AsString);
+        for j := 0 to High(netInterfaces) do begin
+          if netInterfaces[j]=interfaceGuid then begin
+            Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used'),fdbmt_error);
+            exit;
+          end;
+        end;
+        SetLength(netInterfaces,Length(netInterfaces)+1);
+        netInterfaces[Length(netInterfaces)-1]:=interfaceGuid;
+        if vmService.Field('interface').ValueCount>i then begin
+          CheckDbResult(conn.FetchAs(vmService.Field('interface').AsObjectLinkItem[i],TFRE_DB_VMACHINE_NIC,nicObj));
+          nicObj.Field('new').AsBoolean:=false;
+          newConf:=false;
+        end else begin
+          nicObj:=TFRE_DB_VMACHINE_NIC.CreateForDB;
+          nicObj.Field('new').AsBoolean:=true;
+          newConf:=true;
+        end;
+        nicScheme.SetObjectFieldsWithScheme(netObj,nicObj,newConf,conn);
+        vmService.Field('interface').AddObjectLink(nicObj.UID);
+        netInterfaceObjs[i].Field('uniquephysicalid').asstring := netInterfaceObjs[i].Field('nic').AsString + '@' + zone.UID_String;
+        netInterfaceObjs[Length(netInterfaces)-1]:=nicObj;
       end;
-      SetLength(netInterfaces,Length(netInterfaces)+1);
-      netInterfaces[Length(netInterfaces)-1]:=interfaceGuid;
-      nicObj:=TFRE_DB_VMACHINE_NIC.CreateForDB;
-      nicScheme.SetObjectFieldsWithScheme(netObj,nicObj,true,conn);
-      netInterfaceObjs[Length(netInterfaces)-1]:=nicObj;
     end;
     data.DeleteField('net'+IntToStr(i));
   end;
@@ -1285,6 +1442,7 @@ begin
           configObj.DeleteField('size');
           diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
 
+          vmService.Field('hdd').AddObjectLink(diskObj.UID);
           SetLength(diskObjs,Length(diskObjs)+1);
           diskObjs[Length(diskObjs)-1]:=diskObj;
         end;
@@ -1305,6 +1463,7 @@ begin
         diskObj.Field('uniquephysicalid').AsString:='cd'+idx_str+'@'+vmService.UID_String;
         diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
 
+        vmService.Field('cd').AddObjectLink(diskObj.UID);
         SetLength(diskObjs,Length(diskObjs)+1);
         diskObjs[Length(diskObjs)-1]:=diskObj;
       end;
@@ -1322,6 +1481,7 @@ begin
       diskObj.Field('uniquephysicalid').AsString:='usb@'+vmService.UID_String;
       diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
 
+      vmService.Field('usb').AddObjectLink(diskObj.UID);
       SetLength(diskObjs,Length(diskObjs)+1);
       diskObjs[Length(diskObjs)-1]:=diskObj;
     end;
@@ -1340,6 +1500,7 @@ begin
         diskObj.Field('uniquephysicalid').AsString:='floppy'+idx_str+'@'+vmService.UID_String;
         diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
 
+        vmService.Field('floppy').AddObjectLink(diskObj.UID);
         SetLength(diskObjs,Length(diskObjs)+1);
         diskObjs[Length(diskObjs)-1]:=diskObj;
       end;
@@ -1347,28 +1508,26 @@ begin
     data.DeleteField('floppy'+idx_str);
   end;
 
-  schemeObject.SetObjectFieldsWithScheme(data,vmService,true,conn);
-  vmService.Field('serviceParent').AsObjectLink:=zone.UID;
-  vmService.Field('zoneid').AsObjectLink:=zone.UID;
-  idx:=TFRE_DB_VMACHINE.ClassName + '_' + vmService.ObjectName + '@' + zone.UID_String;
-  vmService.Field('uniquephysicalid').asstring := idx;
+  schemeObject.SetObjectFieldsWithScheme(data,vmService,not isModify,conn);
 
-  if coll.ExistsIndexedText(idx)<>0 then begin
-    Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_exists_cap'),FetchModuleTextShort(ses,'vm_create_error_exists_msg'),fdbmt_error);
-    exit;
-  end;
   for i := 0 to High(netInterfaces) do begin
-    if compsColl.ExistsIndexedText(netInterfaceObjs[i].Field('nic').AsString + '@' + zone.UID_String)<>0 then begin
-      CheckDbResult(conn.Fetch(netInterfaceObjs[i].Field('nic').AsObjectLink,vnic));
-      Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),StringReplace(FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used_by_vm'),'%vnic_str%',vnic.Field('objname').AsString,[rfReplaceAll]),fdbmt_error);
-      exit;
+    if compsColl.GetIndexedObjsFieldval(netInterfaceObjs[i].Field('uniquephysicalid'),vnicConf)>0 then begin
+      if isModify then begin
+        refs:=conn.GetReferences(vnicConf[0].UID,false,TFRE_DB_VMACHINE.ClassName,'interface');
+        if (refs[0]<>vmService.UID) then begin
+          CheckDbResult(conn.Fetch(netInterfaceObjs[i].Field('nic').AsObjectLink,vnic));
+        end;
+      end else begin
+        CheckDbResult(conn.Fetch(netInterfaceObjs[i].Field('nic').AsObjectLink,vnic));
+      end;
+      if Assigned(vnic) then begin
+        Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),StringReplace(FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used_by_vm'),'%vnic_str%',vnic.Field('objname').AsString,[rfReplaceAll]),fdbmt_error);
+        exit;
+      end;
     end;
   end;
 
-  CheckDbResult(coll.Store(vmService.CloneToNewObject()));
   for i := 0 to High(netInterfaces) do begin
-    netInterfaceObjs[i].Field('serviceParent').AsObjectLink:=vmService.UID;
-    netInterfaceObjs[i].Field('uniquephysicalid').asstring := netInterfaceObjs[i].Field('nic').AsString + '@' + vmService.UID_String;
     if ses.GetSessionModuleData(ClassName).FieldExists('AddVMNC_net' + IntToStr(i+1)) then begin
       configObj:=ses.GetSessionModuleData(ClassName).Field('AddVMNC_net' + IntToStr(i+1)).AsObject;
       if configObj.FieldExists('hostname') and (configObj.Field('hostname').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
@@ -1379,6 +1538,7 @@ begin
           hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
           hnScheme.SetObjectFieldsWithScheme(configObj.Field('ip_net').AsObject,hostnet,true,conn);
           hostnet.Field('uniquephysicalid').AsString:='ip@'+netInterfaceObjs[i].UID_String;
+          hostnet.Field('zoneId').AsObjectLink:=zone.UID;
           CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
           netInterfaceObjs[i].Field('ip').AsObjectLink:=hostnet.UID;
         end;
@@ -1387,6 +1547,7 @@ begin
         hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
         hostnet.Field('ip').AsString:=configObj.Field('gateway').AsString;
         hostnet.Field('uniquephysicalid').AsString:='gateway@'+netInterfaceObjs[i].UID_String;
+        hostnet.Field('zoneId').AsObjectLink:=zone.UID;
         CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
         netInterfaceObjs[i].Field('gateway').AsObjectLink:=hostnet.UID;
       end;
@@ -1394,6 +1555,7 @@ begin
         hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
         hostnet.Field('ip').AsString:=configObj.Field('dns1').AsString;
         hostnet.Field('uniquephysicalid').AsString:='dns1@'+netInterfaceObjs[i].UID_String;
+        hostnet.Field('zoneId').AsObjectLink:=zone.UID;
         CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
         netInterfaceObjs[i].Field('dns_ip0').AsObjectLink:=hostnet.UID;
       end;
@@ -1401,16 +1563,27 @@ begin
         hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
         hostnet.Field('ip').AsString:=configObj.Field('dns2').AsString;
         hostnet.Field('uniquephysicalid').AsString:='dns2@'+netInterfaceObjs[i].UID_String;
+        hostnet.Field('zoneId').AsObjectLink:=zone.UID;
         CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
         netInterfaceObjs[i].Field('dns_ip1').AsObjectLink:=hostnet.UID;
       end;
+    end;
+    if netInterfaceObjs[i].Field('new').AsBoolean then begin
       CheckDbResult(compsColl.Store(netInterfaceObjs[i].CloneToNewObject()));
+    end else begin
+      CheckDbResult(conn.Update(netInterfaceObjs[i]));
     end;
   end;
 
   //Store disks
   for i := 0 to High(diskObjs) do begin
     CheckDbResult(compsColl.Store(diskObjs[i]));
+  end;
+
+  if isModify then begin
+    CheckDbResult(conn.Update(vmService.CloneToNewObject()));
+  end else begin
+    CheckDbResult(coll.Store(vmService.CloneToNewObject()));
   end;
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.create.Describe();
