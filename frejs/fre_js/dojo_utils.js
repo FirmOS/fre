@@ -3710,7 +3710,7 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     for (var i=0; i<this.groupRequiredFields[path].grf.length; i++) {
       var elem = dijit.byId(this.groupRequiredFields[path].grf[i]);
       elem.set('required',required);
-      var labelElem = dojo.byId(this.groupRequiredFields[path].grf[i]+'_label');
+      var labelElem = dojo.byId(elem.id+'_label');
       if (labelElem) {
         if (required) {
           dojo.removeClass(labelElem,"firmosFormLabel");

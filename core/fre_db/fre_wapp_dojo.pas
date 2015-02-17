@@ -830,7 +830,7 @@ implementation
             end else begin
               jsContentAdd('"<td class=''firmosFormLabelTD''>"+');
             end;
-            jsContentAdd('"<label for='''+elem.Field('field').AsString+''' id='''+elem.Field('field').AsString+'_label'' class='''+labelclass+'''>'+_EscapeValueString(elem.Field('caption').AsString)+': </label>"+');
+            jsContentAdd('"<label for='''+elem.Field('id').AsString+''' id='''+elem.Field('id').AsString+'_label'' class='''+labelclass+'''>'+_EscapeValueString(elem.Field('caption').AsString)+': </label>"+');
             jsContentAdd('"</td>"+');
           end;
           jsContentAdd('"<td "+');
