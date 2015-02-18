@@ -2632,7 +2632,14 @@ var i,j         : NativeInt;
                 begin
                   oldlinks := oldfield.AsObjectLinkArray;
                   inmemobject.Field(newfield.FieldName).AsObjectLinkArray:=newfield.AsObjectLinkArray;
-                  master._ChangeRefLink(inmemobject,uppercase(inmemobject.SchemeClass),uppercase(newfield.FieldName),oldlinks,newfield.AsObjectLinkArray,FNotifIF,GetTransActionStepID);
+                  if inmemobject.IsSystemDB then
+                    begin
+                      G_SysMaster._ChangeRefLink(inmemobject,uppercase(inmemobject.SchemeClass),uppercase(newfield.FieldName),oldlinks,newfield.AsObjectLinkArray,FNotifIF,GetTransActionStepID);
+                    end
+                  else
+                    begin
+                      master._ChangeRefLink(inmemobject,uppercase(inmemobject.SchemeClass),uppercase(newfield.FieldName),oldlinks,newfield.AsObjectLinkArray,FNotifIF,GetTransActionStepID);
+                    end;
                 end;
           end;
         end;
