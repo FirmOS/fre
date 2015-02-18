@@ -788,6 +788,7 @@ begin
    if currentVersionId='0.9.1' then begin
      currentVersionId:='0.9.2';
      CreateModuleText(conn,'machines_modify_vm','Modify','','Modify VM');
+     CreateModuleText(conn,'vm_modify_caption','Modfiy Virtual Machine');
    end;
 end;
 
@@ -1054,11 +1055,11 @@ var
   netObj               : IFRE_DB_Object;
   cdbo                 : IFRE_DB_Object;
   diskObj              : IFRE_DB_Object;
+  caption: TFRE_DB_String;
 begin
   CheckClassVisibility4MyDomain(ses);
 
   _cleanupAddModifyVMTmpData(ses);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_new_caption'),600,false,true,false);
 
   sf:=CWSF(@WEB_StoreVM);
 
@@ -1074,6 +1075,8 @@ begin
     dc.Filters.RemoveFilter('used');
     dc.Filters.AddUIDFieldFilter('used','vmid',[service.UID,CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
     sf.AddParam.Describe('serviceId',service.UID_String);
+
+    caption:=FetchModuleTextShort(ses,'vm_modify_caption');
   end else begin
     if input.FieldPathExists('data.zone') then begin
       zoneId:=FREDB_H2G(input.FieldPath('data.zone').AsString);
@@ -1094,7 +1097,10 @@ begin
 
     dc.Filters.RemoveFilter('used');
     dc.Filters.AddUIDFieldFilter('used','vmid',[CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
+
+    caption:=FetchModuleTextShort(ses,'vm_new_caption');
   end;
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(caption,600,false,true,false);
   dc.Filters.RemoveFilter('zone');
   dc.Filters.AddUIDFieldFilter('zone','zid',[zoneId],dbnf_OneValueFromFilter);
   dc:=ses.FetchDerivedCollection(CFRE_DB_VMACHINE_HDD_CHOOSER_DC);
