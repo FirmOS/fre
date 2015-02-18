@@ -1084,12 +1084,13 @@ begin
         Result:=_addVMChooseZone(input,ses,app,conn);
         exit;
       end;
-      sf.AddParam.Describe('zoneId',FREDB_G2H(zoneId));
     end;
     CheckDbResult(conn.FetchAs(zoneId,TFRE_DB_ZONE,zone));
 
     if not canAddVM(input,ses,app,conn,zone) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    sf.AddParam.Describe('zoneId',FREDB_G2H(zoneId));
 
     dc.Filters.RemoveFilter('used');
     dc.Filters.AddUIDFieldFilter('used','vmid',[CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
@@ -1308,7 +1309,10 @@ var
   i,j              : Integer;
   netInterfaces    : TFRE_DB_GUIDArray;
   netInterfaceObjs : IFRE_DB_ObjectArray;
-  diskObjs         : IFRE_DB_ObjectArray;
+  hddObjs          : IFRE_DB_ObjectArray;
+  cdObjs           : IFRE_DB_ObjectArray;
+  usbObjs          : IFRE_DB_ObjectArray;
+  floppyObjs       : IFRE_DB_ObjectArray;
   interfaceGuid    : TFRE_DB_GUID;
   netObj           : IFRE_DB_Object;
   nicScheme        : IFRE_DB_SchemeObject;
@@ -1321,22 +1325,28 @@ var
   diskObj          : TFRE_DB_VMACHINE_DISK;
   diskScheme       : IFRE_DB_SchemeObject;
   isModify         : Boolean;
-  linkId           : TFRE_DB_GUID;
-  newConf          : Boolean;
   vnic             : IFRE_DB_Object;
   refs             : TFRE_DB_GUIDArray;
   vnicConf         : IFRE_DB_ObjectArray;
+  interfaceArray   : TFRE_DB_ObjLinkArray;
+  hddArray         : TFRE_DB_ObjLinkArray;
+  cdArray          : TFRE_DB_ObjLinkArray;
+  usbArray         : TFRE_DB_ObjLinkArray;
+  floppyArray      : TFRE_DB_ObjLinkArray;
+  hostnetDbo       : IFRE_DB_ObjectArray;
 begin
   coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   data:=input.Field('data').AsObject;
   if input.FieldExists('serviceId') then begin
-    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('serviceId').AsString),TFRE_DB_ZONE,vmService));
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('serviceId').AsString),TFRE_DB_VMACHINE,vmService));
 
     if not canModifyVM(input,ses,app,conn,vmService) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
+    CheckDbResult(conn.FetchAs(vmService.Field('zoneId').AsObjectLink,TFRE_DB_ZONE,zone));
+
     if data.FieldExists('objname') and (data.Field('objname').AsString<>vmService.ObjectName) then begin
-      idx:=TFRE_DB_VMACHINE.ClassName + '_' + data.Field('objname').AsString + '@' + FREDB_G2H(vmService.Field('zoneId').AsObjectLink);
+      idx:=TFRE_DB_VMACHINE.ClassName + '_' + data.Field('objname').AsString + '@' + zone.UID_String;
       vmService.Field('uniquephysicalid').asstring := idx;
       if coll.ExistsIndexedText(idx)<>0 then begin
         Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_exists_cap'),FetchModuleTextShort(ses,'vm_create_error_exists_msg'),fdbmt_error);
@@ -1344,6 +1354,16 @@ begin
       end;
     end;
 
+    interfaceArray:=vmService.Field('interface').AsObjectLinkArray;
+    vmService.DeleteField('interface');
+    hddArray:=vmService.Field('hdd').AsObjectLinkArray;
+    vmService.DeleteField('hdd');
+    cdArray:=vmService.Field('cd').AsObjectLinkArray;
+    vmService.DeleteField('cd');
+    usbArray:=vmService.Field('usb').AsObjectLinkArray;
+    vmService.DeleteField('usb');
+    floppyArray:=vmService.Field('floppy').AsObjectLinkArray;
+    vmService.DeleteField('floppy');
     isModify:=true;
   end else begin
     if input.FieldExists('zoneId') then begin
@@ -1385,43 +1405,31 @@ begin
   //check network
   SetLength(netInterfaces,0);
   SetLength(netInterfaceObjs,4);
-  SetLength(diskObjs,0);
+  SetLength(hddObjs,0);
+  SetLength(cdObjs,0);
+  SetLength(usbObjs,0);
+  SetLength(floppyObjs,0);
   for i := 0 to 3 do begin
-    netObj:=data.Field('net'+IntToStr(i+1)).AsObject;
-    if netObj.FieldExists('nic') then begin
-      if netObj.Field('nic').IsSpecialClearMarked then begin
-        if isModify then begin
-          linkId:=vmService.Field('interface').AsObjectLinkItem[i];
-          vmService.Field('interface').RemoveObjectLink(i);
-          CheckDbResult(conn.Delete(linkId));
+    idx_str:=IntToStr(i+1);
+    netObj:=data.Field('net'+idx_str).AsObject;
+    if netObj.FieldExists('nic') and not netObj.Field('nic').IsSpecialClearMarked then begin
+      //check if already used
+      interfaceGuid:=FREDB_H2G(netObj.Field('nic').AsString);
+      for j := 0 to High(netInterfaces) do begin
+        if netInterfaces[j]=interfaceGuid then begin
+          Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used'),fdbmt_error);
+          exit;
         end;
-      end else begin
-        //check if already used
-        interfaceGuid:=FREDB_H2G(netObj.Field('nic').AsString);
-        for j := 0 to High(netInterfaces) do begin
-          if netInterfaces[j]=interfaceGuid then begin
-            Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'vm_create_error_cap'),FetchModuleTextShort(ses,'vm_create_error_msg_net_interface_used'),fdbmt_error);
-            exit;
-          end;
-        end;
-        SetLength(netInterfaces,Length(netInterfaces)+1);
-        netInterfaces[Length(netInterfaces)-1]:=interfaceGuid;
-        if vmService.Field('interface').ValueCount>i then begin
-          CheckDbResult(conn.FetchAs(vmService.Field('interface').AsObjectLinkItem[i],TFRE_DB_VMACHINE_NIC,nicObj));
-          nicObj.Field('new').AsBoolean:=false;
-          newConf:=false;
-        end else begin
-          nicObj:=TFRE_DB_VMACHINE_NIC.CreateForDB;
-          nicObj.Field('new').AsBoolean:=true;
-          newConf:=true;
-        end;
-        nicScheme.SetObjectFieldsWithScheme(netObj,nicObj,newConf,conn);
-        vmService.Field('interface').AddObjectLink(nicObj.UID);
-        netInterfaceObjs[i].Field('uniquephysicalid').asstring := netInterfaceObjs[i].Field('nic').AsString + '@' + zone.UID_String;
-        netInterfaceObjs[Length(netInterfaces)-1]:=nicObj;
       end;
+      SetLength(netInterfaces,Length(netInterfaces)+1);
+      netInterfaces[Length(netInterfaces)-1]:=interfaceGuid;
+      nicObj:=TFRE_DB_VMACHINE_NIC.CreateForDB;
+      nicObj.SetDomainID(zone.DomainID);
+      nicScheme.SetObjectFieldsWithScheme(netObj,nicObj,true,conn);
+      nicObj.Field('uniquephysicalid').asstring := nicObj.Field('nic').AsString + '@' + zone.UID_String;
+      netInterfaceObjs[Length(netInterfaces)-1]:=nicObj;
     end;
-    data.DeleteField('net'+IntToStr(i));
+    data.DeleteField('net'+idx_str);
   end;
 
   //DRIVES
@@ -1436,15 +1444,15 @@ begin
         if not configObj.Field('file').IsSpecialClearMarked then begin
           //link existing zvol/file
           diskObj:=TFRE_DB_VMACHINE_DISK.CreateForDB;
+          diskObj.SetDomainID(zone.DomainID);
           diskObj.Field('hdd_type').AsString:='disk';
           diskObj.Field('uniquephysicalid').AsString:='hdd'+idx_str+'@'+vmService.UID_String;
           configObj.DeleteField('cap');
           configObj.DeleteField('size');
           diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
 
-          vmService.Field('hdd').AddObjectLink(diskObj.UID);
-          SetLength(diskObjs,Length(diskObjs)+1);
-          diskObjs[Length(diskObjs)-1]:=diskObj;
+          SetLength(hddObjs,Length(hddObjs)+1);
+          hddObjs[Length(hddObjs)-1]:=diskObj;
         end;
       end;
     end;
@@ -1459,13 +1467,13 @@ begin
       if not configObj.Field('file').IsSpecialClearMarked then begin
         //link existing file
         diskObj:=TFRE_DB_VMACHINE_DISK.CreateForDB;
+        diskObj.SetDomainID(zone.DomainID);
         diskObj.Field('hdd_type').AsString:='cdrom';
         diskObj.Field('uniquephysicalid').AsString:='cd'+idx_str+'@'+vmService.UID_String;
         diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
 
-        vmService.Field('cd').AddObjectLink(diskObj.UID);
-        SetLength(diskObjs,Length(diskObjs)+1);
-        diskObjs[Length(diskObjs)-1]:=diskObj;
+        SetLength(cdObjs,Length(cdObjs)+1);
+        cdObjs[Length(cdObjs)-1]:=diskObj;
       end;
     end;
     data.DeleteField('cd'+idx_str);
@@ -1477,13 +1485,13 @@ begin
     if not configObj.Field('file').IsSpecialClearMarked then begin
       //link existing file
       diskObj:=TFRE_DB_VMACHINE_DISK.CreateForDB;
+      diskObj.SetDomainID(zone.DomainID);
       diskObj.Field('hdd_type').AsString:='usb';
       diskObj.Field('uniquephysicalid').AsString:='usb@'+vmService.UID_String;
       diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
 
-      vmService.Field('usb').AddObjectLink(diskObj.UID);
-      SetLength(diskObjs,Length(diskObjs)+1);
-      diskObjs[Length(diskObjs)-1]:=diskObj;
+      SetLength(usbObjs,Length(usbObjs)+1);
+      usbObjs[Length(usbObjs)-1]:=diskObj;
     end;
   end;
   data.DeleteField('usb');
@@ -1496,13 +1504,13 @@ begin
       if not configObj.Field('file').IsSpecialClearMarked then begin
         //link existing file
         diskObj:=TFRE_DB_VMACHINE_DISK.CreateForDB;
+        diskObj.SetDomainID(zone.DomainID);
         diskObj.Field('hdd_type').AsString:='floppy';
         diskObj.Field('uniquephysicalid').AsString:='floppy'+idx_str+'@'+vmService.UID_String;
         diskScheme.SetObjectFieldsWithScheme(configObj,diskObj,true,conn);
 
-        vmService.Field('floppy').AddObjectLink(diskObj.UID);
-        SetLength(diskObjs,Length(diskObjs)+1);
-        diskObjs[Length(diskObjs)-1]:=diskObj;
+        SetLength(floppyObjs,Length(floppyObjs)+1);
+        floppyObjs[Length(floppyObjs)-1]:=diskObj;
       end;
     end;
     data.DeleteField('floppy'+idx_str);
@@ -1516,6 +1524,8 @@ begin
         refs:=conn.GetReferences(vnicConf[0].UID,false,TFRE_DB_VMACHINE.ClassName,'interface');
         if (refs[0]<>vmService.UID) then begin
           CheckDbResult(conn.Fetch(netInterfaceObjs[i].Field('nic').AsObjectLink,vnic));
+        end else begin
+          vnic:=nil;
         end;
       end else begin
         CheckDbResult(conn.Fetch(netInterfaceObjs[i].Field('nic').AsObjectLink,vnic));
@@ -1527,57 +1537,103 @@ begin
     end;
   end;
 
+  if isModify then begin
+    CheckDbResult(conn.Update(vmService.CloneToNewObject()));
+    //delete old config
+    for i := 0 to High(interfaceArray) do begin
+      CheckDbResult(conn.Delete(interfaceArray[i]));
+    end;
+  end;
+
   for i := 0 to High(netInterfaces) do begin
     if ses.GetSessionModuleData(ClassName).FieldExists('AddVMNC_net' + IntToStr(i+1)) then begin
       configObj:=ses.GetSessionModuleData(ClassName).Field('AddVMNC_net' + IntToStr(i+1)).AsObject;
-      if configObj.FieldExists('hostname') and (configObj.Field('hostname').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+      if configObj.FieldExists('hostname') and not configObj.Field('hostname').IsSpecialClearMarked then begin
         netInterfaceObjs[i].Field('hostname').AsString:=configObj.Field('hostname').AsString;
       end;
-      if configObj.FieldExists('ip_net') and (configObj.Field('ip_net').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
-        if configObj.FieldPathExists('ip_net.ip') and (configObj.FieldPath('ip_net.ip').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
+      if configObj.FieldExists('ip_net') and not configObj.FieldPath('ip_net.ip').IsSpecialClearMarked then begin
+        if hnColl.GetIndexedObjsFieldval(configObj.FieldPath('ip_net.ip'),hostnetDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+          netInterfaceObjs[i].Field('ip').AsObjectLink:=hostnetDbo[0].UID;
+        end else begin
           hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+          hostnet.SetDomainID(zone.DomainID);
           hnScheme.SetObjectFieldsWithScheme(configObj.Field('ip_net').AsObject,hostnet,true,conn);
-          hostnet.Field('uniquephysicalid').AsString:='ip@'+netInterfaceObjs[i].UID_String;
-          hostnet.Field('zoneId').AsObjectLink:=zone.UID;
           CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
           netInterfaceObjs[i].Field('ip').AsObjectLink:=hostnet.UID;
         end;
       end;
-      if configObj.FieldExists('gateway') and (configObj.Field('gateway').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
-        hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
-        hostnet.Field('ip').AsString:=configObj.Field('gateway').AsString;
-        hostnet.Field('uniquephysicalid').AsString:='gateway@'+netInterfaceObjs[i].UID_String;
-        hostnet.Field('zoneId').AsObjectLink:=zone.UID;
-        CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
-        netInterfaceObjs[i].Field('gateway').AsObjectLink:=hostnet.UID;
+      if configObj.FieldExists('gateway') and not configObj.Field('gateway').IsSpecialClearMarked then begin
+        if hnColl.GetIndexedObjsFieldval(configObj.Field('gateway'),hostnetDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+          netInterfaceObjs[i].Field('gateway').AsObjectLink:=hostnetDbo[0].UID;
+        end else begin
+          hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+          hostnet.SetDomainID(zone.DomainID);
+          hostnet.Field('ip').AsString:=configObj.Field('gateway').AsString;
+          CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
+          netInterfaceObjs[i].Field('gateway').AsObjectLink:=hostnet.UID;
+        end;
       end;
-      if configObj.FieldExists('dns1') and (configObj.Field('dns1').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
-        hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
-        hostnet.Field('ip').AsString:=configObj.Field('dns1').AsString;
-        hostnet.Field('uniquephysicalid').AsString:='dns1@'+netInterfaceObjs[i].UID_String;
-        hostnet.Field('zoneId').AsObjectLink:=zone.UID;
-        CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
-        netInterfaceObjs[i].Field('dns_ip0').AsObjectLink:=hostnet.UID;
+      if configObj.FieldExists('dns1') and not configObj.Field('dns1').IsSpecialClearMarked then begin
+        if hnColl.GetIndexedObjsFieldval(configObj.Field('dns1'),hostnetDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+          netInterfaceObjs[i].Field('dns1').AsObjectLink:=hostnetDbo[0].UID;
+        end else begin
+          hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+          hostnet.SetDomainID(zone.DomainID);
+          hostnet.Field('ip').AsString:=configObj.Field('dns1').AsString;
+          hostnet.Field('zoneId').AsObjectLink:=zone.UID;
+          CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
+          netInterfaceObjs[i].Field('dns_ip0').AsObjectLink:=hostnet.UID;
+        end;
       end;
-      if configObj.FieldExists('dns2') and (configObj.Field('dns1').AsString<>cFRE_DB_SYS_CLEAR_VAL_STR) then begin
-        hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
-        hostnet.Field('ip').AsString:=configObj.Field('dns2').AsString;
-        hostnet.Field('uniquephysicalid').AsString:='dns2@'+netInterfaceObjs[i].UID_String;
-        hostnet.Field('zoneId').AsObjectLink:=zone.UID;
-        CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
-        netInterfaceObjs[i].Field('dns_ip1').AsObjectLink:=hostnet.UID;
+      if configObj.FieldExists('dns2') and not configObj.Field('dns2').IsSpecialClearMarked then begin
+        if hnColl.GetIndexedObjsFieldval(configObj.Field('dns2'),hostnetDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+          netInterfaceObjs[i].Field('dns2').AsObjectLink:=hostnetDbo[0].UID;
+        end else begin
+          hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
+          hostnet.SetDomainID(zone.DomainID);
+          hostnet.Field('ip').AsString:=configObj.Field('dns2').AsString;
+          hostnet.Field('zoneId').AsObjectLink:=zone.UID;
+          CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
+          netInterfaceObjs[i].Field('dns_ip1').AsObjectLink:=hostnet.UID;
+        end;
       end;
     end;
-    if netInterfaceObjs[i].Field('new').AsBoolean then begin
-      CheckDbResult(compsColl.Store(netInterfaceObjs[i].CloneToNewObject()));
-    end else begin
-      CheckDbResult(conn.Update(netInterfaceObjs[i]));
+    CheckDbResult(compsColl.Store(netInterfaceObjs[i].CloneToNewObject()));
+    vmService.Field('interface').AddObjectLink(netInterfaceObjs[i].UID);
+  end;
+
+  if isModify then begin
+    //delete old config
+    for i := 0 to High(hddArray) do begin
+      CheckDbResult(conn.Delete(hddArray[i]));
+    end;
+    for i := 0 to High(cdArray) do begin
+      CheckDbResult(conn.Delete(cdArray[i]));
+    end;
+    for i := 0 to High(usbArray) do begin
+      CheckDbResult(conn.Delete(usbArray[i]));
+    end;
+    for i := 0 to High(floppyArray) do begin
+      CheckDbResult(conn.Delete(floppyArray[i]));
     end;
   end;
 
   //Store disks
-  for i := 0 to High(diskObjs) do begin
-    CheckDbResult(compsColl.Store(diskObjs[i]));
+  for i := 0 to High(hddObjs) do begin
+    CheckDbResult(compsColl.Store(hddObjs[i]));
+    vmService.Field('hdd').AddObjectLink(hddObjs[i].UID);
+  end;
+  for i := 0 to High(cdObjs) do begin
+    CheckDbResult(compsColl.Store(cdObjs[i]));
+    vmService.Field('cd').AddObjectLink(cdObjs[i].UID);
+  end;
+  for i := 0 to High(usbObjs) do begin
+    CheckDbResult(compsColl.Store(usbObjs[i]));
+    vmService.Field('usb').AddObjectLink(usbObjs[i].UID);
+  end;
+  for i := 0 to High(floppyObjs) do begin
+    CheckDbResult(compsColl.Store(floppyObjs[i]));
+    vmService.Field('floppy').AddObjectLink(floppyObjs[i].UID);
   end;
 
   if isModify then begin

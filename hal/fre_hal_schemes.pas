@@ -9353,8 +9353,15 @@ begin
   end else begin
     collection  := conn.GetCollection(CFRE_DB_IP_COLLECTION);
   end;
+  if collection.IndexExists('def') then begin
+    ix_def      := collection.GetIndexDefinition('def');
+    if lowercase(ix_def.FieldName)='uniquephysicalid' then begin
+      collection.DropIndex('def');
+      CheckDbResult(collection.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false));
+    end;
+  end;
   if not collection.IndexExists('def') then begin
-    collection.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false);
+    collection.DefineIndexOnField('ip',fdbft_String,false,true,'def',true,false,true); //FIXXME - make unique
   end;
 
   if not conn.CollectionExists(CFOS_DB_ZONES_COLLECTION) then begin
