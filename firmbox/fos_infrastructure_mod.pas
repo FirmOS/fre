@@ -963,6 +963,7 @@ begin
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
       SetFinalRightTransformFunction(@CalculateIcon,[]);
+      AddMatchingReferencedField(['SERVICEPARENT>'],'uid','zuid','',false);
     end;
 
     dc := session.NewDerivedCollection('ZONE_SERVICES_GRID');
@@ -1289,7 +1290,7 @@ begin
 
   dc:=ses.FetchDerivedCollection('ZONE_SERVICES_GRID');
   dc.Filters.RemoveFilter('zone');
-  //dc.Filters.AddAutoDependencyFilter('zone',['<SERVICEPARENT'],[zone.UID]); //FIXXME
+  dc.Filters.AddUIDFieldFilter('zone','zuid',[zone.UID],dbnf_OneValueFromFilter);
   res:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
   canAdd:=false;

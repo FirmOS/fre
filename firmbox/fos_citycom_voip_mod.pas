@@ -541,11 +541,8 @@ begin
       customers.AddButton.Describe(CWSF(@WEB_AddService),'',FetchModuleTextShort(ses,'tb_add_service'),FetchModuleTextHint(ses,'tb_add_service'));
     end;
 
-    ext_admin_Grid.SetUseDependencyAsUidFilter('vs_uid',false,'uid');
     customers.AddFilterEvent(ext_admin_Grid.getDescriptionStoreId(),'uid');
-    ext_Grid.SetUseDependencyAsUidFilter('vs_uid',false,'uid');
     customers.AddFilterEvent(ext_Grid.getDescriptionStoreId(),'uid');
-    pb_Grid.SetUseDependencyAsUidFilter('vs_uid',false,'uid');
     customers.AddFilterEvent(pb_Grid.getDescriptionStoreId(),'uid');
 
     Result:=TFRE_DB_LAYOUT_DESC.create.Describe.SetLayout(customers,subsec.Implementor_HC as TFRE_DB_CONTENT_DESC);
@@ -554,12 +551,12 @@ begin
     pb_Grid.Filters.RemoveFilter('service');
     if coll.ItemCount=1 then begin
       voip_service:=coll.First;
-      //ext_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_EXTENSION<VOIP_SERVICE'],[voip_service.UID]); //FIXXME
-      //pb_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_PHONEBOOK_ENTRY<VOIP_SERVICE'],[voip_service.UID]); //FIXXME
+      ext_Grid.Filters.AddUIDFieldFilter('service','vs_uid',[voip_service.UID],dbnf_OneValueFromFilter);
+      pb_Grid.Filters.AddUIDFieldFilter('service','vs_uid',[voip_service.UID],dbnf_OneValueFromFilter);
       ses.GetSessionModuleData(ClassName).Field('selectedVoIP').AsString:=voip_service.UID_String;
     end else begin
-      //ext_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_EXTENSION<VOIP_SERVICE'],[CFRE_DB_NullGUID]); // FIXXME
-      //pb_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_PHONEBOOK_ENTRY<VOIP_SERVICE'],[CFRE_DB_NullGUID]); // FIXXME
+      ext_Grid.Filters.AddUIDFieldFilter('service','vs_uid',[CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
+      pb_Grid.Filters.AddUIDFieldFilter('service','vs_uid',[CFRE_DB_NullGUID],dbnf_OneValueFromFilter);
       ses.GetSessionModuleData(ClassName).DeleteField('selectedVoIP');
     end;
     Result:=subsec;
@@ -1469,6 +1466,7 @@ begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_VOIP_EXTENSIONS_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_ExtMenu),nil,CWSF(@WEB_ExtSC));
+      SetUseDependencyAsUidFilter('vs_uid',false,'uid');
       SetDefaultOrderField('objname',true);
     end;
 
@@ -1499,6 +1497,7 @@ begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_VOIP_EXTENSIONS_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_ExtMenu),nil,CWSF(@WEB_ExtSC));
+      SetUseDependencyAsUidFilter('vs_uid',false,'uid');
       SetDefaultOrderField('objname',true);
     end;
 
@@ -1507,6 +1506,7 @@ begin
       AddMatchingReferencedField('EXPANSION>TFOS_DB_CITYCOM_VOIP_HARDWARE','objname','objname',FetchModuleTextShort(session,'grid_exp_in_name'),true,dt_string,true);
       AddOneToOnescheme('count','',FetchModuleTextShort(session,'grid_exp_in_count'),dt_string,true,true);
       AddFulltextFilterOnTransformed(['objname']);
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_VOIP_EXTENSION<EXPANSIONS'],'uid','extuid','',false);
     end;
 
     grid := session.NewDerivedCollection('VOIP_EXTENSION_EXP_IN_GRID');
@@ -1522,6 +1522,7 @@ begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_exp_out_name'),dt_string,true,true);
       AddOneToOnescheme('type','','',dt_string,false);
       AddFulltextFilterOnTransformed(['objname']);
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_VOIP_EXT_EXP_REL<EXPANSION','TFOS_DB_CITYCOM_VOIP_EXTENSION<EXPANSIONS'],'uid','extuid','',false);
     end;
 
     grid := session.NewDerivedCollection('VOIP_EXTENSION_EXP_OUT_GRID');
@@ -1897,9 +1898,9 @@ begin
   used_exp_grid.AddButton.Describe(sf,'',FetchModuleTextShort(ses,'tb_configure_exp'),FetchModuleTextHint(ses,'tb_configure_exp'),fdgbd_single);
 
   used_exp.Filters.RemoveFilter('USEDEXP');
-  //used_exp.Filters.AddAutoDependencyFilter('USEDEXP',['EXPANSIONS>TFOS_DB_CITYCOM_VOIP_EXT_EXP_REL'],[extDBO.UID]); //FIXXME
+  used_exp.Filters.AddUIDFieldFilter('USEDEXP','extuid',[extDBO.UID],dbnf_OneValueFromFilter);
   available_exp.Filters.RemoveFilter('USEDEXP');
-  //available_exp.Filters.AddAutoDependencyFilter('USEDEXP',['EXPANSIONS>TFOS_DB_CITYCOM_VOIP_EXT_EXP_REL','EXPANSION>TFOS_DB_CITYCOM_VOIP_HARDWARE'],[extDBO.UID],false); // FIXXME
+  available_exp.Filters.AddUIDFieldFilter('USEDEXP','extuid',[extDBO.UID],dbnf_OneValueFromFilter,false);
 
   expansions:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,used_exp_grid,nil,nil,available_exp_grid,true,1,1,1,1,1);
 
@@ -2261,6 +2262,7 @@ begin
       SetDeriveParent(conn.GetCollection(CFOS_DB_VOIP_PHONEBOOK_COLLECTION));
       SetDeriveTransformation(transform);
       SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_PBMenu),nil,CWSF(@WEB_PBSC));
+      SetUseDependencyAsUidFilter('vs_uid',false,'uid');
       SetDefaultOrderField('lastname',true);
     end;
  end;

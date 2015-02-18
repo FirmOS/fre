@@ -148,6 +148,7 @@ begin
     with transform do begin
       AddOneToOnescheme('caption','',FetchAppTextShort(session,'notif_grid_caption'),dt_string,true,true);
       AddOneToOnescheme('details','','',dt_description);
+      AddMatchingReferencedField(['FOR>'],'uid','fuid','',false);
     end;
     notification_grid := session.NewDerivedCollection('NOTIFICATION_GRID');
     with notification_grid do begin
@@ -157,7 +158,7 @@ begin
       uids:=conn.SYS.GetCurrentUserTokenRef.GetUserGroupIDS;
       SetLength(uids,Length(uids)+1);
       uids[Length(uids)-1]:=conn.SYS.GetCurrentUserTokenRef.GetUserUID;
-      //Filters.AddAutoDependencyFilter('FOR',['TFRE_DB_NOTIFICATION<FOR'],uids); //FIXXME
+      Filters.AddUIDFieldFilter('FOR','fuid',uids,dbnf_OneValueFromFilter);
     end;
   end;
 end;
