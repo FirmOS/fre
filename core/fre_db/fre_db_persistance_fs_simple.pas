@@ -769,12 +769,35 @@ end;
 
 function TFRE_DB_PS_FILE.LoadScheme: TFRE_DB_Errortype;
 var objdir : string;
+
+  procedure RebuildSchemeOverlays;
+
+    procedure ConcatOverlay(const o : IFRE_DB_Object);
+    var sch : TFRE_DB_SchemeObject;
+        rs  : TFRE_DB_STANDARD_RIGHT_SET;
+    begin
+      sch := o.Implementor_HC as TFRE_DB_SchemeObject;
+      if sch.GetOverlayRights4UserClass('WEBUSER',rs) then
+        begin
+          G_OverlayRights.Field(sch.DefinedSchemeName).AsInt32 := Integer(rs);
+        end;
+    end;
+
+  begin
+    if assigned(G_OverlayRights) then
+      G_OverlayRights.ClearAllFields
+    else
+      G_OverlayRights:=TFRE_DB_Object.Create;
+    G_SysScheme.Field('SCHEMES').AsObject.ForAllObjects(@ConcatOverlay);
+  end;
+
 begin
   result := edb_OK;
   objdir := FBasedirectory+DirectorySeparator+'fre_scheme.dbo';
   if FileExists(objdir) then
     try
       G_SysScheme := TFRE_DB_Object.CreateFromFile(objdir);
+      RebuildSchemeOverlays;
       result := edb_OK;
     except
       on e:exception do
@@ -1278,7 +1301,7 @@ begin
           idx := 0;
           FDefaultDomU.ClearGuid;
           FSysDomains.ForAllInternalI(@IterateDomains);
-          tokeno := TFRE_DB_USER_RIGHT_TOKEN.Create(myuser.UID,myuser.Login,myUser.Firstname,myUser.Lastname,'',myuser.Userclass,myuser.GetUserGroupIDS,_GetRightsArrayForUser(myUser),sys_admin,FSysDomain.UID,myuser.DomainID,FDefaultDomU,domuids,domnames);
+          tokeno := TFRE_DB_USER_RIGHT_TOKEN.Create(myuser.UID,myuser.Login,myUser.Firstname,myUser.Lastname,'',myuser.Userclass,myuser.GetUserGroupIDS,_GetRightsArrayForUser(myUser),sys_admin,FSysDomain.UID,myuser.DomainID,FDefaultDomU,domuids,domnames,G_OverlayRights.CloneToNewObject);
           G_UpdateUserToken(myuser.UID,tokeno);
           Result := tokeno.CloneToNewUserToken;
         finally

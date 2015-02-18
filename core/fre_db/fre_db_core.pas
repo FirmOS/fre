@@ -2020,6 +2020,7 @@ type
     FConnectionRights : TFRE_DB_StringArray;
     FAllDomainsUids   : TFRE_DB_GUIDArray;
     FAllDomainNames   : TFRE_DB_NameTypeArray;
+    FOverlayrights    : IFRE_DB_Object;
 
     function    Implementor                 : TObject;
     function    IsCurrentUserSystemAdmin    : boolean; //inline;
@@ -2033,9 +2034,12 @@ type
     function    _GetStdRightName            (const std_right: TFRE_DB_STANDARD_RIGHT; const classtyp: TClass ; const domainguid : TFRE_DB_GUID): TFRE_DB_String;
     function    _GetStdRightName            (const std_right: TFRE_DB_STANDARD_RIGHT; const classtyp: TClass): TFRE_DB_String;
     function    FetchAllDomainUids          : TFRE_DB_GUIDArray;
+    function    _OverlayRightsAllow         (const classn : ShortString ; needed_rs : TFRE_DB_STANDARD_RIGHT_SET):boolean;
+
 
   public
-    constructor Create                      (const user_uid: TFRE_DB_GUID; const login_part,firstname,lastname,desc,userclass: TFRE_DB_String; const group_ids: TFRE_DB_GUIDArray; const rights: TFRE_DB_StringArray; is_sys_admin: boolean; sysdom_id, user_domid, def_domid: TFRE_DB_GUID; domainids: TFRE_DB_GUIDArray; domain_names: TFRE_DB_NameTypeArray);
+    constructor Create                      (const user_uid: TFRE_DB_GUID; const login_part,firstname,lastname,desc,userclass: TFRE_DB_String; const group_ids: TFRE_DB_GUIDArray; const rights: TFRE_DB_StringArray;
+                                             is_sys_admin: boolean; sysdom_id, user_domid, def_domid: TFRE_DB_GUID; domainids: TFRE_DB_GUIDArray; domain_names: TFRE_DB_NameTypeArray ; const overlayrights : IFRE_DB_Object);
     destructor  Destroy                     ;override;
     procedure   Finalize                    ;
 
@@ -2048,8 +2052,8 @@ type
     function    Userclass                    : TFRE_DB_String;
     function    CheckStdRightAndCondFinalize (const dbi : IFRE_DB_Object ; const sr : TFRE_DB_STANDARD_RIGHT ; const without_right_check: boolean=false;const cond_finalize:boolean=true) : TFRE_DB_Errortype;
 
-    function    CheckStdRightsetUIDAndClass  (const obj_uid, obj_domuid: TFRE_DB_GUID; const check_classname: ShortString; const sr: TFRE_DB_STANDARD_RIGHT_SET): TFRE_DB_Errortype;
-    function    CheckStdRightsetInternalObj  (const obj : TFRE_DB_Object ; const sr: TFRE_DB_STANDARD_RIGHT_SET): TFRE_DB_Errortype;
+    function    CheckStdRightsetUIDAndClass  (const obj_uid, obj_domuid: TFRE_DB_GUID; const check_classname: ShortString; const sr: TFRE_DB_STANDARD_RIGHT_SET): TFRE_DB_Errortype; { Overlay aware }
+    function    CheckStdRightsetInternalObj  (const obj : TFRE_DB_Object ; const sr: TFRE_DB_STANDARD_RIGHT_SET): TFRE_DB_Errortype; { Overlay aware }
     function    CheckGenRightSetUIDAndClass  (const obj_uid, obj_domuid: TFRE_DB_GUID; const check_classname: ShortString; const sr: TFRE_DB_StringArray): TFRE_DB_Errortype;
 
     { Safe case, use for single domain use cases }
@@ -2061,16 +2065,16 @@ type
     function    GetDomainsForClassRight     (const right_name:TFRE_DB_String;const classtyp: TClass): TFRE_DB_GUIDArray;
 
     { Stdrights Many domain case, add additional checks for the specific domain }
-    function    CheckClassRight4MyDomain    (const std_right:TFRE_DB_STANDARD_RIGHT;const classtyp: TClass):boolean;
-    function    CheckClassRight4AnyDomain   (const std_right:TFRE_DB_STANDARD_RIGHT;const classtyp: TClass):boolean;
-    function    CheckClassRight4AnyDomain   (const std_right:TFRE_DB_STANDARD_RIGHT;const rclassname: ShortString):boolean;
+    function    CheckClassRight4MyDomain    (const std_right:TFRE_DB_STANDARD_RIGHT;const classtyp: TClass):boolean;        { Overlay aware }
+    function    CheckClassRight4AnyDomain   (const std_right:TFRE_DB_STANDARD_RIGHT;const classtyp: TClass):boolean;        { Overlay aware }
+    function    CheckClassRight4AnyDomain   (const std_right:TFRE_DB_STANDARD_RIGHT;const rclassname: ShortString):boolean; { Overlay aware }
 
-    function    CheckClassRight4Domain      (const std_right : TFRE_DB_STANDARD_RIGHT ; const classtyp  : TClass      ; const domainKey:TFRE_DB_String=''):boolean; { specific domain }
-    function    CheckClassRight4Domain      (const std_right : TFRE_DB_STANDARD_RIGHT ; const rclassname: ShortString ; const domainKey:TFRE_DB_String=''):boolean; { specific domain }
+    function    CheckClassRight4Domain      (const std_right : TFRE_DB_STANDARD_RIGHT ; const classtyp  : TClass      ; const domainKey:TFRE_DB_String=''):boolean; { specific domain, overlay aware }
+    function    CheckClassRight4Domain      (const std_right : TFRE_DB_STANDARD_RIGHT ; const rclassname: ShortString ; const domainKey:TFRE_DB_String=''):boolean; { specific domain, overlay aware }
     function    CheckClassRight4DomainId    (const right_name: TFRE_DB_String         ; const classtyp  : TClass      ; const domain: TFRE_DB_GUID): boolean;
     function    CheckClassRight4DomainId    (const right_name: TFRE_DB_String         ; const rclassname: ShortString ; const domain: TFRE_DB_GUID): boolean;
-    function    CheckClassRight4DomainId    (const std_right : TFRE_DB_STANDARD_RIGHT ; const classtyp  : TClass      ; const domain: TFRE_DB_GUID): boolean;
-    function    CheckClassRight4DomainId    (const std_right : TFRE_DB_STANDARD_RIGHT ; const rclassname: ShortString ; const domain: TFRE_DB_GUID): boolean;
+    function    CheckClassRight4DomainId    (const std_right : TFRE_DB_STANDARD_RIGHT ; const classtyp  : TClass      ; const domain: TFRE_DB_GUID): boolean; { Overlay aware }
+    function    CheckClassRight4DomainId    (const std_right : TFRE_DB_STANDARD_RIGHT ; const rclassname: ShortString ; const domain: TFRE_DB_GUID): boolean; { Overlay aware }
 
     function    GetDomainsForClassRight     (const std_right:TFRE_DB_STANDARD_RIGHT;const classtyp: TClass): TFRE_DB_GUIDArray;
     function    GetDomainsForClassRight     (const std_right:TFRE_DB_STANDARD_RIGHT;const rclassname: ShortString): TFRE_DB_GUIDArray;
@@ -3133,6 +3137,21 @@ begin
   Result := FAllDomainsUids;
 end;
 
+function TFRE_DB_USER_RIGHT_TOKEN._OverlayRightsAllow(const classn: ShortString; needed_rs: TFRE_DB_STANDARD_RIGHT_SET): boolean;
+var fld : IFRE_DB_Field;
+    hor : TFRE_DB_STANDARD_RIGHT_SET;
+begin
+  result := false;
+  if FOverlayrights.FieldOnlyExisting(classn,fld) then
+    begin
+      hor := TFRE_DB_STANDARD_RIGHT_SET(fld.AsInt32);
+      if hor * needed_rs = needed_rs then
+        begin
+          result := true;
+        end;
+    end;
+end;
+
 function TFRE_DB_USER_RIGHT_TOKEN.CheckClassRight4MyDomain(const right_name: TFRE_DB_String; const classtyp: TClass): boolean;
 begin
   result := IsCurrentUserSystemAdmin;
@@ -3155,13 +3174,6 @@ end;
 function TFRE_DB_USER_RIGHT_TOKEN.CheckClassRight4Domain(const right_name: TFRE_DB_String; const classtyp: TClass; const domainKey: TFRE_DB_String): boolean;
 begin
   result := CheckClassRight4DomainId(right_name,classtyp,GetDomainID(domainKey));
-  //result := IsCurrentUserSystemAdmin;
-  //if result then
-  //  exit;
-  //result := FREDB_StringInArray((TFRE_DB_BaseClass(classtyp).GetClassRightName(right_name)+'@'+_DomainIDasString(domainkey)),FConnectionRights); // DomainIDasString has to be uppercase!
-  //if result then
-  //  exit;
-  //result := FREDB_StringInArray((TFRE_DB_BaseClass(classtyp).GetClassRightName(right_name)+'@'+GetSystemDomainID_String),FConnectionRights); // check in system domain
 end;
 
 function TFRE_DB_USER_RIGHT_TOKEN.GetDomainsForRight(const right_name: TFRE_DB_String): TFRE_DB_GUIDArray;
@@ -3187,6 +3199,8 @@ begin
   result := IsCurrentUserSystemAdmin;
   if result then
     exit;
+  if _OverlayRightsAllow(classtyp.ClassName,[std_right]) then
+    exit;
   result := FREDB_StringInArray(_GetStdRightName(std_right,classtyp,FMyDomainID),FConnectionRights);
   if result then
     exit;
@@ -3198,6 +3212,8 @@ begin
   result := IsCurrentUserSystemAdmin;
   if result then
     exit;
+  if _OverlayRightsAllow(classtyp.ClassName,[std_right]) then
+    exit;
   result := FREDB_PrefixStringInArray(_GetStdRightName(std_right,classtyp),FConnectionRights);
 end;
 
@@ -3205,6 +3221,8 @@ function TFRE_DB_USER_RIGHT_TOKEN.CheckClassRight4AnyDomain(const std_right: TFR
 begin
   result := IsCurrentUserSystemAdmin;
   if result then
+    exit;
+  if _OverlayRightsAllow(rclassname,[std_right]) then
     exit;
   result := FREDB_PrefixStringInArray(_GetStdRightName(std_right,rclassname),FConnectionRights);
 end;
@@ -3243,6 +3261,8 @@ begin
   result := IsCurrentUserSystemAdmin;
   if result then
     exit;
+  if _OverlayRightsAllow(classtyp.ClassName,[std_right]) then
+    exit;
   result := FREDB_StringInArray(_GetStdRightName(std_right,classtyp,domain),FConnectionRights);
 end;
 
@@ -3252,10 +3272,12 @@ begin
   result := IsCurrentUserSystemAdmin;
   if result then
     exit;
+  if _OverlayRightsAllow(rclassname,[std_right]) then
+    exit;
   result := (domain<>CFRE_DB_NullGUID) and FREDB_StringInArray(_GetStdRightName(std_right,rclassname,domain),FConnectionRights);
 end;
 
-constructor TFRE_DB_USER_RIGHT_TOKEN.Create(const user_uid: TFRE_DB_GUID; const login_part, firstname, lastname, desc, userclass: TFRE_DB_String; const group_ids: TFRE_DB_GUIDArray; const rights: TFRE_DB_StringArray; is_sys_admin: boolean; sysdom_id, user_domid, def_domid: TFRE_DB_GUID; domainids: TFRE_DB_GUIDArray; domain_names: TFRE_DB_NameTypeArray);
+constructor TFRE_DB_USER_RIGHT_TOKEN.Create(const user_uid: TFRE_DB_GUID; const login_part, firstname, lastname, desc, userclass: TFRE_DB_String; const group_ids: TFRE_DB_GUIDArray; const rights: TFRE_DB_StringArray; is_sys_admin: boolean; sysdom_id, user_domid, def_domid: TFRE_DB_GUID; domainids: TFRE_DB_GUIDArray; domain_names: TFRE_DB_NameTypeArray; const overlayrights: IFRE_DB_Object);
 var sl    : TStringList;
     i     : NativeInt;
     hsh   : Cardinal;
@@ -3273,6 +3295,7 @@ begin
   FMyDomainID_GS    := uppercase(FREDB_G2H(FMyDomainID));
   FAllDomainNames   := domain_names;
   FDefaultDomainUID := def_domid;
+  FOverlayrights    := overlayrights;
 
   FAllDomainsUids   := domainids;
   if userclass='MIGHTYFEEDER' then
@@ -3403,6 +3426,8 @@ begin
     classt := uppercase(check_classname);
     res    := true;
     result := edb_OK;
+    if _OverlayRightsAllow(classt,sr) then
+      exit;
     if sr_FETCH in sr then
       begin
         res := res AND IntCheck(sr_FETCH);
@@ -3559,7 +3584,7 @@ end;
 
 function TFRE_DB_USER_RIGHT_TOKEN.Clone: TFRE_DB_USER_RIGHT_TOKEN;
 begin
-  result := TFRE_DB_USER_RIGHT_TOKEN.Create(FUserUID,FUserLoginPart,FUserFirstName,FUserLastName,FUserDescName,FUserClass,FUsergroupIDs,FConnectionRights,FIsSysAdmin,FSysDomainUID,FMyDomainID,FDefaultDomainUID,FAllDomainsUids,FAllDomainNames);
+  result := TFRE_DB_USER_RIGHT_TOKEN.Create(FUserUID,FUserLoginPart,FUserFirstName,FUserLastName,FUserDescName,FUserClass,FUsergroupIDs,FConnectionRights,FIsSysAdmin,FSysDomainUID,FMyDomainID,FDefaultDomainUID,FAllDomainsUids,FAllDomainNames,FOverlayrights);
   if Result.FUniqueToken<>FUniqueToken then
     raise EFRE_DB_Exception.Create(edb_INTERNAL,'unique user token clone / failure / internal logic');
 end;
