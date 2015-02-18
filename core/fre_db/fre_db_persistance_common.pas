@@ -705,10 +705,10 @@ type
     procedure  FieldDelete            (const old_field : IFRE_DB_Field; const tsid : TFRE_DB_TransStepId); virtual;
     procedure  FieldAdd               (const new_field : IFRE_DB_Field; const tsid : TFRE_DB_TransStepId); virtual;
     procedure  FieldChange            (const old_field,new_field : IFRE_DB_Field; const tsid : TFRE_DB_TransStepId); virtual;
-    procedure  SetupOutboundRefLink   (const from_obj : TFRE_DB_GUID           ; const to_obj: IFRE_DB_Object ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId); virtual;
-    procedure  SetupInboundRefLink    (const from_obj : IFRE_DB_Object  ; const to_obj: TFRE_DB_GUID          ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId); virtual;
-    procedure  InboundReflinkDropped  (const from_obj : IFRE_DB_Object  ; const to_obj: TFRE_DB_GUID          ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId); virtual;
-    procedure  OutboundReflinkDropped (const from_obj : TFRE_DB_GUID           ; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId); virtual ;
+    procedure  SetupOutboundRefLink   (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);virtual;
+    procedure  SetupInboundRefLink    (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);virtual;
+    procedure  InboundReflinkDropped  (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);virtual;
+    procedure  OutboundReflinkDropped (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);virtual;
     procedure  FinalizeNotif          ;
   end;
 
@@ -747,10 +747,10 @@ type
     procedure   FieldDelete            (const old_field : IFRE_DB_Field; const tsid : TFRE_DB_TransStepId); override;
     procedure   FieldAdd               (const new_field : IFRE_DB_Field; const tsid : TFRE_DB_TransStepId); override;
     procedure   FieldChange            (const old_field,new_field : IFRE_DB_Field; const tsid : TFRE_DB_TransStepId); override;
-    procedure   SetupOutboundRefLink   (const from_obj : TFRE_DB_GUID          ; const to_obj: IFRE_DB_Object ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId);override;
-    procedure   SetupInboundRefLink    (const from_obj : IFRE_DB_Object ; const to_obj: TFRE_DB_GUID   ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId); override;
-    procedure   InboundReflinkDropped  (const from_obj : IFRE_DB_Object ; const to_obj: TFRE_DB_GUID   ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId); override;
-    procedure   OutboundReflinkDropped (const from_obj : TFRE_DB_GUID          ; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId);override;
+    procedure   SetupOutboundRefLink   (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);override;
+    procedure   SetupInboundRefLink    (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);override;
+    procedure   InboundReflinkDropped  (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);override;
+    procedure   OutboundReflinkDropped (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);override;
   end;
 
 implementation
@@ -1343,7 +1343,7 @@ begin
   end;
 end;
 
-procedure TFRE_DB_DBChangedNotificationProxy.SetupOutboundRefLink(const from_obj: TFRE_DB_GUID; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+procedure TFRE_DB_DBChangedNotificationProxy.SetupOutboundRefLink(const from_obj: IFRE_DB_Object; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 var newe : IFRE_DB_Object;
 begin
   try
@@ -1351,7 +1351,7 @@ begin
     CheckBlockStarted;
     newe := GFRE_DBI.NewObject;
     newe.Field('C').AsString    := 'SOL';
-    newe.Field('FO').AsGUID     := from_obj;
+    newe.Field('FO').AsObject   := from_obj.CloneToNewObject;
     newe.Field('TO').AsObject   := to_obj.CloneToNewObject;
     newe.Field('KD').AsString   := key_description;
     newe.Field('TSID').AsString := tsid;
@@ -1362,7 +1362,7 @@ begin
   end;
 end;
 
-procedure TFRE_DB_DBChangedNotificationProxy.SetupInboundRefLink(const from_obj: IFRE_DB_Object; const to_obj: TFRE_DB_GUID; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+procedure TFRE_DB_DBChangedNotificationProxy.SetupInboundRefLink(const from_obj: IFRE_DB_Object; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 var newe : IFRE_DB_Object;
 begin
   try
@@ -1371,7 +1371,7 @@ begin
     newe := GFRE_DBI.NewObject;
     newe.Field('C').AsString    := 'SIL';
     newe.Field('FO').AsObject   := from_obj.CloneToNewObject;
-    newe.Field('TO').AsGUID     := to_obj;
+    newe.Field('TO').AsObject   := to_obj.CloneToNewObject;
     newe.Field('KD').AsString   := key_description;
     newe.Field('TSID').AsString := tsid;
     AddNotificationEntry(newe);
@@ -1381,7 +1381,7 @@ begin
   end;
 end;
 
-procedure TFRE_DB_DBChangedNotificationProxy.InboundReflinkDropped(const from_obj: IFRE_DB_Object; const to_obj: TFRE_DB_GUID; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+procedure TFRE_DB_DBChangedNotificationProxy.InboundReflinkDropped(const from_obj: IFRE_DB_Object; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 var newe : IFRE_DB_Object;
 begin
   try
@@ -1390,7 +1390,7 @@ begin
     newe := GFRE_DBI.NewObject;
     newe.Field('C').AsString    := 'DIL';
     newe.Field('FO').AsObject   := from_obj.CloneToNewObject;
-    newe.Field('TO').AsGUID     := to_obj;
+    newe.Field('TO').AsObject   := to_obj.CloneToNewObject();
     newe.Field('KD').AsString   := key_description;
     newe.Field('TSID').AsString := tsid;
     AddNotificationEntry(newe);
@@ -1400,7 +1400,7 @@ begin
   end;
 end;
 
-procedure TFRE_DB_DBChangedNotificationProxy.OutboundReflinkDropped(const from_obj: TFRE_DB_GUID; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+procedure TFRE_DB_DBChangedNotificationProxy.OutboundReflinkDropped(const from_obj: IFRE_DB_Object; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 var newe : IFRE_DB_Object;
 begin
   try
@@ -1408,7 +1408,7 @@ begin
     CheckBlockStarted;
     newe := GFRE_DBI.NewObject;
     newe.Field('C').AsString    := 'DOL';
-    newe.Field('FO').AsGUID     := from_obj;
+    newe.Field('FO').AsObject   := from_obj.CloneToNewObject;
     newe.Field('TO').AsObject   := to_obj.CloneToNewObject;
     newe.Field('KD').AsString   := key_description;
     newe.Field('TSID').AsString := tsid;
@@ -1512,24 +1512,24 @@ begin
   GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> FIELD [%s/(%s)] CHANGED IN OBJECT -> %s',[FLayerDB,tsid,new_field.FieldName,new_field.FieldTypeAsString,new_field.ParentObject.GetDescriptionID]));
 end;
 
-procedure TFRE_DB_DBChangedNotificationBase.SetupOutboundRefLink(const from_obj: TFRE_DB_GUID; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+procedure TFRE_DB_DBChangedNotificationBase.SetupOutboundRefLink(const from_obj: IFRE_DB_Object; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 begin
-    GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> NEW OUTBOUND REFLINK  [%s] -> [%s] (%s)',[FLayerDB,tsid,FREDB_G2H(from_obj),to_obj.UID_String,key_description]));
+    GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> NEW OUTBOUND REFLINK  [%s] -> [%s] (%s)',[FLayerDB,tsid,from_obj.UID_String+'/'+from_obj.SchemeClass,to_obj.UID_String+'/'+to_obj.SchemeClass,key_description]));
 end;
 
-procedure TFRE_DB_DBChangedNotificationBase.SetupInboundRefLink(const from_obj: IFRE_DB_Object; const to_obj: TFRE_DB_GUID; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+procedure TFRE_DB_DBChangedNotificationBase.SetupInboundRefLink(const from_obj: IFRE_DB_Object; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 begin
-    GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> NEW INBOUND REFLINK  [%s] -> [%s] (%s)',[FLayerDB,tsid,from_obj.UID_String,FREDB_G2H(to_obj),key_description]));
+    GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> NEW INBOUND REFLINK  [%s] -> [%s] (%s)',[FLayerDB,tsid,from_obj.UID_String+'/'+from_obj.SchemeClass,to_obj.UID_String+'/'+to_obj.SchemeClass,key_description]));
 end;
 
-procedure TFRE_DB_DBChangedNotificationBase.InboundReflinkDropped(const from_obj: IFRE_DB_Object; const to_obj: TFRE_DB_GUID; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+procedure TFRE_DB_DBChangedNotificationBase.InboundReflinkDropped(const from_obj: IFRE_DB_Object; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 begin
-    GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> DROPPED INBOUND REFLINK  [%s] -> [%s] (%s)',[FLayerDB,tsid,from_obj.UID_String,FREDB_G2H(to_obj),key_description]));
+    GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> DROPPED INBOUND REFLINK  [%s] -> [%s] (%s)',[FLayerDB,tsid,from_obj.UID_String+'/'+from_obj.SchemeClass,to_obj.UID_String+'/'+to_obj.SchemeClass,key_description]));
 end;
 
-procedure TFRE_DB_DBChangedNotificationBase.OutboundReflinkDropped(const from_obj: TFRE_DB_GUID; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+procedure TFRE_DB_DBChangedNotificationBase.OutboundReflinkDropped(const from_obj: IFRE_DB_Object; const to_obj: IFRE_DB_Object; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
 begin
-  GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> DROPPED OUTBOUND REFLINK  [%s] -> [%s] (%s)',[FLayerDB,tsid,FREDB_G2H(from_obj),to_obj.UID_String,key_description]));
+  GFRE_DBI.LogInfo(dblc_PERSISTANCE_NOTIFY,Format('[%s/%s]> DROPPED OUTBOUND REFLINK  [%s] -> [%s] (%s)',[FLayerDB,tsid,from_obj.UID_String+'/'+from_obj.SchemeClass,to_obj.UID_String+'/'+to_obj.SchemeClass,key_description]));
 end;
 
 procedure TFRE_DB_DBChangedNotificationBase.FinalizeNotif;
@@ -3270,11 +3270,13 @@ end;
 
 procedure TFRE_DB_Master_Data.__RemoveInboundReflink(const from_uid, to_uid: TFRE_DB_GUID; const scheme_link_key: TFRE_DB_NameTypeRL; const notifif: IFRE_DB_DBChangedNotification; const tsid: TFRE_DB_TransStepId);
 var
-  refinkey   : RFRE_DB_GUID_RefLink_InOut_Key;
-  exists     : boolean;
-  value      : PtrUInt;
-  from_obj   : TFRE_DB_Object;
-  lock_state : boolean;
+  refinkey    : RFRE_DB_GUID_RefLink_InOut_Key;
+  exists      : boolean;
+  value       : PtrUInt;
+  from_obj    : TFRE_DB_Object;
+  to_obj      : TFRE_DB_Object;
+  lock_statef : boolean;
+  lock_statet : boolean;
 
 begin
   __SetupInboundLinkKey(from_uid,to_uid,scheme_link_key,refinkey);
@@ -3285,15 +3287,19 @@ begin
     raise EFRE_DB_PL_Exception.Create(edb_INTERNAL,'internal inbound reflink structure bad, value invalid [%d]',[value]);
 
   if not FetchObject(from_uid,from_obj,true) then
-    raise EFRE_DB_PL_Exception.Create(edb_ERROR,'remove inbound reflink not found %s',[FREDB_G2H(to_uid)]);
+    raise EFRE_DB_PL_Exception.Create(edb_ERROR,'remove inbound reflink from obj not found %s',[from_obj.UID_String]);
+  if not FetchObject(to_uid,to_obj,true) then
+    raise EFRE_DB_PL_Exception.Create(edb_ERROR,'remove inbound reflink to obj not found %s',[to_obj.UID_String]);
 
   if assigned(notifif) then
     begin
-      from_obj.Set_Store_LockedUnLockedIf(false,lock_state); { Locking is ok here, to reduce cloning }
+      from_obj.Set_Store_LockedUnLockedIf(false,lock_statef); { Locking is ok here, to reduce cloning }
+      to_obj.Set_Store_LockedUnLockedIf(false,lock_statet); { Locking is ok here, to reduce cloning }
       try
-        notifif.InboundReflinkDropped(from_obj,to_uid,scheme_link_key,tsid);
+        notifif.InboundReflinkDropped(from_obj,to_obj,scheme_link_key,tsid);
       finally
-        from_obj.Set_Store_LockedUnLockedIf(true,lock_state);
+        from_obj.Set_Store_LockedUnLockedIf(true,lock_statef);
+        to_obj.Set_Store_LockedUnLockedIf(true,lock_statet);
       end;
     end;
 end;
@@ -3303,8 +3309,12 @@ var
   refoutkey  : RFRE_DB_GUID_RefLink_InOut_Key;
   exists     : boolean;
   value      : PtrUInt;
-  to_obj     : TFRE_DB_Object;
-  lock_state : boolean;
+  from_obj    : TFRE_DB_Object;
+  to_obj      : TFRE_DB_Object;
+  lock_statef : boolean;
+  lock_statet : boolean;
+
+
 begin
   __SetupOutboundLinkKey(from_uid,to_uid,scheme_link_key,refoutkey);
   exists := FMasterRefLinks.RemoveBinaryKey(@refoutkey,refoutkey.KeyLength,value);
@@ -3312,15 +3322,21 @@ begin
     raise EFRE_DB_PL_Exception.Create(edb_INTERNAL,'internal outbound reflink structure bad, inbound link not found for outbound from,to,schemelink [%s, %s, %s]',[FREDB_G2H(from_uid),FREDB_G2H(to_uid),scheme_link_key]);
   if value<>$BAD0BEEF then
     raise EFRE_DB_PL_Exception.Create(edb_INTERNAL,'internal outbound reflink structure bad, value invalid [%d]',[value]);
+
+  if not FetchObject(from_uid,from_obj,true) then
+    raise EFRE_DB_PL_Exception.Create(edb_ERROR,'remove outbound reflink from obj not found %s',[from_obj.UID_String]);
   if not FetchObject(to_uid,to_obj,true) then
-    raise EFRE_DB_PL_Exception.Create(edb_ERROR,'remove outbound reflink not found %s',[FREDB_G2H(to_uid)]);
+    raise EFRE_DB_PL_Exception.Create(edb_ERROR,'remove outbound reflink to obj not found %s',[to_obj.UID_String]);
+
   if assigned(notifif) then
     begin
-      to_obj.Set_Store_LockedUnLockedIf(false,lock_state);
+      to_obj.Set_Store_LockedUnLockedIf(false,lock_statet);
+      from_obj.Set_Store_LockedUnLockedIf(false,lock_statef);
       try
-        notifif.OutboundReflinkDropped(from_uid,to_obj,scheme_link_key,tsid); { Locking is ok here, to reduce cloning }
+        notifif.OutboundReflinkDropped(from_obj,to_obj,scheme_link_key,tsid); { Locking is ok here, to reduce cloning }
       finally
-        to_obj.Set_Store_LockedUnLockedIf(true,lock_state);
+        to_obj.Set_Store_LockedUnLockedIf(true,lock_statet);
+        from_obj.Set_Store_LockedUnLockedIf(true,lock_statef);
       end;
     end;
 end;
@@ -3434,11 +3450,11 @@ begin
     begin
       ref_obj.Set_Store_LockedUnLockedIf(false,was_locked); { Locking is ok here, to reduce cloning }
       try
-        notifif.SetupOutboundRefLink(from_key.UID,ref_obj,FromFieldToSchemename,tsid);
+        notifif.SetupOutboundRefLink(from_key,ref_obj,FromFieldToSchemename,tsid);
+        notifif.SetupInboundRefLink(from_key,ref_obj,LinkFromSchemenameField,tsid);
       finally
         ref_obj.Set_Store_LockedUnLockedIf(true,was_locked);
       end;
-      notifif.SetupInboundRefLink(from_key,references_to,LinkFromSchemenameField,tsid);
     end;
 end;
 
@@ -4156,7 +4172,11 @@ begin
   if result then
     begin
       if not assigned(user_context) then
-        exit(true);
+        begin
+          if internal_obj=false then { only cloneout if needed }
+            obj := CloneOutObject(obj);
+          exit(true);
+        end;
       result := uti.CheckStdRightsetInternalObj(obj,[sr_FETCH])=edb_OK;
       if result=false then
         begin

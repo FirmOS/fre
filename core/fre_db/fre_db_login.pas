@@ -157,7 +157,7 @@ begin
       uids:=conn.SYS.GetCurrentUserTokenRef.GetUserGroupIDS;
       SetLength(uids,Length(uids)+1);
       uids[Length(uids)-1]:=conn.SYS.GetCurrentUserTokenRef.GetUserUID;
-      Filters.AddAutoDependencyFilter('FOR',['TFRE_DB_NOTIFICATION<FOR'],uids);
+      //Filters.AddAutoDependencyFilter('FOR',['TFRE_DB_NOTIFICATION<FOR'],uids); //FIXXME
     end;
   end;
 end;

@@ -1019,6 +1019,12 @@ begin
           raise;
         end;
     end;
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;
@@ -1059,6 +1065,12 @@ begin
       //    end;
       //    exit(edb_NOT_FOUND);
       //  end;
+      {$IFDEF DEBUG_STORELOCK}
+       GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+      {$ENDIF}
+      {$IFDEF DEBUG_SUBOBJECTS_STORED}
+       GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+      {$ENDIF}
     except
       on e:EFRE_DB_PL_Exception do
         begin
@@ -1292,6 +1304,12 @@ begin
           raise;
         end;
     end;
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;
@@ -1871,6 +1889,12 @@ begin
           G_Transaction := nil;
         end;
     end;
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;
@@ -2612,6 +2636,12 @@ begin
   LayerLock.Acquire;
   try
     result := FMaster.GetReferencesRC(obj_uid,from,scheme_prefix_filter,field_exact_filter,user_context,false);
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;
@@ -2622,6 +2652,12 @@ begin
   LayerLock.Acquire;
   try
     result := FMaster.GetReferencesCountRC(obj_uid,from,scheme_prefix_filter,field_exact_filter,user_context);
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;
@@ -2632,6 +2668,12 @@ begin
   LayerLock.Acquire;
   try
     result := FMaster.GetReferencesDetailedRC(obj_uid,from,scheme_prefix_filter,field_exact_filter,user_context);
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;
@@ -2642,6 +2684,12 @@ begin
   LayerLock.Acquire;
   try
     FMaster.ExpandReferencesRC(user_context,ObjectList,ref_constraints,expanded_refs);
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;
@@ -2652,6 +2700,12 @@ begin
   LayerLock.Acquire;
   try
     result := FMaster.ExpandReferencesCountRC(user_context,ObjectList,ref_constraints);
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;
@@ -2662,6 +2716,12 @@ begin
   LayerLock.Acquire;
   try
     FMaster.FetchExpandReferencesRC(user_context,ObjectList,ref_constraints,expanded_refs);
+    {$IFDEF DEBUG_STORELOCK}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(1); { Full Storelocking Check }
+    {$ENDIF}
+    {$IFDEF DEBUG_SUBOBJECTS_STORED}
+     GFRE_DB_PS_LAYER.DEBUG_InternalFunction(2); { Full Subobject Storage Check }
+    {$ENDIF}
   finally
     LayerLock.Release;
   end;

@@ -987,7 +987,6 @@ type
   IFRE_DB_TRANSDATA_CHANGE_NOTIFIER   = interface
   end;
 
-  TFRE_DB_TRANSFORMED_ARRAY_BASE      = class;
   TFRE_DB_DC_FILTER_DEFINITION_BASE   = class;
   TFRE_DB_DC_ORDER_DEFINITION_BASE    = class;
 
@@ -1022,7 +1021,6 @@ type
     //  or all Objects which point to the the input "Dependency" object,
     //  via a schemelinkdefinition chain : Outbound ['TFRE_DB_SCHEME>DOMAINDILINK', ... ] or Inbound (common) ['TFRE_DB_USER<DOMAINIDLINK']
     //}
-    procedure  SetUseDependencyAsRefLinkFilter (const scheme_and_field_constraint : Array of TFRE_DB_NameTypeRL ; const negate : boolean ; const dependency_reference : string = 'uids'); deprecated; { bad performance impact / soes not sit on transform layer but on filter layer (-) }
     procedure  SetUseDependencyAsUidFilter     (const field_to_filter : TFRE_DB_NameType ; const negate : boolean=false ; const dependency_reference : string = 'uids');
 
     procedure  SetDisplayType                   (const CollectionDisplayType : TFRE_COLLECTION_DISPLAY_TYPE ; const Flags:TFRE_COLLECTION_GRID_DISPLAY_FLAGS;const title:TFRE_DB_String;const item_menu_func: TFRE_DB_SERVER_FUNC_DESC=nil;const item_details_func: TFRE_DB_SERVER_FUNC_DESC=nil; const grid_item_notification: TFRE_DB_SERVER_FUNC_DESC=nil; const tree_menu_func: TFRE_DB_SERVER_FUNC_DESC=nil; const drop_func: TFRE_DB_SERVER_FUNC_DESC=nil; const drag_func: TFRE_DB_SERVER_FUNC_DESC=nil);
@@ -1057,6 +1055,7 @@ type
 
   IFRE_DB_FINAL_RIGHT_TRANSFORM_FUNCTION = procedure (const ut : IFRE_DB_USER_RIGHT_TOKEN ; const transformed_object : IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String) of object;
   IFRE_DB_QUERY_SELECTOR_FUNCTION        = procedure (const ref_objects: IFRE_DB_ObjectArray; const input_object,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray) of object;
+  IFRE_DB_QUERY_SELECTOR_FUNCTION_NESTED = procedure (const ref_objects: IFRE_DB_ObjectArray; const input_object,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray) is nested;
   IFRE_DB_OBJECT_SIMPLE_CALLBACK         = procedure (const input, output : IFRE_DB_Object;const langres: TFRE_DB_StringArray) of object;
   IFRE_DB_OBJECT_SIMPLE_CALLBACK_NESTED  = procedure (const input, output : IFRE_DB_Object;const langres: TFRE_DB_StringArray) is nested;
 
@@ -1559,10 +1558,10 @@ type
     procedure  FieldChange            (const old_field,new_field : IFRE_DB_Field; const tsid : TFRE_DB_TransStepId);  { DIFFERENTIAL STATE}
     procedure  DifferentiallUpdEnds   (const obj_uid   : TFRE_DB_GUID; const tsid : TFRE_DB_TransStepId);             { DIFFERENTIAL STATE}
     procedure  ObjectRemoved          (const coll_names: TFRE_DB_NameTypeArray ; const obj : IFRE_DB_Object ; const is_a_full_delete : boolean ; const tsid : TFRE_DB_TransStepId);
-    procedure  SetupOutboundRefLink   (const from_obj : TFRE_DB_GUID            ; const to_obj: IFRE_DB_Object ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId);
-    procedure  SetupInboundRefLink    (const from_obj : IFRE_DB_Object   ; const to_obj: TFRE_DB_GUID          ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId);
-    procedure  InboundReflinkDropped  (const from_obj: IFRE_DB_Object    ; const to_obj   : TFRE_DB_GUID       ; const key_description : TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId);
-    procedure  OutboundReflinkDropped (const from_obj : TFRE_DB_GUID            ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid : TFRE_DB_TransStepId);
+    procedure  SetupOutboundRefLink   (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+    procedure  SetupInboundRefLink    (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+    procedure  InboundReflinkDropped  (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
+    procedure  OutboundReflinkDropped (const from_obj: IFRE_DB_Object ; const to_obj: IFRE_DB_Object ; const key_description: TFRE_DB_NameTypeRL; const tsid: TFRE_DB_TransStepId);
     procedure  FinalizeNotif          ;
   end;
 
@@ -2103,18 +2102,13 @@ type
     FNegate            : Boolean;
     FAllowNull         : Boolean;
     FOnlyRootNodes     : Boolean;
-    FNeedsDBReEvaluate : Boolean; { the filter must be reevaluated }
     FDBName            : TFRE_DB_NameType;
   public
     function    GetKeyName              : TFRE_DB_NameType;                     { get a reproducable unique key, depending on the filter field, values and settings}
     function    GetDefinitionKey        : TFRE_DB_NameType;virtual;abstract;    { return true if the filter hits }
     function    CheckFilterMiss         (const obj : IFRE_DB_Object ; var flt_errors : Int64):boolean;virtual;abstract; { return TRUE, when the filter misses the value (!) }
-    function    FilterNeedsDbUpdate     : boolean;
-    procedure   ReEvalFilterStartVals   ; virtual ; abstract ;                  { update the filter against db changes (dependency filter type (rl changed) }
-    procedure   SetFilterNeedsUpdate    ;
     constructor Create                  (const key : TFRE_DB_NameType);
     function    Clone                   : TFRE_DB_FILTER_BASE;virtual; abstract;
-    function    CheckReflinkUpdateEvent (const key_descr : TFRE_DB_NameTypeRL) : boolean; virtual ;{ check if a given qry filter, needs to send updates on RL changes }
     function    IsARootNodeOnlyFilter   : Boolean;
   end;
 
@@ -2147,8 +2141,6 @@ type
     procedure  AddClassRightFilter             (const key:          TFRE_DB_NameType ; domainidfield, objuidfield, schemeclassfield: TFRE_DB_NameType; schemeclass: TFRE_DB_NameType; rightset: Array of TFRE_DB_String; const usertoken: IFRE_DB_USER_RIGHT_TOKEN; const negate: boolean=true; const ignoreField:TFRE_DB_NameType=''; const ignoreValue:TFRE_DB_String=''); virtual;abstract;
     procedure  AddChildFilter                  (const key:          TFRE_DB_NameType); virtual ; abstract;                                                  { Filters Childs out => Only Root nodes PP must be empty, internal (!) do not USE }
     procedure  AddParentFilter                 (const key:          TFRE_DB_NameType ; const allowed_parent_path : TFRE_DB_String); virtual ; abstract ; { Child Query Filter, filter all Nodes which have not the corresponding PP, internal (!), do not USE }
-    procedure  AddAutoDependencyFilter         (const key:          TFRE_DB_NameType ; const RL_Spec : Array of TFRE_DB_NameTypeRL ;  const StartDependecyValues : Array of TFRE_DB_GUID ; const negate:boolean=true  ; const include_null_values : boolean=false);virtual; abstract;
-    procedure  AddRootNodeAutoDependencyFilter (const key:          TFRE_DB_NameType ; const RL_Spec : Array of TFRE_DB_NameTypeRL ;  const StartDependecyValues : Array of TFRE_DB_GUID ; const negate:boolean=true  ; const include_null_values : boolean=false);virtual; abstract;
     function   RemoveFilter                    (const key:          TFRE_DB_NameType):boolean;virtual;abstract;
     function   FilterExists                    (const key:          TFRE_DB_NameType):boolean;virtual;abstract;
     procedure  RemoveAllFilters                ;virtual;abstract;
@@ -2209,14 +2201,6 @@ end;
     procedure ExecutePointQuery    (const iterator   : IFRE_DB_Obj_Iterator);virtual;abstract;
     procedure CaptureStartTime     ; virtual ; abstract;
     function  CaptureEndTime       : NativeInt; virtual ; abstract;
-  end;
-
-  TFRE_DB_TRANSFORMED_ARRAY_BASE=class { usage from the DC to transform the unordered basedata }
-    procedure CleanUp                        ; virtual ; abstract;
-    procedure SetTransformedObject           (const tr_obj : IFRE_DB_Object);virtual; abstract;
-    procedure SetTransObjectSingleInsert     (const tr_obj : IFRE_DB_Object);virtual; abstract;
-    procedure HandleUpdateTransformedObject  (const tr_obj : IFRE_DB_Object; const upd_idx: NativeInt);virtual; abstract;
-    procedure HandleInsertTransformedObject  (const tr_obj : IFRE_DB_Object ; const parent_object : IFRE_DB_Object);virtual; abstract;
   end;
 
   { TFRE_DB_TRANSDATA_MANAGER_BASE }
@@ -3518,6 +3502,10 @@ end;
   function  FREDB_CreateIndexDefArrayFromObject               (const ix_def_ao : IFRE_DB_Object): TFRE_DB_INDEX_DEF_ARRAY;
   function  FREDB_CheckMacAddress                             (const mac:ShortString):boolean;
 
+  function  FREDB_CompareReflinkSpecs                         (r1,r2 : TFRE_DB_NameTypeRL ; const strict : boolean=false):boolean;
+  function  FREDB_CompareReflinkSpec2Arr                      (const key_descr: TFRE_DB_NameTypeRL; const rla: TFRE_DB_NameTypeRLArray): boolean;
+
+
   function  FREDB_TransformException2ec                       (const e:exception;const lineinfo:shortstring):TFRE_DB_Errortype;inline;
 
   operator<  (g1, g2: TFRE_DB_GUID) b : boolean;
@@ -3594,6 +3582,37 @@ begin
     exit(false);
   len    := HexToBin(@conv[1],@binv,6);
   result := len=6;
+end;
+
+function FREDB_CompareReflinkSpecs(r1,r2 : TFRE_DB_NameTypeRL ; const strict : boolean=false):boolean;
+var f1,s1,f2,s2   : TFRE_DB_NameType;
+    rc1,rc2,d1,d2 : boolean;
+begin
+  if strict then
+    exit(uppercase(r1)=uppercase(r2));
+  d1 := FREDB_SplitRefLinkDescriptionEx(r1,f1,s1,rc1);
+  d2 := FREDB_SplitRefLinkDescriptionEx(r2,f2,s2,rc2);
+  if d1<>d2 then
+    exit(false);
+  { direction is same }
+  if f1<>f2 then
+    exit(false);
+  result := true; // Schemes must not match, fields must
+end;
+
+function FREDB_CompareReflinkSpec2Arr(const key_descr: TFRE_DB_NameTypeRL; const rla: TFRE_DB_NameTypeRLArray): boolean;
+var
+  i: NativeInt;
+begin
+  result := false;
+  for i := 0 to high(rla) do
+     begin
+       if  FREDB_CompareReflinkSpecs(key_descr,rla[i],false) then
+         begin
+           result := true;
+           break;
+         end
+     end;
 end;
 
 
@@ -5654,25 +5673,9 @@ begin
   result := FKey;
 end;
 
-function TFRE_DB_FILTER_BASE.FilterNeedsDbUpdate: boolean;
-begin
-  result := FNeedsDBReEvaluate;
-end;
-
-procedure TFRE_DB_FILTER_BASE.SetFilterNeedsUpdate;
-begin
-  FNeedsDBReEvaluate := true;
-end;
-
 constructor TFRE_DB_FILTER_BASE.Create(const key: TFRE_DB_NameType);
 begin
   FKey               := key;
-  FNeedsDBReEvaluate := false;
-end;
-
-function TFRE_DB_FILTER_BASE.CheckReflinkUpdateEvent(const key_descr: TFRE_DB_NameTypeRL): boolean;
-begin
-  result := false;
 end;
 
 function TFRE_DB_FILTER_BASE.IsARootNodeOnlyFilter: Boolean;
@@ -11443,10 +11446,10 @@ begin
               'FD'  : deploy_if.FieldDelete(Field('FLD').AsObject._InternalDecodeAsField,tsid); { Field is created new .. free it in the deploy if }
               'FA'  : deploy_if.FieldAdd(Field('FLD').AsObject._InternalDecodeAsField,tsid);    { Field is created new .. free it in the deploy if }
               'FC'  : deploy_if.FieldChange(Field('FLDO').AsObject._InternalDecodeAsField,Field('FLDN').AsObject._InternalDecodeAsField,tsid); { Field is created new .. free it in the deploy if }
-              'SOL' : deploy_if.SetupOutboundRefLink  (field('FO').AsGUID,field('TO').CheckOutObject,field('KD').AsString,tsid);
-              'SIL' : deploy_if.SetupInboundRefLink   (field('FO').AsObject,field('TO').AsGUID,field('KD').AsString,tsid);
-              'DOL' : deploy_if.OutboundReflinkDropped(field('FO').AsGUID,field('TO').CheckOutObject,field('KD').AsString,tsid);
-              'DIL' : deploy_if.InboundReflinkDropped (field('FO').CheckOutObject,field('TO').AsGUID,field('KD').AsString,tsid);
+              'SOL' : deploy_if.SetupOutboundRefLink  (field('FO').CheckOutObject,field('TO').CheckOutObject,field('KD').AsString,tsid);
+              'SIL' : deploy_if.SetupInboundRefLink   (field('FO').CheckOutObject,field('TO').CheckOutObject,field('KD').AsString,tsid);
+              'DOL' : deploy_if.OutboundReflinkDropped(field('FO').CheckOutObject,field('TO').CheckOutObject,field('KD').AsString,tsid);
+              'DIL' : deploy_if.InboundReflinkDropped (field('FO').CheckOutObject,field('TO').CheckOutObject,field('KD').AsString,tsid);
               'DUS' : deploy_if.DifferentiallUpdStarts(field('O').CheckOutObject,tsid);
               'DUE' : deploy_if.DifferentiallUpdEnds(field('O').AsGUID,tsid);
               else

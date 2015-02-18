@@ -1289,7 +1289,7 @@ begin
 
   dc:=ses.FetchDerivedCollection('ZONE_SERVICES_GRID');
   dc.Filters.RemoveFilter('zone');
-  dc.Filters.AddAutoDependencyFilter('zone',['<SERVICEPARENT'],[zone.UID]);
+  //dc.Filters.AddAutoDependencyFilter('zone',['<SERVICEPARENT'],[zone.UID]); //FIXXME
   res:=dc.GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
 
   canAdd:=false;

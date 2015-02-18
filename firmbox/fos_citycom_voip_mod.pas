@@ -554,12 +554,12 @@ begin
     pb_Grid.Filters.RemoveFilter('service');
     if coll.ItemCount=1 then begin
       voip_service:=coll.First;
-      ext_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_EXTENSION<VOIP_SERVICE'],[voip_service.UID]);
-      pb_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_PHONEBOOK_ENTRY<VOIP_SERVICE'],[voip_service.UID]);
+      //ext_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_EXTENSION<VOIP_SERVICE'],[voip_service.UID]); //FIXXME
+      //pb_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_PHONEBOOK_ENTRY<VOIP_SERVICE'],[voip_service.UID]); //FIXXME
       ses.GetSessionModuleData(ClassName).Field('selectedVoIP').AsString:=voip_service.UID_String;
     end else begin
-      ext_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_EXTENSION<VOIP_SERVICE'],[CFRE_DB_NullGUID]);
-      pb_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_PHONEBOOK_ENTRY<VOIP_SERVICE'],[CFRE_DB_NullGUID]);
+      //ext_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_EXTENSION<VOIP_SERVICE'],[CFRE_DB_NullGUID]); // FIXXME
+      //pb_Grid.Filters.AddAutoDependencyFilter('service',['TFOS_DB_CITYCOM_VOIP_PHONEBOOK_ENTRY<VOIP_SERVICE'],[CFRE_DB_NullGUID]); // FIXXME
       ses.GetSessionModuleData(ClassName).DeleteField('selectedVoIP');
     end;
     Result:=subsec;
@@ -1897,9 +1897,9 @@ begin
   used_exp_grid.AddButton.Describe(sf,'',FetchModuleTextShort(ses,'tb_configure_exp'),FetchModuleTextHint(ses,'tb_configure_exp'),fdgbd_single);
 
   used_exp.Filters.RemoveFilter('USEDEXP');
-  used_exp.Filters.AddAutoDependencyFilter('USEDEXP',['EXPANSIONS>TFOS_DB_CITYCOM_VOIP_EXT_EXP_REL'],[extDBO.UID]);
+  //used_exp.Filters.AddAutoDependencyFilter('USEDEXP',['EXPANSIONS>TFOS_DB_CITYCOM_VOIP_EXT_EXP_REL'],[extDBO.UID]); //FIXXME
   available_exp.Filters.RemoveFilter('USEDEXP');
-  available_exp.Filters.AddAutoDependencyFilter('USEDEXP',['EXPANSIONS>TFOS_DB_CITYCOM_VOIP_EXT_EXP_REL','EXPANSION>TFOS_DB_CITYCOM_VOIP_HARDWARE'],[extDBO.UID],false);
+  //available_exp.Filters.AddAutoDependencyFilter('USEDEXP',['EXPANSIONS>TFOS_DB_CITYCOM_VOIP_EXT_EXP_REL','EXPANSION>TFOS_DB_CITYCOM_VOIP_HARDWARE'],[extDBO.UID],false); // FIXXME
 
   expansions:=TFRE_DB_LAYOUT_DESC.create.Describe().SetLayout(nil,used_exp_grid,nil,nil,available_exp_grid,true,1,1,1,1,1);
 

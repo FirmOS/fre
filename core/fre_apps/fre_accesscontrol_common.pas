@@ -219,7 +219,6 @@ begin
     end
   else
     G_setDisplaynameGRD(input,transformed_object,langres);
-  writeln(transformed_object.DumpToString());
 end;
 
 
@@ -329,7 +328,6 @@ begin
     userin_Grid := session.NewDerivedCollection('DOMAINMOD_USERIN_GRID');
     with userin_Grid do begin
       SetDeriveParent(conn.AdmGetUserCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_USER<DOMAINIDLINK'],false,'uids');
       SetUseDependencyAsUidFilter('dom_uid');
       domain_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -352,7 +350,6 @@ begin
     groupin_Grid := session.NewDerivedCollection('DOMAINMOD_GROUPIN_GRID');
     with groupin_Grid do begin
       SetDeriveParent(conn.AdmGetGroupCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_GROUP<DOMAINIDLINK'],false);
       SetUseDependencyAsUidFilter('dom_uid');
       domain_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -376,7 +373,6 @@ begin
     rolein_Grid := session.NewDerivedCollection('DOMAINMOD_ROLEIN_GRID');
     with rolein_Grid do begin
       SetDeriveParent(conn.AdmGetRoleCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_ROLE<DOMAINIDLINK'],false);
       SetUseDependencyAsUidFilter('dom_uid');
       domain_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -932,7 +928,6 @@ begin
     userin_Grid := session.NewDerivedCollection('ROLEMOD_USERIN_GRID');
     with userin_Grid do begin
       SetDeriveParent(conn.AdmGetUserCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_GROUP<ROLEIDS','TFRE_DB_USER<USERGROUPIDS'],false);
       SetUseDependencyAsUidFilter('role_uid');
       role_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -956,7 +951,6 @@ begin
     userout_Grid := session.NewDerivedCollection('ROLEMOD_USEROUT_GRID');
     with userout_Grid do begin
       SetDeriveParent(conn.AdmGetUserCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_GROUP<ROLEIDS','TFRE_DB_USER<USERGROUPIDS'],true);
       SetUseDependencyAsUidFilter('role_uid',true);
       role_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -982,7 +976,6 @@ begin
     groupin_Grid := session.NewDerivedCollection('ROLEMOD_GROUPIN_GRID');
     with groupin_Grid do begin
       SetDeriveParent(conn.AdmGetGroupCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_GROUP<ROLEIDS'],false);
       SetUseDependencyAsUidFilter('role_uid',false);
       role_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -1011,7 +1004,6 @@ begin
     groupout_Grid := session.NewDerivedCollection('ROLEMOD_GROUPOUT_GRID');
     with groupout_Grid do begin
       SetDeriveParent(conn.AdmGetGroupCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_GROUP<ROLEIDS'],true);
       SetUseDependencyAsUidFilter('role_uid',true);
       role_Grid.AddSelectionDependencyEvent(CollectionName);
       Filters.AddBooleanFieldFilter('delegation','delegation',false);
@@ -1813,7 +1805,6 @@ begin
     userin_Grid := session.NewDerivedCollection('GROUPMOD_USERIN_GRID');
     with userin_Grid do begin
       SetDeriveParent(conn.AdmGetUserCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_USER<USERGROUPIDS'],false); // UserGroupIDS
       SetUseDependencyAsUidFilter('group_uid');
       group_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -1837,7 +1828,6 @@ begin
     userout_Grid := session.NewDerivedCollection('GROUPMOD_USEROUT_GRID');
     with userout_Grid do begin
       SetDeriveParent(conn.AdmGetUserCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_USER<USERGROUPIDS'],true); // UserGroupIDS
       SetUseDependencyAsUidFilter('group_uid',true);
       group_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -1862,7 +1852,6 @@ begin
     rolein_Grid := session.NewDerivedCollection('GROUPMOD_ROLEIN_GRID');
     with rolein_Grid do begin
       SetDeriveParent(conn.AdmGetRoleCollection);
-      //SetXUseDependencyAsRefLinkFilter(['ROLEIDS>TFRE_DB_ROLE'],false);
       SetUseDependencyAsUidFilter('role_uid');
       group_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -1888,7 +1877,6 @@ begin
     roleout_Grid := session.NewDerivedCollection('GROUPMOD_ROLEOUT_GRID');
     with roleout_Grid do begin
       SetDeriveParent(conn.AdmGetRoleCollection);
-      //SetXUseDependencyAsRefLinkFilter(['ROLEIDS>TFRE_DB_ROLE'],true);
       SetUseDependencyAsUidFilter('role_uid',true);
       group_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -1916,7 +1904,6 @@ begin
     groupin_Grid := session.NewDerivedCollection('GROUPMOD_GROUPIN_GRID');
     with groupin_Grid do begin
       SetDeriveParent(conn.AdmGetGroupCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_GROUP<GROUPIDS'],false);
       SetUseDependencyAsUidFilter('group_uid');
       group_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -1945,7 +1932,6 @@ begin
     groupout_Grid := session.NewDerivedCollection('GROUPMOD_GROUPOUT_GRID');
     with groupout_Grid do begin
       SetDeriveParent(conn.AdmGetGroupCollection);
-      //SetXUseDependencyAsRefLinkFilter(['TFRE_DB_GROUP<GROUPIDS'],true);
       SetUseDependencyAsUidFilter('group_uid',true);
       group_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -3142,7 +3128,6 @@ begin
     groupin_Grid := session.NewDerivedCollection('USERMOD_GROUPIN_GRID');
     with groupin_Grid do begin
       SetDeriveParent(conn.AdmGetGroupCollection);
-      //SetXUseDependencyAsRefLinkFilter(['USERGROUPIDS>TFRE_DB_GROUP'],false);
       SetUseDependencyAsUidFilter('user_uid');
       user_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -3172,7 +3157,6 @@ begin
     groupout_Grid := session.NewDerivedCollection('USERMOD_GROUPOUT_GRID');
     with groupout_Grid do begin
       SetDeriveParent(conn.AdmGetGroupCollection);
-      //SetXUseDependencyAsRefLinkFilter(['USERGROUPIDS>TFRE_DB_GROUP'],true);
       SetUseDependencyAsUidFilter('user_uid',true);
       user_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -3200,7 +3184,6 @@ begin
     rolein_Grid := session.NewDerivedCollection('USERMOD_ROLEIN_GRID');
     with rolein_Grid do begin
       SetDeriveParent(conn.AdmGetRoleCollection);
-      //SetXUseDependencyAsRefLinkFilter(['USERGROUPIDS>TFRE_DB_GROUP','ROLEIDS>TFRE_DB_ROLE'],false);
       SetUseDependencyAsUidFilter('user_uid');
       user_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -3227,7 +3210,6 @@ begin
     roleout_Grid := session.NewDerivedCollection('USERMOD_ROLEOUT_GRID');
     with roleout_Grid do begin
       SetDeriveParent(conn.AdmGetRoleCollection);
-      //SetXUseDependencyAsRefLinkFilter(['USERGROUPIDS>TFRE_DB_GROUP','ROLEIDS>TFRE_DB_ROLE'],true);
       SetUseDependencyAsUidFilter('user_uid',true);
       user_Grid.AddSelectionDependencyEvent(CollectionName);
       if CHIDE_INTERNAL then begin
@@ -3770,6 +3752,7 @@ var
   userUid : String;
   group_id: TFRE_DB_GUID;
   res     : TFRE_DB_Errortype;
+  fail    : string;
 begin
   if input.FieldExists('uids_ref') then begin
     userUid:=input.Field('uids_ref').AsString;
@@ -3787,9 +3770,10 @@ begin
     group_id:=FREDB_H2G(input.Field('selected').AsStringArr[i]);
     if conn.sys.FetchGroupById(group_id,group)<>edb_OK then
       raise EFRE_DB_Exception.Create(StringReplace(FetchModuleTextShort(ses,'error_fetch_group_msg'),'%group%',input.Field('selected').AsStringArr[i],[rfReplaceAll]));
+    fail := group.GetDomain(conn);
+    fail := StringReplace(StringReplace(FetchModuleTextShort(ses,'error_add_group_msg'),'%group%',group.ObjectName+'@'+group.GetDomain(conn),[rfReplaceAll]),'%user%',user.GetLoginAtDomain(conn.sys),[rfReplaceAll]);
     res:=conn.sys.ModifyUserGroupsById(user.UID,TFRE_DB_GUIDArray.Create(group_id),true);
-    if res<>edb_OK then
-      raise EFRE_DB_Exception.Create(res,StringReplace(StringReplace(FetchModuleTextShort(ses,'error_add_group_msg'),'%group%',group.ObjectName+'@'+group.GetDomain(conn),[rfReplaceAll]),'%user%',user.GetLoginAtDomain(conn.sys),[rfReplaceAll]));
+    CheckDbResult(res,fail);
   end;
   Result:=GFRE_DB_NIL_DESC;
 end;

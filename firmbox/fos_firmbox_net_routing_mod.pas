@@ -1540,7 +1540,7 @@ begin
   dc.Filters.RemoveFilter('rights');
   dc.Filters.RemoveFilter('rightsPH');
   dc.Filters.RemoveFilter('rightsSIM');
-  dc.Filters.AddAutoDependencyFilter('machine',['<HOSTID'],[zone.Field('hostid').AsObjectLink]);
+  //dc.Filters.AddAutoDependencyFilter('machine',['<HOSTID'],[zone.Field('hostid').AsObjectLink]); //FIXXME
   dc.Filters.AddStdClassRightFilter('rights','domainid','','',dbo.Implementor_HC.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
   if dbo.Implementor_HC is TFRE_DB_DATALINK_AGGR then begin
     dc.Filters.AddStdClassRightFilter('rightsPH','domainid','','',TFRE_DB_DATALINK_PHYS.ClassName,[sr_STORE],conn.SYS.GetCurrentUserTokenClone);
