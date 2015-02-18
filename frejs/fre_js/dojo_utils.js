@@ -1249,7 +1249,7 @@ dojo.declare("FIRMOS.Store", null, {
   },
 
   //dStore Collection/Store API
-  filter: function(query) {
+  filter: function(query) { //FIXXME : only send filter if changed
     if (query.filterfieldname) {
       if (query.filtertype) { //set filter
         this._filterSettings[query.filterfieldname + '_ref'] = query;
@@ -1270,6 +1270,7 @@ dojo.declare("FIRMOS.Store", null, {
     return this;
   },
   sort: function(property, descending) {
+    var oldsettings=this._sortSettings;
     this._sortSettings = new Array();
     if (property instanceof Array) {
       for (var i=property.length-1;i>=0;i--) {
@@ -1279,12 +1280,23 @@ dojo.declare("FIRMOS.Store", null, {
       this._sortSettings.push({property: property, ascending: !descending});
     }
     if (this.sortAndFilterClassname) {
-      var params = dojo.clone(this.sortAndFilterParams);
-      if (this.parent) {
-        params.parentid = this.getIdentity(this.parent).split('@');
+      var issame=(oldsettings.length==this._sortSettings.length);
+      if (issame) {
+        for(var i=0;i<oldsettings.length;i++) {
+          if ((this._sortSettings[i].property != oldsettings[i].property) || (this._sortSettings[i].ascending != oldsettings[i].ascending)) {
+           issame=false;
+           break;
+          }
+        }
       }
-      params.sort = this._sortSettings;
-      G_SERVER_COM.callServerFunction(this.sortAndFilterClassname, this.sortAndFilterFunctionname, this.sortAndFilterUidPath, params);
+      if (!issame) {
+        var params = dojo.clone(this.sortAndFilterParams);
+        if (this.parent) {
+          params.parentid = this.getIdentity(this.parent).split('@');
+        }
+        params.sort = this._sortSettings;
+        G_SERVER_COM.callServerFunction(this.sortAndFilterClassname, this.sortAndFilterFunctionname, this.sortAndFilterUidPath, params);
+      }
     }
     return this;
   },
