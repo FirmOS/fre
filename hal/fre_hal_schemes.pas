@@ -4004,7 +4004,7 @@ end;
 
 class function TFRE_DB_IP_HOSTNET.getAllHostnetClasses: TFRE_DB_StringArray;
 begin
-  Result:=TFRE_DB_StringArray.create(TFRE_DB_IPV4_HOSTNET.ClassName,TFRE_DB_IPV6_HOSTNET.ClassName);
+  Result:=TFRE_DB_StringArray.create(TFRE_DB_IPV4_HOSTNET.ClassName,TFRE_DB_IPV6_HOSTNET.ClassName,TFRE_DB_IPV4_ROUTE.ClassName,TFRE_DB_IPV6_ROUTE.ClassName);
 end;
 
 function TFRE_DB_IP_HOSTNET.GetFMRI: TFRE_DB_String;
@@ -7879,7 +7879,8 @@ end;
 
  class function TFRE_DB_DATALINK.getAllDataLinkClasses: TFRE_DB_StringArray;
  begin
-   Result:=TFRE_DB_StringArray.create(TFRE_DB_DATALINK_PHYS.ClassName,TFRE_DB_DATALINK_AGGR.ClassName,TFRE_DB_DATALINK_IPMP.ClassName,TFRE_DB_DATALINK_IPTUN.ClassName,TFRE_DB_DATALINK_STUB.ClassName,TFRE_DB_DATALINK_BRIDGE.ClassName,TFRE_DB_DATALINK_SIMNET.ClassName,TFRE_DB_DATALINK_VNIC.ClassName);
+   Result:=TFRE_DB_StringArray.create(TFRE_DB_DATALINK_PHYS.ClassName,TFRE_DB_DATALINK_AGGR.ClassName,TFRE_DB_DATALINK_IPMP.ClassName,TFRE_DB_DATALINK_IPTUN.ClassName,TFRE_DB_DATALINK_STUB.ClassName,TFRE_DB_DATALINK_BRIDGE.ClassName,
+                                      TFRE_DB_DATALINK_SIMNET.ClassName,TFRE_DB_DATALINK_VNIC.ClassName);
  end;
 
  procedure TFRE_DB_DATALINK.Embed(const conn: IFRE_DB_CONNECTION);
