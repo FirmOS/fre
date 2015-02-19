@@ -3252,6 +3252,7 @@ end;
     function    GetSessionModuleData     (const mod_key:TFRE_DB_String):IFRE_DB_Object;
     function    GetSessionGlobalData     :IFRE_DB_Object;
     function    NewDerivedCollection     (dcname:TFRE_DB_NameType):IFRE_DB_DERIVED_COLLECTION;
+    function    HasDerivedCollection     (dcname:TFRE_DB_NameType):Boolean;
     function    FetchDerivedCollection   (dcname:TFRE_DB_NameType):IFRE_DB_DERIVED_COLLECTION;
     procedure   FinishDerivedCollections ;
     function    GetUsername              : String;
@@ -7604,6 +7605,13 @@ begin
   end else begin
     raise EFRE_DB_Exception.create(edb_ERROR,'THE SESSION [%s] ALREADY HAS A DERIVED COLLECTION NAMED [%s]',[FSessionID,dcname]);
   end;
+end;
+
+function TFRE_DB_UserSession.HasDerivedCollection(dcname: TFRE_DB_NameType): Boolean;
+var
+  dc: IFRE_DB_DERIVED_COLLECTION;
+begin
+  Result:=SearchSessionDC(dcname,dc);
 end;
 
 function TFRE_DB_UserSession.FetchDerivedCollection(dcname: TFRE_DB_NameType): IFRE_DB_DERIVED_COLLECTION;
