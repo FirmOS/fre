@@ -1301,7 +1301,7 @@ begin
           idx := 0;
           FDefaultDomU.ClearGuid;
           FSysDomains.ForAllInternalI(@IterateDomains);
-          tokeno := TFRE_DB_USER_RIGHT_TOKEN.Create(myuser.UID,myuser.Login,myUser.Firstname,myUser.Lastname,'',myuser.Userclass,myuser.GetUserGroupIDS,_GetRightsArrayForUser(myUser),sys_admin,FSysDomain.UID,myuser.DomainID,FDefaultDomU,domuids,domnames,G_OverlayRights.CloneToNewObject);
+          tokeno := TFRE_DB_USER_RIGHT_TOKEN.Create(myuser.UID,myuser.Login,myUser.Firstname,myUser.Lastname,'',myuser.Userclass,myuser.GetUserGroupIDS,_GetRightsArrayForUser(myUser),sys_admin,FSysDomain.UID,myuser.DomainID,FDefaultDomU,domuids,domnames,G_OverlayRights);
           G_UpdateUserToken(myuser.UID,tokeno);
           Result := tokeno.CloneToNewUserToken;
         finally

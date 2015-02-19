@@ -3295,8 +3295,10 @@ begin
   FMyDomainID_GS    := uppercase(FREDB_G2H(FMyDomainID));
   FAllDomainNames   := domain_names;
   FDefaultDomainUID := def_domid;
-  FOverlayrights    := overlayrights;
-
+  if assigned(overlayrights) then
+    FOverlayrights := overlayrights.CloneToNewObject()
+  else
+    FOverlayrights := TFRE_DB_Object.Create;
   FAllDomainsUids   := domainids;
   if userclass='MIGHTYFEEDER' then
     FIsSysAdmin := true;
