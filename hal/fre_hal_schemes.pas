@@ -1539,7 +1539,6 @@ begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP.Classname);
     scheme.AddSchemeField('ip',fdbft_String).SetupFieldDef(true,false,'','ipv6');
-    scheme.AddSchemeField('zoneid',fdbft_ObjLink).multiValues:=false;
 
     group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
     group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
@@ -1591,7 +1590,6 @@ begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP.Classname);
     scheme.AddSchemeField('ip',fdbft_String).SetupFieldDef(true,false,'','ip');
-    scheme.AddSchemeField('zoneid',fdbft_ObjLink).multiValues:=false;
 
     group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
     group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
@@ -1615,18 +1613,34 @@ begin
 end;
 
 class procedure TFRE_DB_IP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  enum: IFRE_DB_Enum;
 begin
- inherited RegisterSystemScheme(scheme);
- scheme.SetParentSchemeByName(TFRE_DB_SERVICE.Classname);
- scheme.AddSchemeField('datalinkParent',fdbft_ObjLink).multiValues:=false;
+  inherited RegisterSystemScheme(scheme);
+  scheme.SetParentSchemeByName(TFRE_DB_SERVICE.Classname);
+  scheme.AddSchemeField('datalinkParent',fdbft_ObjLink).multiValues:=false;
+
+  enum:=GFRE_DBI.NewEnum('ip_type').Setup(GFRE_DBI.CreateText('$enum_ip_type','IP Type'));
+  enum.addEntry('IP',GetTranslateableTextKey('enum_ip_type_ip'));
+  enum.addEntry('GATEWAY',GetTranslateableTextKey('enum_ip_type_gateway'));
+  enum.addEntry('DNS',GetTranslateableTextKey('enum_ip_type_dns'));
+  enum.addEntry('BASE',GetTranslateableTextKey('enum_ip_type_base'));
+  enum.addEntry('BROADCAST',GetTranslateableTextKey('enum_ip_type_broadcast'));
+  GFRE_DBI.RegisterSysEnum(enum);
 end;
 
 class procedure TFRE_DB_IP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
- newVersionId:='1.0';
- if currentVersionId='' then begin
-   currentVersionId := '1.0';
- end;
+  newVersionId:='1.0';
+  if currentVersionId='' then begin
+    currentVersionId := '1.0';
+
+    StoreTranslateableText(conn,'enum_ip_type_ip','IP');
+    StoreTranslateableText(conn,'enum_ip_type_gateway','Gateway');
+    StoreTranslateableText(conn,'enum_ip_type_dns','DNS');
+    StoreTranslateableText(conn,'enum_ip_type_base','Base');
+    StoreTranslateableText(conn,'enum_ip_type_broadcast','Broadcast');
+  end;
 end;
 
 { TFRE_DB_IP_SUBNET }
@@ -2918,9 +2932,8 @@ var group : IFRE_DB_InputGroupSchemeDefinition;
 begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP_ROUTE.Classname);
-    scheme.AddSchemeField('subnet',fdbft_ObjLink).MultiValues:=false;
-    scheme.AddSchemeField('gateway',fdbft_ObjLink).MultiValues:=false;
-    scheme.AddSchemeField('zoneid',fdbft_ObjLink).multiValues:=false;
+    scheme.AddSchemeField('subnet',fdbft_ObjLink).SetupFieldDef(true,false);
+    scheme.AddSchemeField('gateway',fdbft_ObjLink).SetupFieldDef(true,false);
 
     group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
     group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
@@ -2953,9 +2966,8 @@ var group : IFRE_DB_InputGroupSchemeDefinition;
 begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP_ROUTE.Classname);
-    scheme.AddSchemeField('subnet',fdbft_ObjLink);
-    scheme.AddSchemeField('gateway',fdbft_ObjLink);
-    scheme.AddSchemeField('zoneid',fdbft_ObjLink).multiValues:=false;
+    scheme.AddSchemeField('subnet',fdbft_ObjLink).SetupFieldDef(true,false);
+    scheme.AddSchemeField('gateway',fdbft_ObjLink).SetupFieldDef(true,false);
 
     group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
     group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
@@ -4253,12 +4265,11 @@ var
 begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP_SUBNET.Classname);
-    scheme.AddSchemeField('ip',fdbft_ObjLink);
+    scheme.AddSchemeField('base_ip',fdbft_ObjLink).SetupFieldDef(true,false);
     scheme.AddSchemeField('subnet',fdbft_String).SetupFieldDefNum(false,0,128);
-    scheme.AddSchemeField('zoneid',fdbft_ObjLink).multiValues:=false;
 
     group:=scheme.AddInputGroup('ip').Setup(GetTranslateableTextKey('scheme_ip_group'));
-    group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
+    group.AddInput('base_ip',GetTranslateableTextKey('scheme_ip'));
     group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
 end;
 
@@ -4392,12 +4403,11 @@ var
 begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP_SUBNET.Classname);
-    scheme.AddSchemeField('ip',fdbft_ObjLink);
+    scheme.AddSchemeField('base_ip',fdbft_ObjLink).SetupFieldDef(true,false);
     scheme.AddSchemeField('subnet',fdbft_Int16).SetupFieldDefNum(false,0,32);
-    scheme.AddSchemeField('zoneid',fdbft_ObjLink).multiValues:=false;
 
     group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
-    group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
+    group.AddInput('base_ip',GetTranslateableTextKey('scheme_ip'));
     group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
 end;
 
