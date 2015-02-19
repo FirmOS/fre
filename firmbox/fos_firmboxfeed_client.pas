@@ -522,11 +522,31 @@ end;
 procedure TFRE_BOX_FEED_CLIENT.TestDatalink;
 var error:string;
     dbo  :IFRE_DB_Object;
+    m    :TFRE_DB_MACHINE;
+    mdbo :IFRE_DB_Object;
+
+    procedure iterdata(const obj:IFRE_DB_Object);
+    var m : TFRE_DB_MACHINE;
+    begin
+     if obj.IsA(TFRE_DB_MACHINE,m) then
+       begin
+         writeln('SWL MACHINE DATA LOADED');
+         m.RIF_CreateDatalinks(self);
+       end;
+    end;
+
 begin
   {$IFDEF SOLARIS}
-  writeln('GET DL');
-  dbo := get_datalink_dbo;
-  writeln('DATALINK DBO:',dbo.DumpToString);
+
+  m := TFRE_DB_MACHINE.Create;
+  m.RIF_ClearDatalinks(self);
+
+  servicedata := GFRE_DBI.CreateFromFile('/home/fosbuild/machine.dbo');
+  servicedata.ForAllObjects(@iterdata);
+
+//  writeln('GET DL');
+//  dbo := get_datalink_dbo;
+//  writeln('DATALINK DBO:',dbo.DumpToString);
 //  writeln('CREATESIM');
 ////  get_datalink_dbo;
 //  create_simnet('simsn8',error);

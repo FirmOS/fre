@@ -202,6 +202,11 @@ begin
           writeln('remove from ipmp',remove_from_ipmp(aggrname,linkname,err),' ',err);
         end
       else
+      if paramst='clear' then
+        begin
+          writeln('clear datalinks',clear_datalinks(err),' ',err);
+        end
+      else
         writeln('SCHEI* PARAMETER');
     end
   else

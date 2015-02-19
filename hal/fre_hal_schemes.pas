@@ -146,12 +146,12 @@ type
      procedure       AddSvcDependent        (const name:string; const fmri:string; const grouping:string; const restart_on:string);
      function        GetFMRI                : TFRE_DB_STRING; virtual;
    published
-     function        RIF_CreateOrUpdateService : IFRE_DB_Object; virtual;
-     function        StartService          : IFRE_DB_Object; virtual; abstract;
-     function        StopService           : IFRE_DB_Object; virtual; abstract;
-     function        RIF_EnableService     (const runnning_ctx : TObject) : IFRE_DB_Object; virtual;
-     function        RIF_DisableService    (const runnning_ctx : TObject) : IFRE_DB_Object; virtual;
-
+     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; virtual;
+     function        RIF_DeleteService         (const running_ctx : TObject) : IFRE_DB_Object; virtual;
+     function        StartService              : IFRE_DB_Object; virtual; abstract;
+     function        StopService               : IFRE_DB_Object; virtual; abstract;
+     function        RIF_EnableService         (const runnning_ctx : TObject) : IFRE_DB_Object; virtual;
+     function        RIF_DisableService        (const runnning_ctx : TObject) : IFRE_DB_Object; virtual;
    end;
 
    { TFRE_DB_SUBSERVICE }
@@ -238,6 +238,8 @@ type
      function        WEB_GetDefaultCollection   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
      function        WEB_REQUEST_DISK_ENC_POOL_DATA   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
      function        WEB_REQUEST_SERVICE_STRUCTURE    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+     function        RIF_ClearDatalinks               (const running_ctx:TObject):IFRE_DB_Object;
+     function        RIF_CreateDatalinks              (const running_ctx:TObject):IFRE_DB_Object;
    end;
 
    { TFRE_DB_MACHINE_SETTING }
@@ -300,10 +302,13 @@ type
      class function getAllDataLinkClasses   : TFRE_DB_StringArray;
      procedure      Embed                   (const conn: IFRE_DB_CONNECTION); override;
      function       IsDelegated             (const conn: IFRE_DB_CONNECTION): boolean;
+     procedure      CreateVnicsOnDatalink      (const running_ctx  : TObject; const resultdbo : IFRE_DB_Object);
    published
-     function       IMI_Menu                (const input:IFRE_DB_Object): IFRE_DB_Object;
-     function       RIF_CreateOrUpdateServices                          : IFRE_DB_Object;
-     class function WBC_GetConfig           (const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object; override;
+     function       IMI_Menu                   (const input:IFRE_DB_Object): IFRE_DB_Object;
+     function       RIF_CreateOrUpdateServices (const running_ctx  : TObject) : IFRE_DB_Object;
+     class function WBC_GetConfig              (const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object; override;
+     function       RIF_CreateOrUpdateService  (const running_ctx  : TObject) : IFRE_DB_Object; override;
+     function       RIF_DeleteService          (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_DATALINK_PHYS }
@@ -313,9 +318,10 @@ type
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
    published
-     function        IMI_Menu               (const input:IFRE_DB_Object): IFRE_DB_Object;
-     function        IMI_AddVNIC            (const input:IFRE_DB_Object): IFRE_DB_Object;
-     class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
+     function        IMI_Menu                   (const input:IFRE_DB_Object): IFRE_DB_Object;
+     function        IMI_AddVNIC                (const input:IFRE_DB_Object): IFRE_DB_Object;
+     class function  GetCaption                 (const conn: IFRE_DB_CONNECTION): String; override;
+     function        RIF_CreateOrUpdateService  (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_DATALINK_VNIC }
@@ -327,9 +333,10 @@ type
    published
      function        IMI_Menu               (const input:IFRE_DB_Object): IFRE_DB_Object;
      function        IMI_Delete             (const input:IFRE_DB_Object): IFRE_DB_Object;
-     function        RIF_CreateVNIC         : IFRE_DB_Object;
      function        RIF_CreateVNDforVNIC   : IFRE_DB_Object;
      class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
+     function        RIF_CreateOrUpdateService  (const running_ctx  : TObject) : IFRE_DB_Object; override;
+     function        RIF_DeleteService          (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_DATALINK_IPTUN }
@@ -340,6 +347,7 @@ type
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
    published
      class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
+     function        RIF_DeleteService      (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    //{ TFRE_DB_IP_HOSTNET }
@@ -375,6 +383,8 @@ type
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
      function        GetNetbaseIPWithSubnet : TFRE_DB_String;  virtual; abstract;
      function        GetIPWithSubnet        : TFRE_DB_String; virtual;
+   published
+//     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_IPV4_SUBNET }
@@ -480,6 +490,8 @@ type
      function        IMI_AddVNIC            (const input:IFRE_DB_Object): IFRE_DB_Object;
      function        IMI_Delete             (const input:IFRE_DB_Object): IFRE_DB_Object;
      class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
+     function        RIF_CreateOrUpdateService  (const running_ctx  : TObject) : IFRE_DB_Object; override;
+     function        RIF_DeleteService          (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_DATALINK_AGGR }
@@ -493,6 +505,8 @@ type
      function        IMI_AddVNIC            (const input:IFRE_DB_Object): IFRE_DB_Object;
      function        IMI_Delete             (const input:IFRE_DB_Object): IFRE_DB_Object;
      class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
+     function        RIF_CreateOrUpdateService  (const running_ctx  : TObject) : IFRE_DB_Object; override;
+     function        RIF_DeleteService          (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_DATALINK_IPMP }
@@ -503,6 +517,8 @@ type
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
    published
      class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
+     function        RIF_CreateOrUpdateService  (const running_ctx  : TObject) : IFRE_DB_Object; override;
+     function        RIF_DeleteService          (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_DATALINK_BRIDGE }
@@ -512,7 +528,9 @@ type
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
    published
-     class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
+     class function  GetCaption                 (const conn: IFRE_DB_CONNECTION): String; override;
+     function        RIF_CreateOrUpdateService  (const running_ctx  : TObject) : IFRE_DB_Object; override;
+     function        RIF_DeleteService          (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_DATALINK_SIMNET }
@@ -522,7 +540,9 @@ type
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
    published
-     class function  GetCaption             (const conn: IFRE_DB_CONNECTION): String; override;
+     class function  GetCaption                 (const conn: IFRE_DB_CONNECTION): String; override;
+     function        RIF_CreateOrUpdateService  (const running_ctx  : TObject) : IFRE_DB_Object; override;
+     function        RIF_DeleteService          (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_ZIP_STATUS }
@@ -598,7 +618,7 @@ type
      procedure setVNCHost(AValue: TFRE_DB_String);
      procedure setVNCPort(AValue: UInt32);
    published
-     function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
      function        RIF_CreateVNDforVNics     : IFRE_DB_Object;
      class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
    public
@@ -622,7 +642,7 @@ type
      function        GetFMRI                : TFRE_DB_STRING; override;
    published
      class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-     function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+     function        RIF_CreateOrUpdateService (const running_ctx : TObject)   : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_LDAP_SERVICE }
@@ -633,7 +653,7 @@ type
      class procedure InstallDBObjects          (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
      function        GetFMRI                   : TFRE_DB_STRING; override;
    published
-     function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
      class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
    end;
 
@@ -682,6 +702,8 @@ type
    public
      class procedure RegisterSystemScheme  (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects      (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+   published
+     function        RIF_CreateDatalinks   (const running_ctx : TObject) : IFRE_DB_Object;
    end;
 
    { TFRE_DB_ZONECREATION_JOB }
@@ -983,7 +1005,7 @@ type
     function IMI_addSubnet               (const input:IFRE_DB_Object) : IFRE_DB_Object;
     function IMI_addFixedHost            (const input:IFRE_DB_Object) : IFRE_DB_Object;
     class function  GetCaption           (const conn: IFRE_DB_CONNECTION): String; override;
-    function RIF_CreateOrUpdateService   : IFRE_DB_Object; override;
+    function RIF_CreateOrUpdateService   (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_DHCP_Subnet }
@@ -1017,7 +1039,7 @@ type
     function        GetFMRI                : TFRE_DB_STRING; override;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_Radius }
@@ -1088,7 +1110,7 @@ type
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     function        GetFMRI                : TFRE_DB_STRING; override;
   published
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
   end;
 
@@ -1100,7 +1122,7 @@ type
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     function        GetFMRI                : TFRE_DB_STRING; override;
   published
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_SSH_SERVICE }
@@ -1112,7 +1134,7 @@ type
     function        GetFMRI                : TFRE_DB_STRING; override;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_IMAP_SERVICE }
@@ -1124,7 +1146,7 @@ type
     function        GetFMRI                : TFRE_DB_STRING; override;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_MTA_SERVICE }
@@ -1136,7 +1158,7 @@ type
     function        GetFMRI                : TFRE_DB_STRING; override;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_POSTGRES_SERVICE }
@@ -1148,7 +1170,7 @@ type
     function        GetFMRI                : TFRE_DB_STRING; override;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_MYSQL_SERVICE }
@@ -1160,7 +1182,7 @@ type
     function        GetFMRI              : TFRE_DB_STRING; override;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_HTTP_SERVICE }
@@ -1172,7 +1194,7 @@ type
     function        GetFMRI              : TFRE_DB_STRING; override;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_PHPFPM_SERVICE }
@@ -1184,7 +1206,7 @@ type
     function        GetFMRI              : TFRE_DB_STRING; override;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
-    function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
+    function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
   { TFRE_DB_FIREWALL_SERVICE }
@@ -3293,6 +3315,63 @@ begin
   inherited InstallDBObjects(conn, currentVersionId, newVersionId);
 end;
 
+function TFRE_DB_GLOBAL_ZONE.RIF_CreateDatalinks(const running_ctx: TObject): IFRE_DB_Object;
+  // OK create simnet
+  // OK create stub
+  // create iptun
+  // OK create vnics on interfaces
+
+  // create aggr
+  // create bridges
+  // create ipmp
+
+    procedure _dlIterator(const obj:IFRE_DB_Object);
+    var dl : TFRE_DB_DATALINK;
+    begin
+      if obj.IsA(TFRE_DB_DATALINK_PHYS,dl) or obj.IsA(TFRE_DB_DATALINK_SIMNET,dl) or obj.IsA(TFRE_DB_DATALINK_STUB,dl) or obj.IsA(TFRE_DB_DATALINK_IPTUN,dl) then
+        begin
+          writeln('CREATE DATALINK,VNICS ',dl.ObjectName);
+          dl.RIF_CreateOrUpdateService(running_ctx);
+        end;
+    end;
+
+    procedure _aggrIterator(const obj:IFRE_DB_Object);
+    var dl : TFRE_DB_DATALINK_AGGR;
+    begin
+      if obj.IsA(TFRE_DB_DATALINK_AGGR,dl) then
+        begin
+          writeln('CREATE AGGR ',dl.ObjectName);
+          dl.RIF_CreateOrUpdateService(running_ctx);
+        end;
+    end;
+
+    procedure _bridgeIterator(const obj:IFRE_DB_Object);
+    var dl : TFRE_DB_DATALINK_BRIDGE;
+    begin
+      if obj.IsA(TFRE_DB_DATALINK_BRIDGE,dl) then
+        begin
+          writeln('CREATE BRIDGE ',dl.ObjectName);
+          dl.RIF_CreateOrUpdateService(running_ctx);
+        end;
+    end;
+
+    procedure _ipmpIterator(const obj:IFRE_DB_Object);
+    var dl : TFRE_DB_DATALINK_IPMP;
+    begin
+      if obj.IsA(TFRE_DB_DATALINK_IPMP,dl) then
+        begin
+          writeln('CREATE IPMP ',dl.ObjectName);
+          dl.RIF_CreateOrUpdateService(running_ctx);
+        end;
+    end;
+
+begin
+  ForAllObjects(@_dlIterator);
+  ForAllObjects(@_aggrIterator);
+  ForAllObjects(@_bridgeIterator);
+  ForAllObjects(@_ipmpIterator);
+end;
+
 { TFRE_DB_DATALINK_SIMNET }
 
 class procedure TFRE_DB_DATALINK_SIMNET.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -3320,6 +3399,36 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
+function TFRE_DB_DATALINK_SIMNET.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL CREATE SIMNET');
+
+  result := GFRE_DBI.NewObject;
+
+  if create_simnet(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  CreateVNICsonDatalink(running_ctx,result);
+
+  {$ENDIF}
+end;
+
+function TFRE_DB_DATALINK_SIMNET.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+var error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL DELETE SIMNET');
+
+  result := GFRE_DBI.NewObject;
+
+  if delete_simnet(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  {$ENDIF}
+end;
+
 { TFRE_DB_DATALINK_BRIDGE }
 
 class procedure TFRE_DB_DATALINK_BRIDGE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -3345,6 +3454,60 @@ end;
 class function TFRE_DB_DATALINK_BRIDGE.GetCaption(const conn: IFRE_DB_CONNECTION): String;
 begin
   Result:=GetTranslateableTextShort(conn,'caption');
+end;
+
+function TFRE_DB_DATALINK_BRIDGE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var error    : string;
+    brname : string;
+    sa       : TFRE_DB_StringArray;
+
+    procedure _linkIterator(const obj:IFRE_DB_Object);
+    var dl : TFRE_DB_DATALINK;
+    begin
+      if (obj.IsA(TFRE_DB_DATALINK,dl)) and (not obj.IsA(TFRE_DB_DATALINK_VNIC)) then
+        begin
+          SetLength(sa,length(sa)+1);
+          sa[high(sa)] := dl.ObjectName;
+        end;
+    end;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL CREATE BRIDGE');
+
+  result := GFRE_DBI.NewObject;
+
+//  writeln('SWL DUMP BRIDGE',DumpToString);
+
+  sa := TFRE_DB_StringArray.Create;
+
+  ForAllObjects(@_linkIterator);
+
+  brname := ObjectName;
+
+  if create_bridge(Objectname,sa,error)=false then
+    result.Field('errors').addstring(error);
+
+  {$ENDIF}
+end;
+
+function TFRE_DB_DATALINK_BRIDGE.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+var i      : NativeInt;
+    error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL DELETE BRIDGE');
+//  writeln('SWL REMOVE BRIDGE MEMBERS ',DumpToString);
+
+  result := GFRE_DBI.NewObject;
+
+  if Field('ports').ValueCount>0 then
+  if remove_from_bridge(Objectname,Field('ports').AsStringArr,error)=false then
+    result.Field('errors').AddString(error);
+
+  if delete_bridge(Objectname,error)=false then
+    result.Field('errors').AddString(error);
+
+  {$ENDIF}
 end;
 
 { TFRE_DB_SERVICE_BASE }
@@ -3501,7 +3664,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_PHPFPM_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_PHPFPM_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -3546,7 +3709,7 @@ begin
   result := 'svc:/fos/fos_ldap';
 end;
 
-function TFRE_DB_LDAP_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_LDAP_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename :string;
 begin
  {$IFDEF SOLARIS}
@@ -3606,7 +3769,8 @@ begin
   Result:='no fmri';
 end;
 
-function TFRE_DB_CRYPTO_FILESERVER.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_CRYPTO_FILESERVER.RIF_CreateOrUpdateService(
+  const running_ctx: TObject): IFRE_DB_Object;
 begin
  {$IFDEF SOLARIS}
    result := GFRE_DBI.NewObject;
@@ -3649,6 +3813,62 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
+function TFRE_DB_DATALINK_IPMP.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+var i      : NativeInt;
+    error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL DELETE IPMP');
+  result := GFRE_DBI.NewObject;
+
+  writeln('SWL REMOVE IPMP MEMBERS ',DumpToString);
+  for i:=0 to Field('interfaces').ValueCount-1 do
+    begin
+      if remove_from_ipmp(ObjectName,Field('interfaces').AsStringItem[i],error)=false then
+        result.Field('errors').addstring(error);
+    end;
+
+  if delete_ipmp(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  {$ENDIF}
+end;
+
+function TFRE_DB_DATALINK_IPMP.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var error      : string;
+    ipmpname   : string;
+    resultdbo  : IFRE_DB_Object;
+
+    procedure _linkIterator(const obj:IFRE_DB_Object);
+    var dl : TFRE_DB_DATALINK;
+    begin
+      if obj.IsA(TFRE_DB_DATALINK,dl) then
+        begin
+          if add_to_ipmp(ObjectName,dl.ObjectName,true,error)=false then
+            resultdbo.Field('errors').AddString(error);
+        end;
+    end;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL CREATE IPMP');
+
+  result := GFRE_DBI.NewObject;
+
+//  writeln('SWL DUMP IPMP',DumpToString);
+
+
+  ipmpname := ObjectName;
+
+  if create_ipmp(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  resultdbo := result;
+  ForAllObjects(@_linkIterator);
+
+
+  {$ENDIF}
+end;
+
 { TFRE_DB_SSH_SERVICE }
 
 class procedure TFRE_DB_SSH_SERVICE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -3679,7 +3899,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_SSH_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_SSH_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename :string;
 begin
  {$IFDEF SOLARIS}
@@ -3758,7 +3978,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_HTTP_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_HTTP_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -3814,7 +4034,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_MYSQL_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_MYSQL_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -3870,7 +4090,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_POSTGRES_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_POSTGRES_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -3922,7 +4142,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_MTA_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_MTA_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -3972,7 +4192,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_IMAP_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_IMAP_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -4132,6 +4352,23 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
+function TFRE_DB_DATALINK_IPTUN.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+var error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL DELETE IPTUN',DumpToString);
+  result := GFRE_DBI.NewObject;
+
+  writeln('DELETE INTERFACE');
+  if delete_interface(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  if delete_iptun(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  {$ENDIF}
+end;
+
 { TFRE_DB_IP_ADDRESS }
 
 //procedure TFRE_DB_IP_HOSTNET.InternalSetIPCIDR(const value: TFRE_DB_String);
@@ -4257,6 +4494,7 @@ end;
 //end;
 
 
+
 { TFRE_DB_IPV6_SUBNET }
 
 class procedure TFRE_DB_IPV6_SUBNET.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -4312,7 +4550,7 @@ begin
   else
     begin
       linkname   := Field('datalinkname').asstring;
-      aliasname  := GetAddrObjAlias;
+//      aliasname  := GetAddrObjAlias;  //FIXXME
       if FieldExists('slaac') and Field('slaac').AsBoolean=true then
         begin
          if create_ipv6slaac(linkname,'addrconf',errorstring) then
@@ -4371,7 +4609,7 @@ begin
   else
     begin
       linkname   := Field('datalinkname').asstring;
-      aliasname  := GetAddrObjAlias;
+//      aliasname  := GetAddrObjAlias;  //FIXXME
       if FieldExists('slaac') and Field('slaac').AsBoolean=true then
         begin
           result.Field('STOPPED').asboolean:=true;  // dont remove addrconf on link, no further add or remove of ipv6 possible after that
@@ -4456,7 +4694,7 @@ begin
     begin
       writeln('SWL: IPV4 START');
       linkname   := Field('datalinkname').asstring;
-      aliasname  := GetAddrObjAlias;
+//      aliasname  := GetAddrObjAlias;  //FIXXME
       ip_hostnet := GetIPWithSubnet;
       if FieldExists('dhcp') and Field('dhcp').AsBoolean=true then
         res := create_ipv4dhcp(linkname,aliasname,errorstring)
@@ -4503,7 +4741,7 @@ begin
     begin
       writeln('SWL: IPV4 STOP');
       linkname   := Field('datalinkname').asstring;
-      aliasname  := GetAddrObjAlias;
+//      aliasname  := GetAddrObjAlias;  //FIXXME
       if delete_ipaddress(linkname,aliasname,errorstring) then
         begin
           result.Field('STOPPED').asboolean:=true;
@@ -5013,7 +5251,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_DNS.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_DNS.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -5918,7 +6156,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_VPN.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_VPN.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -6190,7 +6428,7 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
-function TFRE_DB_DHCP.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_DHCP.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}
@@ -7413,7 +7651,7 @@ end;
      if obj.IsA(TFRE_DB_DATALINK_VNIC,dl_vnic) then
        begin
          setzonename(dl_vnic);
-         dl_vnic.RIF_CreateVNIC;
+         dl_vnic.RIF_CreateOrUpdateService(self);
        end;
    end;
 
@@ -7750,6 +7988,35 @@ begin
   Result:=GetTranslateableTextShort(conn,'caption');
 end;
 
+function TFRE_DB_DATALINK_STUB.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL CREATE ETHERSTUB');
+
+  result := GFRE_DBI.NewObject;
+
+  if create_etherstub(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  CreateVNICsonDatalink(running_ctx,result);
+
+  {$ENDIF}
+end;
+
+function TFRE_DB_DATALINK_STUB.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+var error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL DELETE STUB');
+  result := GFRE_DBI.NewObject;
+
+  if delete_etherstub(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  {$ENDIF}
+end;
+
  { TFRE_DB_DATALINK_AGGR }
 
  class procedure TFRE_DB_DATALINK_AGGR.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -7757,6 +8024,11 @@ end;
  begin
    inherited RegisterSystemScheme(scheme);
    scheme.SetParentSchemeByName(TFRE_DB_DATALINK.ClassName);
+
+   scheme.AddSchemeField('aggr_lacp_mode',fdbft_String).Required:=true;   // FIXXME enum off,active,passive
+   scheme.AddSchemeField('aggr_policy',fdbft_String);  // FIXXME enum L2,L3,L4
+   scheme.AddSchemeField('aggr_timer',fdbft_String);   // FIXXME enum short,long
+
  end;
 
  class procedure TFRE_DB_DATALINK_AGGR.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -7801,6 +8073,76 @@ end;
 class function TFRE_DB_DATALINK_AGGR.GetCaption(const conn: IFRE_DB_CONNECTION): String;
 begin
   Result:=GetTranslateableTextShort(conn,'caption');
+end;
+
+function TFRE_DB_DATALINK_AGGR.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var error    : string;
+    aggrname : string;
+    key      : integer;
+    sa       : TFRE_DB_StringArray;
+    aggr_policy    : string;
+    aggr_timer     : string;
+    aggr_lacp_mode : string;
+
+    procedure _linkIterator(const obj:IFRE_DB_Object);
+    var dl : TFRE_DB_DATALINK;
+    begin
+      if (obj.IsA(TFRE_DB_DATALINK,dl)) and (not obj.IsA(TFRE_DB_DATALINK_VNIC)) then
+        begin
+          SetLength(sa,length(sa)+1);
+          sa[high(sa)] := dl.ObjectName;
+        end;
+    end;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL CREATE AGGR');
+
+  result := GFRE_DBI.NewObject;
+
+//  writeln('SWL DUMP AGGR',DumpToString);
+
+  sa := TFRE_DB_StringArray.Create;
+
+  ForAllObjects(@_linkIterator);
+
+  if FieldExists('aggr_policy') then
+    aggr_policy := Field('aggr_policy').asstring
+  else
+    aggr_policy := 'L4';
+
+  if FieldExists('aggr_timer') then
+    aggr_timer := Field('aggr_timer').asstring
+  else
+    aggr_timer := 'short';
+
+  if FieldExists('aggr_lacp_mode') then
+    aggr_lacp_mode := Field('aggr_lacp_mode').asstring
+  else
+    aggr_lacp_mode := 'active';
+
+  aggrname := ObjectName;
+  key      := StrToInt(Copy(aggrname,Length(aggrname),1));
+
+  if create_aggr(Objectname,key,sa,aggr_policy,aggr_timer,aggr_lacp_mode,false,error)=false then
+    result.Field('errors').addstring(error);
+
+  CreateVNICsonDatalink(running_ctx,result);
+
+  {$ENDIF}
+end;
+
+function TFRE_DB_DATALINK_AGGR.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+var i      : NativeInt;
+    error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL DELETE AGGR');
+  result := GFRE_DBI.NewObject;
+
+  if delete_aggr(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  {$ENDIF}
 end;
 
  { TFRE_DB_DATALINK_VNIC }
@@ -7850,17 +8192,42 @@ end;
    result :=  TFRE_DB_MESSAGE_DESC.create.Describe('','Feature disabled in Demo Mode',fdbmt_info,nil);
  end;
 
- function TFRE_DB_DATALINK_VNIC.RIF_CreateVNIC: IFRE_DB_Object;
- var parent_if  : string;
+ function TFRE_DB_DATALINK_VNIC.RIF_CreateVNDforVNIC: IFRE_DB_Object;
+ var
+     zonename   : string;
+     err        : string;
+ begin
+   {$IFDEF SOLARIS}
+     writeln('SWL CREATE VND ',Field('zonename').asstring+' '+ObjectName);
+     if FieldExists('zonename') then
+       zonename  := Field('zonename').asstring
+     else
+       zonename  := '';
+
+     writeln('CREATE VND ',create_vnd(ObjectName,zonename,Objectname,err),' ',err);
+   {$ENDIF}
+ end;
+
+class function TFRE_DB_DATALINK_VNIC.GetCaption(const conn: IFRE_DB_CONNECTION): String;
+begin
+  Result:=GetTranslateableTextShort(conn,'caption');
+end;
+
+function TFRE_DB_DATALINK_VNIC.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var parent_if  : string;
      mac        : TFOS_MAC_ADDR;
      vlan       : Uint16;
      zonename   : string;
      err        : string;
- begin
+begin
   {$IFDEF SOLARIS}
    writeln('CREATE VNIC START');
   //writeln('SWL DUMP:',self.DumpToString());
-   parent_if := Field('parent').AsObject.Field('objname').AsString;
+   if fieldexists('parentname') then
+     parent_if := field('parentname').asstring
+   else
+     parent_if := Field('parent').AsObject.Field('objname').AsString;
+
    writeln('SWL: PARENT IF:',parent_if);
    if FieldExists('zonename') then
      zonename  := Field('zonename').asstring
@@ -7889,27 +8256,34 @@ end;
       end;
    writeln('CREATE VNIC DONE');
    {$ENDIF}
- end;
 
- function TFRE_DB_DATALINK_VNIC.RIF_CreateVNDforVNIC: IFRE_DB_Object;
- var
-     zonename   : string;
-     err        : string;
- begin
-   {$IFDEF SOLARIS}
-     writeln('SWL CREATE VND ',Field('zonename').asstring+' '+ObjectName);
-     if FieldExists('zonename') then
-       zonename  := Field('zonename').asstring
-     else
-       zonename  := '';
+end;
 
-     writeln('CREATE VND ',create_vnd(ObjectName,zonename,Objectname,err),' ',err);
-   {$ENDIF}
- end;
-
-class function TFRE_DB_DATALINK_VNIC.GetCaption(const conn: IFRE_DB_CONNECTION): String;
+function TFRE_DB_DATALINK_VNIC.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+var error  : string;
+    zonename : string;
 begin
-  Result:=GetTranslateableTextShort(conn,'caption');
+  {$IFDEF SOLARIS}
+//  writeln('SWL DELETE VNIC',DumpToString);
+  writeln('DELETE INTERFACE');
+  result := GFRE_DBI.NewObject;
+
+  if delete_interface(Objectname,error)=false then
+    result.Field('errors').addstring(error);
+
+  zonename := Field('zonename').AsString;
+  if zonename='' then
+    if FieldExists('props') then
+      begin
+        if Field('props').AsObject.FieldExists('zone') then
+          zonename := Field('props').AsObject.Field('zone').asObject.Field('current').AsString;
+      end;
+
+  writeln('SWL ZONENAME:',zonename);
+  if delete_vnic(Objectname,error,zonename)=false then
+    result.Field('errors').addstring(error);
+
+  {$ENDIF}
 end;
 
  { TFRE_DB_DATALINK_PHYS }
@@ -7962,6 +8336,19 @@ end;
  class function TFRE_DB_DATALINK_PHYS.GetCaption(const conn: IFRE_DB_CONNECTION): String;
 begin
   Result:=GetTranslateableTextShort(conn,'caption');
+end;
+
+function TFRE_DB_DATALINK_PHYS.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var error  : string;
+begin
+  {$IFDEF SOLARIS}
+  writeln('SWL CREATE PHYS');
+
+  result := GFRE_DBI.NewObject;
+
+  CreateVNICsonDatalink(running_ctx,result);
+
+  {$ENDIF}
 end;
 
  { TFRE_DB_DATALINK }
@@ -8092,6 +8479,26 @@ end;
            obj.Finalize;
          end;
      end;
+  end;
+
+  procedure TFRE_DB_DATALINK.CreateVnicsOnDatalink(const running_ctx: TObject;const resultdbo: IFRE_DB_Object);
+
+   procedure _vniciterator(const obj: IFRE_DB_Object);
+   var
+     vnic: TFRE_DB_DATALINK_VNIC;
+   begin
+     if obj.IsA(TFRE_DB_DATALINK_VNIC,vnic) then
+       begin
+         writeln('SWL CREATE VNIC : ',vnic.ObjectName);
+         vnic.Field('parentname').asstring := Objectname;
+         vnic.RIF_CreateOrUpdateService(running_ctx);
+       end;
+   end;
+
+ begin
+   writeln('SWL CREATE VLINKS ON DL : ',ObjectName);
+
+   ForAllObjects(@_vniciterator);
  end;
 
  function TFRE_DB_DATALINK.IMI_Menu(const input: IFRE_DB_Object): IFRE_DB_Object;
@@ -8100,20 +8507,20 @@ end;
    result := GFRE_DB_NIL_DESC;
  end;
 
-  function TFRE_DB_DATALINK.RIF_CreateOrUpdateServices: IFRE_DB_Object;
+ function TFRE_DB_DATALINK.RIF_CreateOrUpdateServices(const running_ctx: TObject): IFRE_DB_Object;
  var
    oldsvclist : IFRE_DB_Object;
    resultdatalink : IFRE_DB_Object;
 
    {$IFDEF SOLARIS}
    procedure _CreateorUpdateIPHOSTNET(const obj:IFRE_DB_Object);
-   var iphostnet   : TFRE_DB_IP_HOSTNET;
+   var iphostnet   : TFRE_DB_IP;
        resdbo      : IFRE_DB_Object;
        foundobj    : IFRE_DB_Object;
        servicename : string;
        fmri        : string;
    begin
-     if obj.IsA(TFRE_DB_IP_HOSTNET,iphostnet) then
+     if obj.IsA(TFRE_DB_IP,iphostnet) then
        begin
          iphostnet.Field('datalinkname').asstring := ObjectName;
          fmri        := iphostnet.GetFMRI;
@@ -8124,7 +8531,7 @@ end;
            end
          else
            begin
-             resdbo := iphostnet.RIF_CreateOrUpdateService;
+             resdbo := iphostnet.RIF_CreateOrUpdateService(running_ctx);
              resdbo.Field('UID').AsGUID:=iphostnet.UID;
 //             writeln('SWL:',resdbo.DumpToString);
            end;
@@ -8155,6 +8562,17 @@ begin
   Result:=inherited WBC_GetConfig(input, ses, app, conn);
   Result.Field('Type').AsString:='datalink';
 end;
+
+ function TFRE_DB_DATALINK.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+ begin
+   writeln('SWL CREATE SERVICE DATALINK',ObjectName);
+ end;
+
+ function TFRE_DB_DATALINK.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+ begin
+   writeln('SWL DELETE DATALINK');
+   Result:=inherited RIF_DeleteService(running_ctx);
+ end;
 
  { TFRE_DB_TESTER }
 
@@ -8495,7 +8913,7 @@ end;
    end;
  end;
 
- function TFRE_DB_VMACHINE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+ function TFRE_DB_VMACHINE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
  var servicename : string;
      pidfile     : string;
      qemubin     : string;
@@ -8983,6 +9401,102 @@ begin
   //writeln('SWL SERVICE STRUCTURE: ',result.DumpToString);
 end;
 
+function TFRE_DB_MACHINE.RIF_ClearDatalinks(const running_ctx: TObject): IFRE_DB_Object;
+var
+  dbo  : IFRE_DB_Object;
+  rdbo : IFRE_DB_Object;
+
+  // OK remove dlinks from ipmp
+  // OK delete ipmp
+  // OK remove from bridges
+  // OK delete bridges
+  // OK delete aggr
+  // OK delete vnics
+  // OK delete simnet
+  // OK delete etherstub
+  // OK delete iptun
+
+  procedure _ipmpIterator(const obj: IFRE_DB_Object);
+  var dl : TFRE_DB_DATALINK_IPMP;
+  begin
+    if obj.IsA(TFRE_DB_DATALINK_IPMP,dl) then
+      begin
+        writeln('SWL CLEAR IPMP ',dl.ObjectName);
+        rdbo := dl.RIF_DeleteService(running_ctx);
+        writeln('SWL RES',rdbo.DumpToString);
+      end;
+  end;
+
+  procedure _bridgeIterator(const obj: IFRE_DB_Object);
+  var dl : TFRE_DB_DATALINK_BRIDGE;
+  begin
+    if obj.IsA(TFRE_DB_DATALINK_BRIDGE,dl) then
+      begin
+        writeln('SWL CLEAR BRIDGE ',dl.ObjectName);
+        rdbo := dl.RIF_DeleteService(running_ctx);
+        writeln('SWL RES',rdbo.DumpToString);
+      end;
+  end;
+
+  procedure _aggrIterator(const obj: IFRE_DB_Object);
+  var dl : TFRE_DB_DATALINK_AGGR;
+  begin
+    if obj.IsA(TFRE_DB_DATALINK_AGGR,dl) then
+      begin
+        writeln('SWL CLEAR AGGR ',dl.ObjectName);
+        rdbo := dl.RIF_DeleteService(running_ctx);
+        writeln('SWL RES',rdbo.DumpToString);
+      end;
+  end;
+
+  procedure _vnicIterator(const obj: IFRE_DB_Object);
+  var dl : TFRE_DB_DATALINK_VNIC;
+  begin
+    if obj.IsA(TFRE_DB_DATALINK_VNIC,dl) then
+      begin
+        writeln('SWL CLEAR VNIC ',dl.ObjectName);
+        rdbo := dl.RIF_DeleteService(running_ctx);
+        writeln('SWL RES',rdbo.DumpToString);
+      end;
+  end;
+
+  procedure _otherDLIterator(const obj: IFRE_DB_Object);
+  var dl : TFRE_DB_DATALINK;
+  begin
+    if obj.IsA(TFRE_DB_DATALINK_SIMNET,dl) or obj.IsA(TFRE_DB_DATALINK_STUB,dl) or obj.IsA(TFRE_DB_DATALINK_IPTUN,dl) then
+      begin
+        writeln('SWL CLEAR DATALINK ',dl.ObjectName);
+        rdbo := dl.RIF_DeleteService(running_ctx);
+        writeln('SWL RES',rdbo.DumpToString);
+      end;
+  end;
+
+begin
+  dbo := get_datalink_dbo;
+//  writeln(dbo.DumpToString);
+  dbo.ForAllObjects(@_ipmpIterator);
+  dbo.ForAllObjects(@_bridgeIterator);
+  dbo.ForAllObjects(@_aggrIterator);
+  dbo.ForAllObjects(@_vnicIterator);
+  dbo.ForAllObjects(@_otherDLIterator);
+end;
+
+function TFRE_DB_MACHINE.RIF_CreateDatalinks(const running_ctx: TObject): IFRE_DB_Object;
+
+  procedure _zoneiterator(const obj:IFRE_DB_Object);
+  var gz:TFRE_DB_GLOBAL_ZONE;
+  begin
+    if obj.isa(TFRE_DB_GLOBAL_ZONE,gz) then
+      begin
+        writeln('SWL GZ',gz.ObjectName);
+        gz.RIF_CreateDatalinks(running_ctx);
+      end;
+  end;
+
+begin
+  ForAllObjects(@_zoneiterator);
+end;
+
  procedure TFRE_DB_SERVICE.ClearErrors;
  begin
    DeleteField('errors');
@@ -9113,7 +9627,7 @@ begin
   result := 'svc:/fos/fos_'+ClassName;
 end;
 
- function TFRE_DB_SERVICE.RIF_CreateOrUpdateService: IFRE_DB_Object;
+ function TFRE_DB_SERVICE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
  var servicename :string;
  begin
   {$IFDEF SOLARIS}
@@ -9132,6 +9646,12 @@ end;
     result.Field('fmri').asstring:=servicename;
 
   {$ENDIF}
+ end;
+
+ function TFRE_DB_SERVICE.RIF_DeleteService(const running_ctx: TObject): IFRE_DB_Object;
+ begin
+   writeln('SWL DELETE SERVICE');
+   result := GFRE_DBI.NewObject;
  end;
 
  function TFRE_DB_SERVICE.RIF_EnableService(const runnning_ctx: TObject): IFRE_DB_Object;
@@ -9197,7 +9717,7 @@ begin
   result := 'svc:/fos/fos_samba';
 end;
 
-function TFRE_DB_VIRTUAL_FILESERVER.RIF_CreateOrUpdateService: IFRE_DB_Object;
+function TFRE_DB_VIRTUAL_FILESERVER.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
 var servicename : string;
 begin
   {$IFDEF SOLARIS}

@@ -19,6 +19,7 @@ function  add_ipv4routing   (const gateway  : string ; const ip_hostsubnet: stri
 function  add_ipv6routing   (const gateway  : string ; const ip_hostsubnet: string; out error : string):boolean;
 function  delete_ipv4routing(const gateway  : string ; const ip_hostsubnet: string; out error : string):boolean;
 function  delete_ipv6routing(const gateway  : string ; const ip_hostsubnet: string; out error : string):boolean;
+function  delete_interface  (const linkname : string ; out error : string):boolean;
 
 implementation
 
@@ -130,6 +131,26 @@ var cmd : string;
 begin
  cmd :='route delete -inet6 '+ip_hostsubnet+' '+gateway;
  writeln('SWL: DELETE IPV4ROUTING ',cmd);
+ res := FRE_ProcessCMD(cmd,outstring,errorstring);
+ if res=0 then
+   begin
+     result := true;
+   end
+ else
+   begin
+     result := false;
+     error  := 'RES:'+inttostr(res)+' '+outstring +' '+ errorstring;
+     writeln('SWL: ERROR ',error);
+   end;
+end;
+
+function delete_interface(const linkname: string; out error: string): boolean;
+var cmd : string;
+    outstring, errorstring: string;
+    res : integer;
+begin
+ cmd :='ipadm delete-if '+linkname;
+ writeln('SWL: DELETE INTERFACE ',cmd);
  res := FRE_ProcessCMD(cmd,outstring,errorstring);
  if res=0 then
    begin

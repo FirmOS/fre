@@ -7,7 +7,7 @@ unit fosillu_dladm;
 interface
 
 uses
-  Classes, SysUtils,fre_db_interface,
+  Classes, SysUtils,fre_db_interface,fos_tool_interfaces,
   fos_illumos_defs,
   fosillu_libscf,
   fosillu_nvpair,
@@ -57,6 +57,7 @@ function  create_ipmp       (const ipmpname: string; out error: string) : boolea
 function  add_to_ipmp       (const ipmpname: string; const linkname : string; const is_active:boolean; out error: string) : boolean;
 function  remove_from_ipmp  (const ipmpname: string; const linkname : string; out error : string) : boolean;
 function  delete_ipmp       (const ipmpname: string; out error: string) : boolean;
+
 
 implementation
 
@@ -344,6 +345,8 @@ var macaddr_attr : dladm_macaddr_attr_t;
     dldbo        : IFRE_DB_Object;
     macdbo       : IFRE_DB_Object;
     macaddr      : TFOS_MAC_ADDR;
+    addr         : string;
+    i            : NativeInt;
 begin
   macaddr_attr:=_pmacaddr^;
 
@@ -351,20 +354,69 @@ begin
   macdbo := GFRE_DBI.NewObject;
   dldbo.Field(inttostr(macaddr_attr.ma_slot)).asobject:=macdbo;
 
-  writeln('SWL WALKMAC');
+//  writeln('SWL WALKMAC');
   macdbo.Field('slot').asuint16  := macaddr_attr.ma_slot;
   macdbo.Field('flags').asuint16 := macaddr_attr.ma_flags;
   macdbo.Field('addrlen').asuint16 := macaddr_attr.ma_addrlen;
 
-  if macaddr_attr.ma_addrlen<>6 then
-    raise EFRE_DB_Exception.Create('UNSUPPORTED MAC ADDR LEN '+inttostr(macaddr_attr.ma_addrlen));
-
-  Move(macaddr_attr.ma_addr,macaddr,macaddr_attr.ma_addrlen);
-
-  macdbo.Field('macaddr').asstring       := macaddr.GetAsString;
+  if macaddr_attr.ma_addrlen=6 then
+    begin
+      Move(macaddr_attr.ma_addr,macaddr,macaddr_attr.ma_addrlen);
+      macdbo.Field('macaddr').asstring       := macaddr.GetAsString;
+    end
+  else
+    begin
+      addr :='';
+      for i:=0 to macaddr_attr.ma_addrlen-1 do
+        begin
+          addr := addr+inttoStr(Byte(macaddr_attr.ma_addr[i]));
+          if i<(macaddr_attr.ma_addrlen-1) then
+            addr :=addr+'.';
+        end;
+      macdbo.Field('addr').asstring       := addr;
+    end;
   macdbo.Field('client_name').asstring   := StrPas(macaddr_attr.ma_client_name);
   macdbo.Field('client_linkid').asuint32 := macaddr_attr.ma_client_linkid;
   result := B_TRUE;
+end;
+
+function AddPortToBridge(_dladm_handle:dladm_handle_t; _dl_id:datalink_id_t; _dbo:pointer):longint; cdecl;
+var dbo    : IFRE_DB_Object;
+    status : dladm_status_t;
+    flags  : UInt32_t;
+    media  : Uint32_t;
+    dlclass: datalink_class_t;
+    link   : Array[0..MAXLINKNAMELEN-1] of char;
+    error  : string;
+begin
+  writeln('SWL WALK BRIDGE LINK ADD ');
+  dbo    := IFRE_DB_Object(_dbo);
+  status := dladm_datalink_id2info(_dladm_handle,_dl_id,@flags,@dlclass,@media,@link,MAXLINKNAMELEN);
+  if status <>DLADM_STATUS_OK then
+    begin
+      error := 'DATALINK ID 2 INFO FAILED: ['+inttostr(_dl_id)+'] failed ['+CDLADM_STATUS_CODES[status]+']';
+      raise EFRE_DB_Exception.Create(error);
+    end
+  else
+    dbo.Field('ports').addstring(link);
+end;
+
+function ShowBridgeLinkCB(_dladm_handle:dladm_handle_t; _dl_id:datalink_id_t; _dbo:pointer):longint; cdecl;
+var brname : string;
+    brdbo  : IFRE_DB_Object;
+    bridge : Array[0..MAXLINKNAMELEN-1] of char;
+begin
+  brdbo  := IFRE_DB_Object(_dbo);
+  brname := brdbo.Field('objname').asstring;
+  if (dladm_bridge_getlink(_dladm_handle, _dl_id, @bridge, length(bridge))= DLADM_STATUS_OK) then
+    begin
+      writeln('SWL BRIDGE_GETLINK',bridge);
+      if bridge=brname then
+        begin
+          AddPortToBridge(_dladm_handle,_dl_id,brdbo);
+        end;
+    end;
+  result := DLADM_WALK_CONTINUE;
 end;
 
 function ShowLinkCB (_dladm_handle:dladm_handle_t; _dl_id:datalink_id_t; _dbo:pointer):longint; cdecl;
@@ -379,12 +431,51 @@ var dbo    : IFRE_DB_Object;
     dbocl  : string;
     lprops : IFRE_DB_Object;
     res    : NativeInt;
+
+    procedure GetBridgePorts(const brdbo:IFRE_DB_Object);
+    var
+      pdlp    : pdatalink_id_t;
+      i       : uint_t;
+      nlinks  : uint_t;
+      dlclass : datalink_class_t;
+      flags   : Uint32_t;
+    begin
+      writeln('SWL GET BRIDGE PORTS ',link);
+      pdlp := dladm_bridge_get_portlist(link,@nlinks);
+      writeln('SWL NLINKS',nlinks, ' PDLP:',int64(pdlp));
+      if assigned(pdlp) then
+        begin
+          for i:=0 to nlinks-1 do
+            begin
+              writeln('SWL BRIDGE LINKS ',pdlp[i]);
+              AddPorttoBridge(_dladm_handle,pdlp[i],brdbo);
+            end;
+          dladm_bridge_free_portlist(pdlp);
+        end
+      else
+        begin
+          writeln('SWL USE BRIDGE WALK');
+          dlclass := datalink_class_t(uint32(DATALINK_CLASS_PHYS)+uint32(DATALINK_CLASS_SIMNET)+uint32(DATALINK_CLASS_AGGR)+uint32(DATALINK_CLASS_ETHERSTUB));
+          flags  := DLADM_OPT_ACTIVE+DLADM_OPT_PERSIST;
+          status := dladm_walk_datalink_id(@ShowBridgeLinkCB,_dladm_handle,brdbo,dlclass,DATALINK_ANY_MEDIATYPE,flags);
+          if status <>DLADM_STATUS_OK then
+           begin
+             error := 'DATALINK WALK FOR BRIDGE FAILED: ['+CDLADM_STATUS_CODES[status]+']';
+             raise EFRE_DB_Exception.Create(error);
+           end;
+        end;
+//      writeln('SWL BRDBO ',brdbo.DumpToString);
+        //else
+        //  begin
+        //    error := 'UNABLE TO GET PORT LIST FOR BRIDGE: ['+link+']';
+        //    writeln('SWL BRIDGE PORTS ERROR:',error);
+        //  end;
+    end;
+
 begin
   dbo := IFRE_DB_Object(_dbo);
 
-
-//  dbo.Field('linkid').asuint32:=_dl_id;
-  writeln('SWL SHOWLINK CB DATALINK');
+//  writeln('SWL SHOWLINK CB DATALINK');
 
   status := dladm_datalink_id2info(_dladm_handle,_dl_id,@flags,@dlclass,@media,@link,MAXLINKNAMELEN);
   if status <>DLADM_STATUS_OK then
@@ -410,7 +501,12 @@ begin
   dbo.Field(inttostr(_dl_id)).AsObject:= dldbo;
 
   dldbo.Field('datalink_id').asUint32    :=_dl_id;
-  dldbo.Field('objname').asstring        := link;
+
+  if dlclass=DATALINK_CLASS_BRIDGE then
+    dldbo.Field('objname').asstring        := Copy(link,1,length(Strpas(link))-1)  // bridgename is linkname without trailing 0 (observability node)
+  else
+    dldbo.Field('objname').asstring        := link;
+
   dldbo.Field('datalink_class').asuint16 := Uint16(dlclass);
   dldbo.Field('media').asuint32          := media;
 
@@ -430,6 +526,10 @@ begin
     begin
       writeln('SWL :',error);
     end;
+
+  if dlclass=DATALINK_CLASS_BRIDGE then
+    GetBridgePorts(dldbo);
+
   result := DLADM_WALK_CONTINUE;
 end;
 
@@ -441,6 +541,42 @@ var status : dladm_status_t;
     error  : string;
     dlclass: datalink_class_t;
 
+    procedure ParseIPMP(const dbo:IFRE_DB_Object);
+    var
+      res    : integer;
+      outs   : string;
+      errors : string;
+      sl     : TStringList;
+      i      : NativeInt;
+      sa     : TFRE_DB_StringArray;
+      sp     : TFRE_DB_StringArray;
+      dl     : IFRE_DB_Object;
+    begin
+      // add ipmps
+
+      res := FRE_ProcessCMD('ipmpstat -g -P -o group,interfaces,state',outs,errors);
+      writeln('SWL: IPMP',outs);
+      if res=0 then
+        begin
+          sl:=TStringList.Create;
+          try
+            sl.Text:=outs;
+            for i:=0 to sl.Count-1 do
+              begin
+                GFRE_BT.SeperateString(sl[i],':',sa);
+                dl := GFRE_DBI.NewObjectSchemeByName('TFRE_DB_DATALINK_IPMP');
+                dl.Field('objname').asstring := sa[0];
+                setlength(sp,0);
+                GFRE_BT.SeperateString(sa[1],' ',sp);
+                dl.Field('interfaces').AsStringArr:=sp;
+                dbo.Field('IPMP_'+sa[0]).AsObject  := dl;
+              end;
+          finally
+            sl.Free;
+          end;
+        end;
+    end;
+
 begin
  writeln('SWL GET DATALINK');
  cb     := @ShowLinkCB;
@@ -449,7 +585,7 @@ begin
 
  result := GFRE_DBI.NewObject;
  state  := result;
- dlclass := datalink_class_t(uint32(DATALINK_CLASS_PHYS)+uint32(DATALINK_CLASS_VNIC)+uint32(DATALINK_CLASS_SIMNET)+uint32(DATALINK_CLASS_AGGR)+uint32(DATALINK_CLASS_BRIDGE)+uint32(DATALINK_CLASS_ETHERSTUB));
+ dlclass := datalink_class_t(uint32(DATALINK_CLASS_PHYS)+uint32(DATALINK_CLASS_VNIC)+uint32(DATALINK_CLASS_SIMNET)+uint32(DATALINK_CLASS_AGGR)+uint32(DATALINK_CLASS_BRIDGE)+uint32(DATALINK_CLASS_ETHERSTUB)+uint32(DATALINK_CLASS_IPTUN));
  status := dladm_walk_datalink_id(cb,GILLU_DLADM,state,dlclass,DATALINK_ANY_MEDIATYPE,flags);
  if status <>DLADM_STATUS_OK then
    begin
@@ -457,7 +593,10 @@ begin
      raise EFRE_DB_Exception.Create(error);
    end;
 
-   writeln('SWL DBO',result.DumpToString);
+
+ ParseIPMP(result);
+
+//   writeln('SWL DBO',result.DumpToString);
 end;
 
 function create_ipmp(const ipmpname: string; out error: string): boolean;
@@ -549,6 +688,7 @@ end;
 
 
 
+
 function create_etherstub(const linkname: string; out error: string): boolean;
 var flags    : UInt32_t;
     status   : dladm_status_t;
@@ -603,7 +743,7 @@ var flags    : UInt32_t;
     linkid   : datalink_id_t;
 begin
   lname  := PChar(linkname);
-  flags  := DLADM_OPT_ACTIVE;
+  flags  := DLADM_OPT_ACTIVE+DLADM_OPT_PERSIST;
   status := dladm_zname2info(GILLU_DLADM,zonename,lname,@linkid,nil,nil,nil);
   if status<>DLADM_STATUS_OK then
     begin
