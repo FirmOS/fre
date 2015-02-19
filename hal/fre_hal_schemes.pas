@@ -3835,6 +3835,7 @@ begin
 end;
 
 function TFRE_DB_DATALINK_IPMP.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+{$IFDEF SOLARIS}
 var error      : string;
     ipmpname   : string;
     resultdbo  : IFRE_DB_Object;
@@ -3848,6 +3849,7 @@ var error      : string;
             resultdbo.Field('errors').AddString(error);
         end;
     end;
+{$ENDIF}
 begin
   {$IFDEF SOLARIS}
   writeln('SWL CREATE IPMP');
@@ -9402,6 +9404,8 @@ begin
 end;
 
 function TFRE_DB_MACHINE.RIF_ClearDatalinks(const running_ctx: TObject): IFRE_DB_Object;
+{$IFDEF SOLARIS}
+
 var
   dbo  : IFRE_DB_Object;
   rdbo : IFRE_DB_Object;
@@ -9480,6 +9484,11 @@ begin
   dbo.ForAllObjects(@_vnicIterator);
   dbo.ForAllObjects(@_otherDLIterator);
 end;
+{$ELSE}
+begin
+
+end;
+{$ENDIF}
 
 function TFRE_DB_MACHINE.RIF_CreateDatalinks(const running_ctx: TObject): IFRE_DB_Object;
 
