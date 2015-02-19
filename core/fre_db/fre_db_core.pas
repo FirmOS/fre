@@ -3257,10 +3257,10 @@ end;
 
 function TFRE_DB_USER_RIGHT_TOKEN.CheckClassRight4DomainId(const std_right: TFRE_DB_STANDARD_RIGHT; const classtyp: TClass; const domain: TFRE_DB_GUID): boolean;
 begin
-  CheckDomainUid(domain);
   result := IsCurrentUserSystemAdmin;
   if result then
     exit;
+  CheckDomainUid(domain);
   if _OverlayRightsAllow(classtyp.ClassName,[std_right]) then
     exit;
   result := FREDB_StringInArray(_GetStdRightName(std_right,classtyp,domain),FConnectionRights);
