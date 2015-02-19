@@ -1323,8 +1323,15 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     svc_coll       : IFRE_DB_COLLECTION;
     vmcomp_coll    : IFRE_DB_COLLECTION;
     link_id        : TFRE_DB_GUID;
+    aggr_id        : TFRE_DB_GUID;
+    br_id          : TFRE_DB_GUID;
     ipcoll         : IFRE_DB_COLLECTION;
     oce0_id        : TFRE_DB_GUID;
+    oce1_id        : TFRE_DB_GUID;
+    oce2_id        : TFRE_DB_GUID;
+    oce3_id        : TFRE_DB_GUID;
+    sim1_id        : TFRE_DB_GUID;
+    sim2_id        : TFRE_DB_GUID;
     ixgbe_id       : TFRE_DB_GUID;
     e0_id,e1_id    : TFRE_DB_GUID;
     ipmp_nfs       : TFRE_DB_GUID;
@@ -1355,6 +1362,22 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     int_link_id     : TFRE_DB_GUID;
     lan_ip_id       : TFRE_DB_GUID;
     int_ip_id       : TFRE_DB_GUID;
+
+    procedure DumpMachineDBO (const host_id:TFRE_DB_GUID);
+    var obj            :IFRE_DB_Object;
+        machine_dbo    : IFRE_DB_Object;
+        machine        : TFRE_DB_MACHINE;
+    begin
+      CheckDbResult(conn.FetchI(host_id,obj));
+      if obj.IsA(TFRE_DB_MACHINE,machine) then
+        begin
+          machine_dbo :=machine.WEB_REQUEST_SERVICE_STRUCTURE(nil,nil,nil,conn);
+          machine_dbo.SaveToFile('machine.dbo');
+//          abort;
+          writeln(machine_dbo.DumpToString);
+          abort;
+        end;
+    end;
 
     function       CreateDC(const name:string):TFRE_DB_GUID;
     var
@@ -1790,7 +1813,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
 
        procedure SaveRule(const fwr:TFRE_DB_FIREWALL_RULE);
        begin
-         writeln('SaveFWRule ',fwr.DumpToString);
+//         writeln('SaveFWRule ',fwr.DumpToString);
          CheckDbResult(fwrule_coll.Store(fwr));
        end;
 
@@ -1835,7 +1858,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
 
        procedure SavePool(const fwp:TFRE_DB_FIREWALL_POOL);
        begin
-         writeln('SaveFWPool ',fwp.DumpToString);
+//         writeln('SaveFWPool ',fwp.DumpToString);
          fw_pool_uid := fwp.Uid;
          CheckDbResult(fwpool_coll.Store(fwp));
        end;
@@ -1855,7 +1878,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
            pe.Field('group').asuint32   := group
          else
            pe.Field('ip_not').AsBoolean := ip_not;
-         writeln('SaveFWPoolEntry ',pe.DumpToString);
+//         writeln('SaveFWPoolEntry ',pe.DumpToString);
          CheckDbResult(fwpoolent_coll.Store(pe));
        end;
 
@@ -1873,7 +1896,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
 
        procedure SaveNAT(const fwn:TFRE_DB_FIREWALL_NAT);
        begin
-         writeln('SaveFWNAT ',fwn.DumpToString);
+//         writeln('SaveFWNAT ',fwn.DumpToString);
          CheckDbResult(fwnat_coll.Store(fwn));
        end;
 
@@ -2547,20 +2570,22 @@ begin
   AddIPV4('10.54.240.105','24',ipmp_drs);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:37:79:4a','generic');
   oce0_id  := link_id;
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:a0:36:08','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,oce0_id,0,1595,ipmp_nfs,'02:08:20:a0:36:08','mgmt');
   AddIPV4('10.54.250.103','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:7a:74:cd','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,oce0_id,0,1594,ipmp_drs,'02:08:20:7a:74:cd','mgmt');
   AddIPV4('10.54.240.106','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce1',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:37:79:4e','generic');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_1',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:f9:51:fb','mgmt');
   AddIPV4('10.54.240.107','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce2',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:37:79:a2','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:7e:8f:d4','mgmt');
+  oce2_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,oce2_id,0,1594,ipmp_drs,'02:08:20:7e:8f:d4','mgmt');
   AddIPV4('10.54.240.108','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce3',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:37:79:a6','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:ec:27:ce','mgmt');
+  oce3_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,oce3_id,0,1595,ipmp_nfs,'02:08:20:ec:27:ce','mgmt');
   AddIPV4('10.54.250.203','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:d4:64:df','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,oce3_id,0,1594,ipmp_drs,'02:08:20:d4:64:df','mgmt');
   AddIPV4('10.54.240.109','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:82:bf:ae','generic');
   ixgbe_id := link_id;
@@ -2709,24 +2734,27 @@ begin
   AddIPV4('10.54.240.100','24',ipmp_drs);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:47:6d:88','generic');
   oce0_id  := link_id;
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:35:ba:d3','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,oce0_id,0,1595,ipmp_nfs,'02:08:20:35:ba:d3','mgmt');
   AddIPV4('10.54.250.101','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:da:52:00','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,oce0_id,0,1594,ipmp_drs,'02:08:20:da:52:00','mgmt');
   AddIPV4('10.54.240.101','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce1',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:47:6d:8c','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:88:20:90:d9:15','mgmt');
+  oce1_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,oce1_id,0,1595,ipmp_nfs,'02:88:20:90:d9:15','mgmt');
   AddIPV4('10.54.250.107','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_1',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:1d:52:4d','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_1',CFRE_DB_NullGUID,oce1_id,0,1594,ipmp_drs,'02:08:20:1d:52:4d','mgmt');
   AddIPV4('10.54.240.102','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce2',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:47:6c:b0','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_2',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:a2:c7:11','mgmt');
+  oce2_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_2',CFRE_DB_NullGUID,oce2_id,0,1595,ipmp_nfs,'02:08:20:a2:c7:11','mgmt');
   AddIPV4('10.54.250.201','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:86:12:9c','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,oce2_id,0,1594,ipmp_drs,'02:08:20:86:12:9c','mgmt');
   AddIPV4('10.54.240.103','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce3',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'0:90:fa:47:6c:b4','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_3',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:c7:6a:fd','mgmt');
+  oce3_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_3',CFRE_DB_NullGUID,oce3_id,0,1595,ipmp_nfs,'02:08:20:c7:6a:fd','mgmt');
   AddIPV4('10.54.250.207','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:39:36:36','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,oce3_id,0,1594,ipmp_drs,'02:08:20:39:36:36','mgmt');
   AddIPV4('10.54.240.104','24',link_id);
 
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:8a:c7:c0','mgmt');
@@ -2747,20 +2775,23 @@ begin
   AddIPV4('10.54.240.115','24',ipmp_drs);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:4c:11:64','generic');
   oce0_id  := link_id;
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:8:20:e5:26:67','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,oce0_id,0,1595,ipmp_nfs,'02:8:20:e5:26:67','mgmt');
   AddIPV4('10.54.250.113','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:2a:85:19','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,oce0_id,0,1594,ipmp_drs,'02:08:20:2a:85:19','mgmt');
   AddIPV4('10.54.240.116','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce1',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:4c:11:68','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_1',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:c9:d3:5f','mgmt');
+  oce1_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_1',CFRE_DB_NullGUID,oce1_id,0,1594,ipmp_drs,'02:08:20:c9:d3:5f','mgmt');
   AddIPV4('10.54.240.117','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce2',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:4c:f:f6','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:ff:99:35','mgmt');
+  oce2_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,oce2_id,0,1594,ipmp_drs,'02:08:20:ff:99:35','mgmt');
   AddIPV4('10.54.240.118','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce3',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:4c:f:fa','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:3d:56:8','mgmt');
+  oce3_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,oce3_id,0,1595,ipmp_nfs,'02:08:20:3d:56:8','mgmt');
   AddIPV4('10.54.250.213','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:89:76:8e','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,oce3_id,0,1594,ipmp_drs,'02:08:20:89:76:8e','mgmt');
   AddIPV4('10.54.240.119','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:8a:cb:e2','mgmt');
   AddIPV4('','',link_id);
@@ -2804,24 +2835,27 @@ begin
   AddIPV4('10.54.240.110','24',ipmp_drs);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:4c:0e:f8','generic');
   oce0_id  := link_id;
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:07:2b:4d','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,oce0_id,0,1595,ipmp_nfs,'02:08:20:07:2b:4d','mgmt');
   AddIPV4('10.54.250.111','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:d4:df:88','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,oce0_id,0,1594,ipmp_drs,'02:08:20:d4:df:88','mgmt');
   AddIPV4('10.54.240.111','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce1',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:4c:0e:fc','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:f9:33:a6','mgmt');
+  oce1_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,oce1_id,0,1595,ipmp_nfs,'02:08:20:f9:33:a6','mgmt');
   AddIPV4('10.54.250.117','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_1',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:79:a7:79','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_1',CFRE_DB_NullGUID,oce1_id,0,1594,ipmp_drs,'02:08:20:79:a7:79','mgmt');
   AddIPV4('10.54.240.112','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce2',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:47:6c:c8','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_2',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:f0:43:f8','mgmt');
+  oce2_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_2',CFRE_DB_NullGUID,oce2_id,0,1595,ipmp_nfs,'02:08:20:f0:43:f8','mgmt');
   AddIPV4('10.54.250.211','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:1d:4a:18','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_2',CFRE_DB_NullGUID,oce2_id,0,1594,ipmp_drs,'02:08:20:1d:4a:18','mgmt');
   AddIPV4('10.54.240.113','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'oce3',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'00:90:fa:47:6c:cc','generic');
-  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'vnicnfs0_3',CFRE_DB_NullGUID,link_id,0,1595,ipmp_nfs,'02:08:20:e0:93:1f','mgmt');
+  oce3_id  := link_id;
+  link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'vnicnfs0_3',CFRE_DB_NullGUID,oce3_id,0,1595,ipmp_nfs,'02:08:20:e0:93:1f','mgmt');
   AddIPV4('10.54.250.217','25',link_id);
-  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,link_id,0,1594,ipmp_drs,'02:08:20:73:8d:b0','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_3',CFRE_DB_NullGUID,oce3_id,0,1594,ipmp_drs,'02:08:20:73:8d:b0','mgmt');
   AddIPV4('10.54.240.114','24',link_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_PHYS.ClassName,'ixgbe0',zone_id,CFRE_DB_NullGUID,1500,0,CFRE_DB_NullGUID,'00:25:90:8a:c7:d8','mgmt');
   AddIPV4('','',link_id);
@@ -2869,6 +2903,33 @@ begin
   AddIPV4('172.22.0.99','24',link_id);
   e1_id    := link_id;
 
+  ipmp_nfs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'nfs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'test_ipmp_nfs','mgmt');
+  AddIPV4('10.54.250.102','25',ipmp_nfs);
+  ipmp_drs := AddDatalink(TFRE_DB_DATALINK_IPMP.ClassName,'drs0',zone_id,CFRE_DB_NullGUID,9000,0,CFRE_DB_NullGUID,'test_ipmp_drs','mgmt');
+  AddIPV4('10.54.240.105','24',ipmp_drs);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_0',CFRE_DB_NullGUID,e0_id,0,1595,ipmp_nfs,'02:08:20:a4:c6:00','mgmt');
+  AddIPV4('10.54.250.103','25',link_id);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_0',CFRE_DB_NullGUID,e0_id,0,1594,ipmp_drs,'02:08:20:a4:c6:01','mgmt');
+  AddIPV4('10.54.240.106','24',link_id);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicnfs0_1',CFRE_DB_NullGUID,e1_id,0,1595,ipmp_nfs,'02:08:20:a4:c6:02','mgmt');
+  AddIPV4('10.54.250.203','25',link_id);
+  link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'vnicdrs0_1',CFRE_DB_NullGUID,e1_id,0,1594,ipmp_drs,'02:08:20:a4:c6:03','mgmt');
+  AddIPV4('10.54.240.109','24',link_id);
+
+  link_id  := AddDatalink(TFRE_DB_DATALINK_SIMNET.ClassName,'sim0',zone_id,CFRE_DB_NullGUID,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:04','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_SIMNET.ClassName,'sim1',zone_id,CFRE_DB_NullGUID,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:05','mgmt');
+
+  link_id  := AddDatalink(TFRE_DB_DATALINK_STUB.ClassName,'stub0',zone_id,CFRE_DB_NullGUID,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:06','mgmt');
+
+  aggr_id  := AddDatalink(TFRE_DB_DATALINK_AGGR.ClassName,'aggr0',zone_id,CFRE_DB_NullGUID,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:07','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_SIMNET.ClassName,'sim2',zone_id,aggr_id,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:08','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_SIMNET.ClassName,'sim3',zone_id,aggr_id,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:09','mgmt');
+
+  br_id    := AddDatalink(TFRE_DB_DATALINK_BRIDGE.ClassName,'br',zone_id,CFRE_DB_NullGUID,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:10','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_SIMNET.ClassName,'sim4',zone_id,br_id,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:11','mgmt');
+  link_id  := AddDatalink(TFRE_DB_DATALINK_SIMNET.ClassName,'sim5',zone_id,br_id,0,0,CFRE_DB_NullGUID,'02:08:20:a4:c6:12','mgmt');
+
+
   g_domain_id := CheckFindDomainID('DEMO');
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('demo2',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'15a56c904a7f00248929bfdb576a45c9');
@@ -2894,6 +2955,8 @@ begin
   CreateShare(vf_id,pool_id,'syspool/domains/mydomain/newzone0/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
   AddFirewall(zone_id);
 
+//  DumpMachineDBO(host_id);
+
 
   //CheckDbResult(conn.FetchI(zone_id,obj));
   //if obj.IsA(TFRE_DB_ZONE,zone) then
@@ -2903,11 +2966,7 @@ begin
   //    abort;
   //  end;
 
-  //CheckDbResult(conn.FetchI(host_id,obj));
-  //if obj.IsA(TFRE_DB_MACHINE,machine) then
-  //  begin
-  //    writeln(machine.WEB_REQUEST_SERVICE_STRUCTURE(nil,nil,nil,conn).DumpToString);
-  //  end;
+
 
   g_domain_id:=g_def_domain_id;
   dc_id := CreateDC('RZ FirmOS Office');
@@ -2950,7 +3009,6 @@ begin
   int_link_id := link_id;
   int_ip_id:=AddIPV4('91.114.28.44','29',link_id);
   AddRoutingIPV4('default','91.114.28.41',zone_id,'Default Route');
-
 
   AddFirewall(zone_id);
 

@@ -299,6 +299,7 @@ type
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
      class function getAllDataLinkClasses   : TFRE_DB_StringArray;
      procedure      Embed                   (const conn: IFRE_DB_CONNECTION); override;
+     function       IsDelegated             (const conn: IFRE_DB_CONNECTION): boolean;
    published
      function       IMI_Menu                (const input:IFRE_DB_Object): IFRE_DB_Object;
      function       RIF_CreateOrUpdateServices                          : IFRE_DB_Object;
@@ -8025,6 +8026,7 @@ end;
     i         : integer;
     ip        : TFRE_DB_IP;
     dl        : TFRE_DB_DATALINK;
+
  begin
    inherited;
    refs := conn.GetReferencesDetailed(UID,false);
@@ -8035,10 +8037,24 @@ end;
        if obj.IsA(TFRE_DB_IP,ip) then
          self.Field(obj.UID.AsHexString).AsObject:=ip
        else
-         obj.Finalize;
+         if obj.IsA(TFRE_DB_DATALINK,dl) then
+           begin
+             if dl.isdelegated(conn)=false then
+               begin
+                 dl.Field('noparentembed').AsBoolean:=true;
+                 dl.Embed(conn);
+                 dl.DeleteField('noparentembed');
+                 Field(obj.UID.asHexstring).asobject:=dl;
+               end
+             else
+               obj.Finalize;
+           end
+         else
+           obj.Finalize;
      end;
+
    // embed parent (datalink)
-   if FieldExists('datalinkparent') then
+   if (FieldExists('datalinkparent')) and (not FieldExists('noparentembed')) then
      begin
        for i:=0 to field('datalinkparent').ValueCount-1 do
          begin
@@ -8047,6 +8063,23 @@ end;
              self.Field('PARENT').AsObject:=dl
            else
              obj.Finalize;
+         end;
+     end;
+ end;
+
+ function TFRE_DB_DATALINK.IsDelegated(const conn: IFRE_DB_CONNECTION): boolean;
+ var i   : NativeInt;
+     obj : IFRE_DB_Object;
+ begin
+    result :=false;
+    if FieldExists('serviceparent') then
+     begin
+       for i:=0 to field('serviceparent').ValueCount-1 do
+         begin
+           CheckDbResult(conn.Fetch(field('serviceparent').AsObjectLinkItem[i],obj),' could not fetch parent object '+field('serviceparent').AsObjectLinkItem[i].AsHexString);
+           if (obj.IsA(TFRE_DB_ZONE)) and (not obj.IsA(TFRE_DB_GLOBAL_ZONE)) then
+             result:=true;
+           obj.Finalize;
          end;
      end;
  end;
@@ -8937,7 +8970,7 @@ begin
 
   _getsubreferences(mo,0);
 
- //writeln('SWL SERVICE STRUCTURE: ',result.DumpToString);
+  //writeln('SWL SERVICE STRUCTURE: ',result.DumpToString);
 end;
 
  procedure TFRE_DB_SERVICE.ClearErrors;
@@ -9500,7 +9533,6 @@ begin
     ix_def      := collection.GetIndexDefinition('def');
     if lowercase(ix_def.FieldName)='uniquephysicalid' then begin
       collection.DropIndex('def');
-      CheckDbResult(collection.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false));
     end;
   end;
   if not collection.IndexExists('def') then begin
