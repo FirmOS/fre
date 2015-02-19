@@ -181,6 +181,9 @@ var
   dbo       : IFRE_DB_Object;
   natDBO    : IFRE_DB_Object;
   service   : IFRE_DB_Object;
+  dc        : IFRE_DB_DERIVED_COLLECTION;
+  group     : TFRE_DB_INPUT_GROUP_DESC;
+  block     : TFRE_DB_INPUT_BLOCK_DESC;
 begin
   sf:=CWSF(@WEB_StoreNAT);
   if isModify then begin
@@ -202,7 +205,16 @@ begin
   end;
   GetSystemScheme(TFRE_DB_FIREWALL_NAT,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_src_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('src'),ses);
+
+  dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC);
+  dc.Filters.RemoveFilter('zone');
+  dc.Filters.AddUIDFieldFilter('zone','zuid',service.Field('serviceParent').AsObjectLink,dbnf_OneValueFromFilter);
+  dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_IP_CHOOSER_DC);
+  dc.Filters.RemoveFilter('domain');
+  dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
@@ -290,6 +302,8 @@ begin
 
     CreateModuleText(conn,'service_grid_objname','Name');
     CreateModuleText(conn,'service_grid_zone','Zone');
+
+    CreateModuleText(conn,'nat_diag_src_block','Source');
   end;
 end;
 
@@ -319,6 +333,7 @@ begin
   if session.IsInteractiveSession then begin
     app  := GetEmbeddingApp;
     conn := session.GetDBConnection;
+    fre_hal_schemes.InitDerivedCollections(session,conn);
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
@@ -408,7 +423,6 @@ begin
       servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);
     end;
-
   end;
 end;
 

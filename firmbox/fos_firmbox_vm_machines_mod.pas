@@ -580,10 +580,12 @@ var
 
 begin
   inherited MySessionInitializeModule(session);
-  app:=GetEmbeddingApp;
-  conn := session.GetDBConnection;
 
   if session.IsInteractiveSession then begin
+    app:=GetEmbeddingApp;
+    conn := session.GetDBConnection;
+    fre_hal_schemes.InitDerivedCollections(session,conn);
+
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'gc_vm_customer'),true,dt_string,true,true,4,'',FetchModuleTextShort(session,'gc_vm_customer_default_value'),nil,false,'domainid');
@@ -622,33 +624,6 @@ begin
       Filters.AddStdClassRightFilter('rights','domainid','','',TFRE_DB_VMACHINE.ClassName,[sr_STORE],session.GetDBConnection.SYS.GetCurrentUserTokenClone);
       Filters.AddStringFieldFilter('serviceclasses','serviceclasses',TFRE_DB_VMACHINE.ClassName,dbft_EXACTVALUEINARRAY);
       Filters.AddStringFieldFilter('disabledSCs','disabledSCs',TFRE_DB_VMACHINE.ClassName,dbft_EXACTVALUEINARRAY,false,true);
-    end;
-
-    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    with transform do begin
-      AddOneToOnescheme('objname');
-      AddMatchingReferencedField(['TFRE_DB_VMACHINE_NIC<NIC','TFRE_DB_VMACHINE<INTERFACE'],'uid','vmid','',false,dt_string,false,false,1,'',FREDB_G2H(CFRE_DB_NullGUID));
-      AddMatchingReferencedFieldArray(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
-    end;
-    dc := session.NewDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC);
-    with dc do begin
-      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
-      SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'');
-      Filters.AddSchemeObjectFilter('type',[TFRE_DB_DATALINK_VNIC.ClassName]);
-    end;
-
-    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    with transform do begin
-      AddOneToOnescheme('objname');
-      AddMatchingReferencedFieldArray(['DATALINKPARENT>>TFRE_DB_ZONE'],'uid','zid','',false);
-    end;
-    dc := session.NewDerivedCollection(CFRE_DB_VMACHINE_HDD_CHOOSER_DC);
-    with dc do begin
-      SetDeriveParent(conn.GetCollection(CFRE_DB_ZFS_DATASET_COLLECTION));
-      SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Chooser,[],'');
-      Filters.AddSchemeObjectFilter('type',[TFRE_DB_ZFS_DATASET_ZVOL.ClassName]);
     end;
   end;
 end;
@@ -1245,7 +1220,7 @@ function TFRE_FIRMBOX_VM_MACHINES_MOD.canAddVM(const input: IFRE_DB_Object; cons
 begin
   Result:=(conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE,zone.DomainID) and
            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE_NIC,zone.DomainID) and
-           conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,zone.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,zone.DomainID) and
            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE_DISK,zone.DomainID));
 end;
 
@@ -1254,8 +1229,8 @@ begin
   Result:=(conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_VMACHINE,service.DomainID) and
            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE_NIC,service.DomainID) and
            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_VMACHINE_NIC,service.DomainID) and
-           conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_HOSTNET,service.DomainID) and
-           conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_IPV4_HOSTNET,service.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and
+           conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_IPV4,service.DomainID) and
            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_VMACHINE_DISK,service.DomainID) and
            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_VMACHINE_DISK,service.DomainID));
 end;
@@ -1272,7 +1247,7 @@ begin
 
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_diag_cap'),600,true,true,false);
 
-  GetSystemScheme(TFRE_DB_IPV4_HOSTNET,scheme);
+  GetSystemScheme(TFRE_DB_IPV4,scheme);
   res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_hostname'),'hostname');
   block:=res.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_ip_net'));
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ip_net'),ses,'ip_net',false);
@@ -1324,8 +1299,8 @@ var
   nicScheme        : IFRE_DB_SchemeObject;
   nicObj           : TFRE_DB_VMACHINE_NIC;
   configObj        : IFRE_DB_Object;
-  hostnet          : TFRE_DB_IPV4_HOSTNET;
-  hnScheme         : IFRE_DB_SchemeObject;
+  ip               : TFRE_DB_IPV4;
+  ipScheme         : IFRE_DB_SchemeObject;
   hnColl           : IFRE_DB_COLLECTION;
   idx_str          : String;
   diskObj          : TFRE_DB_VMACHINE_DISK;
@@ -1339,7 +1314,7 @@ var
   cdArray          : TFRE_DB_ObjLinkArray;
   usbArray         : TFRE_DB_ObjLinkArray;
   floppyArray      : TFRE_DB_ObjLinkArray;
-  hostnetDbo       : IFRE_DB_ObjectArray;
+  ipDbo            : IFRE_DB_ObjectArray;
 begin
   coll:=conn.GetCollection(CFOS_DB_SERVICES_COLLECTION);
   data:=input.Field('data').AsObject;
@@ -1401,7 +1376,7 @@ begin
 
   GetSystemScheme(TFRE_DB_VMACHINE_NIC,nicScheme);
   GetSystemScheme(TFRE_DB_VMACHINE_DISK,diskScheme);
-  GetSystemScheme(TFRE_DB_IPV4_HOSTNET,hnScheme);
+  GetSystemScheme(TFRE_DB_IPV4,ipScheme);
 
   //check cpu config
   if (data.Field('cores').AsInt16 * data.Field('threads').AsInt16 * data.Field('sockets').AsInt16>64) then begin
@@ -1558,49 +1533,49 @@ begin
         netInterfaceObjs[i].Field('hostname').AsString:=configObj.Field('hostname').AsString;
       end;
       if configObj.FieldExists('ip_net') and not configObj.FieldPath('ip_net.ip').IsSpecialClearMarked then begin
-        if hnColl.GetIndexedObjsFieldval(configObj.FieldPath('ip_net.ip'),hostnetDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
-          netInterfaceObjs[i].Field('ip').AsObjectLink:=hostnetDbo[0].UID;
+        if hnColl.GetIndexedObjsFieldval(configObj.FieldPath('ip_net.ip'),ipDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+          netInterfaceObjs[i].Field('ip').AsObjectLink:=ipDbo[0].UID;
         end else begin
-          hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
-          hostnet.SetDomainID(zone.DomainID);
-          hnScheme.SetObjectFieldsWithScheme(configObj.Field('ip_net').AsObject,hostnet,true,conn);
-          CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
-          netInterfaceObjs[i].Field('ip').AsObjectLink:=hostnet.UID;
+          ip:=TFRE_DB_IPV4.CreateForDB;
+          ip.SetDomainID(zone.DomainID);
+          ipScheme.SetObjectFieldsWithScheme(configObj.Field('ip_net').AsObject,ip,true,conn);
+          CheckDbResult(hnColl.Store(ip.CloneToNewObject()));
+          netInterfaceObjs[i].Field('ip').AsObjectLink:=ip.UID;
         end;
       end;
       if configObj.FieldExists('gateway') and not configObj.Field('gateway').IsSpecialClearMarked then begin
-        if hnColl.GetIndexedObjsFieldval(configObj.Field('gateway'),hostnetDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
-          netInterfaceObjs[i].Field('gateway').AsObjectLink:=hostnetDbo[0].UID;
+        if hnColl.GetIndexedObjsFieldval(configObj.Field('gateway'),ipDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+          netInterfaceObjs[i].Field('gateway').AsObjectLink:=ipDbo[0].UID;
         end else begin
-          hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
-          hostnet.SetDomainID(zone.DomainID);
-          hostnet.Field('ip').AsString:=configObj.Field('gateway').AsString;
-          CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
-          netInterfaceObjs[i].Field('gateway').AsObjectLink:=hostnet.UID;
+          ip:=TFRE_DB_IPV4.CreateForDB;
+          ip.SetDomainID(zone.DomainID);
+          ip.Field('ip').AsString:=configObj.Field('gateway').AsString;
+          CheckDbResult(hnColl.Store(ip.CloneToNewObject()));
+          netInterfaceObjs[i].Field('gateway').AsObjectLink:=ip.UID;
         end;
       end;
       if configObj.FieldExists('dns1') and not configObj.Field('dns1').IsSpecialClearMarked then begin
-        if hnColl.GetIndexedObjsFieldval(configObj.Field('dns1'),hostnetDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
-          netInterfaceObjs[i].Field('dns1').AsObjectLink:=hostnetDbo[0].UID;
+        if hnColl.GetIndexedObjsFieldval(configObj.Field('dns1'),ipDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+          netInterfaceObjs[i].Field('dns1').AsObjectLink:=ipDbo[0].UID;
         end else begin
-          hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
-          hostnet.SetDomainID(zone.DomainID);
-          hostnet.Field('ip').AsString:=configObj.Field('dns1').AsString;
-          hostnet.Field('zoneId').AsObjectLink:=zone.UID;
-          CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
-          netInterfaceObjs[i].Field('dns_ip0').AsObjectLink:=hostnet.UID;
+          ip:=TFRE_DB_IPV4.CreateForDB;
+          ip.SetDomainID(zone.DomainID);
+          ip.Field('ip').AsString:=configObj.Field('dns1').AsString;
+          ip.Field('zoneId').AsObjectLink:=zone.UID;
+          CheckDbResult(hnColl.Store(ip.CloneToNewObject()));
+          netInterfaceObjs[i].Field('dns_ip0').AsObjectLink:=ip.UID;
         end;
       end;
       if configObj.FieldExists('dns2') and not configObj.Field('dns2').IsSpecialClearMarked then begin
-        if hnColl.GetIndexedObjsFieldval(configObj.Field('dns2'),hostnetDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
-          netInterfaceObjs[i].Field('dns2').AsObjectLink:=hostnetDbo[0].UID;
+        if hnColl.GetIndexedObjsFieldval(configObj.Field('dns2'),ipDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+          netInterfaceObjs[i].Field('dns2').AsObjectLink:=ipDbo[0].UID;
         end else begin
-          hostnet:=TFRE_DB_IPV4_HOSTNET.CreateForDB;
-          hostnet.SetDomainID(zone.DomainID);
-          hostnet.Field('ip').AsString:=configObj.Field('dns2').AsString;
-          hostnet.Field('zoneId').AsObjectLink:=zone.UID;
-          CheckDbResult(hnColl.Store(hostnet.CloneToNewObject()));
-          netInterfaceObjs[i].Field('dns_ip1').AsObjectLink:=hostnet.UID;
+          ip:=TFRE_DB_IPV4.CreateForDB;
+          ip.SetDomainID(zone.DomainID);
+          ip.Field('ip').AsString:=configObj.Field('dns2').AsString;
+          ip.Field('zoneId').AsObjectLink:=zone.UID;
+          CheckDbResult(hnColl.Store(ip.CloneToNewObject()));
+          netInterfaceObjs[i].Field('dns_ip1').AsObjectLink:=ip.UID;
         end;
       end;
     end;
