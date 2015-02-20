@@ -238,9 +238,9 @@ type
     //@ FIXXME: only implemented for dh_chooser_combo.
     procedure addFilterEvent        (const filteredStoreId,refId:String);
     //@ Adds a dependent input element. If chooserValue is selected the input element will be updated.
-    procedure addDependentInput     (const inputId: String; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility=fdv_none; const caption: String='';const validator: IFRE_DB_ClientFieldValidator=nil; const validatorConfigParams : IFRE_DB_Object=nil);
+    procedure addDependentInput     (const inputId: String; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility=fdv_none; const enabledState: TFRE_DB_FieldDepEnabledState=fdes_none; const caption: String='';const validator: IFRE_DB_ClientFieldValidator=nil; const validatorConfigParams : IFRE_DB_Object=nil);
     //@ Adds a dependent input group. If chooserValue is selected the input element will be updated.
-    procedure addDependentInputGroup(const inputGroup: TFRE_DB_INPUT_GROUP_DESC; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility=fdv_visible);
+    procedure addDependentInputGroup(const inputGroup: TFRE_DB_INPUT_GROUP_DESC; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility=fdv_visible; const enabledState: TFRE_DB_FieldDepEnabledState=fdes_none);
 
     procedure addOption             (const caption,value: String);
     //@ Enables the caption compare.
@@ -1583,7 +1583,7 @@ implementation
 
   { TFRE_DB_INPUT_CHOOSER_DESC }
 
-  procedure TFRE_DB_INPUT_CHOOSER_DESC.addDependentInput(const inputId: String; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility; const caption: String;const validator: IFRE_DB_ClientFieldValidator; const validatorConfigParams : IFRE_DB_Object);
+    procedure TFRE_DB_INPUT_CHOOSER_DESC.addDependentInput(const inputId: String; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility; const enabledState: TFRE_DB_FieldDepEnabledState; const caption: String; const validator: IFRE_DB_ClientFieldValidator; const validatorConfigParams: IFRE_DB_Object);
   var
     obj: IFRE_DB_Object;
   begin
@@ -1591,6 +1591,7 @@ implementation
    obj.Field('inputId').AsString:=inputId;
    obj.Field('value').AsString:=chooserValue;
    obj.Field('visible').AsString:=CFRE_DB_FIELDDEPVISIBILITY[visible];
+   obj.Field('enabledState').AsString:=CFRE_DB_FIELDDEPENABLEDSTATE[enabledState];
    obj.Field('caption').AsString:=caption;
    if Assigned(validator) then begin
      obj.Field('vtype').AsObject:=TFRE_DB_VALIDATOR_DESC.create.Describe(validator.ObjectName,validator.getRegExp,validator.getHelpTextKey,validator.getAllowedChars,validator.getReplaceRegExp,validator.getReplaceValue,validatorConfigParams);
@@ -1598,18 +1599,18 @@ implementation
    Field('dependentInputFields').AddObject(obj);
   end;
 
-  procedure TFRE_DB_INPUT_CHOOSER_DESC.addDependentInputGroup(const inputGroup: TFRE_DB_INPUT_GROUP_DESC; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility);
+    procedure TFRE_DB_INPUT_CHOOSER_DESC.addDependentInputGroup(const inputGroup: TFRE_DB_INPUT_GROUP_DESC; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility; const enabledState: TFRE_DB_FieldDepEnabledState);
   var
     i: Integer;
   begin
     for i := 0 to inputGroup.Field('elements').ValueCount - 1 do begin
       if inputGroup.Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_GROUP_DESC then begin
-        addDependentInputGroup(inputGroup.Field('elements').AsObjectItem[i].Implementor_HC as TFRE_DB_INPUT_GROUP_DESC,chooserValue,visible);
+        addDependentInputGroup(inputGroup.Field('elements').AsObjectItem[i].Implementor_HC as TFRE_DB_INPUT_GROUP_DESC,chooserValue,visible,enabledState);
       end else begin
         if inputGroup.Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_BLOCK_DESC then begin
-          addDependentInput(inputGroup.Field('elements').AsObjectItem[i].Field('id').AsString,chooserValue,visible);
+          addDependentInput(inputGroup.Field('elements').AsObjectItem[i].Field('id').AsString,chooserValue,visible,enabledState);
         end else begin
-          addDependentInput(inputGroup.Field('elements').AsObjectItem[i].Field('field').AsString,chooserValue,visible);
+          addDependentInput(inputGroup.Field('elements').AsObjectItem[i].Field('field').AsString,chooserValue,visible,enabledState);
         end;
       end;
     end;
@@ -2026,7 +2027,7 @@ implementation
           validatorParams:=vdf.valParams;
         end;
       end;
-      chooserField.addDependentInput(prefix+vdf.depFieldName,vdf.enumValue,vdf.visible,session.GetDBConnection.FetchTranslateableTextShort(vdf.capTransKey),validator,validatorParams);
+      chooserField.addDependentInput(prefix+vdf.depFieldName,vdf.enumValue,vdf.visible,vdf.enabledState,session.GetDBConnection.FetchTranslateableTextShort(vdf.capTransKey),validator,validatorParams);
     end;
 
     procedure _addDomain(const domain: IFRE_DB_Domain);
@@ -2310,7 +2311,7 @@ implementation
             end else begin
               newBlock:=block.AddBlock;
             end;
-            newBlock.Describe(_getText(inputGroup.CaptionKey));
+            newBlock.Describe(_getText(inputGroup.CaptionKey),'',fields[i].GetIndentEC);
             _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,nil,newBlock);
           end;
         end;

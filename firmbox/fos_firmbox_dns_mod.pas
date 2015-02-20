@@ -274,10 +274,10 @@ begin
   schemeField.addEnumDepField('weight','SRV',fdv_visible);
   schemeField.addEnumDepField('port','SRV',fdv_visible);
 
-  schemeField.addEnumDepField('value','CNAME',fdv_none,GetTranslateableTextKey('scheme_value_cname'));
-  schemeField.addEnumDepField('value','TXT',fdv_none,GetTranslateableTextKey('scheme_value_txt'));
-  schemeField.addEnumDepField('value','A',fdv_none,GetTranslateableTextKey('scheme_value_a'),'ip');
-  schemeField.addEnumDepField('value','AAAA',fdv_none,GetTranslateableTextKey('scheme_value_aaaa'),'ipv6');
+  schemeField.addEnumDepField('value','CNAME',fdv_none,fdes_none,GetTranslateableTextKey('scheme_value_cname'));
+  schemeField.addEnumDepField('value','TXT',fdv_none,fdes_none,GetTranslateableTextKey('scheme_value_txt'));
+  schemeField.addEnumDepField('value','A',fdv_none,fdes_none,GetTranslateableTextKey('scheme_value_a'),'ip');
+  schemeField.addEnumDepField('value','AAAA',fdv_none,fdes_none,GetTranslateableTextKey('scheme_value_aaaa'),'ipv6');
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('host',GetTranslateableTextKey('scheme_host'));

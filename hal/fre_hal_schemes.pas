@@ -1718,6 +1718,8 @@ class procedure TFRE_DB_FIREWALL_NAT.RegisterSystemScheme(const scheme: IFRE_DB_
 var
   group: IFRE_DB_InputGroupSchemeDefinition;
   enum : IFRE_DB_Enum;
+  fld  : IFRE_DB_FieldSchemeDefinition;
+  cfld : IFRE_DB_FieldSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
@@ -1742,40 +1744,69 @@ begin
 
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
-  scheme.AddSchemeField('command',fdbft_String).SetupFieldDef(true,false,'fw_nat_command');
+  cfld:=scheme.AddSchemeField('command',fdbft_String).SetupFieldDef(true,false,'fw_nat_command');
 
   scheme.AddSchemeField('interface',fdbft_ObjLink).Required:=true;    // datalink of the zone
   scheme.AddSchemeField('protocol',fdbft_String).SetupFieldDef(false,false,'fw_nat_protocol');
 
   scheme.AddSchemeField('src_addr',fdbft_ObjLink).Required:=true;
-  scheme.AddSchemeField('src_addr_host',fdbft_boolean);
   scheme.AddSchemeField('src_port',fdbft_UInt16);                     // show only with command rdr
+  cfld.addEnumDepField('src_port','RDR',fdv_none,fdes_enabled);
 
   scheme.AddSchemeField('dst_addr',fdbft_ObjLink).Required:=true;
-  scheme.AddSchemeField('dst_addr_host',fdbft_boolean);
   scheme.AddSchemeField('dst_port_1',fdbft_UInt16);
-  scheme.AddSchemeField('dst_port_mode',fdbft_String).SetupFieldDef(false,false,'fw_nat_dst_port_mode');
   scheme.AddSchemeField('dst_port_2',fdbft_UInt16);                   // show only if dst_port_mode is ":"
+  fld:=scheme.AddSchemeField('dst_port_mode',fdbft_String).SetupFieldDef(true,false,'fw_nat_dst_port_mode');
+  fld.addEnumDepField('dst_port_1','AUTO',fdv_none,fdes_disabled);
+  fld.addEnumDepField('dst_port_2','AUTO',fdv_none,fdes_disabled);
 
   // expert mode
-
   scheme.AddSchemeField('src_to_addr',fdbft_ObjLink);                 // show only with command map,bimap
-  scheme.AddSchemeField('scr_to_addr_host',fdbft_boolean);
+  cfld.addEnumDepField('src_to_addr','MAP',fdv_none,fdes_enabled);
+  cfld.addEnumDepField('src_to_addr','BIMAP',fdv_none,fdes_enabled);
   scheme.AddSchemeField('option_frag',fdbft_Boolean);
   scheme.AddSchemeField('option_age',fdbft_Uint32);
   scheme.AddSchemeField('option_clamp',fdbft_Uint32);
   scheme.AddSchemeField('option_roundrobin',fdbft_Boolean);           // show only with command rdr
+  cfld.addEnumDepField('option_roundrobin','RDR',fdv_none,fdes_enabled);
   scheme.AddSchemeField('proxy_name',fdbft_string);                   // show only with command map,bimap
+  cfld.addEnumDepField('proxy_name','MAP',fdv_none,fdes_enabled);
+  cfld.addEnumDepField('proxy_name','BIMAP',fdv_none,fdes_enabled);
   scheme.AddSchemeField('proxy_port',fdbft_Uint16);                   // show only with command map,bimap
+  cfld.addEnumDepField('proxy_port','MAP',fdv_none,fdes_enabled);
+  cfld.addEnumDepField('proxy_port','BIMAP',fdv_none,fdes_enabled);
+
+  group:=scheme.AddInputGroup('src').Setup(GetTranslateableTextKey('scheme_src_group'));
+  group.AddInput('src_addr',GetTranslateableTextKey('scheme_src_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('src_port',GetTranslateableTextKey('scheme_src_port'));
+  group:=scheme.AddInputGroup('dst').Setup(GetTranslateableTextKey('scheme_dst_group'));
+  group.AddInput('dst_addr',GetTranslateableTextKey('scheme_dst_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('dst_port_mode',GetTranslateableTextKey('scheme_dst_port_mode'));
+  group:=scheme.AddInputGroup('dst_ports').Setup(GetTranslateableTextKey('scheme_dst_ports_group'));
+  group.AddInput('dst_port_1',GetTranslateableTextKey('scheme_dst_port_1'));
+  group.AddInput('dst_port_2',GetTranslateableTextKey('scheme_dst_port_2'));
+  group:=scheme.AddInputGroup('proxy').Setup(GetTranslateableTextKey('scheme_proxy_group'));
+  group.AddInput('proxy_name',GetTranslateableTextKey('scheme_proxy_name'));
+  group.AddInput('proxy_port',GetTranslateableTextKey('scheme_proxy_port'));
+
+  group:=scheme.AddInputGroup('advanced').Setup(GetTranslateableTextKey('scheme_advanced_group'));
+  group.AddInput('src_to_addr',GetTranslateableTextKey('scheme_src_to_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('option_frag',GetTranslateableTextKey('scheme_option_frag'));
+  group.AddInput('option_age',GetTranslateableTextKey('scheme_option_age'));
+  group.AddInput('option_clamp',GetTranslateableTextKey('scheme_option_clamp'));
+  group.AddInput('option_roundrobin',GetTranslateableTextKey('scheme_option_roundrobin'));
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'proxy');
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
   group.AddInput('command',GetTranslateableTextKey('scheme_command'));
-  group.AddInput('interface',GetTranslateableTextKey('scheme_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true);
+  group.AddInput('interface',GetTranslateableTextKey('scheme_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
   group.AddInput('protocol',GetTranslateableTextKey('scheme_protocol'));
-  group:=scheme.AddInputGroup('src').Setup(GetTranslateableTextKey('scheme_src_group'));
-  group.AddInput('src_addr',GetTranslateableTextKey('scheme_src_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true);
-  group.AddInput('src_port',GetTranslateableTextKey('scheme_src_port'));
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src');
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst');
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst_ports','',true);
+  group.UseInputGroup(scheme.DefinedSchemeName,'advanced','',true,true,true);
+
 end;
 
 class procedure TFRE_DB_FIREWALL_NAT.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -1808,6 +1839,25 @@ begin
     StoreTranslateableText(conn,'scheme_src_group','Source');
     StoreTranslateableText(conn,'scheme_src_addr','Address');
     StoreTranslateableText(conn,'scheme_src_port','Port');
+
+    StoreTranslateableText(conn,'scheme_dst_group','Destination');
+    StoreTranslateableText(conn,'scheme_dst_addr','Address');
+    StoreTranslateableText(conn,'scheme_dst_port_mode','Mode');
+    StoreTranslateableText(conn,'scheme_dst_port_1','Port 1');
+    StoreTranslateableText(conn,'scheme_dst_port_2','Port 2');
+
+    StoreTranslateableText(conn,'scheme_dst_ports_group','');
+
+    StoreTranslateableText(conn,'scheme_advanced_group','Advanced');
+    StoreTranslateableText(conn,'scheme_proxy_group','Proxy');
+
+    StoreTranslateableText(conn,'scheme_src_to_addr','Source to');
+    StoreTranslateableText(conn,'scheme_option_frag','Frag');
+    StoreTranslateableText(conn,'scheme_option_age','Age');
+    StoreTranslateableText(conn,'scheme_option_clamp','Clamp');
+    StoreTranslateableText(conn,'scheme_option_roundrobin','Round-Robin');
+    StoreTranslateableText(conn,'scheme_proxy_name','Name');
+    StoreTranslateableText(conn,'scheme_proxy_port','Port');
   end;
 end;
 

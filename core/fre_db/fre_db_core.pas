@@ -956,8 +956,8 @@ type
     function    SetupFieldDefNumI  (const is_required: boolean; const min_value: Int64; const max_value: Int64): IFRE_DB_FieldSchemeDefinition;
     procedure   AddDepField        (const fieldName: TFRE_DB_String;const disablesField: Boolean=true);
     procedure   ForAllDepfields    (const depfielditerator : TFRE_DB_Depfielditerator);
-    procedure   AddEnumDepField    (const fieldName: TFRE_DB_String;const enumValue:String;const visible:TFRE_DB_FieldDepVisibility=fdv_none;const cap_trans_key: String='';const validator_key:TFRE_DB_NameType='';const validator_params: TFRE_DB_Object=nil);
-    procedure   AddEnumDepFieldI   (const fieldName: TFRE_DB_String;const enumValue:String;const visible:TFRE_DB_FieldDepVisibility=fdv_none;const cap_trans_key: String='';const validator_key:TFRE_DB_NameType='';const validator_params: IFRE_DB_Object=nil);
+    procedure   AddEnumDepField    (const fieldName: TFRE_DB_String;const enumValue:String;const visible:TFRE_DB_FieldDepVisibility=fdv_none;const enabledState: TFRE_DB_FieldDepEnabledState=fdes_none;const cap_trans_key: String='';const validator_key:TFRE_DB_NameType='';const validator_params: TFRE_DB_Object=nil);
+    procedure   AddEnumDepFieldI   (const fieldName: TFRE_DB_String;const enumValue:String;const visible:TFRE_DB_FieldDepVisibility=fdv_none;const enabledState: TFRE_DB_FieldDepEnabledState=fdes_none;const cap_trans_key: String='';const validator_key:TFRE_DB_NameType='';const validator_params: IFRE_DB_Object=nil);
     procedure   ForAllEnumDepfields(const depfielditerator : TFRE_DB_EnumDepfielditerator);
     property    FieldName          :TFRE_DB_NameType  read GetFieldName write SetFieldName;
     property    FieldType          :TFRE_DB_FIELDTYPE read GetFieldType write SetFieldType;
@@ -984,6 +984,7 @@ type
      FGroup        : TFRE_DB_FIELD;
      FScheme       : TFRE_DB_FIELD;
      FPrefix       : TFRE_DB_FIELD;
+     FIndentEC     : TFRE_DB_FIELD;
      FRightClass   : TFRE_DB_FIELD;
      FStdright     : TFRE_DB_FIELD;
      FDataColl     : TFRE_DB_FIELD;
@@ -1012,6 +1013,7 @@ type
      function GetType                 : TFRE_InputGroupDefType;
      function GetGroup                : TFRE_DB_NameType;
      function GetPrefix               : TFRE_DB_String;
+     function GetIndentEC             : Boolean;
      function GetScheme               : TFRE_DB_String;
      function GetStdRight             : TFRE_DB_STANDARD_RIGHT;
      function GetRightClass           : Shortstring;
@@ -1061,7 +1063,7 @@ type
     procedure   AddInput             (const schemefield: TFRE_DB_String; const cap_trans_key: TFRE_DB_String=''; const disabled: Boolean=false;const hidden:Boolean=false; const default_value:String=''; const field_backing_collection: TFRE_DB_String='';const fbCollectionIsDerivedCollection:Boolean=false; const chooser_type:TFRE_DB_CHOOSER_DH=dh_chooser_combo;const standard_coll:TFRE_DB_STANDARD_COLL=coll_NONE;const chooserAddEmptyForRequired: Boolean=false; const validator_key:TFRE_DB_NameType=''; const validator_params : IFRE_DB_Object=nil);
     procedure   AddDomainChooser     (const schemefield: TFRE_DB_String; const std_right:TFRE_DB_STANDARD_RIGHT; const rightClasstype: TClass; const hideSingle: Boolean; const cap_trans_key: TFRE_DB_String='');
     procedure   UseInputGroup        (const scheme,group: TFRE_DB_String; const addPrefix: TFRE_DB_String='';const as_gui_subgroup:boolean=false ; const collapsible:Boolean=false;const collapsed:Boolean=false);
-    procedure   UseInputGroupAsBlock (const scheme,group: TFRE_DB_String);
+    procedure   UseInputGroupAsBlock (const scheme,group: TFRE_DB_String; const addPrefix: TFRE_DB_String='';const indentEmptyCaption: Boolean=true);
     function    GroupFields          : IFRE_DB_FieldDef4GroupArr;
   end;
 
@@ -2803,6 +2805,7 @@ begin
   FScheme       := Field('SM');
   FStdright     := Field('SR');
   FPrefix       := Field('PR');
+  FIndentEC     := Field('IEC');
   FRightClass   := Field('RC');
   FValKey       := Field('VK');
   FValParams    := Field('VP');
@@ -2821,6 +2824,11 @@ end;
 function TFRE_DB_FieldDef4Group.GetPrefix: TFRE_DB_String;
 begin
   result := FPrefix.AsString;
+end;
+
+function TFRE_DB_FieldDef4Group.GetIndentEC: Boolean;
+begin
+  result := FIndentEC.AsBoolean;
 end;
 
 function TFRE_DB_FieldDef4Group.GetScheme: TFRE_DB_String;
@@ -4482,7 +4490,7 @@ begin
   FInputs.Field('IN'+inttostr(fcount)).AsObject := fdg;
 end;
 
-procedure TFRE_DB_InputGroupSchemeDefinition.UseInputGroupAsBlock(const scheme, group: TFRE_DB_String);
+procedure TFRE_DB_InputGroupSchemeDefinition.UseInputGroupAsBlock(const scheme, group: TFRE_DB_String; const addPrefix: TFRE_DB_String; const indentEmptyCaption: Boolean);
 var
   fdg      : TFRE_DB_FieldDef4Group;
   props    : TFRE_DB_InputGroupFieldproperties;
@@ -4492,9 +4500,11 @@ begin
   props := [];
   fdg.FType.AsByte := ord(igd_BlockGroup);
 
-  fdg.Fscheme.AsString  := scheme;
-  fdg.FGroup.AsString   := uppercase(group);
-  fdg.FieldProperties := props;
+  fdg.Fscheme.AsString    := scheme;
+  fdg.FGroup.AsString     := uppercase(group);
+  fdg.FPrefix.AsString    := addPrefix;
+  fdg.FIndentEC.AsBoolean := indentEmptyCaption;
+  fdg.FieldProperties     := props;
 
   fcount := FInputs.FieldCount(true);
   FInputs.Field('IN'+inttostr(fcount)).AsObject := fdg;
@@ -8985,7 +8995,7 @@ begin
   FDepFields.ForAllFields(@iterate,true);
 end;
 
-procedure TFRE_DB_FieldSchemeDefinition.AddEnumDepField(const fieldName: TFRE_DB_String; const enumValue: String; const visible: TFRE_DB_FieldDepVisibility; const cap_trans_key: String; const validator_key: TFRE_DB_NameType; const validator_params: TFRE_DB_Object);
+procedure TFRE_DB_FieldSchemeDefinition.AddEnumDepField(const fieldName: TFRE_DB_String; const enumValue: String; const visible: TFRE_DB_FieldDepVisibility; const enabledState: TFRE_DB_FieldDepEnabledState; const cap_trans_key: String; const validator_key: TFRE_DB_NameType; const validator_params: TFRE_DB_Object);
 var
   tmpField  : TFRE_DB_FieldSchemeDefinition;
   defObj    : IFRE_DB_Object;
@@ -9004,6 +9014,7 @@ begin
   defObj.Field('fn').AsString:=fieldName;
   defObj.Field('val').AsString:=enumValue;
   defObj.Field('vis').AsString:=CFRE_DB_FIELDDEPVISIBILITY[visible];
+  defObj.Field('ens').AsString:=CFRE_DB_FIELDDEPENABLEDSTATE[enabledState];
   defObj.Field('cap').AsString:=cap_trans_key;
   if validator_key<>'' then begin
     if GFRE_DB.GetSysClientFieldValidator(validator_key,lValid) then begin
@@ -9017,12 +9028,12 @@ begin
   end;
 end;
 
-procedure TFRE_DB_FieldSchemeDefinition.AddEnumDepFieldI(const fieldName: TFRE_DB_String; const enumValue: String; const visible: TFRE_DB_FieldDepVisibility; const cap_trans_key: String; const validator_key: TFRE_DB_NameType; const validator_params: IFRE_DB_Object);
+procedure TFRE_DB_FieldSchemeDefinition.AddEnumDepFieldI(const fieldName: TFRE_DB_String; const enumValue: String; const visible: TFRE_DB_FieldDepVisibility; const enabledState: TFRE_DB_FieldDepEnabledState; const cap_trans_key: String; const validator_key: TFRE_DB_NameType; const validator_params: IFRE_DB_Object);
 begin
   if assigned(validator_params) then begin
-    AddEnumDepField(fieldName,enumValue,visible,cap_trans_key,validator_key,validator_params.Implementor_HC as TFRE_DB_Object);
+    AddEnumDepField(fieldName,enumValue,visible,enabledState,cap_trans_key,validator_key,validator_params.Implementor_HC as TFRE_DB_Object);
   end else begin
-    AddEnumDepField(fieldName,enumValue,visible,cap_trans_key,validator_key,nil);
+    AddEnumDepField(fieldName,enumValue,visible,enabledState,cap_trans_key,validator_key,nil);
   end;
 end;
 
@@ -9036,6 +9047,7 @@ procedure TFRE_DB_FieldSchemeDefinition.ForAllEnumDepfields(const depfielditerat
     df.depFieldName := obj.Field('fn').AsString;
     df.enumValue    := obj.Field('val').AsString;
     df.visible      := FREDB_FieldDepVisString2FieldDepVis(obj.Field('vis').AsString);
+    df.enabledState := FREDB_FieldDepESString2FieldDepES(obj.Field('ens').AsString);
     df.capTransKey  := obj.Field('cap').AsString;
     df.valKey       := obj.Field('validKey').AsString;
     if obj.FieldExists('valid_params') then begin

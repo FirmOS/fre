@@ -652,7 +652,7 @@ implementation
                              preFix:='';
                              for i := 0 to co.Field('dependentInputFields').ValueCount - 1 do begin
                                jsContentAdd('" '+preFix+'{inputId: \\\"'+co.Field('dependentInputFields').AsObjectArr[i].Field('inputId').AsString +'\\\",value: \\\"'+FREDB_String2EscapedJSString(co.Field('dependentInputFields').AsObjectArr[i].Field('value').AsString) +'\\\"' +
-                                                        ',visible: \\\"'+co.Field('dependentInputFields').AsObjectArr[i].Field('visible').AsString +'\\\",caption: \\\"'+FREDB_String2EscapedJSString(co.Field('dependentInputFields').AsObjectArr[i].Field('caption').AsString) +'\\\""+');
+                                                        ',visible: \\\"'+co.Field('dependentInputFields').AsObjectArr[i].Field('visible').AsString +'\\\",enabled: \\\"'+co.Field('dependentInputFields').AsObjectArr[i].Field('enabledState').AsString +'\\\",caption: \\\"'+FREDB_String2EscapedJSString(co.Field('dependentInputFields').AsObjectArr[i].Field('caption').AsString) +'\\\""+');
                                if co.Field('dependentInputFields').AsObjectArr[i].FieldExists('vtype') then begin
                                  jsContentAdd('",placeHolder: \\\"'+conn.FetchTranslateableTextShort(co.Field('dependentInputFields').AsObjectArr[i].FieldPath('vtype.helpTextKey').AsString)+'\\\""+');
                                  if (co.Field('dependentInputFields').AsObjectArr[i].FieldPath('vtype.allowedChars').AsString<>'') then begin

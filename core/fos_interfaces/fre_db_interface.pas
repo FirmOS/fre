@@ -156,18 +156,20 @@ type
   EFRE_DB_PL_Exception=class(EFRE_DB_Exception)
   end;
 
-  TFRE_DB_FIELDTYPE          = (fdbft_NotFound,fdbft_GUID,fdbft_Byte,fdbft_Int16,fdbft_UInt16,fdbft_Int32,fdbft_UInt32,fdbft_Int64,fdbft_UInt64,fdbft_Real32,fdbft_Real64,fdbft_Currency,fdbft_String,fdbft_Boolean,fdbft_DateTimeUTC,fdbft_Stream,fdbft_Object,fdbft_ObjLink);
-  TFRE_DB_INDEX_TYPE         = (fdbit_Unsupported,fdbit_Unsigned,fdbit_Signed,fdbit_Real,fdbit_Text,fdbit_SpecialValue);
-  TFRE_DB_DISPLAY_TYPE       = (dt_string,dt_date,dt_number,dt_number_pb,dt_currency,dt_icon,dt_boolean,dt_description);
-  TFRE_DB_MESSAGE_TYPE       = (fdbmt_error,fdbmt_warning,fdbmt_info,fdbmt_confirm,fdbmt_wait);
-  TFRE_DB_FIELDTYPE_Array    = Array of TFRE_DB_FIELDTYPE;
-  TFRE_DB_DISPLAY_TYPE_Array = Array of TFRE_DB_DISPLAY_TYPE;
-  TFRE_DB_Fieldproperty      = (fp_Required,fp_Multivalues,fp_PasswordField,fp_AddConfirmation,fp_MinMax);
-  TFRE_DB_Fieldproperties    = set of TFRE_DB_Fieldproperty;
-  TFRE_DB_FieldDepVisibility = (fdv_visible,fdv_hidden,fdv_none);
+  TFRE_DB_FIELDTYPE           = (fdbft_NotFound,fdbft_GUID,fdbft_Byte,fdbft_Int16,fdbft_UInt16,fdbft_Int32,fdbft_UInt32,fdbft_Int64,fdbft_UInt64,fdbft_Real32,fdbft_Real64,fdbft_Currency,fdbft_String,fdbft_Boolean,fdbft_DateTimeUTC,fdbft_Stream,fdbft_Object,fdbft_ObjLink);
+  TFRE_DB_INDEX_TYPE          = (fdbit_Unsupported,fdbit_Unsigned,fdbit_Signed,fdbit_Real,fdbit_Text,fdbit_SpecialValue);
+  TFRE_DB_DISPLAY_TYPE        = (dt_string,dt_date,dt_number,dt_number_pb,dt_currency,dt_icon,dt_boolean,dt_description);
+  TFRE_DB_MESSAGE_TYPE        = (fdbmt_error,fdbmt_warning,fdbmt_info,fdbmt_confirm,fdbmt_wait);
+  TFRE_DB_FIELDTYPE_Array     = Array of TFRE_DB_FIELDTYPE;
+  TFRE_DB_DISPLAY_TYPE_Array  = Array of TFRE_DB_DISPLAY_TYPE;
+  TFRE_DB_Fieldproperty       = (fp_Required,fp_Multivalues,fp_PasswordField,fp_AddConfirmation,fp_MinMax);
+  TFRE_DB_Fieldproperties     = set of TFRE_DB_Fieldproperty;
+  TFRE_DB_FieldDepVisibility  = (fdv_visible,fdv_hidden,fdv_none);
+  TFRE_DB_FieldDepEnabledState= (fdes_enabled,fdes_disabled,fdes_none);
 
 const
   CFRE_DB_FIELDDEPVISIBILITY     : Array[TFRE_DB_FieldDepVisibility]      of String = ('VISIBLE','HIDDEN','NONE');
+  CFRE_DB_FIELDDEPENABLEDSTATE   : Array[TFRE_DB_FieldDepEnabledState]    of String = ('ENABLED','DISABLED','NONE');
   CFRE_DB_FIELDTYPE              : Array[TFRE_DB_FIELDTYPE]               of String = ('UNSET','GUID','BYTE','INT16','UINT16','INT32','UINT32','INT64','UINT64','REAL32','REAL64','CURRENCY','STRING','BOOLEAN','DATE','STREAM','OBJECT','OBJECTLINK');
   CFRE_DB_FIELDTYPE_SHORT        : Array[TFRE_DB_FIELDTYPE]               of String = (    '-',   'G',  'U1',   'I2',    'U2',   'S4',    'U4',   'I8',    'U8',    'R4',    'R8',      'CU',    'SS',     'BO',  'DT',    'ST',    'OB',        'LK');
   CFRE_DB_INDEX_TYPE             : Array[TFRE_DB_INDEX_TYPE]              of String = ('UNSUPPORTED','UNSIGNED','SIGNED','REAL','TEXT','SPECIAL');
@@ -684,6 +686,7 @@ type
     depFieldName  : TFRE_DB_NameType;
     enumValue     : String;
     visible       : TFRE_DB_FieldDepVisibility;
+    enabledState  : TFRE_DB_FieldDepEnabledState;
     capTransKey   : String;
     valKey        : String;
     valParams     : IFRE_DB_Object;
@@ -1107,7 +1110,7 @@ type
     function   SetupFieldDef      (const is_required:boolean;const is_multivalue:boolean=false;const enum_key:TFRE_DB_NameType='';const validator_key:TFRE_DB_NameType='';const is_pass:Boolean=false; const add_confirm:Boolean=false ; const validator_params : IFRE_DB_Object=nil):IFRE_DB_FieldSchemeDefinition;
     function   SetupFieldDefNum   (const is_required:boolean;const min_value:Int64;const max_value:Int64):IFRE_DB_FieldSchemeDefinition;
     procedure  addDepField        (const fieldName: TFRE_DB_String;const disablesField: Boolean=true);
-    procedure  addEnumDepField    (const fieldName: TFRE_DB_String;const enumValue:String;const visible:TFRE_DB_FieldDepVisibility=fdv_none;const cap_trans_key: String='';const validator_key:TFRE_DB_NameType='';const validator_params: IFRE_DB_Object=nil);
+    procedure  addEnumDepField    (const fieldName: TFRE_DB_String;const enumValue:String;const visible:TFRE_DB_FieldDepVisibility=fdv_none;const enabledState:TFRE_DB_FieldDepEnabledState=fdes_none;const cap_trans_key: String='';const validator_key:TFRE_DB_NameType='';const validator_params: IFRE_DB_Object=nil);
     property   FieldName          :TFRE_DB_NameType   read GetFieldName;
     property   FieldType          :TFRE_DB_FIELDTYPE  read GetFieldType;
     property   SubschemeName      :TFRE_DB_NameType   read GetSubSchemeName;
@@ -2964,6 +2967,7 @@ end;
     function GetType                 : TFRE_InputGroupDefType;
     function GetGroup                : TFRE_DB_NameType;
     function GetPrefix               : TFRE_DB_String;
+    function GetIndentEC             : Boolean;
     function GetScheme               : TFRE_DB_String;
     function GetStdRight             : TFRE_DB_STANDARD_RIGHT; //     FREDB_String2StdRightShort(obj^.std_right)
     function GetRightClass           : Shortstring;
@@ -2997,7 +3001,7 @@ end;
     procedure AddInput             (const schemefield: TFRE_DB_String; const cap_trans_key: TFRE_DB_String=''; const disabled: Boolean=false;const hidden:Boolean=false; const default_value:String=''; const field_backing_collection: TFRE_DB_String='';const fbCollectionsIsDerivedCollection:Boolean=false; const chooser_type:TFRE_DB_CHOOSER_DH=dh_chooser_combo; const standard_coll: TFRE_DB_STANDARD_COLL=coll_NONE; const chooserAddEmptyForRequired: Boolean=false; const validator_key:TFRE_DB_NameType=''; const validator_params : IFRE_DB_Object=nil);
     procedure AddDomainChooser     (const schemefield: TFRE_DB_String; const std_right:TFRE_DB_STANDARD_RIGHT; const rightClasstype: TClass; const hideSingle: Boolean; const cap_trans_key: TFRE_DB_String='');
     procedure UseInputGroup        (const scheme,group: TFRE_DB_String; const addPrefix: TFRE_DB_String='';const as_gui_subgroup:boolean=false ; const collapsible:Boolean=false;const collapsed:Boolean=false);
-    procedure UseInputGroupAsBlock (const scheme,group: TFRE_DB_String);
+    procedure UseInputGroupAsBlock (const scheme,group: TFRE_DB_String; const addPrefix: TFRE_DB_String='';const indentEmptyCaption: Boolean=true);
     property  CaptionKey           : TFRE_DB_NameType read GetCaptionKey;
     function  GroupFields          : IFRE_DB_FieldDef4GroupArr;
   end;
@@ -3394,6 +3398,7 @@ end;
 
   function  FREDB_FieldtypeShortString2Fieldtype (const fts: TFRE_DB_String): TFRE_DB_FIELDTYPE;
   function  FREDB_FieldDepVisString2FieldDepVis  (const fts: TFRE_DB_String): TFRE_DB_FieldDepVisibility;
+  function  FREDB_FieldDepESString2FieldDepES    (const fts: TFRE_DB_String): TFRE_DB_FieldDepEnabledState;
   function  FREDB_FilterTypeString2Filtertype    (const fts: TFRE_DB_String): TFRE_DB_FILTERTYPE;
   function  FREDB_Bool2String                    (const bool:boolean):String;
   function  FREDB_EncodeTranslatableWithParams   (const translation_key:TFRE_DB_String  ; params : array of const):TFRE_DB_String;
@@ -3816,6 +3821,14 @@ begin
      if CFRE_DB_FIELDDEPVISIBILITY[result]=fts then exit;
   end;
   raise EFRE_DB_Exception.Create(edb_ERROR,'invalid fielddepvisibility specifier : ['+fts+']');
+end;
+
+function FREDB_FieldDepESString2FieldDepES(const fts: TFRE_DB_String): TFRE_DB_FieldDepEnabledState;
+begin
+  for result in TFRE_DB_FieldDepEnabledState do begin
+     if CFRE_DB_FIELDDEPENABLEDSTATE[result]=fts then exit;
+  end;
+  raise EFRE_DB_Exception.Create(edb_ERROR,'invalid fielddepenabledstate specifier : ['+fts+']');
 end;
 
 function FREDB_FilterTypeString2Filtertype(const fts: TFRE_DB_String): TFRE_DB_FILTERTYPE;

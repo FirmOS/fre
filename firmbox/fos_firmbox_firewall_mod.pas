@@ -186,6 +186,7 @@ var
   block     : TFRE_DB_INPUT_BLOCK_DESC;
 begin
   sf:=CWSF(@WEB_StoreNAT);
+  CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID,service));
   if isModify then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
 
@@ -195,8 +196,6 @@ begin
     sf.AddParam.Describe('natId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'nat_modify_diag_cap');
   end else begin
-    CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID,service));
-
     if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_NAT,service.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
@@ -206,8 +205,8 @@ begin
   GetSystemScheme(TFRE_DB_FIREWALL_NAT,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
-  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_src_block'));
-  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('src'),ses);
+  //block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_src_block'));
+  //block.AddSchemeFormGroupInputs(scheme.GetInputGroup('src'),ses);
 
   dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC);
   dc.Filters.RemoveFilter('zone');

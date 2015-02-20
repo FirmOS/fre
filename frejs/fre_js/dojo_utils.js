@@ -4399,6 +4399,13 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
             ignoreVis = false;
             doHide = (fielddef[i].visible=='HIDDEN');
           }
+          if (fielddef[i].enabled!='NONE') { //ENABLEDSTATE
+            if (typeof elem._orgES == 'undefined') {
+              elem._orgES = elem.get('disabled');
+            }
+            elem._orgESSetterValue = fielddef[i].value;
+            elem.set('disabled',(fielddef[i].enabled=='DISABLED'));
+          }
           if (fielddef[i].caption!='') { //CAPTION
             if (labelElem) {
               if (!labelElem._orgLabel) {
@@ -4445,6 +4452,17 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
           if (fielddef[i].visible!='NONE') { //VISIBILITY
             ignoreVis = false;
             doHide = (fielddef[i].visible!='HIDDEN');
+          }
+          if (fielddef[i].enabled!='NONE') { //ENABLEDSTATE
+            if (elem._orgESSetterValue) {
+              if (elem._orgESSetterValue == fielddef[i].value) {
+                elem.set('disabled',elem._orgES);
+                delete elem._orgES;
+                delete elem._orgESSetterValue;
+              }
+            } else {
+              elem.set('disabled',(fielddef[i].enabled!='DISABLED'));
+            }
           }
         }
       }
