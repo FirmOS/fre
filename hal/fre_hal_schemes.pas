@@ -80,6 +80,7 @@ const
   CFRE_DB_DATACENTER_COLLECTION        = 'datacenter';
   CFRE_DB_TEMPLATE_COLLECTION          = 'templates';
   CFRE_DB_IP_COLLECTION                = 'ip';
+  CFRE_DB_SUBNET_COLLECTION            = 'subnet';
   CFRE_DB_ROUTING_COLLECTION           = 'routing';
   CFRE_DB_VM_COMPONENTS_COLLECTION     = 'vmcomponents';
   CFRE_DB_IMAGEFILE_COLLECTION         = 'imagefiles';
@@ -381,9 +382,10 @@ type
      class function  getAllSubnetClasses    : TFRE_DB_StringArray;
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-     function        GetNetbaseIPWithSubnet : TFRE_DB_String;  virtual; abstract;
+     function        GetNetbaseIPWithSubnet (const conn:IFRE_DB_CONNECTION): TFRE_DB_String;  virtual;
      function        GetIPWithSubnet        : TFRE_DB_String; virtual;
-   published
+     class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; virtual; abstract;
+   public
 //     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
    end;
 
@@ -395,7 +397,7 @@ type
    public
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-     function        GetNetbaseIPWithSubnet : TFRE_DB_String; override;
+     class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; override;
    published
      function        StartService           : IFRE_DB_Object; override;
      function        StopService            : IFRE_DB_Object; override;
@@ -407,6 +409,7 @@ type
    public
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+     class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; override;
    published
      function        StartService           : IFRE_DB_Object; override;
      function        StopService            : IFRE_DB_Object; override;
@@ -435,7 +438,7 @@ type
 
    { TFRE_DB_IPV4_DHCP }
 
-   TFRE_DB_IPV4_DHCP=class(TFRE_DB_IPV4)
+   TFRE_DB_IPV4_DHCP=class(TFRE_DB_IP)
    end;
 
    { TFRE_DB_IPV6 }
@@ -450,7 +453,7 @@ type
 
    { TFRE_DB_IPV6_SLAAC }
 
-   TFRE_DB_IPV6_SLAAC=class(TFRE_DB_IPV6)
+   TFRE_DB_IPV6_SLAAC=class(TFRE_DB_IP)
    end;
 
    { TFRE_DB_IP_ROUTE }
@@ -1561,6 +1564,7 @@ begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP.Classname);
     scheme.AddSchemeField('ip',fdbft_String).SetupFieldDef(true,false,'','ipv6');
+    scheme.AddSchemeField('subnet',fdbft_ObjLink).SetupFieldDef(true,false);
 
     group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
     group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
@@ -1612,6 +1616,7 @@ begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP.Classname);
     scheme.AddSchemeField('ip',fdbft_String).SetupFieldDef(true,false,'','ip');
+    scheme.AddSchemeField('subnet',fdbft_ObjLink).SetupFieldDef(true,false);
 
     group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
     group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
@@ -1649,6 +1654,9 @@ begin
   enum.addEntry('BASE',GetTranslateableTextKey('enum_ip_type_base'));
   enum.addEntry('BROADCAST',GetTranslateableTextKey('enum_ip_type_broadcast'));
   GFRE_DBI.RegisterSysEnum(enum);
+
+  scheme.AddSchemeField('ip_type',fdbft_String).SetupFieldDef(true,false,'ip_type');
+
 end;
 
 class procedure TFRE_DB_IP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -1677,6 +1685,7 @@ begin
  inherited RegisterSystemScheme(scheme);
  scheme.SetParentSchemeByName(TFRE_DB_SERVICE.Classname);
  scheme.AddSchemeField('datalinkParent',fdbft_ObjLink).multiValues:=false;
+ scheme.AddSchemeField('base_ip',fdbft_ObjLink).SetupFieldDef(false,false);
 end;
 
 class procedure TFRE_DB_IP_SUBNET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -1684,6 +1693,17 @@ begin
   newVersionId:='1.0';
   if currentVersionId='' then begin
     currentVersionId := '1.0';
+  end;
+end;
+
+function TFRE_DB_IP_SUBNET.GetNetbaseIPWithSubnet(const conn: IFRE_DB_CONNECTION): TFRE_DB_String;
+var obj:IFRE_DB_Object;
+begin
+  CheckDbResult(conn.Fetch(Field('base_ip').AsObjectLink,obj));
+  try
+    result := obj.Field('ip').asstring+'/'+Field('subnet_bits').asstring;
+  finally
+    obj.Finalize;
   end;
 end;
 
@@ -4505,12 +4525,11 @@ var
 begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP_SUBNET.Classname);
-    scheme.AddSchemeField('base_ip',fdbft_ObjLink).SetupFieldDef(true,false);
-    scheme.AddSchemeField('subnet',fdbft_String).SetupFieldDefNum(false,0,128);
+    scheme.AddSchemeField('subnet_bits',fdbft_String).SetupFieldDefNum(false,0,128);
 
     group:=scheme.AddInputGroup('ip').Setup(GetTranslateableTextKey('scheme_ip_group'));
     group.AddInput('base_ip',GetTranslateableTextKey('scheme_ip'));
-    group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
+    group.AddInput('subnet_bits',GetTranslateableTextKey('scheme_subnet'));
 end;
 
 class procedure TFRE_DB_IPV6_SUBNET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -4522,6 +4541,11 @@ begin
     StoreTranslateableText(conn,'scheme_ip','IPv6');
     StoreTranslateableText(conn,'scheme_subnet','Subnet');
   end;
+end;
+
+class function TFRE_DB_IPV6_SUBNET.CalcBaseIPforSubnet(const ip: string; const subnet: int16): string;
+begin
+  result := ip;  // FIXXME
 end;
 
 function TFRE_DB_IPV6_SUBNET.StartService: IFRE_DB_Object;
@@ -4643,12 +4667,11 @@ var
 begin
     inherited RegisterSystemScheme(scheme);
     scheme.SetParentSchemeByName(TFRE_DB_IP_SUBNET.Classname);
-    scheme.AddSchemeField('base_ip',fdbft_ObjLink).SetupFieldDef(true,false);
-    scheme.AddSchemeField('subnet',fdbft_Int16).SetupFieldDefNum(false,0,32);
+    scheme.AddSchemeField('subnet_bits',fdbft_Int16).SetupFieldDefNum(true,0,32);
 
     group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
     group.AddInput('base_ip',GetTranslateableTextKey('scheme_ip'));
-    group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
+    group.AddInput('subnet_bits',GetTranslateableTextKey('scheme_subnet'));
 end;
 
 class procedure TFRE_DB_IPV4_SUBNET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -4662,10 +4685,18 @@ begin
   end;
 end;
 
-function TFRE_DB_IPV4_SUBNET.GetNetbaseIPWithSubnet: TFRE_DB_String;
+class function TFRE_DB_IPV4_SUBNET.CalcBaseIPforSubnet(const ip: string; const subnet: int16): string;
+var maskip:TFRE_HAL_IP4;
+    netip :TFRE_HAL_IP4;
+    s     :string;
 begin
-  result := ''; //FIXXME
+ maskip:= NMask(subnet);
+ netip := StringtoIP4(ip);
+
+ netip._long := netip._long and maskip._long;
+ result      := IP4toString(netip)
 end;
+
 
 function TFRE_DB_IPV4_SUBNET.StartService: IFRE_DB_Object;
 var linkname    : string;
@@ -10061,6 +10092,12 @@ begin
         collection.DropIndex('def');
         CheckDbResult(collection.DefineIndexOnField('uniquephysicalid',fdbft_String,true,true,'def',false));
       end;
+  end;
+
+  if not conn.CollectionExists(CFRE_DB_SUBNET_COLLECTION) then begin
+    collection  := conn.CreateCollection(CFRE_DB_SUBNET_COLLECTION);
+  end else begin
+    collection  := conn.GetCollection(CFRE_DB_SUBNET_COLLECTION);
   end;
 
   if not conn.CollectionExists(CFRE_DB_IP_COLLECTION) then begin
