@@ -1797,11 +1797,14 @@ begin
   group.AddInput('option_roundrobin',GetTranslateableTextKey('scheme_option_roundrobin'));
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'proxy');
 
-  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
   group.AddInput('command',GetTranslateableTextKey('scheme_command'));
   group.AddInput('interface',GetTranslateableTextKey('scheme_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
   group.AddInput('protocol',GetTranslateableTextKey('scheme_protocol'));
+
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'general');
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src');
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst');
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst_ports','',true);
@@ -1858,6 +1861,7 @@ begin
     StoreTranslateableText(conn,'scheme_option_roundrobin','Round-Robin');
     StoreTranslateableText(conn,'scheme_proxy_name','Name');
     StoreTranslateableText(conn,'scheme_proxy_port','Port');
+    StoreTranslateableText(conn,'scheme_general_group','General Information');
   end;
 end;
 
