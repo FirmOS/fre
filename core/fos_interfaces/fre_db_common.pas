@@ -202,7 +202,7 @@ type
   public
     //@ Describes an input field as button
     //@ cleanupFunc is called if the button was used by the user and than is hidden by another input field e.g. chooser
-    function  Describe (const caption,buttonCaption: String; const serverFunc:TFRE_DB_SERVER_FUNC_DESC; const cleanupFunc: TFRE_DB_SERVER_FUNC_DESC=nil) : TFRE_DB_INPUT_BUTTON_DESC; reintroduce;
+    function  Describe (const caption,buttonCaption: String; const serverFunc:TFRE_DB_SERVER_FUNC_DESC; const sendInputData: Boolean=false; const cleanupFunc: TFRE_DB_SERVER_FUNC_DESC=nil) : TFRE_DB_INPUT_BUTTON_DESC; reintroduce;
   end;
 
   { TFRE_DB_INPUT_BOOL_DESC }
@@ -820,7 +820,7 @@ implementation
 
   { TFRE_DB_INPUT_BUTTON_DESC }
 
-  function TFRE_DB_INPUT_BUTTON_DESC.Describe(const caption, buttonCaption: String; const serverFunc: TFRE_DB_SERVER_FUNC_DESC; const cleanupFunc: TFRE_DB_SERVER_FUNC_DESC): TFRE_DB_INPUT_BUTTON_DESC;
+    function TFRE_DB_INPUT_BUTTON_DESC.Describe(const caption, buttonCaption: String; const serverFunc: TFRE_DB_SERVER_FUNC_DESC; const sendInputData: Boolean; const cleanupFunc: TFRE_DB_SERVER_FUNC_DESC): TFRE_DB_INPUT_BUTTON_DESC;
   begin
     inherited Describe(caption, '');
     Field('buttonCaption').AsString:=buttonCaption;
@@ -829,6 +829,7 @@ implementation
       Field('cleanupFunc').AsObject:=cleanupFunc;
     end;
     Field('buttonType').AsString:='bt_form';
+    Field('sendInputData').AsBoolean:=sendInputData;
     Result:=Self;
   end;
 
@@ -2283,7 +2284,7 @@ implementation
       inputPrefix:=groupPreFix + '.' + inputPrefix;
     end;
 
-    for i := 0 to Length(fields) - 1 do
+    for i := 0 to Length(fields) - 1 do begin
       if fields[i].GetScheme<>'' then begin
         if not GFRE_DBI.GetSystemSchemeByName(fields[i].GetScheme,scheme) then
           raise EFRE_DB_Exception.Create(edb_ERROR,'(B) cannot get scheme '+fields[i].GetScheme);
@@ -2318,6 +2319,7 @@ implementation
       end else begin
         _addInput(fields[i],inputPrefix,required,group,block);
       end;
+    end;
   end;
 
   procedure TFRE_DB_FORM_DESC.AddStore(const store: TFRE_DB_STORE_DESC);
