@@ -1708,29 +1708,90 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
       //writeln('SWL Created ipv4:',ip_mask);
     end;
 
-    function AddIPV6( const ip_str,subnet:string;const parent_id:TFRE_DB_GUID): TFRE_DB_GUID;
+    function GetOrCreateSubnetV6(const domain_id:TFRE_DB_GUID;const ip:string; const subnet:int16): TFRE_DB_GUID;
     var
-      ip    : TFRE_DB_IP;
+      hlt     : boolean;
+      sn_id   : TFRE_DB_GUID;
+      base_id : TFRE_DB_GUID;
+      base    : string;
+      base_sn : string;
+      nsn     : TFRE_DB_IPV6_SUBNET;
+      nip     : TFRE_DB_IPV6;
+      nobj    : IFRE_DB_Object;
+
+      procedure subNetIterator(const obj:IFRE_DB_Object;var hlt:boolean);
+      var sn: TFRE_DB_IP_SUBNET;
+      begin
+        if obj.IsA(TFRE_DB_IP_SUBNET,sn) and (obj.DomainID=domain_id) then
+          begin
+            if sn.GetNetbaseIPWithSubnet(conn)=base_sn then
+              begin
+                sn_id := sn.UID;
+                writeln('SWL FOUND SN '+base_sn);
+                hlt:=true;
+              end;
+          end;
+      end;
+
+    begin
+      base    := TFRE_DB_IPV6_SUBNET.CalcBaseIPforSubnet(ip,subnet);
+      base_sn := base +'/'+inttostr(subnet);
+
+      hlt := false;
+      subnetcoll.ForAllBreak(@subnetIterator,hlt);
+      if hlt = true then
+        result := sn_id
+      else
+        begin
+          nsn := TFRE_DB_IPV6_SUBNET.CreateForDB;
+          nsn.SetDomainID(domain_id);
+          nsn.Field('subnet_bits').AsInt16 := subnet;
+          sn_id := nsn.UID;
+          writeln('SWL CREATE SUBNET:',nsn.DumpToString);
+          CheckDbResult(subnetcoll.Store(nsn));
+          nip := TFRE_DB_IPV6.CreateForDB;
+          nip.SetDomainID(domain_id);
+          nip.Field('subnet').AsObjectLink := sn_id;
+          nip.Field('ip_type').asstring    := 'BASE';
+          nip.Field('ip').asstring         := base;
+          base_id := nip.UID;
+          writeln('SWL CREATE IP:',nip.DumpToString);
+          CheckDBResult(ipcoll.Store(nip));
+          CheckDbResult(conn.FetchI(sn_id,nobj));
+          nobj.Field('base_ip').AsObjectLink:=base_id;
+          writeln('SWL UPDATE SN:',nobj.DumpToString);
+          subnetcoll.Update(nobj);
+          result := sn_id;
+        end;
+    end;
+
+    function AddIPV6( const ip_str,subnet:string;const parent_id:TFRE_DB_GUID; const domain_id:TFRE_DB_GUID): TFRE_DB_GUID;
+    var
+      ip        : TFRE_DB_IP;
+      subnet_id : TFRE_DB_GUID;
     begin
       if ip_str<>'' then
         begin
+          subnet_id := GetOrCreateSubnetV6(domain_id,ip_str,strtoint(subnet));
           ip := TFRE_DB_IPV6.CreateForDB;
           ip.Field('ip').AsString:=ip_str;
-          //subnet //FIXXME
+          ip.Field('subnet').AsObjectLink := subnet_id;
         end
       else begin
+        exit;
         ip := TFRE_DB_IPV6_SLAAC.CreateForDB;
         ip.ObjectName:='SLAAC';
       end;
 
+      ip.Field('ip_type').asstring := 'IP';
       ip.Field('datalinkParent').AsObjectLink:=parent_id;
       ip.Field('serviceParent').AsObjectLink:=parent_id;
-      ip.SetDomainID(g_domain_id);
+      ip.SetDomainID(domain_id);
       result           := ip.UID;
-//      writeln('IPV6',ip.DumpToString());
+      writeln('IPV6',ip.DumpToString());
       CheckDBResult(ipcoll.Store(ip));
-      // writeln('SWL Created ipv6:',ip_mask);
     end;
+
 
     function AddRoutingIPV4( const ip_mask:string; const gw:string; const zone_id:TFRE_DB_GUID;const description:string=''): TFRE_DB_GUID;
     var
@@ -2680,7 +2741,7 @@ begin
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('boot1',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:50:4c:9c','cpe','Crypto CPE');
-  AddIPV6('fdd7:f47b:4605:0705::20','64',link_id);
+  AddIPV6('fdd7:f47b:4605:0705::20','64',link_id,g_def_domain_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:85:d9:ab','internet','Internet');
   AddIPV4('109.73.158.185','28',link_id,g_def_domain_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
@@ -2704,7 +2765,7 @@ begin
 
   zone_id  := CreateZone('ns1',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:15:83:8f','cpe','Crypto CPE');
-  AddIPV6('fdd7:f47b:4605:0705::11','64',link_id);
+  AddIPV6('fdd7:f47b:4605:0705::11','64',link_id,g_def_domain_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:a9:32:69','internet','Internet');
   AddIPV4('109.73.158.187','28',link_id,g_def_domain_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
@@ -2725,7 +2786,7 @@ begin
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('kmurz_a',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:84:b2:0d','cpe','Crypto CPE');
-  AddIPV6('','',link_id);
+  AddIPV6('','',link_id,g_def_domain_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:28:5d:11','internet','Internet');
   AddIPV4('109.73.158.184','28',link_id,g_def_domain_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
@@ -2750,7 +2811,7 @@ begin
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('demo',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a:8:9c','cpe','Crypto CPE');
-  AddIPV6('','',link_id);
+  AddIPV6('','',link_id,g_def_domain_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1588,CFRE_DB_NullGUID,'02:08:20:2f:3b:3c','internet','Internet');
   AddIPV4('91.143.108.194','27',link_id,g_def_domain_id);
   AddRoutingIPV4('default','91.143.108.193',zone_id,'Default Route');
@@ -2881,7 +2942,7 @@ begin
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('ns2',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,oce0_id,0,1699,CFRE_DB_NullGUID,'02:08:20:bf:8c:ae','cpe','Crypto CPE');
-  AddIPV6('fdd7:f47b:4605:0705::12','64',link_id);
+  AddIPV6('fdd7:f47b:4605:0705::12','64',link_id,g_def_domain_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,oce0_id,0,1598,CFRE_DB_NullGUID,'02:08:20:16:a3:b3','internet','Internet');
   AddIPV4('109.73.158.189','28',link_id,g_def_domain_id);
   AddRoutingIPV4('default','109.73.158.177',zone_id,'Default Route');
@@ -3013,7 +3074,7 @@ begin
   ds_id    := CreateDataSetChild(domainsds_id,g_domain_id.AsHexString);
   zone_id  := CreateZone('demo2',ds_id,host_id,FREDB_G2H(g_domain_id),fbz_tmpl_uid,'15a56c904a7f00248929bfdb576a45c9');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'cpe0',zone_id,e1_id,0,1699,CFRE_DB_NullGUID,'02:08:20:a4:c6:7c','cpe','Crypto CPE');
-  AddIPV6('fdd7:f47b:4605:0705:1:0:0:3','64',link_id);
+  AddIPV6('fdd7:f47b:4605:0705:1:0:0:3','64',link_id,g_def_domain_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'inet0',zone_id,e0_id,0,1588,CFRE_DB_NullGUID,'02:08:20:e7:40:51','internet','Internet');
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'mgmt0',zone_id,e0_id,0,0,CFRE_DB_NullGUID,'02:08:20:d3:59:df','mgmt','Mgmt Lan');
   int_link_id := link_id;
