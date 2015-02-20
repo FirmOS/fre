@@ -384,6 +384,7 @@ type
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
      function        GetNetbaseIPWithSubnet (const conn:IFRE_DB_CONNECTION): TFRE_DB_String;  virtual;
      function        GetIPWithSubnet        : TFRE_DB_String; virtual;
+     function        IsIPValidinSubnet      (const conn:IFRE_DB_CONNECTION;const ip:string): boolean; virtual; abstract;
      class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; virtual; abstract;
    public
 //     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
@@ -397,11 +398,14 @@ type
    public
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+     function        IsIPValidinSubnet      (const conn:IFRE_DB_CONNECTION;const ip:string):boolean; override;
      class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; override;
    published
      function        StartService           : IFRE_DB_Object; override;
      function        StopService            : IFRE_DB_Object; override;
    end;
+
+   TFRE_DB_IPV4_SUBNET_DEFAULT=class(TFRE_DB_IPV4_SUBNET);
 
    { TFRE_DB_IPV6_SUBNET }
 
@@ -410,10 +414,13 @@ type
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
      class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; override;
+     function        IsIPValidinSubnet      (const conn:IFRE_DB_CONNECTION;const ip:string): boolean; override;
    published
      function        StartService           : IFRE_DB_Object; override;
      function        StopService            : IFRE_DB_Object; override;
    end;
+
+   TFRE_DB_IPV6_SUBNET_DEFAULT=class(TFRE_DB_IPV6_SUBNET);
 
    { TFRE_DB_IP }
 
@@ -4598,6 +4605,11 @@ begin
   result := ip;  // FIXXME
 end;
 
+function TFRE_DB_IPV6_SUBNET.IsIPValidinSubnet(const conn: IFRE_DB_CONNECTION; const ip: string): boolean;
+begin
+  result := false ; //FIXXME
+end;
+
 function TFRE_DB_IPV6_SUBNET.StartService: IFRE_DB_Object;
 var linkname    : string;
     aliasname   : string;
@@ -4733,6 +4745,17 @@ begin
     StoreTranslateableText(conn,'scheme_ip','IP');
     StoreTranslateableText(conn,'scheme_subnet','Subnet');
   end;
+end;
+
+function TFRE_DB_IPV4_SUBNET.IsIPValidinSubnet(const conn: IFRE_DB_CONNECTION; const ip: string): boolean;
+var sn:string;
+    bn:string;
+begin
+  sn:=GetNetbaseIPWithSubnet(conn);
+  bn:=CalcBaseIPforSubnet(ip,Field('subnet_bits').AsInt16);
+  bn:=bn+'/'+Field('subnet_bits').AsString;
+  writeln('SWL BN ',bn,' SN ',sn);
+  result := bn=sn;
 end;
 
 class function TFRE_DB_IPV4_SUBNET.CalcBaseIPforSubnet(const ip: string; const subnet: int16): string;
@@ -10099,6 +10122,8 @@ begin
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_IP_SUBNET);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_IPV4_SUBNET);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_IPV6_SUBNET);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_IPV4_SUBNET_DEFAULT);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_IPV6_SUBNET_DEFAULT);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_IP_ROUTE);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_IPV4_ROUTE);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_IPV6_ROUTE);
