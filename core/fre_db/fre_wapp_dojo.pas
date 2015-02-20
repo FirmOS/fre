@@ -344,7 +344,7 @@ implementation
       propsPrefix:='';
     end;
     case co.Field('buttonType').AsString of
-      'bt_form'    : jsContentAdd('"    \" type=''form'' "+');
+      'bt_form'    : jsContentAdd('"    '+propsPrefix+' sendInputData: '+BoolToStr(co.Field('sendInputData').AsBoolean,'true','false')+' \" type=''form'' "+');
       'bt_button'  : jsContentAdd('"    \" type=''button'' "+');
       'bt_submit'  : jsContentAdd('"    \" type=''submit'' "+');
       'bt_close'   : begin

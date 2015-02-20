@@ -2554,7 +2554,14 @@ dojo.declare("FIRMOS.FormButton", dijit.form.Button, {
     return widget;
   },
   handleTypeForm: function() {
-    G_SERVER_COM.callServerFunction(this.actionClassname,this.actionFunctionname,this.actionUidPath,this.actionParams,this.sfCallback.bind(this));
+    var params = dojo.clone(this.actionParams);
+    if (this.sendInputData) {
+      var form = this._getWidget();
+      if (form.isInstanceOf(dijit.form.Form)) {
+        params.data = form.get('value');
+      }
+    }
+    G_SERVER_COM.callServerFunction(this.actionClassname,this.actionFunctionname,this.actionUidPath,params,this.sfCallback.bind(this));
   },
   handleTypeButton: function() {
     if (this.closeDialog) {
