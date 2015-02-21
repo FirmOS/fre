@@ -191,6 +191,8 @@ var
   baseAddIPSf : TFRE_DB_SERVER_FUNC_DESC;
   addIPSf     : TFRE_DB_SERVER_FUNC_DESC;
   ipversionch : TFRE_DB_INPUT_CHOOSER_DESC;
+  canAddIPv4  : Boolean;
+  canAddIPv6  : Boolean;
 begin
   sf:=CWSF(@WEB_StoreNAT);
   baseAddIPSf:=CWSF(@WEB_AddIP);
@@ -212,6 +214,8 @@ begin
     baseAddIPSf.AddParam.Describe('firewallId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'nat_create_diag_cap');
   end;
+  canAddIPv4:=conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID);
+  canAddIPv6:=conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_SUBNET,service.DomainID);
 
   dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC);
   dc.Filters.RemoveFilter('zone');
@@ -235,14 +239,20 @@ begin
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_src_block'),'src_ipv4_block');
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('src'),ses,[10,5],'src_ipv4');
-  addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
-  addIPSf.AddParam.Describe('field','src');
-  block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  if canAddIPv4 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','src_ipv4.src_addr');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  end;
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_src_block'),'src_ipv6_block');
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('src'),ses,[10,5],'src_ipv6');
-  addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
-  addIPSf.AddParam.Describe('field','src');
-  block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  if canAddIPv6 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','src_ipv6.src_addr');
+    addIPSf.AddParam.Describe('ipversion','ipv6');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  end;
 
   (res.GetFormElement('src_ipv6.src_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(dc.GetStoreDescription as TFRE_DB_STORE_DESC);
   ipversionch.addDependentInput('src_ipv4_block','IPV4',fdv_visible);
@@ -250,18 +260,24 @@ begin
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_dst_block'),'dst_ipv4_block');
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('dst'),ses,[10,5],'dst_ipv4');
-  addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
-  addIPSf.AddParam.Describe('field','dst');
-  block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  if canAddIPv4 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','dst_ipv4.dst_addr');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  end;
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_dst_ports_block'),'dst_ipv4_ports_block',true);
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('dst_ports'),ses,[],'dst_ipv4');
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_dst_block'),'dst_ipv6_block');
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('dst'),ses,[10,5],'dst_ipv6');
-  addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
-  addIPSf.AddParam.Describe('field','dst');
-  block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  if canAddIPv6 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','dst_ipv6.dst_addr');
+    addIPSf.AddParam.Describe('ipversion','ipv6');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  end;
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_dst_ports_block'),'dst_ipv6_ports_block',true);
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('dst_ports'),ses,[],'dst_ipv6');
@@ -276,14 +292,20 @@ begin
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_src_to_block'),'src_to_ipv4_block');
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('src_to'),ses,[],'src_to_ipv4',false,true);
-  addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
-  addIPSf.AddParam.Describe('field','src_to');
-  block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  if canAddIPv4 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','src_to_ipv4.src_to_addr');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  end;
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'nat_diag_src_to_block'),'src_to_ipv6_block');
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('src_to'),ses,[],'src_to_ipv6',false,true);
-  addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
-  addIPSf.AddParam.Describe('field','src_to');
-  block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  if canAddIPv6 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','src_to_ipv6.src_to_addr');
+    addIPSf.AddParam.Describe('ipversion','ipv6');
+    block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'nat_diag_new_ip_button'),addIPSf,true);
+  end;
 
   (res.GetFormElement('src_to_ipv6.src_to_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(dc.GetStoreDescription as TFRE_DB_STORE_DESC);
   ipversionch.addDependentInput('src_to_ipv4_block','IPV4',fdv_visible);
@@ -393,6 +415,22 @@ begin
     CreateModuleText(conn,'nat_diag_src_to_block','Source to');
     CreateModuleText(conn,'nat_diag_advanced_group','Advanced');
     CreateModuleText(conn,'nat_diag_new_ip_button','New IP');
+
+    CreateModuleText(conn,'add_ipv4_diag_caption','New IPv4');
+    CreateModuleText(conn,'add_ipv6_diag_caption','New IPv6');
+
+    CreateModuleText(conn,'add_ip_diag_subnet_chooser_new','New');
+    CreateModuleText(conn,'add_ip_diag_subnet','Subnet');
+    CreateModuleText(conn,'add_ip_diag_new_subnet_label','');
+    CreateModuleText(conn,'add_ip_diag_new_subnet_base_ip','Base IP');
+    CreateModuleText(conn,'add_ip_diag_new_subnet_subnet_bits','Subnet');
+    CreateModuleText(conn,'add_ip_diag_ip','IP');
+    CreateModuleText(conn,'add_ip_diag_close_button','Close');
+
+    CreateModuleText(conn,'ip_store_error_exists_cap','Error');
+    CreateModuleText(conn,'ip_store_error_exists_msg','Error: The given IP already exists!');
+    CreateModuleText(conn,'ip_store_error_base_exists_wrong_type_cap','Error');
+    CreateModuleText(conn,'ip_store_error_base_exists_wrong_type_msg','Error: The given Base IP already exists and is not declared as Base IP!');
   end;
 end;
 
@@ -417,6 +455,12 @@ var
     transformed_object.Field('label').AsString:=str;
   end;
 
+  procedure _setSubnetLabel(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  begin
+    transformed_object.Field('label').AsString:=transformed_object.Field('baseIp').AsString + '/' + input.Field('subnet_bits').AsString;
+  end;
+
+
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -438,6 +482,24 @@ begin
 
       SetDefaultOrderField('label',true);
     end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('label');
+      AddMatchingReferencedField(['BASE_IP>TFRE_DB_IP'],'ip','baseIp');
+      AddOneToOnescheme('domainid');
+      SetSimpleFuncTransformNested(@_setSubnetLabel,[]);
+    end;
+
+    dc := session.NewDerivedCollection('FIREWALL_SUBNET_CHOOSER_DC');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFRE_DB_SUBNET_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+
+      SetDefaultOrderField('label',true);
+    end;
+
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
@@ -1239,9 +1301,15 @@ end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_AddIP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res : TFRE_DB_FORM_DIALOG_DESC;
-  sf  : TFRE_DB_SERVER_FUNC_DESC;
-  dbo: IFRE_DB_Object;
+  res           : TFRE_DB_FORM_DIALOG_DESC;
+  sf            : TFRE_DB_SERVER_FUNC_DESC;
+  dbo           : IFRE_DB_Object;
+  store         : TFRE_DB_STORE_DESC;
+  dc            : IFRE_DB_DERIVED_COLLECTION;
+  block         : TFRE_DB_INPUT_BLOCK_DESC;
+  validator     : IFRE_DB_ClientFieldValidator;
+  chooser       : TFRE_DB_INPUT_CHOOSER_DESC;
+  maxSubnetBits : Integer;
 begin
   sf:=CWSF(@WEB_StoreIP);
   if input.FieldExists('natId') then begin
@@ -1251,23 +1319,61 @@ begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('firewallId').AsString),dbo));
     sf.AddParam.Describe('firewallId',input.Field('firewallId').AsString);
   end;
-
-  if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,dbo.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,dbo.DomainID)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+  sf.AddParam.Describe('ipversion',input.Field('ipversion').AsString);
+  sf.AddParam.Describe('field',input.Field('field').AsString);
 
   ses.GetSessionModuleData(ClassName).Field('AddNAT_data').AsObject:=input.Field('data').AsObject.CloneToNewObject();
 
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe('ADD IP',600,false);
-  res.AddButton.Describe('ADD',sf,fdbbt_submit);
-  res.AddButton.Describe('CLOSE',CWSF(@WEB_CleanUpAddIP),fdbbt_close);
+  dc:=ses.FetchDerivedCollection('FIREWALL_SUBNET_CHOOSER_DC');
+  dc.Filters.RemoveFilter('domain');
+  dc.Filters.AddUIDFieldFilter('domain','domainid',[dbo.DomainID],dbnf_OneValueFromFilter);
+  dc.Filters.RemoveFilter('scheme');
+
+  if input.Field('ipversion').AsString='ipv4' then begin
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,dbo.DomainID)) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_ipv4_diag_caption'),600,false,true,false);
+    dc.Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4_SUBNET.ClassName,TFRE_DB_IPV4_SUBNET_DEFAULT.ClassName]);
+    GFRE_DBI.GetSystemClientFieldValidator('ip',validator);
+    maxSubnetBits:=32;
+  end else begin
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_SUBNET,dbo.DomainID)) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'add_ipv6_diag_caption'),600,false,true,false);
+    dc.Filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV6_SUBNET.ClassName,TFRE_DB_IPV6_SUBNET_DEFAULT.ClassName]);
+    GFRE_DBI.GetSystemClientFieldValidator('ipv6',validator);
+    maxSubnetBits:=128;
+  end;
+
+  store:=dc.GetStoreDescription as TFRE_DB_STORE_DESC;
+  store.AddEntry.Describe(FetchModuleTextShort(ses,'add_ip_diag_subnet_chooser_new'),'_new_');
+  chooser:=res.AddChooser.Describe(FetchModuleTextShort(ses,'add_ip_diag_subnet'),'subnet',store,dh_chooser_combo,true,false,true);
+  chooser.addDependentInput('new_subnet_block','_new_',fdv_visible);
+  block:=res.AddBlock.Describe(FetchModuleTextShort(ses,'add_ip_diag_new_subnet_label'),'new_subnet_block');
+  block.AddInput(10).Describe(FetchModuleTextShort(ses,'add_ip_diag_new_subnet_base_ip'),'base_ip',true,true,false,false,'',validator);
+  block.AddNumber(5).Describe(FetchModuleTextShort(ses,'add_ip_diag_new_subnet_subnet_bits'),'subnet_bits',true,true,false,false,'',0,TFRE_DB_Real64Array.create(0,maxSubnetBits));
+
+  res.AddInput.Describe(FetchModuleTextShort(ses,'add_ip_diag_ip'),'ip',true,true,false,false,'',validator);
+
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  res.AddButton.Describe(FetchModuleTextShort(ses,'add_ip_diag_close_button'),CWSF(@WEB_CleanUpAddIP),fdbbt_close);
   Result:=res;
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_StoreIP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res : TFRE_DB_FORM_DIALOG_DESC;
-  dbo : IFRE_DB_Object;
+  res      : TFRE_DB_FORM_DIALOG_DESC;
+  dbo      : IFRE_DB_Object;
+  subnet   : TFRE_DB_IP_SUBNET;
+  baseIp   : TFRE_DB_IP;
+  ipcoll   : IFRE_DB_COLLECTION;
+  ipDbo    : IFRE_DB_ObjectArray;
+  IP       : TFRE_DB_IP;
+  isModify : Boolean;
 begin
   if input.FieldExists('natId') then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('natId').AsString),dbo));
@@ -1275,16 +1381,79 @@ begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('firewallId').AsString),dbo));
   end;
 
-  if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,dbo.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,dbo.DomainID)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+  if input.Field('ipversion').AsString='ipv4' then begin
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,dbo.DomainID)) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  //STORE NEW IP
+  end else begin
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_SUBNET,dbo.DomainID)) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  end;
+
+  ipcoll:=conn.GetCollection(CFRE_DB_IP_COLLECTION);
+
+  if ipcoll.GetIndexedObjsFieldval(input.FieldPath('data.ip'),ipDbo,'def',FREDB_G2H(dbo.DomainID))>0 then begin
+    Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'ip_store_error_exists_cap'),FetchModuleTextShort(ses,'ip_store_error_exists_msg'),fdbmt_error);
+    exit;
+  end;
+
+  if input.FieldPath('data.subnet').AsString='_new_' then begin
+    //create new subnet
+    subnet:=TFRE_DB_IPV4_SUBNET.CreateForDB;
+    subnet.SetDomainID(dbo.DomainID);
+    subnet.Field('subnet_bits').AsInt16:=input.FieldPath('data.subnet_bits').AsInt16;
+    CheckDbResult(conn.GetCollection(CFRE_DB_SUBNET_COLLECTION).Store(subnet.CloneToNewObject()));
+
+    if ipcoll.GetIndexedObjsFieldval(input.FieldPath('data.base_ip'),ipDbo,'def',FREDB_G2H(dbo.DomainID))>0 then begin
+      if ipDbo[0].Field('ip_type').AsString<>'BASE' then begin
+        Result:=TFRE_DB_MESSAGE_DESC.Create.Describe(FetchModuleTextShort(ses,'ip_store_error_base_exists_wrong_type_cap'),FetchModuleTextShort(ses,'ip_store_error_base_exists_wrong_type_msg'),fdbmt_error);
+        exit;
+      end;
+      baseIp:=ipDbo[0].Implementor_HC as TFRE_DB_IP;
+    end else begin
+      baseIp:=TFRE_DB_IPV4.CreateForDB;
+      baseIp.SetDomainID(dbo.DomainID);
+      baseIp.Field('ip').AsString:=input.FieldPath('data.base_ip').AsString;
+      baseIp.Field('subnet').AsObjectLink:=subnet.UID;
+      baseIp.Field('ip_type').AsString:='BASE';
+      CheckDbResult(ipcoll.Store(baseIp.CloneToNewObject()));
+    end;
+
+    subnet.Field('base_ip').AsObjectLink:=baseIp.UID;
+    CheckDbResult(conn.Update(subnet.CloneToNewObject));
+  end else begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.FieldPath('data.subnet').AsString),TFRE_DB_IP_SUBNET,subnet));
+  end;
+
+  if input.Field('ipversion').AsString='ipv4' then begin
+    IP:=TFRE_DB_IPV4.CreateForDB;
+  end else begin
+    IP:=TFRE_DB_IPV6.CreateForDB;
+  end;
+  IP.SetDomainID(dbo.DomainID);
+  IP.Field('ip').AsString:=input.FieldPath('data.ip').AsString;
+  IP.Field('subnet').AsObjectLink:=subnet.UID;
+  IP.Field('ip_type').AsString:='IP';
+  CheckDbResult(ipcoll.Store(IP.CloneToNewObject()));
+
   //SET INTO DATA
+  ses.GetSessionModuleData(ClassName).Field('AddNAT_data').AsObject.FieldPath(input.Field('field').AsString).AsString:=ip.UID_String;
   //REBUILD DIALOG
-  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe());
-  res:=_AddModifyNAT(input,ses,app,conn,false).Implementor_HC as TFRE_DB_FORM_DIALOG_DESC;
-  res.FillWithObjectValues(input.Field('data').AsObject,ses);
+  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE ADD IP
+  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE ADD NAT
+
+  if input.FieldExists('natId') then begin
+    input.Field('selected').AsString:=input.Field('natId').AsString;
+    isModify:=true;
+  end else begin
+    isModify:=false;
+  end;
+
+  res:=_AddModifyNAT(input,ses,app,conn,isModify).Implementor_HC as TFRE_DB_FORM_DIALOG_DESC;
+  res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddNAT_data').AsObject,ses);
   WEB_CleanupAddIP(input,ses,app,conn);
   Result:=res;
 end;
