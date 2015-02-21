@@ -804,12 +804,14 @@ dojo.declare("FIRMOS.uiHandler", null, {
     var tr = dojo.byId(gId+'_tr');
     if (dojo.hasClass(tl,"firmosFormGroupShowLeft")) {
       var displayStyle = '';
+      var hidden = false;
       dojo.removeClass(tl,"firmosFormGroupShowLeft");
       dojo.removeClass(tr,"firmosFormGroupShowRight");
       dojo.addClass(tl,"firmosFormGroupHideLeft");
       dojo.addClass(tr,"firmosFormGroupHideRight");
     } else {
       var displayStyle = 'none';
+      var hidden = true;
       dojo.removeClass(tl,"firmosFormGroupHideLeft");
       dojo.removeClass(tr,"firmosFormGroupHideRight");
       dojo.addClass(tl,"firmosFormGroupShowLeft");
@@ -818,7 +820,12 @@ dojo.declare("FIRMOS.uiHandler", null, {
     var form = dijit.byId(formId);
     var trs=dojo.query('tr[firmosGroup~="'+gId+'"]',form.domeNode);
     for (var i=0; i<trs.length; i++) {
-      if (trs[i]._depHidden) continue; //skip dependent hidden rows
+      if (hidden) {
+        trs[i].setAttribute('_groupHidden',true);
+      } else {
+        trs[i].removeAttribute('_groupHidden');
+      }
+      if (trs[i].getAttribute('_depHidden')) continue; //skip dependent hidden rows
       dojo.style(trs[i],'display',displayStyle);
     }
     form.handleContentChange();
@@ -1112,10 +1119,20 @@ dojo.declare("FIRMOS.Dialog", dijit.Dialog, {
       dojo.style(this.closeButtonNode, "display", "none");
     }
   },
+  internalHide: function() {
+    G_UI_COM.dialogClosed(this.id);
+    this.destroyRecursive();
+  },
   hide: function(forceHide) {
     if (this.closable || forceHide) {
-      G_UI_COM.dialogClosed(this.id);
-      this.destroyRecursive();
+      var children = this.getDescendants();
+      for (var i=0; i<children.length; i++) {
+        if (children[i].isInstanceOf(FIRMOS.FormButton) && children[i].closeDialog) { //let the 1st close button close the dialog
+          children[i].handleTypeButton();
+          return;
+        }
+      }
+      this.internalHide();
     }
   }
 });
@@ -2536,7 +2553,6 @@ dojo.declare("FIRMOS.FormButton", dijit.form.Button, {
     if (this._used) {
       this._used = false;
       if (this.cleanupClassname) {
-        alert('CALL CLEANUP');
         G_SERVER_COM.callServerFunction(this.cleanupClassname,this.cleanupFunctionname,this.cleanupUidPath,this.cleanupParams);
       }
     }
@@ -2567,7 +2583,7 @@ dojo.declare("FIRMOS.FormButton", dijit.form.Button, {
     if (this.closeDialog) {
       var dialog = this._getWidget(true);
       if (dialog && dialog.isInstanceOf(FIRMOS.Dialog)) {
-        dialog.hide();
+        dialog.internalHide();
       }
     }
     if (this.actionClassname) {
@@ -3779,6 +3795,9 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
         if ((field.get('value')==emptyValue && !field.depFields[i]) ||
             (field.get('value')!=emptyValue && field.depFields[i])) {
           elem.set('disabled',true);
+          if (elem.isInstanceOf(FIRMOS.FormButton)) {
+            elem.cleanUp();
+          }
         } else {
           elem.set('disabled',false);
         }
@@ -4019,7 +4038,7 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
       }
     }
   },
-  
+
   restoreAllButtons: function() {
     var children = this.getChildren();
     for (var i=0; i<children.length; i++) {
@@ -4386,7 +4405,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
       }
     }
   },
-  _updateDepField: function(fieldname,fielddef,forceHide,form) {
+  _updateDepField: function(fieldname,fielddef,forceHide,forceShow,form) {
     var elem = form.getInputById(fieldname);
     var isBlockInput = false;
     if (!elem) {
@@ -4394,7 +4413,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
       isBlockInput = true;
     }
     if (elem) {
-      var doHide = true;
+      var doHide = !forceShow;
       var ignoreVis = true;
       var resetLabel = true;
       var resetValidator = true;
@@ -4411,7 +4430,11 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
               elem._orgES = elem.get('disabled');
             }
             elem._orgESSetterValue = fielddef[i].value;
-            elem.set('disabled',(fielddef[i].enabled=='DISABLED'));
+            var disabled = (fielddef[i].enabled=='DISABLED');
+            elem.set('disabled',disabled);
+            if (disabled && elem.isInstanceOf(FIRMOS.FormButton)) {
+              elem.cleanUp();
+            }
           }
           if (fielddef[i].caption!='') { //CAPTION
             if (labelElem) {
@@ -4468,7 +4491,11 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
                 delete elem._orgESSetterValue;
               }
             } else {
-              elem.set('disabled',(fielddef[i].enabled!='DISABLED'));
+              var disabled = (fielddef[i].enabled!='DISABLED');
+              elem.set('disabled',disabled);
+              if (disabled && elem.isInstanceOf(FIRMOS.FormButton)) {
+                elem.cleanUp();
+              }
             }
           }
         }
@@ -4505,10 +4532,12 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
       while (domElem && domElem.tagName!='TR') {
         domElem = domElem.parentNode;
       }
-      if (domElem && (forceHide || !ignoreVis)) {
+      if (domElem && (forceHide || forceShow || !ignoreVis)) {
         if (doHide) {
-          dojo.style(domElem,'display','none');
-          domElem._depHidden = true;
+          if (!domElem.getAttribute('_groupHidden')) {
+            dojo.style(domElem,'display','none');
+          }
+          domElem.setAttribute('_depHidden',true);
           if (isBlockInput) {
             var elems = form.getInputBlockChildren(elem);
           } else {
@@ -4529,8 +4558,10 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
             }
           }
         } else {
-          dojo.style(domElem,'display','');
-          domElem._depHidden = false;
+          if (!domElem.getAttribute('_groupHidden')) {
+            dojo.style(domElem,'display','');
+          }
+          domElem.removeAttribute('_depHidden');
           if (isBlockInput) {
             var elems = form.getInputBlockChildren(elem);
           } else {
@@ -4555,17 +4586,17 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
   },
   unhide: function(form) {
     this._hidden = false;
-    this._updateDepGroup(form);
+    this._updateDepGroup(form,true);
   },
-  _updateDepGroup: function(form) {
+  _updateDepGroup: function(form,forceShow) {
     for (var i in this.depGroup_) {
-      this._updateDepField(i,this.depGroup_[i],false,form);
+      this._updateDepField(i,this.depGroup_[i],false,forceShow,form);
     }
     form.handleContentChange();
   },
   _hideAllDepFields: function(form) {
     for (var i in this.depGroup_) {
-      this._updateDepField(i,this.depGroup_[i],true,form);
+      this._updateDepField(i,this.depGroup_[i],true,false,form);
     }
   },
   init: function() {
@@ -4582,7 +4613,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
       if (this._hidden) {
         this._hideAllDepFields(form);
       } else {
-        this._updateDepGroup(form);
+        this._updateDepGroup(form,false);
       }
     }
   },
@@ -4600,7 +4631,7 @@ dojo.declare("FIRMOS.FilteringSelect", dijit.form.FilteringSelect, {
       form=form.getParent();
     }
     if (form && form.isInstanceOf(FIRMOS.Form)) {
-      if (!this._hidden) this._updateDepGroup(form);
+      if (!this._hidden) this._updateDepGroup(form,false);
       form.checkDepAndGroupRequiredFields(this);
       form.submitOnChange(this);
     }

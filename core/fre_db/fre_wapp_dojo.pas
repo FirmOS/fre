@@ -776,7 +776,7 @@ implementation
       if elem is TFRE_DB_INPUT_BLOCK_DESC then begin
         allRequired:=true;
         _checkBlockChildren(elem as TFRE_DB_INPUT_BLOCK_DESC, allRequired, ids);
-        jsContentAdd('"<tr firmosGroup='''+groupId+''' childIds=\"'+_BuildJSArray(ids)+'\" '+BoolToStr(hidden,' style=''display:none;''','')+' class=''firmosFormBlock'' id='''+elem.Field('id').AsString+'''>"+');
+        jsContentAdd('"<tr firmosGroup='''+groupId+''' childIds=\"'+_BuildJSArray(ids)+'\" '+BoolToStr(hidden,' _groupHidden=true style=''display:none;''','')+' class=''firmosFormBlock'' id='''+elem.Field('id').AsString+'''>"+');
         if (elem.Field('caption').AsString<>'') or (elem.Field('indentEmptyCaption').AsBoolean) then begin
           if allRequired then begin
             labelclass:='firmosFormLabelRequired';
@@ -820,7 +820,7 @@ implementation
             labelclass:='firmosFormLabel';
           end;
           if groupId<>'' then begin
-            jsContentAdd('"<tr firmosGroup='''+groupId+''' '+BoolToStr(hidden,' style=''display:none;''','')+' id='''+elem.Field('id').AsString+'_tr''>"+');
+            jsContentAdd('"<tr firmosGroup='''+groupId+''' '+BoolToStr(hidden,' _groupHidden=true style=''display:none;''','')+' id='''+elem.Field('id').AsString+'_tr''>"+');
           end else begin
             jsContentAdd('"<tr id='''+elem.Field('id').AsString+'_tr''>"+');
           end;

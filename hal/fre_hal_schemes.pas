@@ -1731,6 +1731,11 @@ begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
 
+  enum:=GFRE_DBI.NewEnum('fw_nat_ipversion').Setup(GFRE_DBI.CreateText('$enum_fw_nat_ipversion','Firewall NAT IP Version'));
+  enum.addEntry('IPV4',GetTranslateableTextKey('enum_fw_nat_ipversion_ipv4'));
+  enum.addEntry('IPV6',GetTranslateableTextKey('enum_fw_nat_ipversion_ipv6'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
   enum:=GFRE_DBI.NewEnum('fw_nat_command').Setup(GFRE_DBI.CreateText('$enum_fw_nat_command','Firewall NAT Command'));
   enum.addEntry('MAP',GetTranslateableTextKey('enum_fw_nat_command_map'));
   enum.addEntry('BIMAP',GetTranslateableTextKey('enum_fw_nat_command_bimap'));
@@ -1750,6 +1755,7 @@ begin
   GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
+  scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(true,false,'fw_nat_ipversion');
   scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
   cfld:=scheme.AddSchemeField('command',fdbft_String).SetupFieldDef(true,false,'fw_nat_command');
 
@@ -1796,15 +1802,22 @@ begin
   group.AddInput('proxy_name',GetTranslateableTextKey('scheme_proxy_name'));
   group.AddInput('proxy_port',GetTranslateableTextKey('scheme_proxy_port'));
 
-  group:=scheme.AddInputGroup('advanced').Setup(GetTranslateableTextKey('scheme_advanced_group'));
+  group:=scheme.AddInputGroup('src_to').Setup(GetTranslateableTextKey('scheme_src_to_group'));
   group.AddInput('src_to_addr',GetTranslateableTextKey('scheme_src_to_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('expert').Setup(GetTranslateableTextKey('scheme_expert_group'));
   group.AddInput('option_frag',GetTranslateableTextKey('scheme_option_frag'));
   group.AddInput('option_age',GetTranslateableTextKey('scheme_option_age'));
   group.AddInput('option_clamp',GetTranslateableTextKey('scheme_option_clamp'));
   group.AddInput('option_roundrobin',GetTranslateableTextKey('scheme_option_roundrobin'));
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'proxy');
 
+  group:=scheme.AddInputGroup('advanced').Setup(GetTranslateableTextKey('scheme_advanced_group'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'src_to');
+  group.UseInputGroup(scheme.DefinedSchemeName,'expert');
+
   group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
+  group.AddInput('ipversion',GetTranslateableTextKey('scheme_ipversion'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
   group.AddInput('command',GetTranslateableTextKey('scheme_command'));
   group.AddInput('interface',GetTranslateableTextKey('scheme_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
@@ -1828,6 +1841,9 @@ begin
   if currentVersionId='0.1' then begin
     currentVersionId := '0.2';
 
+    StoreTranslateableText(conn,'enum_fw_nat_ipversion_ipv4','IPv4');
+    StoreTranslateableText(conn,'enum_fw_nat_ipversion_ipv6','IPv6');
+
     StoreTranslateableText(conn,'enum_fw_nat_command_map','Map');
     StoreTranslateableText(conn,'enum_fw_nat_command_bimap','Bimap');
     StoreTranslateableText(conn,'enum_fw_nat_command_rdr','Rdr');
@@ -1841,6 +1857,7 @@ begin
     StoreTranslateableText(conn,'enum_fw_nat_dst_port_mode_auto','auto');
 
     StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_ipversion','IP Version');
     StoreTranslateableText(conn,'scheme_number','Number');
     StoreTranslateableText(conn,'scheme_command','Command');
     StoreTranslateableText(conn,'scheme_interface','Interface');
@@ -1860,6 +1877,8 @@ begin
 
     StoreTranslateableText(conn,'scheme_advanced_group','Advanced');
     StoreTranslateableText(conn,'scheme_proxy_group','Proxy');
+    StoreTranslateableText(conn,'scheme_src_to_group','Source to');
+    StoreTranslateableText(conn,'scheme_expert_group','Expert');
 
     StoreTranslateableText(conn,'scheme_src_to_addr','Source to');
     StoreTranslateableText(conn,'scheme_option_frag','Frag');
@@ -10288,7 +10307,7 @@ begin
  if not session.HasDerivedCollection(CFRE_DB_FIREWALL_IP_CHOOSER_DC) then begin
    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
    with transform do begin
-     AddOneToOnescheme('objname');
+     AddOneToOnescheme('ip','label');
      AddOneToOnescheme('domainid');
    end;
 
@@ -10298,7 +10317,7 @@ begin
      SetDeriveTransformation(transform);
      SetDisplayType(cdt_Chooser,[],'');
 
-     SetDefaultOrderField('objname',true);
+     SetDefaultOrderField('label',true);
    end;
  end;
 end;

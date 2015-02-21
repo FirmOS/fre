@@ -242,6 +242,7 @@ type
     //@ Adds a dependent input group. If chooserValue is selected the input element will be updated.
     procedure addDependentInputGroup(const inputGroup: TFRE_DB_INPUT_GROUP_DESC; const chooserValue: String; const visible: TFRE_DB_FieldDepVisibility=fdv_visible; const enabledState: TFRE_DB_FieldDepEnabledState=fdes_none);
 
+    procedure setStore              (const store: TFRE_DB_STORE_DESC);
     procedure addOption             (const caption,value: String);
     //@ Enables the caption compare.
     //@ Useful for fields which store the caption and not a link to the object.
@@ -382,7 +383,7 @@ type
     function  GetStore                (const id:String): TFRE_DB_STORE_DESC;virtual;
     function  Describe                (const caption:String;const defaultClose:Boolean;const sendChangedFieldsOnly: Boolean; const editable: Boolean; const onChangeFunc: TFRE_DB_SERVER_FUNC_DESC; const onChangeDelay:Integer; const hideEmptyGroups: Boolean): TFRE_DB_FORM_DESC;
     procedure _FillWithObjectValues   (const obj: IFRE_DB_Object;const session: IFRE_DB_UserSession; const prefix:String);
-    procedure _addFields              (const schemeGroup: IFRE_DB_InputGroupSchemeDefinition; const session: IFRE_DB_UserSession; const fields: IFRE_DB_FieldDef4GroupArr; const prefix:String; const groupPreFix:String; const groupRequired: Boolean; const group: TFRE_DB_INPUT_GROUP_DESC; const block: TFRE_DB_INPUT_BLOCK_DESC);
+    procedure _addFields              (const schemeGroup: IFRE_DB_InputGroupSchemeDefinition; const session: IFRE_DB_UserSession; const fields: IFRE_DB_FieldDef4GroupArr; const prefix:String; const groupPreFix:String; const groupRequired: Boolean; const withoutCaptions:Boolean; const group: TFRE_DB_INPUT_GROUP_DESC; const block: TFRE_DB_INPUT_BLOCK_DESC; const blockSizes: array of Integer);
   public
     //@ Return the form element with the given id.
     function  GetFormElement          (const elementId:String): TFRE_DB_CONTENT_DESC;
@@ -460,13 +461,14 @@ type
     procedure AddDBO      (const id: String; const session: IFRE_DB_UserSession; const groupPreFix:String);override;
     function  GetStore    (const id: String):TFRE_DB_STORE_DESC;override;
   public
+    class function getDefaultBlockSize : Integer;
     //@ Describes an horizontal input block within a form (e.g. Favourite 3 colours: input input input).
     function  Describe    (const caption:String=''; const id: String=''; const indentEmptyCaption: Boolean=false):TFRE_DB_INPUT_BLOCK_DESC;
     //@ Adds the given InputGroupSchemeDefinition to the form and returns the TFRE_DB_INPUT_GROUP_DESC.
     //@ See TFRE_DB_INPUT_GROUP_DESC.
     function  AddSchemeFormGroup      (const schemeGroup: IFRE_DB_InputGroupSchemeDefinition ; const session : IFRE_DB_UserSession; const collapsible: Boolean=false; const collapsed: Boolean=false; const relSize:Integer=10; const groupPreFix:String=''; const groupRequired:Boolean=true; const hideGroupHeader:Boolean=false): TFRE_DB_INPUT_GROUP_DESC; reintroduce;
     //@ Adds the given input fields of the schemeGroup as fields of the input block with relSize 10
-    function  AddSchemeFormGroupInputs(const schemeGroup: IFRE_DB_InputGroupSchemeDefinition ; const session : IFRE_DB_UserSession;  const groupPreFix:String=''; const groupRequired:Boolean=true): TFRE_DB_INPUT_BLOCK_DESC;
+    function  AddSchemeFormGroupInputs(const schemeGroup: IFRE_DB_InputGroupSchemeDefinition ; const session : IFRE_DB_UserSession; const blockSizes: array of Integer; const groupPreFix:String=''; const groupRequired:Boolean=true; const withoutCaptions: Boolean=false): TFRE_DB_INPUT_BLOCK_DESC;
     //@ Creates a new input field and adds it to the form. See also TFRE_DB_INPUT_DESC.
     function  AddInput                (const relSize:Integer=10): TFRE_DB_INPUT_DESC; reintroduce;
     //@ Creates a new description and adds it to the form. See also TFRE_DB_INPUT_DESCRIPTION_DESC.
@@ -1319,10 +1321,10 @@ implementation
     Field('sizeSum').AsInt16:=Field('sizeSum').AsInt16+relSize;
   end;
 
-  function TFRE_DB_INPUT_BLOCK_DESC.AddSchemeFormGroupInputs(const schemeGroup: IFRE_DB_InputGroupSchemeDefinition; const session: IFRE_DB_UserSession; const groupPreFix: String; const groupRequired: Boolean): TFRE_DB_INPUT_BLOCK_DESC;
+    function TFRE_DB_INPUT_BLOCK_DESC.AddSchemeFormGroupInputs(const schemeGroup: IFRE_DB_InputGroupSchemeDefinition; const session: IFRE_DB_UserSession; const blockSizes: array of Integer; const groupPreFix: String; const groupRequired: Boolean; const withoutCaptions: Boolean): TFRE_DB_INPUT_BLOCK_DESC;
   begin
     Result:=self;
-    _addFields(schemeGroup,session,schemeGroup.GroupFields,'',groupPreFix,groupRequired,nil,Result);
+    _addFields(schemeGroup,session,schemeGroup.GroupFields,'',groupPreFix,groupRequired,withoutCaptions,nil,Result,blockSizes);
   end;
 
   function TFRE_DB_INPUT_BLOCK_DESC.AddInput(const relSize: Integer): TFRE_DB_INPUT_DESC;
@@ -1455,6 +1457,11 @@ implementation
     end else begin
       raise Exception.Create('Failed to get the store: Root Form not found!');
     end;
+  end;
+
+  class function TFRE_DB_INPUT_BLOCK_DESC.getDefaultBlockSize: Integer;
+  begin
+    Result:=10;
   end;
 
   function TFRE_DB_INPUT_GROUP_PROXY_DESC.Describe(const caption: String; const loadFunc: TFRE_DB_SERVER_FUNC_DESC): TFRE_DB_INPUT_GROUP_PROXY_DESC;
@@ -1615,6 +1622,17 @@ implementation
         end;
       end;
     end;
+  end;
+
+  procedure TFRE_DB_INPUT_CHOOSER_DESC.setStore(const store: TFRE_DB_STORE_DESC);
+  var
+    obj: IFRE_DB_Object;
+  begin
+    obj:=GFRE_DBI.NewObject;
+    obj.Field('id').AsString:=store.Field('id').AsString;
+    obj.Field('serverFuncExists').AsBoolean:=store.FieldExists('serverFunc');
+    Field('store').AsObject:=obj;
+    (Parent.Parent.Implementor_HC as TFRE_DB_FORM_DESC).AddStore(store);
   end;
 
   procedure TFRE_DB_INPUT_CHOOSER_DESC.addOption(const caption, value: String);
@@ -1965,7 +1983,7 @@ implementation
     end;
   end;
 
-  procedure TFRE_DB_FORM_DESC._addFields(const schemeGroup: IFRE_DB_InputGroupSchemeDefinition; const session: IFRE_DB_UserSession; const fields: IFRE_DB_FieldDef4GroupArr; const prefix:String; const groupPreFix:String; const groupRequired: Boolean; const group: TFRE_DB_INPUT_GROUP_DESC; const block: TFRE_DB_INPUT_BLOCK_DESC);
+  procedure TFRE_DB_FORM_DESC._addFields(const schemeGroup: IFRE_DB_InputGroupSchemeDefinition; const session: IFRE_DB_UserSession; const fields: IFRE_DB_FieldDef4GroupArr; const prefix: String; const groupPreFix: String; const groupRequired: Boolean; const withoutCaptions: Boolean; const group: TFRE_DB_INPUT_GROUP_DESC; const block: TFRE_DB_INPUT_BLOCK_DESC; const blockSizes: array of Integer);
   var
     i          : integer;
     scheme     : IFRE_DB_SchemeObject;
@@ -1977,13 +1995,14 @@ implementation
     path       : TFOSStringArray;
     fieldDef   : IFRE_DB_FieldSchemeDefinition;
     inputPrefix: String;
+    blockSize  : Integer;
 
     function _getText(const key:TFRE_DB_String):TFRE_DB_String;
     begin
       Result:=session.GetDBConnection.FetchTranslateableTextShort(key);
     end;
 
-    procedure _addInput(const obj:IFRE_DB_FieldDef4Group; const prefix:String; const requiredParent:Boolean; const group: TFRE_DB_INPUT_GROUP_DESC; const block: TFRE_DB_INPUT_BLOCK_DESC);
+    procedure _addInput(const obj:IFRE_DB_FieldDef4Group; const prefix:String; const requiredParent:Boolean; const group: TFRE_DB_INPUT_GROUP_DESC; const block: TFRE_DB_INPUT_BLOCK_DESC; const blockSize: Int16);
     var
       coll               : IFRE_DB_COLLECTION;
       store              : TFRE_DB_STORE_DESC;
@@ -2002,6 +2021,7 @@ implementation
       domainValue        : String;
       dcoll              : IFRE_DB_DERIVED_COLLECTION;
       minMax             : TFRE_DB_Real64Array;
+      fldCaption         : String;
 
     procedure addObjects(const obj: IFRE_DB_Object);
     begin
@@ -2047,12 +2067,17 @@ implementation
       standardColl       := obj.GetStandardCollection;
       store              := nil;
       coll               := nil;
+      if withoutCaptions then begin
+        fldCaption := '';
+      end else begin
+        fldCaption := _getText(obj.GetCaptionKey);
+      end;
       if (dataCollectionName<>'') or (standardColl<>coll_NONE) then begin
         if obj.GetHidden then begin
           if Assigned(group) then begin
             inputField:=group.AddInput;
           end else begin
-            inputField:=block.AddInput;
+            inputField:=block.AddInput(blockSize);
           end;
           (inputField as TFRE_DB_INPUT_DESC).Describe('',prefix+obj.GetfieldName,false,false,false,true,obj.GetDefault);
         end else begin
@@ -2086,9 +2111,9 @@ implementation
           if Assigned(group) then begin
             chooserField:=group.AddChooser;
           end else begin
-            chooserField:=block.AddChooser;
+            chooserField:=block.AddChooser(blockSize);
           end;
-          chooserField.Describe(_getText(obj.GetCaptionKey),prefix+obj.GetfieldName,store,obj.GetChooserType,required,obj.GetRequired,obj.GetChooserAddEmptyValue,obj.GetDisabled,obj.GetDefault);
+          chooserField.Describe(fldCaption,prefix+obj.GetfieldName,store,obj.GetChooserType,required,obj.GetRequired,obj.GetChooserAddEmptyValue,obj.GetDisabled,obj.GetDefault);
           inputField:=chooserField;
           chooserField.captionCompareEnabled(true);
         end;
@@ -2102,16 +2127,16 @@ implementation
             if Assigned(group) then begin
               inputField:=group.AddInput;
             end else begin
-             inputField:=block.AddInput;
+             inputField:=block.AddInput(blockSize);
             end;
             (inputField as TFRE_DB_INPUT_DESC).Describe('',prefix+obj.GetfieldName,false,false,false,true,domainValue);
           end else begin
             if Assigned(group) then begin
               chooserField:=group.AddChooser;
             end else begin
-              chooserField:=block.AddChooser;
+              chooserField:=block.AddChooser(blockSize);
             end;
-            chooserField.Describe(_getText(obj.GetCaptionKey),prefix+obj.GetfieldName,store,obj.GetChooserType,required,obj.GetRequired,obj.GetChooserAddEmptyValue,obj.GetDisabled,obj.GetDefault);
+            chooserField.Describe(fldCaption,prefix+obj.GetfieldName,store,obj.GetChooserType,required,obj.GetRequired,obj.GetChooserAddEmptyValue,obj.GetDisabled,obj.GetDefault);
             inputField:=chooserField;
             obj.FieldSchemeDefinition.ForAllEnumDepfields(@EnumDepITerator);
           end;
@@ -2121,7 +2146,7 @@ implementation
               if Assigned(group) then begin
                 inputField:=group.AddInput;
               end else begin
-                inputField:=block.AddInput;
+                inputField:=block.AddInput(blockSize);
               end;
               (inputField as TFRE_DB_INPUT_DESC).Describe('',prefix+obj.GetfieldName,false,false,false,true,obj.GetDefault);
             end else begin
@@ -2133,9 +2158,9 @@ implementation
               if Assigned(group) then begin
                 chooserField:=group.AddChooser;
               end else begin
-                chooserField:=block.AddChooser;
+                chooserField:=block.AddChooser(blockSize);
               end;
-              chooserField.Describe(_getText(obj.GetCaptionKey),prefix+obj.GetfieldName,store,obj.GetChooserType,required,obj.GetRequired,obj.GetChooserAddEmptyValue,obj.GetDisabled,obj.GetDefault);
+              chooserField.Describe(fldCaption,prefix+obj.GetfieldName,store,obj.GetChooserType,required,obj.GetRequired,obj.GetChooserAddEmptyValue,obj.GetDisabled,obj.GetDefault);
               inputField:=chooserField;
               obj.FieldSchemeDefinition.ForAllEnumDepfields(@EnumDepITerator);
             end;
@@ -2162,9 +2187,9 @@ implementation
                   if Assigned(group) then begin
                     inputField:=group.AddNumber;
                   end else begin
-                    inputField:=block.AddNumber;
+                    inputField:=block.AddNumber(blockSize);
                   end;
-                  (inputField as TFRE_DB_INPUT_NUMBER_DESC).Describe(_getText(GetCaptionKey),prefix+GetfieldName,required,GetRequired,GetDisabled,GetHidden,'',0,minMax);
+                  (inputField as TFRE_DB_INPUT_NUMBER_DESC).Describe(fldCaption,prefix+GetfieldName,required,GetRequired,GetDisabled,GetHidden,'',0,minMax);
                 end;
 
               fdbft_Currency :
@@ -2179,9 +2204,9 @@ implementation
                   if Assigned(group) then begin
                     inputField:=group.AddNumber;
                   end else begin
-                    inputField:=block.AddNumber;
+                    inputField:=block.AddNumber(blockSize);
                   end;
-                  (inputField as TFRE_DB_INPUT_NUMBER_DESC).Describe(_getText(GetCaptionKey),prefix+GetfieldName,required,GetRequired,GetDisabled,Gethidden,'',2);
+                  (inputField as TFRE_DB_INPUT_NUMBER_DESC).Describe(fldCaption,prefix+GetfieldName,required,GetRequired,GetDisabled,Gethidden,'',2);
                 end;
 
               fdbft_Real64 :
@@ -2196,9 +2221,9 @@ implementation
                   if Assigned(group) then begin
                     inputField:=group.AddNumber;
                   end else begin
-                    inputField:=block.AddNumber;
+                    inputField:=block.AddNumber(blockSize);
                   end;
-                  (inputField as TFRE_DB_INPUT_NUMBER_DESC).Describe(_getText(GetCaptionKey),prefix+GetfieldName,required,GetRequired,obj.GetDisabled,obj.GetHidden);
+                  (inputField as TFRE_DB_INPUT_NUMBER_DESC).Describe(fldCaption,prefix+GetfieldName,required,GetRequired,obj.GetDisabled,obj.GetHidden);
                 end;
 
               fdbft_ObjLink,
@@ -2207,16 +2232,16 @@ implementation
                   if Assigned(group) then begin
                     inputField:=group.AddInput;
                   end else begin
-                    inputField:=block.AddInput;
+                    inputField:=block.AddInput(blockSize);
                   end;
-                  (inputField as TFRE_DB_INPUT_DESC).Describe(_getText(GetCaptionKey),prefix+GetfieldName,required,GetRequired,GetDisabled,GetHidden,GetDefault,validator,valParams,FieldSchemeDefinition.MultiValues,FieldSchemeDefinition.isPass);
+                  (inputField as TFRE_DB_INPUT_DESC).Describe(fldCaption,prefix+GetfieldName,required,GetRequired,GetDisabled,GetHidden,GetDefault,validator,valParams,FieldSchemeDefinition.MultiValues,FieldSchemeDefinition.isPass);
                   if FieldSchemeDefinition.AddConfirm then begin
                     if Assigned(group) then begin
                       inputField:=group.AddInput;
                     end else begin
-                      inputField:=block.AddInput();
+                      inputField:=block.AddInput(blockSize);
                     end;
-                    (inputField as TFRE_DB_INPUT_DESC).Describe(_getText(FREDB_GetGlobalTextKey('input_confirm_prefix'))+' ' + _getText(GetCaptionKey),prefix+GetfieldName + '_confirm',required,GetRequired,
+                    (inputField as TFRE_DB_INPUT_DESC).Describe(_getText(FREDB_GetGlobalTextKey('input_confirm_prefix'))+' ' + fldCaption,prefix+GetfieldName + '_confirm',required,GetRequired,
                                                                 GetDisabled,GetHidden,GetDefault,validator,valParams,FieldSchemeDefinition.MultiValues,FieldSchemeDefinition.isPass,prefix+obj.GetfieldName);
                   end;
                 end;
@@ -2225,9 +2250,9 @@ implementation
                   if Assigned(group) then begin
                     inputField:=group.AddBool;
                   end else begin
-                    inputField:=block.AddBool;
+                    inputField:=block.AddBool(blockSize);
                   end;
-                  (inputField as TFRE_DB_INPUT_BOOL_DESC).Describe(_getText(GetCaptionKey),prefix+GetfieldName,required,GetRequired,GetDisabled,false);
+                  (inputField as TFRE_DB_INPUT_BOOL_DESC).Describe(fldCaption,prefix+GetfieldName,required,GetRequired,GetDisabled,false);
                 end;
 
               fdbft_DateTimeUTC:
@@ -2235,9 +2260,9 @@ implementation
                   if Assigned(group) then begin
                     inputField:=group.AddDate;
                   end else begin
-                    inputField:=block.AddDate;
+                    inputField:=block.AddDate(blockSize);
                   end;
-                  (inputField as TFRE_DB_INPUT_DATE_DESC).Describe(_getText(GetCaptionKey),prefix+GetfieldName,required,GetRequired,GetDisabled,GetHidden,'',validator,valParams);
+                  (inputField as TFRE_DB_INPUT_DATE_DESC).Describe(fldCaption,prefix+GetfieldName,required,GetRequired,GetDisabled,GetHidden,'',validator,valParams);
                 end;
 
               fdbft_Stream:
@@ -2245,18 +2270,18 @@ implementation
                   if Assigned(group) then begin
                     inputField:=group.AddFile;
                   end else begin
-                    inputField:=block.AddFile;
+                    inputField:=block.AddFile(blockSize);
                   end;
-                  (inputField as TFRE_DB_INPUT_FILE_DESC).Describe(_getText(GetCaptionKey),prefix+GetfieldName,required,GetRequired,GetDisabled,Gethidden,'',validator,valParams);
+                  (inputField as TFRE_DB_INPUT_FILE_DESC).Describe(fldCaption,prefix+GetfieldName,required,GetRequired,GetDisabled,Gethidden,'',validator,valParams);
                 end
               else { String fallback }
                 with obj do begin
                   if Assigned(group) then begin
                     inputField:=group.AddInput;
                   end else begin
-                    inputField:=block.AddInput;
+                    inputField:=block.AddInput(blockSize);
                   end;
-                  (inputField as TFRE_DB_INPUT_DESC).Describe(_getText(GetCaptionKey),prefix+GetfieldName,required,GetRequired,GetDisabled,GetHidden,'',validator,valParams,FieldSchemeDefinition.multiValues,FieldSchemeDefinition.isPass);
+                  (inputField as TFRE_DB_INPUT_DESC).Describe(fldCaption,prefix+GetfieldName,required,GetRequired,GetDisabled,GetHidden,'',validator,valParams,FieldSchemeDefinition.multiValues,FieldSchemeDefinition.isPass);
                 end;
             end;
           end;
@@ -2285,6 +2310,11 @@ implementation
     end;
 
     for i := 0 to Length(fields) - 1 do begin
+      if Length(blockSizes)>i then begin
+        blockSize:=blockSizes[i];
+      end else begin
+        blockSize:=TFRE_DB_INPUT_BLOCK_DESC.getDefaultBlockSize;
+      end;
       if fields[i].GetScheme<>'' then begin
         if not GFRE_DBI.GetSystemSchemeByName(fields[i].GetScheme,scheme) then
           raise EFRE_DB_Exception.Create(edb_ERROR,'(B) cannot get scheme '+fields[i].GetScheme);
@@ -2297,27 +2327,27 @@ implementation
           if Assigned(group) then begin
             newGroup:=group.AddGroup;
           end else begin
-            newGroup:=block.AddGroup;
+            newGroup:=block.AddGroup(blockSize);
           end;
           newGroup.Describe(_getText(inputGroup.CaptionKey),fields[i].GetCollapsible,fields[i].GetCollapsed);
-          _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,newGroup,nil);
+          _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,withoutCaptions,newGroup,nil,[]);
         end else begin
           if fields[i].GetType=igd_UsedGroup then begin
             inputGroup:=scheme.GetInputGroup(fields[i].GetGroup);
-            _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,group,block);
+            _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,withoutCaptions,group,block,[]);
           end else begin
             inputGroup := scheme.GetInputGroup(fields[i].GetGroup);
             if Assigned(group) then begin
               newBlock:=group.AddBlock;
             end else begin
-              newBlock:=block.AddBlock;
+              newBlock:=block.AddBlock(blockSize);
             end;
             newBlock.Describe(_getText(inputGroup.CaptionKey),'',fields[i].GetIndentEC);
-            _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,nil,newBlock);
+            _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,withoutCaptions,nil,newBlock,[]);
           end;
         end;
       end else begin
-        _addInput(fields[i],inputPrefix,required,group,block);
+        _addInput(fields[i],inputPrefix,required,group,block,blockSize);
       end;
     end;
   end;
@@ -2370,7 +2400,7 @@ implementation
     end else begin
       Result:=AddGroup.Describe(session.GetDBConnection.FetchTranslateableTextShort(schemeGroup.CaptionKey),collapsible,collapsed);
     end;
-    _addFields(schemeGroup,session,schemeGroup.GroupFields,'',groupPreFix,groupRequired,Result,nil);
+    _addFields(schemeGroup,session,schemeGroup.GroupFields,'',groupPreFix,groupRequired,false,Result,nil,[]);
   end;
 
   procedure TFRE_DB_FORM_DESC.SetElementValue(const elementId, value: String);

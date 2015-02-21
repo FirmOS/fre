@@ -764,6 +764,8 @@ begin
      currentVersionId:='0.9.2';
      CreateModuleText(conn,'machines_modify_vm','Modify','','Modify VM');
      CreateModuleText(conn,'vm_modify_caption','Modfiy Virtual Machine');
+     DeleteModuleText(conn,'vm_form_network_advanced_ip_net');
+     CreateModuleText(conn,'vm_form_network_advanced_ip','IP');
    end;
 end;
 
@@ -1097,12 +1099,12 @@ begin
   for i := 0 to 3 do begin
     idx_str:=IntToStr(i+1);
     block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_'+idx_str),'net'+idx_str);
-    block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,'net'+idx_str,false);
+    block.AddSchemeFormGroupInputs(nicScheme.GetInputGroup('main'),ses,[],'net'+idx_str,false);
     sf:=CWSF(@WEB_AddModifyVMConfigureNetwork);
     sf.AddParam.Describe('id','net'+idx_str);
     cusf:=CWSF(@WEB_AddModifyVMConfigureNetworkCleanup);
     cusf.AddParam.Describe('id','net'+idx_str);
-    button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,cusf);
+    button:=block.AddInputButton(5).Describe('',FetchModuleTextShort(ses,'vm_form_network_advanced_button'),sf,false,cusf);
     ch:=(block.GetFormElement('net'+idx_str+'.nic').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
     if (i<3) then begin
       ch.addDependentInput('net'+IntToStr(i+2),'',fdv_hidden);
@@ -1116,7 +1118,7 @@ begin
   for i := 0 to 7 do begin
     idx_str:=IntToStr(i+1);
     block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_hdd'+idx_str),'hdd'+idx_str);
-    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main_hdd'),ses,'hdd'+idx_str,false);
+    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main_hdd'),ses,[],'hdd'+idx_str,false);
     res.SetElementGroupRequired('hdd'+idx_str+'.hdd_type');
     ch:=(block.GetFormElement('hdd'+idx_str+'.file').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
     if (i<7) then begin
@@ -1133,7 +1135,7 @@ begin
   for i := 0 to 1 do begin
     idx_str:=IntToStr(i+1);
     block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_cd'+idx_str),'cd'+idx_str);
-    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,'cd'+idx_str,false);
+    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,[],'cd'+idx_str,false);
     if (i=0) then begin
       ch:=(block.GetFormElement('cd'+idx_str+'.file').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
       ch.addDependentInput('cd'+IntToStr(i+2),'',fdv_hidden);
@@ -1141,12 +1143,12 @@ begin
   end;
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_usb'),'usb');
-  block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,'usb',false);
+  block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,[],'usb',false);
 
   for i := 0 to 1 do begin
     idx_str:=IntToStr(i+1);
     block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_floppy'+idx_str),'floppy'+idx_str);
-    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,'floppy'+idx_str,false);
+    block.AddSchemeFormGroupInputs(diskScheme.GetInputGroup('main'),ses,[],'floppy'+idx_str,false);
     if (i=0) then begin
       ch:=(block.GetFormElement('floppy'+idx_str+'.file').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
       ch.addDependentInput('floppy'+IntToStr(i+2),'',fdv_hidden);
@@ -1168,7 +1170,7 @@ begin
       ses.GetSessionModuleData(ClassName).FieldPathCreate('AddVMNC_net' + idx_str+'.hostname').AsString:=netObj.Field('hostname').AsString;
       if netObj.FieldExists('ip') then begin
         conn.Fetch(netObj.Field('ip').AsObjectLink,cdbo);
-        ses.GetSessionModuleData(ClassName).FieldPathCreate('AddVMNC_net' + idx_str+'.ip_net').AsObject:=cdbo.CloneToNewObject;
+        ses.GetSessionModuleData(ClassName).FieldPathCreate('AddVMNC_net' + idx_str+'.ip').AsString:=cdbo.Field('ip').AsString;
       end;
       if netObj.FieldExists('gateway') then begin
         conn.Fetch(netObj.Field('gateway').AsObjectLink,cdbo);
@@ -1240,7 +1242,6 @@ var
   res      : TFRE_DB_FORM_DIALOG_DESC;
   scheme   : IFRE_DB_SchemeObject;
   sf       : TFRE_DB_SERVER_FUNC_DESC;
-  block    : TFRE_DB_INPUT_BLOCK_DESC;
   validator: IFRE_DB_ClientFieldValidator;
 begin
   CheckClassVisibility4MyDomain(ses);
@@ -1248,10 +1249,9 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_diag_cap'),600,true,true,false);
 
   GetSystemScheme(TFRE_DB_IPV4,scheme);
-  res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_hostname'),'hostname');
-  block:=res.AddBlock.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_ip_net'));
-  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ip_net'),ses,'ip_net',false);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_hostname'),'hostname'); //FIXXME - use chooser
   GFRE_DBI.GetSystemClientFieldValidator('ip',validator);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_ip'),'ip',false,false,false,false,'',validator);
   res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_gateway'),'gateway',false,false,false,false,'',validator);
   res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_dns1'),'dns1',false,false,false,false,'',validator);
   res.AddInput.Describe(FetchModuleTextShort(ses,'vm_form_network_advanced_dns2'),'dns2',false,false,false,false,'',validator);
@@ -1532,13 +1532,13 @@ begin
       if configObj.FieldExists('hostname') and not configObj.Field('hostname').IsSpecialClearMarked then begin
         netInterfaceObjs[i].Field('hostname').AsString:=configObj.Field('hostname').AsString;
       end;
-      if configObj.FieldExists('ip_net') and not configObj.FieldPath('ip_net.ip').IsSpecialClearMarked then begin
-        if hnColl.GetIndexedObjsFieldval(configObj.FieldPath('ip_net.ip'),ipDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
+      if configObj.FieldExists('ip') and not configObj.FieldPath('ip').IsSpecialClearMarked then begin
+        if hnColl.GetIndexedObjsFieldval(configObj.FieldPath('ip'),ipDbo,'def',FREDB_G2H(zone.DomainID))>0 then begin
           netInterfaceObjs[i].Field('ip').AsObjectLink:=ipDbo[0].UID;
         end else begin
           ip:=TFRE_DB_IPV4.CreateForDB;
           ip.SetDomainID(zone.DomainID);
-          ipScheme.SetObjectFieldsWithScheme(configObj.Field('ip_net').AsObject,ip,true,conn);
+          ipScheme.SetObjectFieldsWithScheme(configObj.Field('ip').AsObject,ip,true,conn);
           CheckDbResult(hnColl.Store(ip.CloneToNewObject()));
           netInterfaceObjs[i].Field('ip').AsObjectLink:=ip.UID;
         end;
