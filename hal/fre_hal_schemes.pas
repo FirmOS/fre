@@ -1609,7 +1609,7 @@ begin
   writeln('SWL: IPV4 DHCP START');
   linkname   := Field('datalinkname').asstring;
   aliasname  := GetAddrObjAlias;
-  res := create_ipv4dhcp(linkname,aliasname,errorstring)
+  res := create_ipv4dhcp(linkname,aliasname,errorstring);
   if res then
     begin
       result.Field('STARTED').asboolean:=true;
@@ -2856,7 +2856,7 @@ begin
 
   if FieldExists('protocol') then
     begin
-      cmd := cmd +' proto '+lowercase(Field('protocol').asstring);
+      cmd := cmd +' proto '+lowercase(StringReplace(Field('protocol').asstring,'_','/',[]));
     end;
 
   fromto :='all';

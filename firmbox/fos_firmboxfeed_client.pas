@@ -651,7 +651,7 @@ begin
 
 //  TestzoneEnum;
 //  TestSvcZone;
-  TestDatalink;
+//  TestDatalink;
 
   GFRE_TF.Get_Lock(liveupdate_lock);
   live_all := GFRE_DBI.NewObject;

@@ -46,39 +46,47 @@ var
   svc           : TFRE_DB_SERVICE;
 
   function StartService(const obj: IFRE_DB_Object):boolean;
-  var ip     : TFRE_DB_IP_HOSTNET;
-      ip4    : TFRE_DB_IPV4_HOSTNET;
+  var ip     : TFRE_DB_IP;
+      r      : TFRE_DB_IP_ROUTE;
       dl     : TFRE_DB_DATALINK;
       resdbo : IFRE_DB_Object;
 
   begin
     result := false;
     writeln('SWL: START');
-    if obj.IsA(TFRE_DB_IP_HOSTNET,ip) then
+    if obj.IsA(TFRE_DB_IP,ip) then
       begin
+        writeln(ip.Parent.DumpToString);
         if ip.Parent.IsA(TFRE_DB_DATALINK,dl) then
           ip.Field('datalinkname').asstring := dl.ObjectName;
-//        ip.Field('datalinkname').asstring :='e1000g0';  //DEBUG
-//        if obj.isA(TFRE_DB_IPV4_HOSTNET,ip4) then       //DEBUG
-//          ip.Field('dhcp').asboolean := true;           //DEBUG
         resdbo := ip.StartService;
+        result := resdbo.Field('started').asboolean;
+      end;
+    if obj.IsA(TFRE_DB_IP_ROUTE,r) then
+      begin
+        resdbo := r.StartService;
         result := resdbo.Field('started').asboolean;
       end;
   end;
 
   function StopService(const obj: IFRE_DB_Object):boolean;
-  var ip     : TFRE_DB_IP_HOSTNET;
+  var ip     : TFRE_DB_IP;
+      r      : TFRE_DB_IP_ROUTE;
       dl     : TFRE_DB_DATALINK;
       resdbo : IFRE_DB_Object;
   begin
     result :=false;
     writeln('SWL: STOP');
-    if obj.IsA(TFRE_DB_IP_HOSTNET,ip) then
+    if obj.IsA(TFRE_DB_IP,ip) then
       begin
         if ip.Parent.IsA(TFRE_DB_DATALINK,dl) then
           ip.Field('datalinkname').asstring := dl.ObjectName;
-        //ip.Field('datalinkname').asstring :='e1000g0';  //DEBUG
         resdbo := ip.StopService;
+        result := resdbo.Field('stopped').asboolean;
+      end;
+    if obj.IsA(TFRE_DB_IP_ROUTE,r) then
+      begin
+        resdbo := r.StopService;
         result := resdbo.Field('stopped').asboolean;
       end;
   end;
@@ -127,7 +135,7 @@ var
     if obj.IsA(TFRE_DB_DATALINK,dl) then
       begin
         writeln('SWL: NOW DATALINK ',dl.ObjectName,' ',obj.UID.AsHexString);
-        resdbo := dl.RIF_CreateOrUpdateServices;
+        resdbo := dl.RIF_CreateOrUpdateServices(self);
         resdbo.ForAllFields(@_RemoveIPHostnetService,true);
 //        writeln(resdbo.DumpToString());
       end
@@ -144,7 +152,7 @@ var
             else
               begin
                 writeln('SWL CREATE OR UPDATE SERVICE ',svc.getFMRI);
-                resdbo := svc.RIF_CreateOrUpdateService;
+                resdbo := svc.RIF_CreateOrUpdateService(self);
               //  writeln(resdbo.DumpToString());
               end;
           end;
