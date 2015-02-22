@@ -431,6 +431,22 @@ begin
     CreateModuleText(conn,'ip_store_error_exists_msg','Error: The given IP already exists!');
     CreateModuleText(conn,'ip_store_error_base_exists_wrong_type_cap','Error');
     CreateModuleText(conn,'ip_store_error_base_exists_wrong_type_msg','Error: The given Base IP already exists and is not declared as Base IP!');
+
+    CreateModuleText(conn,'nat_grid_interface','Interface');
+    CreateModuleText(conn,'nat_grid_number','Number');
+    CreateModuleText(conn,'nat_grid_command','Command');
+    CreateModuleText(conn,'nat_grid_source','Source');
+    CreateModuleText(conn,'nat_grid_protocol','Protocol');
+    CreateModuleText(conn,'nat_grid_destination','Destination');
+    CreateModuleText(conn,'nat_grid_ipversion','IP Version');
+
+    CreateModuleText(conn,'nat_grid_descr_delimiter',' - ');
+    CreateModuleText(conn,'nat_grid_descr_source_to','Source to: %src_to_str%');
+    CreateModuleText(conn,'nat_grid_descr_frag','Frag');
+    CreateModuleText(conn,'nat_grid_descr_age','Age: %age_str%');
+    CreateModuleText(conn,'nat_grid_descr_clamp','Clamp: %clamp_str%');
+    CreateModuleText(conn,'nat_grid_descr_round_robin','Round Robin');
+    CreateModuleText(conn,'nat_grid_descr_proxy','Proxy: %proxy_str%');
   end;
 end;
 
@@ -460,6 +476,66 @@ var
     transformed_object.Field('label').AsString:=transformed_object.Field('baseIp').AsString + '/' + input.Field('subnet_bits').AsString;
   end;
 
+  procedure _setNATColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    delimiter: String;
+    proxy_str: TFRE_DB_String;
+  begin
+    //SOURCE
+    transformed_object.Field('source').AsString:=transformed_object.Field('src_ip').AsString;
+    if transformed_object.Field('src_port').AsString<>'' then begin
+      transformed_object.Field('source').AsString:=transformed_object.Field('source').AsString + ':' + input.Field('src_port').AsString;
+    end;
+    //DESTINATION
+    transformed_object.Field('destination').AsString:=transformed_object.Field('dst_ip').AsString;
+    if transformed_object.Field('dst_port_mode').AsString='AUTO' then begin
+      transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ' (auto)';
+    end else begin
+      if (transformed_object.Field('dst_port_1').AsString<>'') and (transformed_object.Field('dst_port_2').AsString<>'') then begin
+        transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ' ('+input.Field('dst_port_1').AsString+':'+input.Field('dst_port_2').AsString+')';
+      end else begin
+        if (transformed_object.Field('dst_port_1').AsString<>'') then begin
+          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ':'+input.Field('dst_port_1').AsString;
+        end;
+      end;
+    end;
+    //DESCR
+
+    //CreateModuleText(conn,'nat_grid_descr_frag','Frag');
+    //CreateModuleText(conn,'nat_grid_descr_age','Age: %age_str%');
+    //CreateModuleText(conn,'nat_grid_descr_clamp','Clamp: %clamp_str%');
+    //CreateModuleText(conn,'nat_grid_descr_round_robin','Round Robin');
+    //CreateModuleText(conn,'nat_grid_descr_proxy','Proxy: %proxy_str%');
+
+    delimiter:='';
+    if transformed_object.Field('src_to_ip').AsString<>'' then begin
+      transformed_object.Field('descr').AsString:=StringReplace(langres[1],'%src_to_str%',transformed_object.Field('src_to_ip').AsString,[rfReplaceAll]);
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('option_frag').AsString='1' then begin
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + langres[2];
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('option_age').AsString<>'' then begin
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[3],'%age_str%',transformed_object.Field('option_age').AsString,[rfReplaceAll]);
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('option_clamp').AsString<>'' then begin
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[4],'%clamp_str%',transformed_object.Field('option_clamp').AsString,[rfReplaceAll]);
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('option_roundrobin').AsString='1' then begin
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + langres[5];
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('proxy_name').AsString<>'' then begin
+      proxy_str:=transformed_object.Field('proxy_name').AsString;
+      if transformed_object.Field('proxy_port').AsString<>'' then begin
+        proxy_str:=proxy_str + ':' + transformed_object.Field('proxy_port').AsString;
+      end;
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[6],'%proxy_str%',proxy_str,[rfReplaceAll]);
+    end;
+  end;
 
 begin
   inherited MySessionInitializeModule(session);
@@ -558,8 +634,31 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('number','','NUMBER');
+      AddOneToOnescheme('number','',FetchModuleTextShort(session,'nat_grid_number'));
+      AddOneToOnescheme('command','',FetchModuleTextShort(session,'nat_grid_command'));
+      AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'nat_grid_interface'));
+      AddOneToOnescheme('source','',FetchModuleTextShort(session,'nat_grid_source'));
+      AddMatchingReferencedField(['SRC_ADDR>TFRE_DB_IP'],'ip','src_ip','',false);
+      AddOneToOnescheme('src_port','','',dt_string,false);
+      AddOneToOnescheme('protocol','',FetchModuleTextShort(session,'nat_grid_protocol'));
+      AddOneToOnescheme('destination','',FetchModuleTextShort(session,'nat_grid_destination'));
+      AddMatchingReferencedField(['DST_ADDR>TFRE_DB_IP'],'ip','dst_ip','',false);
+      AddOneToOnescheme('dst_port_1','','',dt_string,false);
+      AddOneToOnescheme('dst_port_1','','',dt_string,false);
+      AddOneToOnescheme('dst_port_mode','','',dt_string,false);
+      AddOneToOnescheme('ipversion','',FetchModuleTextShort(session,'nat_grid_ipversion'));
+      AddOneToOnescheme('descr','','',dt_description);
+      AddMatchingReferencedField(['SRC_TO_ADDR>TFRE_DB_IP'],'ip','src_to_ip','',false);
+      AddOneToOnescheme('option_frag','','',dt_string,false);
+      AddOneToOnescheme('option_age','','',dt_string,false);
+      AddOneToOnescheme('option_clamp','','',dt_string,false);
+      AddOneToOnescheme('option_roundrobin','','',dt_string,false);
+      AddOneToOnescheme('proxy_name','','',dt_string,false);
+      AddOneToOnescheme('proxy_port','','',dt_string,false);
       AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
+      SetSimpleFuncTransformNested(@_setNATColumns,[FetchModuleTextShort(session,'nat_grid_descr_delimiter'),FetchModuleTextShort(session,'nat_grid_descr_source_to'),FetchModuleTextShort(session,'nat_grid_descr_frag'),
+                                                    FetchModuleTextShort(session,'nat_grid_descr_age'),FetchModuleTextShort(session,'nat_grid_descr_clamp'),FetchModuleTextShort(session,'nat_grid_descr_round_robin'),
+                                                    FetchModuleTextShort(session,'nat_grid_descr_proxy')]);
       AddFulltextFilterOnTransformed(['number']);
     end;
 
@@ -571,6 +670,8 @@ begin
       SetUseDependencyAsUidFilter('fw_uid');
       servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);
+      //Orders.AddOrderDef('ipversion',true,true); //FIXXME - Heli - does not work?!?
+      //Orders.AddOrderDef('number',true,true);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -1374,6 +1475,7 @@ var
   ipDbo    : IFRE_DB_ObjectArray;
   IP       : TFRE_DB_IP;
   isModify : Boolean;
+  isIP4    : Boolean;
 begin
   if input.FieldExists('natId') then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('natId').AsString),dbo));
@@ -1386,11 +1488,13 @@ begin
             conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,dbo.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
+    isIP4:=true;
   end else begin
     if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6,dbo.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_SUBNET,dbo.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
+    isIP4:=false;
   end;
 
   ipcoll:=conn.GetCollection(CFRE_DB_IP_COLLECTION);
@@ -1402,7 +1506,11 @@ begin
 
   if input.FieldPath('data.subnet').AsString='_new_' then begin
     //create new subnet
-    subnet:=TFRE_DB_IPV4_SUBNET.CreateForDB;
+    if isIP4 then begin
+      subnet:=TFRE_DB_IPV4_SUBNET.CreateForDB;
+    end else begin
+      subnet:=TFRE_DB_IPV6_SUBNET.CreateForDB;
+    end;
     subnet.SetDomainID(dbo.DomainID);
     subnet.Field('subnet_bits').AsInt16:=input.FieldPath('data.subnet_bits').AsInt16;
     CheckDbResult(conn.GetCollection(CFRE_DB_SUBNET_COLLECTION).Store(subnet.CloneToNewObject()));
@@ -1414,27 +1522,34 @@ begin
       end;
       baseIp:=ipDbo[0].Implementor_HC as TFRE_DB_IP;
     end else begin
-      baseIp:=TFRE_DB_IPV4.CreateForDB;
+      if isIP4 then begin
+        baseIp:=TFRE_DB_IPV4.CreateForDB;
+      end else begin
+        baseIp:=TFRE_DB_IPV6.CreateForDB;
+      end;
       baseIp.SetDomainID(dbo.DomainID);
       baseIp.Field('ip').AsString:=input.FieldPath('data.base_ip').AsString;
+      baseIp.ObjectName:=baseIp.Field('ip').AsString;
       baseIp.Field('subnet').AsObjectLink:=subnet.UID;
       baseIp.Field('ip_type').AsString:='BASE';
       CheckDbResult(ipcoll.Store(baseIp.CloneToNewObject()));
     end;
 
     subnet.Field('base_ip').AsObjectLink:=baseIp.UID;
+    subnet.ObjectName:=baseIp.Field('ip').AsString + '/' + subnet.Field('subnet_bits').AsString;
     CheckDbResult(conn.Update(subnet.CloneToNewObject));
   end else begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.FieldPath('data.subnet').AsString),TFRE_DB_IP_SUBNET,subnet));
   end;
 
-  if input.Field('ipversion').AsString='ipv4' then begin
+  if isIP4 then begin
     IP:=TFRE_DB_IPV4.CreateForDB;
   end else begin
     IP:=TFRE_DB_IPV6.CreateForDB;
   end;
   IP.SetDomainID(dbo.DomainID);
   IP.Field('ip').AsString:=input.FieldPath('data.ip').AsString;
+  IP.ObjectName:=IP.Field('ip').AsString;
   IP.Field('subnet').AsObjectLink:=subnet.UID;
   IP.Field('ip_type').AsString:='IP';
   CheckDbResult(ipcoll.Store(IP.CloneToNewObject()));

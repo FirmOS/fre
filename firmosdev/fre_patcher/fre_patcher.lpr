@@ -1340,21 +1340,16 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
     g_domain_id    : TFRE_DB_GUID;
     rcoll          : IFRE_DB_COLLECTION;
     sharecoll      : IFRE_DB_COLLECTION;
-    extColl        : IFRE_DB_COLLECTION;
-    hwColl         : IFRE_DB_COLLECTION;
     vf_id          : TFRE_DB_GUID;
     voip_id        : TFRE_DB_GUID;
     tel_id_22      : TFRE_DB_GUID;
     tel_id_46      : TFRE_DB_GUID;
     tel_id_48      : TFRE_DB_GUID;
     g_def_domain_id : TFRE_DB_GUID;
-    obj             : IFRE_DB_Object;
-    machine         : TFRE_DB_MACHINE;
     global_tmpl_uid : TFRE_DB_GUID;
     fbz_tmpl_uid    : TFRE_DB_GUID;
     root_tmpl_uid   : TFRE_DB_GUID;
     g_vmdisk_id     : TFRE_DB_GUID;
-    zone            : TFRE_DB_ZONE;
     fwrule_coll     : IFRE_DB_COLLECTION;
     fwpool_coll     : IFRE_DB_COLLECTION;
     fwpoolent_coll  : IFRE_DB_COLLECTION;
@@ -2097,14 +2092,26 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
        end;
 
        function AddNAT(const command:string; const intf:TFRE_DB_GUID; const protocol : string): TFRE_DB_FIREWALL_NAT;
+
+         function _protocolToEnum(const str:String):String;
+         begin
+           Result:='';
+           case str of
+             'tcp',
+             'udp': Result:=UpperCase(str);
+             'tcp/udp': Result:='TCP_UDP';
+           end;
+         end;
+
        begin
          result := TFRE_DB_FIREWALL_NAT.CreateForDB;
          result.Field('firewall_id').AsObjectLink := fw_uid;
+         result.Field('ipversion').AsString := 'IPV4'; //FIXXME
          result.SetDomainID(g_domain_id);
          result.Field('number').asuint32          := rnr;
          inc(rnr);
-         result.Field('command').asstring         := command;
-         result.Field('protocol').asstring          := protocol;
+         result.Field('command').asstring         := UpperCase(command);
+         result.Field('protocol').asstring          := _protocolToEnum(protocol);
          result.Field('interface').AsObjectLink   := intf;
        end;
 
@@ -2398,13 +2405,13 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      n := AddNAT('bimap',int_link_id,'tcp');
      n.Field('src_addr').AsObjectLink:=lan_ip_id;
      n.Field('dst_addr').AsObjectLink:=int_ip_id;
-     n.Field('dst_port_mode').asstring:='auto';
+     n.Field('dst_port_mode').asstring:='AUTO';
      SaveNAT(n);
 
      n := AddNAT('map-block',int_link_id,'tcp/udp');
      n.Field('src_addr').AsObjectLink:=lan_ip_id;
      n.Field('dst_addr').AsObjectLink:=int_ip_id;
-     n.Field('dst_port_mode').asstring:='auto';
+     n.Field('dst_port_mode').asstring:='AUTO';
      SaveNAT(n);
 
      n := AddNAT('rdr',int_link_id,'tcp');
