@@ -190,13 +190,7 @@ const
   cFRE_DB_ST_ETAG                = '#ETG#';
   cFRE_DB_SYS_NOCHANGE_VAL_STR   = '*$NOCHANGE*';   { used to indicate a DONT CHANGE THE FIELD in translating from JSON <-> DBO }
   cFRE_DB_SYS_CLEAR_VAL_STR      = '*$CLEAR*';      { used to indicate a CLEAR FIELD in translating from JSON <-> DBO  }
-  //cFRE_DB_SYS_ORDER_REF_KEY      = '*$ORK*';      { used to backlink from ordered data(key) to base transformed data }
-  cFRE_DB_SYS_PARENT_PATH_FULL   = '*$_PPATH_F*';   { used in a parent child transform to set the pp in the child, full path }
-  //cFRE_DB_SYS_PARENT_PATH_PART   = '*$_PPATH_P*'; { used in a parent child transform to set the pp in the child, immediate parent }
-  cFRE_DB_SYS_TRANS_IN_OBJ_WAS_A = '*$_TIOWA*';     { used in the transform as implicit field }
-  cFRE_DB_SYS_T_OBJ_TOTAL_ORDER  = '*$_TOTO*';      { used in the transform as implicit field, store total order key }
   cFRE_DB_SYS_T_LMO_TRANSID      = '*$_LMOTID*';    { used in the persistence layer to mark the last id that modified the object }
-  cFRE_DB_SYS_TAG_ORDER_CHANGED  = '*$_TAGOC*';     { used in the compare qry algorithm to mark an order change }
   cFRE_DB_SYS_STAT_METHODPOINTER = '*$_SMP*';       { used to call a stattransformation }
 
   cFRE_DB_CLN_CHILD_CNT          = '_children_count_';
@@ -812,8 +806,6 @@ type
     function        IsA                                (const schemename    : shortstring):Boolean;
     function        IsA                                (const IsSchemeclass : TFRE_DB_OBJECTCLASSEX) : Boolean;
     function        IsA                                (const IsSchemeclass : TFRE_DB_OBJECTCLASSEX ; var obj ) : Boolean;
-    function        PreTransformedWasA                 (const schemename:shortstring):Boolean;
-    function        PreTransformedScheme               :ShortString;
     function        IsObjectRoot                       : Boolean;
     procedure       SaveToFile                         (const filename:TFRE_DB_String);
 
@@ -2007,8 +1999,6 @@ type
     function        IsA                                (const schemename:shortstring):Boolean;
     function        IsA                                (const IsSchemeclass : TFRE_DB_OBJECTCLASSEX) : Boolean;
     function        IsA                                (const IsSchemeclass : TFRE_DB_OBJECTCLASSEX ; var obj ) : Boolean;
-    function        PreTransformedWasA                 (const schemename:shortstring):Boolean;
-    function        PreTransformedScheme               :ShortString;
     function        IsObjectRoot                       : Boolean;
     procedure       SaveToFile                         (const filename:TFRE_DB_String);
     function        ReferencesObjectsFromData          : Boolean;
@@ -2096,6 +2086,11 @@ type
 
   end;
 
+  TFRE_DB_TRANSFORM_UTIL_DATA_BASE=class
+    function GetObj               : IFRE_DB_Object;virtual;abstract;
+    function PreTransformedScheme : Shortstring;virtual;abstract;
+  end;
+
   { TFRE_DB_FILTER_BASE }
 
   TFRE_DB_FILTER_BASE=class
@@ -2109,7 +2104,7 @@ type
   public
     function    GetKeyName              : TFRE_DB_NameType;                     { get a reproducable unique key, depending on the filter field, values and settings}
     function    GetDefinitionKey        : TFRE_DB_NameType;virtual;abstract;    { return true if the filter hits }
-    function    CheckFilterMiss         (const obj : IFRE_DB_Object ; var flt_errors : Int64):boolean;virtual;abstract; { return TRUE, when the filter misses the value (!) }
+    function    CheckFilterMiss         (const ud  : TFRE_DB_TRANSFORM_UTIL_DATA_BASE ; var flt_errors : Int64):boolean;virtual;abstract; { return TRUE, when the filter misses the value (!) }
     constructor Create                  (const key : TFRE_DB_NameType);
     function    Clone                   : TFRE_DB_FILTER_BASE;virtual; abstract;
     function    IsARootNodeOnlyFilter   : Boolean;
@@ -3497,12 +3492,9 @@ end;
   procedure FREDB_ApplyNotificationBlockToNotifIF_Connection (const block: IFRE_DB_Object ; const deploy_if : IFRE_DB_DBChangedNotificationConnection);
   procedure FREDB_ApplyNotificationBlockToNotifIF_Session    (const block: IFRE_DB_Object ; const deploy_if : IFRE_DB_DBChangedNotificationSession);
 
-  function  FREDB_PP_ObjectInParentPath                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_String): boolean;
-  procedure FREDB_PP_AddParentPathToObj                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_String);
-  procedure FREDB_PP_SetParentPathToObj                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_StringArray);
-  function  FREDB_PP_GetParentPaths                           (const obj : IFRE_DB_Object):TFRE_DB_StringArray;
+  //function  FREDB_PP_ObjectInParentPath                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_String): boolean;
+  //procedure FREDB_PP_AddParentPathToObj                       (const obj : IFRE_DB_Object ; const pp  : TFRE_DB_String);
   function  FREDB_PP_ExtendParentPath                         (const uid : TFRE_DB_GUID ; const pp :TFRE_DB_String):TFRE_DB_String;
-  function  FREDB_PP_ExtendAllParentPaths                     (const uid : TFRE_DB_GUID ; const ppa :TFRE_DB_StringArray):TFRE_DB_StringArray;
 
   function  FREDB_CreateIndexDefFromObject                    (const ix_def_o : IFRE_DB_Object): TFRE_DB_INDEX_DEF;
   function  FREDB_CreateIndexDefArrayFromObject               (const ix_def_ao : IFRE_DB_Object): TFRE_DB_INDEX_DEF_ARRAY;
@@ -9364,16 +9356,6 @@ begin
   result := FImplementor.IsA(IsSchemeclass,obj);
 end;
 
-function TFRE_DB_ObjectEx.PreTransformedWasA(const schemename: shortstring): Boolean;
-begin
-  result := FImplementor.PreTransformedWasA(schemename);
-end;
-
-function TFRE_DB_ObjectEx.PreTransformedScheme: ShortString;
-begin
-  result := FImplementor.PreTransformedScheme;
-end;
-
 function TFRE_DB_ObjectEx.IsObjectRoot: Boolean;
 begin
   result := FImplementor.IsObjectRoot;
@@ -11541,79 +11523,7 @@ begin
       end;
 end;
 
-function FREDB_PP_ObjectInParentPath(const obj: IFRE_DB_Object; const pp: TFRE_DB_String): boolean;
-var ppa : TFRE_DB_StringArray;
-    fld : IFRE_DB_Field;
-begin
-  if obj.FieldOnlyExisting(cFRE_DB_SYS_PARENT_PATH_FULL,fld) then
-    begin
-      ppa    := fld.AsStringArr;
-      result := FREDB_StringInArray(pp,ppa);
-    end
-  else
-    result := false;
-end;
 
-function FREDB_PP_ObjectInParentPathLastParent(const obj: IFRE_DB_Object; const pp: string): boolean;
-var ppa    : TFRE_DB_StringArray;
-    fld    : IFRE_DB_Field;
-    pparta : TFRE_DB_StringArray;
-    ppart  : string;
-    i      : NativeInt;
-begin
-  result := false;
-  if obj.FieldOnlyExisting(cFRE_DB_SYS_PARENT_PATH_FULL,fld) then
-    begin
-      ppa    := fld.AsStringArr;
-      for i := 0 to high(ppa) do
-        begin
-          FREDB_SeperateString(ppa[i],',',pparta);
-          if Length(pparta)>0 then
-            ppart := pparta[high(pparta)]
-          else
-            ppart := '';
-          if pp=ppart then
-            exit(true);
-        end;
-    end;
-end;
-
-procedure FREDB_PP_AddParentPathToObj(const obj: IFRE_DB_Object; const pp: TFRE_DB_String);
-var ppa   : TFRE_DB_StringArray;
-    //fld   : IFRE_DB_Field;
-    //ppart : string;
-
-begin
-  ppa := obj.Field(cFRE_DB_SYS_PARENT_PATH_FULL).AsStringArr;
-  if FREDB_StringInArray(pp,ppa) then begin
-    exit;//can happen if skipclasses are used and obj is root of more than one skiped object
-  end;
-  SetLength(ppa,Length(ppa)+1);
-
-  ppa[high(ppa)] := pp;
-  obj.Field(cFRE_DB_SYS_PARENT_PATH_FULL).AsStringArr := ppa;
-
-  //var
-  //    tr_obj.Field(cFRE_DB_SYS_PARENT_PATH_FULL).AsString := pp;
-  //    ppart := GFRE_BT.SepRight(pp,',');
-  //    if ppart='' then
-  //      ppart := pp;
-  //    tr_obj.Field(cFRE_DB_SYS_PARENT_PATH_PART).AsString := ppart;
-end;
-
-procedure FREDB_PP_SetParentPathToObj(const obj: IFRE_DB_Object; const pp: TFRE_DB_StringArray);
-begin
-  obj.Field(cFRE_DB_SYS_PARENT_PATH_FULL).AsStringArr := pp;
-end;
-
-function FREDB_PP_GetParentPaths(const obj: IFRE_DB_Object): TFRE_DB_StringArray;
-var fld : IFRE_DB_Field;
-begin
-  if obj.FieldOnlyExisting(cFRE_DB_SYS_PARENT_PATH_FULL,fld) then
-    result := fld.AsStringArr
-  else
-    result := nil;
-end;
 
 function FREDB_PP_ExtendParentPath(const uid: TFRE_DB_GUID; const pp: TFRE_DB_String): TFRE_DB_String;
 begin
@@ -11621,15 +11531,6 @@ begin
     result := uid.AsHexString
   else
     result := uid.AsHexString+'@'+pp; { extend reverse (!) to match client spec }
-end;
-
-function FREDB_PP_ExtendAllParentPaths(const uid: TFRE_DB_GUID; const ppa: TFRE_DB_StringArray): TFRE_DB_StringArray;
-var
-  i: NativeInt;
-begin
-  SetLength(result,Length(ppa));
-  for i:=0 to high(ppa) do
-    result[i] := FREDB_PP_ExtendParentPath(uid,ppa[i]);
 end;
 
 

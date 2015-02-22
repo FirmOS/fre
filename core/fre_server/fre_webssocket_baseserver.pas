@@ -105,6 +105,8 @@ type
     FGotLen        : QWord;
     FWSStartOpcode : Byte;
     FWSDataframe   : RawByteString;
+    FErrorString   : String;
+    FErrorCode     : NativeInt;
 
     FWebSocket_Protocol      : String;
     FWSSockModeProtoVersion  : TFRE_WEBSOCKET_MODE;
@@ -125,7 +127,7 @@ type
     procedure   ReceivedFromClient(const opcode:byte ; const dataframe : RawByteString);virtual;
   end;
 
-  TFRE_VNC_PROXY_STATE=(vps_NOT_CONNECTED,vps_READ_RFB_VERSION_VNC2WC,vps_RFB_VERSION_SENT_WC2VNC,vps_RFB_VERSION_SENT_AUTH_WC2VNC,vps_RFB_VERSION_SENT_CLIENT_INIT_WC2VNC,vps_SHUFFELING);
+  TFRE_VNC_PROXY_STATE=(vps_NOT_CONNECTED,vps_READ_RFB_VERSION_VNC2WC,vps_RFB_VERSION_SENT_WC2VNC,vps_RFB_VERSION_SENT_AUTH_WC2VNC,vps_RFB_VERSION_SENT_CLIENT_INIT_WC2VNC,vps_SHUFFELING,vps_FAILED);
 
   { TFRE_WEBSOCKET_SERVERHANDLER_FIRMOS_VNC_PROXY }
 
@@ -406,6 +408,7 @@ begin
 end;
 
 procedure TFRE_WEBSOCKET_SERVERHANDLER_FIRMOS_VNC_PROXY.NewProxyChannel(const proxychan: IFRE_APSC_CHANNEL; const event: TAPSC_ChannelState; const errorstring: string; const errorcode: NativeInt);
+var msg : String;
 begin
   if event = ch_NEW_CS_CONNECTED then
     begin
@@ -414,10 +417,18 @@ begin
      FVNCProxyChannel.ch_SetOnDisconnnect(@VNC_ProxyChannelDisconnect);
      FVNCProxyChannel.ch_SetOnReadData(@VNC_ProxyChannelReadData);
      FVNCProxyChannel.CH_Enable_Reading;
-     writeln('PART 2 - SETUP VNC PROXY - CHANMANGER ',proxychan.cs_GetChannelManager.GetID);
+     //writeln('PART 2 - SETUP VNC PROXY - CHANMANGER ',proxychan.cs_GetChannelManager.GetID);
     end
   else
-    GFRE_BT.CriticalAbort('new vnc proxy connect / error handle this '+inttostr(ord(event)));
+    begin
+      FProxyState  := vps_FAILED; // TODO : If channel gone, maybe instance is bad - TODO Rework, let the Proxy channel decide the free decision
+      //FErrorString := errorstring;
+      //FErrorCode   := errorcode; { Proxychannel does autofinalize }
+      msg := '-> WEBSOCKET PROXY TO '+proxychan.CH_GetVerboseDesc+' FAILED : '+errorstring;
+      GFRE_DBI.LogError(dblc_WEBSOCK,msg);
+      proxychan.cs_Finalize;
+      Free;
+    end;
 end;
 
 procedure TFRE_WEBSOCKET_SERVERHANDLER_FIRMOS_VNC_PROXY.VNC_ProxyChannelDisconnect(const channel: IFRE_APSC_CHANNEL);

@@ -115,7 +115,6 @@ type
      FHasContent                          : boolean;
      FResponse                            : String;
      FSSL_Enabled                         : boolean;
-     //FWriteQ                              : IFOS_LFQ;
      FResponseHeaders                     : Array[TFRE_HTTP_ResponseHeaders] of String;
      FResponseEntityHeaders               : Array[TFRE_HTTP_ResponseEntityHEaders] of String;
      FHttpBase                            : IFRE_HTTP_BASESERVER;

@@ -658,6 +658,8 @@ type
     FSSL_Enabled       : Boolean;
     FFinalizecalled    : Boolean;
     FDisconnectHandled : Boolean;
+    FAutoFinalize      : Boolean;
+
     procedure   ReadDataEvent          ;
     procedure   WriteDataEvent         ;
     procedure   InputBufferEvent       (const bufinfo : Pevbuffer_cb_info);
@@ -670,9 +672,9 @@ type
 
   protected
     procedure   SetupServedSocketEvBase (fd : cint ; new_sa : TFCOM_SOCKADDRSTORAGE ; new_sal : cInt ; newchannelcb : TFRE_APSC_CHANNEL_CHANGE_EVENT ; const ctx_owner : TFRE_APSC_CTX_THREAD);
-    procedure   SetupClientSocketTCP    (new_sa : TFCOM_SOCKADDRSTORAGE ; new_sal : cInt ; bind_sa : TFCOM_SOCKADDRSTORAGE ; bind_sal : cInt ; const id: TFRE_APSC_ID ; readevent,discoevent : TFRE_APSC_CHANNEL_EVENT ; const status_ev : TFRE_APSC_CHANNEL_CHANGE_EVENT ; const ctx_owner : TFRE_APSC_CTX_THREAD);
-    procedure   SetupClientSocketDNS    (const host : string ; port : NativeInt          ; bind_sa : TFCOM_SOCKADDRSTORAGE ; bind_sal : cInt ; const id: TFRE_APSC_ID ; readevent,discoevent : TFRE_APSC_CHANNEL_EVENT ; const status_ev : TFRE_APSC_CHANNEL_CHANGE_EVENT ; const ctx_owner : TFRE_APSC_CTX_THREAD);
-    procedure   SetupClientSocketUX     (const special_file : Shortstring ; const id : ShortString ; readevent,discoevent : TFRE_APSC_CHANNEL_EVENT ; const status_ev : TFRE_APSC_CHANNEL_CHANGE_EVENT);
+    procedure   SetupClientSocketTCP    (new_sa : TFCOM_SOCKADDRSTORAGE ; new_sal : cInt ; bind_sa : TFCOM_SOCKADDRSTORAGE ; bind_sal : cInt ; const id: TFRE_APSC_ID ; readevent,discoevent : TFRE_APSC_CHANNEL_EVENT ; const status_ev : TFRE_APSC_CHANNEL_CHANGE_EVENT ; const ctx_owner : TFRE_APSC_CTX_THREAD ; const auto_finalize:boolean);
+    procedure   SetupClientSocketDNS    (const host : string ; port : NativeInt          ; bind_sa : TFCOM_SOCKADDRSTORAGE ; bind_sal : cInt ; const id: TFRE_APSC_ID ; readevent,discoevent : TFRE_APSC_CHANNEL_EVENT ; const status_ev : TFRE_APSC_CHANNEL_CHANGE_EVENT ; const ctx_owner : TFRE_APSC_CTX_THREAD ; const auto_finalize:boolean);
+    procedure   SetupClientSocketUX     (const special_file : Shortstring ; const id : ShortString ; readevent,discoevent : TFRE_APSC_CHANNEL_EVENT ; const status_ev : TFRE_APSC_CHANNEL_CHANGE_EVENT ; const auto_finalize:boolean);
     //procedure   StartClientSockConnect  (const base : PEvent_base ; const dnsbase : Pevdns_base  ;manager : TFRE_APSC_CHANNEL_MANAGER); // a client socket part 2
 
     procedure   s_Connect               ;
@@ -2023,6 +2025,10 @@ begin
               LogError('EventDisconnectonce failed [%s] channel : [%d]',[e.Message,_GetDebugID]);
             end;
         end;
+      if (not FFinalizecalled) and FClient and FAutoFinalize then
+        begin
+          cs_Finalize;
+        end;
     end;
   FDisconnectHandled := true;
 end;
@@ -2151,7 +2157,7 @@ begin
     DoStatusCallback(self,ch_NEW_SS_CONNECTED,'',0); { else the channel would get finalized}
 end;
 
-procedure TFRE_APSC_CHANNEL.SetupClientSocketTCP(new_sa: TFCOM_SOCKADDRSTORAGE; new_sal: cInt; bind_sa: TFCOM_SOCKADDRSTORAGE; bind_sal: cInt; const id: TFRE_APSC_ID; readevent, discoevent: TFRE_APSC_CHANNEL_EVENT; const status_ev: TFRE_APSC_CHANNEL_CHANGE_EVENT; const ctx_owner: TFRE_APSC_CTX_THREAD);
+procedure TFRE_APSC_CHANNEL.SetupClientSocketTCP(new_sa: TFCOM_SOCKADDRSTORAGE; new_sal: cInt; bind_sa: TFCOM_SOCKADDRSTORAGE; bind_sal: cInt; const id: TFRE_APSC_ID; readevent, discoevent: TFRE_APSC_CHANNEL_EVENT; const status_ev: TFRE_APSC_CHANNEL_CHANGE_EVENT; const ctx_owner: TFRE_APSC_CTX_THREAD; const auto_finalize: boolean);
 begin
   FClient           := true;
   FDoDNS            := false;
@@ -2169,9 +2175,10 @@ begin
   FEvDNSBase        := FOwnerCTX.FCB.FDnsBase;
   FChannelType      := act_TCP;
   FAssignedThreadID := FOwnerCTX.FMyThreadID;
+  FAutoFinalize     := auto_finalize;
 end;
 
-procedure TFRE_APSC_CHANNEL.SetupClientSocketDNS(const host: string; port: NativeInt; bind_sa: TFCOM_SOCKADDRSTORAGE; bind_sal: cInt; const id: TFRE_APSC_ID; readevent, discoevent: TFRE_APSC_CHANNEL_EVENT; const status_ev: TFRE_APSC_CHANNEL_CHANGE_EVENT; const ctx_owner: TFRE_APSC_CTX_THREAD);
+procedure TFRE_APSC_CHANNEL.SetupClientSocketDNS(const host: string; port: NativeInt; bind_sa: TFCOM_SOCKADDRSTORAGE; bind_sal: cInt; const id: TFRE_APSC_ID; readevent, discoevent: TFRE_APSC_CHANNEL_EVENT; const status_ev: TFRE_APSC_CHANNEL_CHANGE_EVENT; const ctx_owner: TFRE_APSC_CTX_THREAD; const auto_finalize: boolean);
 begin
   FClient           := true;
   FDoDNS            := True;
@@ -2191,6 +2198,7 @@ begin
   FEvDNSBase        := FOwnerCTX.FCB.FDnsBase;
   FChannelType      := act_TCP;
   FAssignedThreadID := FOwnerCTX.FMyThreadID;
+  FAutoFinalize     := auto_finalize;
 end;
 
 //procedure TFRE_APSC_CHANNEL.StartClientSockConnect(const base: PEvent_base; const dnsbase: Pevdns_base; manager: TFRE_APSC_CHANNEL_MANAGER);
@@ -2245,7 +2253,7 @@ end;
 //  end;
 //end;
 
-procedure TFRE_APSC_CHANNEL.SetupClientSocketUX(const special_file: Shortstring; const id: ShortString; readevent, discoevent: TFRE_APSC_CHANNEL_EVENT; const status_ev: TFRE_APSC_CHANNEL_CHANGE_EVENT);
+procedure TFRE_APSC_CHANNEL.SetupClientSocketUX(const special_file: Shortstring; const id: ShortString; readevent, discoevent: TFRE_APSC_CHANNEL_EVENT; const status_ev: TFRE_APSC_CHANNEL_CHANGE_EVENT; const auto_finalize: boolean);
 begin
   abort;
   if Length(special_file)>=108 then
@@ -2272,6 +2280,7 @@ begin
   //FnewChanCB    := newchannelcb;
   FOnDisco      := discoevent;
   FonRead       := readevent;
+  FAutoFinalize := auto_finalize;
 end;
 
 procedure TFRE_APSC_CHANNEL.s_Connect;  // self.FServed
@@ -3862,7 +3871,7 @@ begin
     localChEvent := @_CallbackChannelEvent;
 
   chan := TFRE_APSC_CHANNEL.Create(false,false,nil);
-  chan.SetupClientSocketTCP(sa,len,sabind,bindlen,id,localRead,localDisconnect,localChEvent,channelmanager.Implementor as TFRE_APSC_CHANNEL_MANAGER);
+  chan.SetupClientSocketTCP(sa,len,sabind,bindlen,id,localRead,localDisconnect,localChEvent,channelmanager.Implementor as TFRE_APSC_CHANNEL_MANAGER,auto_finalize);
   (channelmanager.Implementor as TFRE_APSC_CHANNEL_MANAGER).a_AddClientChannel(chan);
   chan.cs_StartConnect;
 end;
@@ -3896,7 +3905,7 @@ begin
     localChEvent := @_CallbackChannelEvent;
 
   chan := TFRE_APSC_CHANNEL.Create(false,false,nil);
-  chan.SetupClientSocketDNS(Host,strtoint(port),sabind,bindlen,id,localRead,localDisconnect,localChEvent,channelmanager.Implementor as TFRE_APSC_CHANNEL_MANAGER);
+  chan.SetupClientSocketDNS(Host,strtoint(port),sabind,bindlen,id,localRead,localDisconnect,localChEvent,channelmanager.Implementor as TFRE_APSC_CHANNEL_MANAGER,auto_finalize);
   (channelmanager.Implementor as TFRE_APSC_CHANNEL_MANAGER).a_AddClientChannel(chan);
   chan.cs_StartConnect;
 end;
@@ -3922,7 +3931,7 @@ begin
   try
     if not assigned(localChEvent) then
       localChEvent := @_CallbackChannelEvent;
-    chan.SetupClientSocketUX(special_file,id,localRead,localDisconnect,localChEvent);
+    chan.SetupClientSocketUX(special_file,id,localRead,localDisconnect,localChEvent,auto_finalize);
   except
     chan.free;
     raise;

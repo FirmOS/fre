@@ -1386,7 +1386,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
           machine_dbo.SaveToFile('machine.dbo');
 //          abort;
           writeln(machine_dbo.DumpToString);
-          abort;
+          //abort;
         end;
     end;
 

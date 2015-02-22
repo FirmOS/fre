@@ -661,8 +661,6 @@ type
     function        IsA                                (const schemename:shortstring):Boolean;
     function        IsA                                (const IsSchemeclass : TFRE_DB_OBJECTCLASSEX ; var obj ) : Boolean;
     function        IsA                                (const IsSchemeclass : TFRE_DB_OBJECTCLASSEX) : Boolean;
-    function        PreTransformedWasA                 (const schemename:shortstring):Boolean;
-    function        PreTransformedScheme               : ShortString;
     procedure       SaveToFile                         (const filename:TFRE_DB_String);
     class function  CreateFromFile                     (const filename:TFRE_DB_String):TFRE_DB_Object;
     function        CloneToNewObject                   (const generate_new_uids:boolean=false): TFRE_DB_Object;
@@ -1512,16 +1510,30 @@ type
 
   { TFRE_DB_TRANSFORM_UTIL_DATA }
 
-  TFRE_DB_TRANSFORM_UTIL_DATA=class
+  TFRE_DB_TRANSFORM_UTIL_DATA=class(TFRE_DB_TRANSFORM_UTIL_DATA_BASE)
   private
-    FObject        : TFRE_DB_Object;
-    FReferenceUids : TFRE_DB_GUIDArray;
+    FObject         : TFRE_DB_Object;
+    FReferenceUids  : TFRE_DB_GUIDArray;
+    FPreTransScheme : shortstring;
+    FParentPaths    : TFRE_DB_StringArray;
+    FOrderKeys      : TFRE_DB_Object;
   public
-    function    GetObject                 : TFRE_DB_Object;
-    procedure   UtilSetTransformedObject  (const obj: TFRE_DB_Object);
-    procedure   SetExpandedReferences     (const uids : TFRE_DB_GUIDArray);
-    function    GetExpandedReferences     : TFRE_DB_GUIDArray;
-    destructor  Destroy                   ; override;
+    function    GetObject                   : TFRE_DB_Object;
+    function    GetObj                      : IFRE_DB_Object;override;
+    procedure   UtilSetTransformedObject    (const obj: TFRE_DB_Object);
+    procedure   SetExpandedReferences       (const uids : TFRE_DB_GUIDArray);
+    function    GetExpandedReferences       : TFRE_DB_GUIDArray;
+    procedure   SetPreTransformedSchemClass (const sc : shortstring);
+    function    ObjectIsInParentPath        (const pp : TFRE_DB_String):boolean;
+    function    PreTransformedScheme        : shortstring;override;
+    function    GetParentPaths              : TFRE_DB_StringArray;
+    procedure   SetParentPaths              (const parentpaths:TFRE_DB_StringArray);
+    procedure   AddParentPath               (const parentpath:TFRE_DB_String);
+    function    GetExtendedParentPath       : TFRE_DB_StringArray;
+    procedure   SetOrderKey                 (const orkey : TFRE_DB_NameType ; const key : TFRE_DB_ByteArray);
+    function    GetOrderKey                 (const orkey : TFRE_DB_NameType):TFRE_DB_ByteArray;
+    function    CloneMySelf                 : TFRE_DB_TRANSFORM_UTIL_DATA;
+    destructor  Destroy                     ; override;
   end;
 
   TFRE_DB_TRANSFORM_UTIL_DATA_ARR = array of TFRE_DB_TRANSFORM_UTIL_DATA;
@@ -1686,17 +1698,20 @@ type
     FTransformList        : OFRE_SL_TFRE_DB_FIELD_TRANSFORM;
     FHasStatTransform     : Boolean;
     FHasReflinkTransforms : Boolean; { we need to consider reflink updates for this transform }
+    FReflinkOutputFields  : TFRE_DB_StringArray;
   protected
     procedure  Finalize;
     function   Implementor    : TObject;
     function   Implementor_HC : TObject;
     function   GetFirstFieldname : TFRE_DB_NameType;
   public
+    procedure   AddReferenceOutputFields(const flds : TFRE_DB_StringArray);
     function    HasReflinksInTransform : boolean;
     function    IsReflinkSpecRelevant(const rlspec : TFRE_DB_NameTypeRL):boolean;
     constructor Create; override;
     destructor  Destroy; override;
     function    TransformInOut (const conn : IFRE_DB_CONNECTION ; const input: IFRE_DB_Object ; const utility_data : TFRE_DB_TRANSFORM_UTIL_DATA): TFRE_DB_Object; virtual;abstract;
+    function    GetOutputFieldsFromReferences : TFRE_DB_StringArray;
   end;
 
   { TFRE_DB_SIMPLE_TRANSFORM }
@@ -1709,8 +1724,8 @@ type
     FFRTLangres                : TFRE_DB_StringArray;
     FSFTLangres                : TFRE_DB_StringArray;
     FSFTLangresN               : TFRE_DB_StringArray;
-    procedure   _AddReferencedFieldQuerycommon   (const func : IFRE_DB_QUERY_SELECTOR_FUNCTION ; const funcn : IFRE_DB_QUERY_SELECTOR_FUNCTION_NESTED ; const ref_field_chain: array of TFRE_DB_NameTypeRL ; const output_fields:array of TFRE_DB_String;const output_titles:array of TFRE_DB_String;const langres: array of TFRE_DB_String; const gui_display_type:array of TFRE_DB_DISPLAY_TYPE;const display:Boolean=true;const sortable:Boolean=false; const filterable:Boolean=false;const fieldSize: Integer=1;const hide_in_output : boolean=false);
 
+    procedure   _AddReferencedFieldQuerycommon   (const func : IFRE_DB_QUERY_SELECTOR_FUNCTION ; const funcn : IFRE_DB_QUERY_SELECTOR_FUNCTION_NESTED ; const ref_field_chain: array of TFRE_DB_NameTypeRL ; const output_fields:array of TFRE_DB_String;const output_titles:array of TFRE_DB_String;const langres: array of TFRE_DB_String; const gui_display_type:array of TFRE_DB_DISPLAY_TYPE;const display:Boolean=true;const sortable:Boolean=false; const filterable:Boolean=false;const fieldSize: Integer=1;const hide_in_output : boolean=false);
   public
     constructor Create                         ; override;
     function    TransformInOut                 (const conn : IFRE_DB_CONNECTION ; const input: IFRE_DB_Object ; const utility_data : TFRE_DB_TRANSFORM_UTIL_DATA): TFRE_DB_Object; override;
@@ -2719,9 +2734,17 @@ begin
   result :=  FObject;
 end;
 
+function TFRE_DB_TRANSFORM_UTIL_DATA.GetObj: IFRE_DB_Object;
+begin
+  result := FObject;
+end;
+
 procedure TFRE_DB_TRANSFORM_UTIL_DATA.UtilSetTransformedObject(const obj: TFRE_DB_Object);
 begin
-  FObject := obj;
+  FObject    := obj;
+  if assigned(FOrderKeys) then
+    E_FOS_TestNosey;
+  FOrderKeys := TFRE_DB_Object.Create;
 end;
 
 procedure TFRE_DB_TRANSFORM_UTIL_DATA.SetExpandedReferences(const uids: TFRE_DB_GUIDArray);
@@ -2734,9 +2757,82 @@ begin
   result := FReferenceUids;
 end;
 
+procedure TFRE_DB_TRANSFORM_UTIL_DATA.SetPreTransformedSchemClass(const sc: shortstring);
+begin
+  FPreTransScheme := sc;
+end;
+
+function TFRE_DB_TRANSFORM_UTIL_DATA.ObjectIsInParentPath(const pp: TFRE_DB_String): boolean;
+begin
+  result := FREDB_StringInArray(pp,FParentPaths);
+end;
+
+function TFRE_DB_TRANSFORM_UTIL_DATA.PreTransformedScheme: shortstring;
+begin
+  result := FPreTransScheme;// FObject.PreTransformedScheme;
+end;
+
+function TFRE_DB_TRANSFORM_UTIL_DATA.GetParentPaths: TFRE_DB_StringArray;
+begin
+  result := FParentPaths;
+end;
+
+procedure TFRE_DB_TRANSFORM_UTIL_DATA.SetParentPaths(const parentpaths: TFRE_DB_StringArray);
+begin
+  FParentPaths := parentpaths;
+end;
+
+procedure TFRE_DB_TRANSFORM_UTIL_DATA.AddParentPath(const parentpath: TFRE_DB_String);
+var ppa   : TFRE_DB_StringArray;
+begin
+  ppa := FParentPaths;
+  if FREDB_StringInArray(parentpath,ppa) then begin
+    exit;//can happen if skipclasses are used and FObject is root of more than one skipped object
+  end;
+  SetLength(ppa,Length(ppa)+1);
+  ppa[high(ppa)] := parentpath;
+  FParentPaths := ppa;
+end;
+
+function TFRE_DB_TRANSFORM_UTIL_DATA.GetExtendedParentPath: TFRE_DB_StringArray;
+
+  function PP_ExtendAllParentPaths(const uid: TFRE_DB_GUID; const ppa: TFRE_DB_StringArray): TFRE_DB_StringArray;
+  var
+    i: NativeInt;
+  begin
+    SetLength(result,Length(ppa));
+    for i:=0 to high(ppa) do
+      result[i] := FREDB_PP_ExtendParentPath(uid,ppa[i]);
+  end;
+
+begin
+  result := PP_ExtendAllParentPaths(FObject.UID,GetParentPaths);
+end;
+
+procedure TFRE_DB_TRANSFORM_UTIL_DATA.SetOrderKey(const orkey: TFRE_DB_NameType; const key: TFRE_DB_ByteArray);
+begin
+  FOrderKeys.Field(orkey).AsByteArr := key;
+end;
+
+function TFRE_DB_TRANSFORM_UTIL_DATA.GetOrderKey(const orkey: TFRE_DB_NameType): TFRE_DB_ByteArray;
+begin
+  result := FOrderKeys.Field(orkey).AsByteArr;
+end;
+
+function TFRE_DB_TRANSFORM_UTIL_DATA.CloneMySelf: TFRE_DB_TRANSFORM_UTIL_DATA;
+begin
+  result := TFRE_DB_TRANSFORM_UTIL_DATA.Create;
+  result.FObject         := FObject.CloneToNewObject();
+  result.FOrderKeys      := FOrderKeys.CloneToNewObject();
+  result.FReferenceUids  := copy(FReferenceUids);
+  result.FPreTransScheme := FPreTransScheme;
+  result.FParentPaths    := Copy(FParentPaths);
+end;
+
 destructor TFRE_DB_TRANSFORM_UTIL_DATA.Destroy;
 begin
   FObject.Free;
+  FOrderKeys.Finalize;
   inherited Destroy;
 end;
 
@@ -3042,13 +3138,26 @@ var objo      : IFRE_DB_ObjectArray;
     ref_uid   : TFRE_DB_GUID;
     expanded  : TFRE_DB_GUIDArray;
     res       : TFRE_DB_Errortype;
+    outputtmp : IFRE_DB_Object;
+    ofn       : TFRE_DB_NameType;
+    i         : NativeInt;
 begin
   conn.ExpandReferences(TFRE_DB_GUIDArray.create(input.UID),FRefFieldChain,expanded);
   try
     utility_data.SetExpandedReferences(expanded);
     if Length(expanded)>0 then
       res := (conn.Implementor_HC as TFRE_DB_CONNECTION).BulkFetchNoRightCheck(expanded,objo);
-    FRQ_func(objo,input,output,FRQO_Langres);
+    outputtmp := output.CloneToNewObject;
+    try
+      FRQ_func(objo,input,outputtmp,FRQO_Langres);
+      for i:=0 to high(FRQO_Fields) do
+        begin
+          ofn := FRQO_Fields[i];
+          output.Field(ofn).CloneFromField(outputtmp.Field(ofn));
+        end;
+    finally
+      outputtmp.Finalize;
+    end;
   finally
     For obj in objo do
       obj.Finalize;
@@ -7652,6 +7761,7 @@ begin
   else
     FTransformList.Add(TFRE_DB_REFERERENCE_QRY_FT.Create(nil,funcn,rfc,FRQO_Fields,FRQO_Titles,FRQO_Langres,FRQO_Types,FRQO_Display,FRQO_Sortable,FRQO_Filterable,FRQO_Hide,FRQO_FieldSize));
   FHasReflinkTransforms:=true;
+  AddReferenceOutputFields(FRQO_Fields);
 end;
 
 constructor TFRE_DB_SIMPLE_TRANSFORM.Create;
@@ -7679,7 +7789,7 @@ begin
   FTransformList.ForAllBreak(@iterate);
   result._Field('uid').AsGUID                            := input.Field('uid').AsGUID;
   result._Field('domainid').AsGUID                       := input.Field('domainid').AsGUID;
-  result._Field(cFRE_DB_SYS_TRANS_IN_OBJ_WAS_A).AsString := input.SchemeClass;
+  utility_data.SetPreTransformedSchemClass(input.SchemeClass);
   plgfld := (input.Implementor as TFRE_DB_Object)._FieldOnlyExisting('_$PLG');
   if assigned(plgfld) then
     result._Field('_$PLG').CloneFromField(plgfld);
@@ -7754,7 +7864,32 @@ begin
     rfc[i] := ref_field_chain[i];
   FTransformList.Add(TFRE_DB_REFERERENCE_CHAIN_FT.Create(rfc,target_field,output_field,output_title,gui_display_type,display,sortable,filterable,fieldSize,iconID,default_value,filterValues,linkFieldName,true));
   FHasReflinkTransforms:=true;
+  AddReferenceOutputFields([output_field]);
 end;
+
+procedure TFRE_DB_SIMPLE_TRANSFORM.AddMatchingReferencedField(const ref_field: TFRE_DB_NameTypeRL; const target_field: TFRE_DB_String; const output_field: TFRE_DB_String; const output_title: TFRE_DB_String; const display:Boolean;const gui_display_type: TFRE_DB_DISPLAY_TYPE;const sortable,filterable:Boolean;const fieldSize: Integer;const iconID:String;const default_value:TFRE_DB_String;const filterValues:TFRE_DB_StringArray;const hide_in_output : boolean; const linkFieldName:TFRE_DB_NameType);
+var rf:TFRE_DB_NameTypeRL;
+begin
+  rf := ref_field;
+  if (pos('>',rf)=0) and
+     (pos('<',rf)=0) then
+       raise EFRE_DB_Exception.Create(edb_ERROR,'old syntax no longer supported, you must use >,< or >>,<< fieldname is mandatory,schemeprefix is optional');
+  AddMatchingReferencedField([rf],target_field,output_field,output_title,display,gui_display_type,sortable,filterable,fieldSize,iconID,default_value,filterValues,hide_in_output,linkFieldName);
+end;
+
+procedure TFRE_DB_SIMPLE_TRANSFORM.AddMatchingReferencedField(const ref_field_chain: array of TFRE_DB_NameTypeRL; const target_field: TFRE_DB_String; const output_field: TFRE_DB_String; const output_title: TFRE_DB_String; const display:Boolean; const gui_display_type: TFRE_DB_DISPLAY_TYPE;const sortable,filterable:Boolean;const fieldSize: Integer;const iconID:String;const default_value:TFRE_DB_String;const filterValues:TFRE_DB_StringArray;const hide_in_output : boolean; const linkFieldName:TFRE_DB_NameType);
+var rfc : TFRE_DB_NameTypeRLArray;
+    i   : NativeInt;
+begin
+  setlength(rfc,Length(ref_field_chain));
+  for i:=0 to high(ref_field_chain) do
+    rfc[i] := ref_field_chain[i];
+  FTransformList.Add(TFRE_DB_REFERERENCE_CHAIN_FT.Create(rfc,target_field,output_field,output_title,gui_display_type,display,sortable,filterable,fieldSize,iconID,default_value,filterValues,linkFieldName));
+  FHasReflinkTransforms:=true;
+  AddReferenceOutputFields([output_field]);
+end;
+
+
 
 function TFRE_DB_SIMPLE_TRANSFORM.GetViewCollectionDescription: TFRE_DB_CONTENT_DESC;
 var vcd : TFRE_DB_VIEW_LIST_LAYOUT_DESC;
@@ -7822,26 +7957,6 @@ begin
   FTransformList.Add(TFRE_DB_ONEONE_FT.Create(pluginfieldname,out_field,output_title,gui_display_type,display,sortable,filterable,fieldSize,iconID,openIconID,default_value,filterValues,pluginclass));
 end;
 
-procedure TFRE_DB_SIMPLE_TRANSFORM.AddMatchingReferencedField(const ref_field_chain: array of TFRE_DB_NameTypeRL; const target_field: TFRE_DB_String; const output_field: TFRE_DB_String; const output_title: TFRE_DB_String; const display:Boolean; const gui_display_type: TFRE_DB_DISPLAY_TYPE;const sortable,filterable:Boolean;const fieldSize: Integer;const iconID:String;const default_value:TFRE_DB_String;const filterValues:TFRE_DB_StringArray;const hide_in_output : boolean; const linkFieldName:TFRE_DB_NameType);
-var rfc : TFRE_DB_NameTypeRLArray;
-    i   : NativeInt;
-begin
-  setlength(rfc,Length(ref_field_chain));
-  for i:=0 to high(ref_field_chain) do
-    rfc[i] := ref_field_chain[i];
-  FTransformList.Add(TFRE_DB_REFERERENCE_CHAIN_FT.Create(rfc,target_field,output_field,output_title,gui_display_type,display,sortable,filterable,fieldSize,iconID,default_value,filterValues,linkFieldName));
-  FHasReflinkTransforms:=true;
-end;
-
-procedure TFRE_DB_SIMPLE_TRANSFORM.AddMatchingReferencedField(const ref_field: TFRE_DB_NameTypeRL; const target_field: TFRE_DB_String; const output_field: TFRE_DB_String; const output_title: TFRE_DB_String; const display:Boolean;const gui_display_type: TFRE_DB_DISPLAY_TYPE;const sortable,filterable:Boolean;const fieldSize: Integer;const iconID:String;const default_value:TFRE_DB_String;const filterValues:TFRE_DB_StringArray;const hide_in_output : boolean; const linkFieldName:TFRE_DB_NameType);
-var rf:TFRE_DB_NameTypeRL;
-begin
-  rf := ref_field;
-  if (pos('>',rf)=0) and
-     (pos('<',rf)=0) then
-       raise EFRE_DB_Exception.Create(edb_ERROR,'old syntax no longer supported, you must use >,< or >>,<< fieldname is mandatory,schemeprefix is optional');
-  AddMatchingReferencedField([rf],target_field,output_field,output_title,display,gui_display_type,sortable,filterable,fieldSize,iconID,default_value,filterValues,hide_in_output,linkFieldName);
-end;
 
 function TFRE_DB_DERIVED_COLLECTION.HasParentChildRefRelationDefined: boolean;
 begin
@@ -8045,23 +8160,6 @@ begin
   FInitialDerived   := False;
 end;
 
-
-//procedure TFRE_DB_DERIVED_COLLECTION.SetUseDependencyAsRefLinkFilter(const scheme_and_field_constraint: array of TFRE_DB_NameTypeRL; const negate: boolean; const dependency_reference: string);
-//var
-//  i: NativeInt;
-//begin
-//  if FUseDepAsLinkFilt or FUseDepAsUidFilt then
-//    raise EFRE_DB_Exception.Create(edb_ERROR,'a dependency filter can be added only once');
-//  FUseDepAsLinkFilt := true;
-//  SetLength(FDependencyRef,1);
-//  FDependencyRef[0] := dependency_reference;
-//  FDepObjectsRefNeg := negate;
-//  SetLength(FDepRefConstraint,1);
-//  SetLength(FDepRefConstraint[0],Length(scheme_and_field_constraint));
-//  for i := 0 to high(scheme_and_field_constraint) do
-//    FDepRefConstraint[0][i] := scheme_and_field_constraint[i];
-//end;
-//
 procedure TFRE_DB_DERIVED_COLLECTION.SetUseDependencyAsUidFilter(const field_to_filter: TFRE_DB_NameType; const negate: boolean; const dependency_reference: string);
 var
   i: NativeInt;
@@ -8730,6 +8828,11 @@ begin
   FTransformList.ForAllBreak(@GetFirst);
 end;
 
+procedure TFRE_DB_TRANSFORMOBJECT.AddReferenceOutputFields(const flds: TFRE_DB_StringArray);
+begin
+  FREDB_ConcatStringArrays(FReflinkOutputFields,flds);
+end;
+
 function TFRE_DB_TRANSFORMOBJECT.IsReflinkSpecRelevant(const rlspec: TFRE_DB_NameTypeRL): boolean;
 
   procedure Check(var ft : TFRE_DB_FIELD_TRANSFORM ; const idx : NativeInt ; var halt_flag:boolean);
@@ -8766,6 +8869,11 @@ destructor TFRE_DB_TRANSFORMOBJECT.Destroy;
 begin
    FTransformList.ForAllBreak(@FinalTrans);
   inherited Destroy;
+end;
+
+function TFRE_DB_TRANSFORMOBJECT.GetOutputFieldsFromReferences: TFRE_DB_StringArray;
+begin
+  result := FReflinkOutputFields;
 end;
 
 function TFRE_DB_FieldSchemeDefinition.GetFieldName: TFRE_DB_NameType;
@@ -15728,23 +15836,6 @@ begin
         exit(true);
   result := false;
 end;
-
-function TFRE_DB_Object.PreTransformedWasA(const schemename: shortstring): Boolean;
-var fld:TFRE_DB_FIELD;
-begin
-  if FieldOnlyExisting(cFRE_DB_SYS_TRANS_IN_OBJ_WAS_A,fld) then
-    result := fld.AsString=uppercase(schemename);
-end;
-
-function TFRE_DB_Object.PreTransformedScheme: ShortString;
-var fld:TFRE_DB_FIELD;
-begin
-  if FieldOnlyExisting(cFRE_DB_SYS_TRANS_IN_OBJ_WAS_A,fld) then
-    exit(Fld.AsString)
-  else
-    result := 'INVALID';
-end;
-
 
 procedure TFRE_DB_Object.SaveToFile(const filename: TFRE_DB_String);
 var m      : TMemoryStream;

@@ -892,6 +892,7 @@ begin
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,1,'','','false');
       AddOneToOnescheme('domainidlink','','',dt_string,False);
+      AddOneToOnescheme('schemeclass','sc','',dt_string,False);
       SetSimpleFuncTransformNested(@G_setDisplaynameGRD,[]);
       SetFinalRightTransformFunction(@CalculateRoleFields,[]);
       AddFulltextFilterOnTransformed(['displayname']);
@@ -1020,7 +1021,7 @@ end;
 
 procedure TFRE_COMMON_ROLE_MOD.CalculateRoleFields(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object ; const session_data : IFRE_DB_Object;const langres: array of TFRE_DB_String);
 begin
-  if transformed_object.PreTransformedWasA('TFRE_DB_DOMAIN') then begin
+  if transformed_object.Field('sc').AsString='TFRE_DB_DOMAIN' then begin
     transformed_object.Field('icon').AsString:=FREDB_getThemedResource('images_apps/accesscontrol/domain_ico.svg');
   end else begin
     if transformed_object.FieldExists('disabled') and transformed_object.Field('disabled').AsBoolean then begin
@@ -1769,6 +1770,7 @@ begin
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddOneToOnescheme('disabled','','',dt_boolean,False,false,false,1,'','','false');
       AddOneToOnescheme('delegation','','',dt_boolean,False,false,false,1,'','','false');
+      AddOneToOnescheme('schemeclass','sc','',dt_string,False);
       SetSimpleFuncTransformNested(@G_setDisplaynameGRD,[]);
       SetFinalRightTransformFunction(@CalculateGroupFields,[]);
       AddFulltextFilterOnTransformed(['displayname']);
@@ -1963,7 +1965,7 @@ end;
 
 procedure TFRE_COMMON_GROUP_MOD.CalculateGroupFields(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object;const langres: array of TFRE_DB_String);
 begin
-  if transformed_object.PreTransformedWasA('TFRE_DB_DOMAIN') then begin
+  if transformed_object.Field('sc').AsString='TFRE_DB_DOMAIN' then begin
     transformed_object.Field('icon').AsString:=FREDB_getThemedResource('images_apps/accesscontrol/domain_ico.svg');
   end else begin
     CalculateGroupIcon(ut,transformed_object,session_data,langres);
@@ -3088,6 +3090,7 @@ begin
       AddOneToOnescheme('displayname','',grid_column_cap,dt_string,true,false,false,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
+      AddOneToOnescheme('schemeclass','sc','',dt_string,False);
       SetSimpleFuncTransformNested(@G_setDisplaynameUser,[]);
       SetFinalRightTransformFunction(@CalculateUserIcon,[]);
       AddFulltextFilterOnTransformed(['displayname']);
@@ -3257,7 +3260,7 @@ end;
 
 procedure TFRE_COMMON_USER_MOD.CalculateUserIcon(const ut: IFRE_DB_USER_RIGHT_TOKEN; const transformed_object: IFRE_DB_Object; const session_data: IFRE_DB_Object;const langres: array of TFRE_DB_String);
 begin
-  if transformed_object.PreTransformedWasA('TFRE_DB_DOMAIN') then begin
+  if transformed_object.field('sc').AsString='TFRE_DB_DOMAIN' then begin
     transformed_object.Field('icon').AsString:=FREDB_getThemedResource('images_apps/accesscontrol/domain_ico.svg');
   end else begin
     if ut.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_USER,transformed_object.DomainID) then begin
