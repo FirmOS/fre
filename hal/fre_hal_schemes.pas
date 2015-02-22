@@ -2042,7 +2042,7 @@ begin
   GFRE_DBI.RegisterSysEnum(enum);
 
   enum:=GFRE_DBI.NewEnum('fw_nat_dst_port_mode').Setup(GFRE_DBI.CreateText('$enum_fw_nat_dst_port_mode','Firewall NAT Dest Port Mode'));
-  enum.addEntry('DEFAULT',GetTranslateableTextKey('enum_fw_nat_dst_port_mode_default'));
+  enum.addEntry('RANGE',GetTranslateableTextKey('enum_fw_nat_dst_port_mode_range'));
   enum.addEntry('AUTO',GetTranslateableTextKey('enum_fw_nat_dst_port_mode_auto'));
   GFRE_DBI.RegisterSysEnum(enum);
 
@@ -2145,7 +2145,7 @@ begin
     StoreTranslateableText(conn,'enum_fw_nat_protocol_udp','UDP');
     StoreTranslateableText(conn,'enum_fw_nat_protocol_tcp_udp','TCP/UDP');
 
-    StoreTranslateableText(conn,'enum_fw_nat_dst_port_mode_default',':');
+    StoreTranslateableText(conn,'enum_fw_nat_dst_port_mode_range',':');
     StoreTranslateableText(conn,'enum_fw_nat_dst_port_mode_auto','auto');
 
     StoreTranslateableText(conn,'scheme_main_group','General Information');
@@ -2581,24 +2581,51 @@ end;
 class procedure TFRE_DB_FIREWALL_RULE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 var
   group: IFRE_DB_InputGroupSchemeDefinition;
+  enum : IFRE_DB_Enum;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
 
-//  https://wiki.firmos.at/pages/editpage.action?pageId=5144810
+  //https://wiki.firmos.at/pages/editpage.action?pageId=5144810
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_ipversion').Setup(GFRE_DBI.CreateText('$enum_fw_rule_ipversion','Firewall Rule IP Version'));
+  enum.addEntry('IPV4',GetTranslateableTextKey('enum_fw_rule_ipversion_ipv4'));
+  enum.addEntry('IPV6',GetTranslateableTextKey('enum_fw_rule_ipversion_ipv6'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_direction').Setup(GFRE_DBI.CreateText('$enum_fw_rule_direction','Firewall Rule Direction'));
+  enum.addEntry('IN',GetTranslateableTextKey('enum_fw_rule_direction_in'));
+  enum.addEntry('OUT',GetTranslateableTextKey('enum_fw_rule_direction_out'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_action').Setup(GFRE_DBI.CreateText('$enum_fw_rule_action','Firewall Rule Action'));
+  enum.addEntry('BLOCK',GetTranslateableTextKey('enum_fw_rule_action_block'));
+  enum.addEntry('PASS',GetTranslateableTextKey('enum_fw_rule_action_pass'));
+  enum.addEntry('LOG',GetTranslateableTextKey('enum_fw_rule_action_log'));
+  enum.addEntry('COUNT',GetTranslateableTextKey('enum_fw_rule_action_count'));
+  enum.addEntry('SKIP',GetTranslateableTextKey('enum_fw_rule_action_skip'));
+  enum.addEntry('CALL',GetTranslateableTextKey('enum_fw_rule_action_call'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_protocol').Setup(GFRE_DBI.CreateText('$enum_fw_rule_protocol','Firewall Rule Protocol'));
+  enum.addEntry('TCP',GetTranslateableTextKey('enum_fw_rule_protocol_tcp'));
+  enum.addEntry('UDP',GetTranslateableTextKey('enum_fw_rule_protocol_udp'));
+  enum.addEntry('TCP_UDP',GetTranslateableTextKey('enum_fw_rule_protocol_tcp_udp'));
+  enum.addEntry('ICMP',GetTranslateableTextKey('enum_fw_rule_protocol_icmp'));
+  GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
-  scheme.AddSchemeField('action',fdbft_String).Required:=true;        // enum
-  scheme.AddSchemeField('direction',fdbft_String).Required:=true;     // enum
-  scheme.AddSchemeField('ipversion',fdbft_String).Required:=true;     // enum
+  scheme.AddSchemeField('action',fdbft_String).SetupFieldDef(false,false,'fw_rule_action');
+  scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(false,false,'fw_rule_direction');
+  scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(false,false,'fw_rule_ipversion');
 
   scheme.AddSchemeField('interface',fdbft_ObjLink);                   // datalink of the zone
 
   scheme.AddSchemeField('option_log',fdbft_Boolean);
   scheme.AddSchemeField('option_quick',fdbft_Boolean);
 
-  scheme.AddSchemeField('protocol',fdbft_String);              //enum
+  scheme.AddSchemeField('protocol',fdbft_String).SetupFieldDef(false,false,'fw_rule_protocol');
 
   scheme.AddSchemeField('src_addr',fdbft_ObjLink);
   scheme.AddSchemeField('src_addr_not',fdbft_Boolean);
@@ -2666,12 +2693,33 @@ end;
 
 class procedure TFRE_DB_FIREWALL_RULE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='0.1';
+  newVersionId:='0.2';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
 
+  end;
+  if currentVersionId='0.1' then begin
+    currentVersionId := '0.2';
     StoreTranslateableText(conn,'scheme_main_group','General Information');
     StoreTranslateableText(conn,'scheme_number','Number');
+
+    StoreTranslateableText(conn,'enum_fw_rule_ipversion_ipv4','IPv4');
+    StoreTranslateableText(conn,'enum_fw_rule_ipversion_ipv6','IPv6');
+
+    StoreTranslateableText(conn,'enum_fw_rule_protocol_tcp','TCP');
+    StoreTranslateableText(conn,'enum_fw_rule_protocol_udp','UDP');
+    StoreTranslateableText(conn,'enum_fw_rule_protocol_tcp_udp','TCP/UDP');
+    StoreTranslateableText(conn,'enum_fw_rule_protocol_icmp','ICMP');
+
+    StoreTranslateableText(conn,'enum_fw_rule_direction_in','In');
+    StoreTranslateableText(conn,'enum_fw_rule_direction_out','Out');
+
+    StoreTranslateableText(conn,'enum_fw_rule_action_block','Block');
+    StoreTranslateableText(conn,'enum_fw_rule_action_pass','Pass');
+    StoreTranslateableText(conn,'enum_fw_rule_action_log','Log');
+    StoreTranslateableText(conn,'enum_fw_rule_action_count','Count');
+    StoreTranslateableText(conn,'enum_fw_rule_action_skip','Skip');
+    StoreTranslateableText(conn,'enum_fw_rule_action_call','Call');
   end;
 end;
 

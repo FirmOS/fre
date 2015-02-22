@@ -447,6 +447,17 @@ begin
     CreateModuleText(conn,'nat_grid_descr_clamp','Clamp: %clamp_str%');
     CreateModuleText(conn,'nat_grid_descr_round_robin','Round Robin');
     CreateModuleText(conn,'nat_grid_descr_proxy','Proxy: %proxy_str%');
+
+    CreateModuleText(conn,'rule_grid_interface','Interface');
+    CreateModuleText(conn,'rule_grid_number','Number');
+    CreateModuleText(conn,'rule_grid_action','Action');
+    CreateModuleText(conn,'rule_grid_direction','Direction');
+    CreateModuleText(conn,'rule_grid_source','Source');
+    CreateModuleText(conn,'rule_grid_protocol','Protocol');
+    CreateModuleText(conn,'rule_grid_destination','Destination');
+    CreateModuleText(conn,'rule_grid_ipversion','IP Version');
+
+    CreateModuleText(conn,'rule_grid_descr_delimiter',' - ');
   end;
 end;
 
@@ -476,7 +487,7 @@ var
     transformed_object.Field('label').AsString:=transformed_object.Field('baseIp').AsString + '/' + input.Field('subnet_bits').AsString;
   end;
 
-  procedure _setNATColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  procedure _setRuleColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
   var
     delimiter: String;
     proxy_str: TFRE_DB_String;
@@ -500,13 +511,6 @@ var
       end;
     end;
     //DESCR
-
-    //CreateModuleText(conn,'nat_grid_descr_frag','Frag');
-    //CreateModuleText(conn,'nat_grid_descr_age','Age: %age_str%');
-    //CreateModuleText(conn,'nat_grid_descr_clamp','Clamp: %clamp_str%');
-    //CreateModuleText(conn,'nat_grid_descr_round_robin','Round Robin');
-    //CreateModuleText(conn,'nat_grid_descr_proxy','Proxy: %proxy_str%');
-
     delimiter:='';
     if transformed_object.Field('src_to_ip').AsString<>'' then begin
       transformed_object.Field('descr').AsString:=StringReplace(langres[1],'%src_to_str%',transformed_object.Field('src_to_ip').AsString,[rfReplaceAll]);
@@ -535,6 +539,40 @@ var
       end;
       transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[6],'%proxy_str%',proxy_str,[rfReplaceAll]);
     end;
+  end;
+
+  procedure _setNATColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    delimiter: String;
+    proxy_str: TFRE_DB_String;
+  begin
+    //SOURCE
+    transformed_object.Field('source').AsString:=transformed_object.Field('src_ip').AsString;
+    if transformed_object.Field('src_port_1').AsString<>'' then begin
+      if (transformed_object.Field('src_port_comparator').AsString='RANGE') then begin
+        if transformed_object.Field('src_port_2').AsString<>'' then begin
+          transformed_object.Field('source').AsString:=transformed_object.Field('source').AsString + ' ('+transformed_object.Field('src_port_1').AsString + ':'+ input.Field('src_port_2').AsString + ')';
+        end else begin
+          transformed_object.Field('source').AsString:=transformed_object.Field('source').AsString + ':'+ input.Field('src_port_2').AsString + ')';
+        end;
+      end else begin
+        transformed_object.Field('source').AsString:=transformed_object.Field('source').AsString+transformed_object.Field('src_port_comparator').AsString + input.Field('src_port_1').AsString;
+      end;
+    end;
+    //DESTINATION
+    transformed_object.Field('destination').AsString:=transformed_object.Field('dst_ip').AsString;
+    if transformed_object.Field('dst_port_1').AsString<>'' then begin
+      if (transformed_object.Field('dst_port_comparator').AsString='RANGE') then begin
+        if transformed_object.Field('dst_port_2').AsString<>'' then begin
+          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ' ('+transformed_object.Field('dst_port_1').AsString + ':'+ input.Field('dst_port_2').AsString + ')';
+        end else begin
+          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ':'+ input.Field('dst_port_2').AsString + ')';
+        end;
+      end else begin
+        transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString+transformed_object.Field('dst_port_comparator').AsString + input.Field('dst_port_1').AsString;
+      end;
+    end;
+    //DESCR
   end;
 
 begin
@@ -615,18 +653,47 @@ begin
       Filters.AddStringFieldFilter('used','firewall','OK',dbft_EXACT);
     end;
 
+
+    //scheme.AddSchemeField('option_log',fdbft_Boolean);
+    //scheme.AddSchemeField('option_quick',fdbft_Boolean);
+    //scheme.AddSchemeField('src_addr_not',fdbft_Boolean);
+    //scheme.AddSchemeField('dst_addr_not',fdbft_Boolean);
+    //scheme.AddSchemeField('keep_state',fdbft_Boolean);
+    //scheme.AddSchemeField('keep_frags',fdbft_Boolean);
+
+
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    with transform do begin
-      AddOneToOnescheme('number','','NUMBER');
+    with transform do begin      //TFRE_DB_FIREWALL_RULE;
+      AddOneToOnescheme('number','',FetchModuleTextShort(session,'rule_grid_number'));
+      AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'rule_grid_interface'));
+      AddOneToOnescheme('source','',FetchModuleTextShort(session,'rule_grid_source'));
+      AddOneToOnescheme('protocol','',FetchModuleTextShort(session,'rule_grid_protocol'));
+      AddOneToOnescheme('destination','',FetchModuleTextShort(session,'rule_grid_destination'));
+      AddOneToOnescheme('action','',FetchModuleTextShort(session,'rule_grid_action'));
+      AddOneToOnescheme('direction','',FetchModuleTextShort(session,'rule_grid_direction'));
+      AddOneToOnescheme('ipversion','',FetchModuleTextShort(session,'rule_grid_ipversion'));
+
+      AddMatchingReferencedField(['SRC_ADDR>TFRE_DB_IP'],'ip','src_ip','',false);
+      AddOneToOnescheme('src_port_1','','',dt_string,false);
+      AddOneToOnescheme('src_port_comparator','','',dt_string,false);
+      AddOneToOnescheme('src_port_2','','',dt_string,false);
+      AddMatchingReferencedField(['DST_ADDR>TFRE_DB_IP'],'ip','dst_ip','',false);
+      AddOneToOnescheme('dst_port_1','','',dt_string,false);
+      AddOneToOnescheme('dst_port_2','','',dt_string,false);
+      AddOneToOnescheme('dst_port_comparator','','',dt_string,false);
+      AddOneToOnescheme('descr','','',dt_description);
       AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
-      AddFulltextFilterOnTransformed(['number']);
+      SetSimpleFuncTransformNested(@_setRuleColumns,[FetchModuleTextShort(session,'rule_grid_descr_delimiter')]);
+
+      AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
+      //AddFulltextFilterOnTransformed(['number']);
     end;
 
     dc := session.NewDerivedCollection('FIREWALL_RULES_GRID');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_RULE_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_RulesMenu),nil,CWSF(@WEB_RulesSC));
+      SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_RulesMenu),nil,CWSF(@WEB_RulesSC));
       SetUseDependencyAsUidFilter('fw_uid');
       servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);
@@ -635,18 +702,19 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'nat_grid_number'));
-      AddOneToOnescheme('command','',FetchModuleTextShort(session,'nat_grid_command'));
       AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'nat_grid_interface'));
       AddOneToOnescheme('source','',FetchModuleTextShort(session,'nat_grid_source'));
-      AddMatchingReferencedField(['SRC_ADDR>TFRE_DB_IP'],'ip','src_ip','',false);
-      AddOneToOnescheme('src_port','','',dt_string,false);
       AddOneToOnescheme('protocol','',FetchModuleTextShort(session,'nat_grid_protocol'));
       AddOneToOnescheme('destination','',FetchModuleTextShort(session,'nat_grid_destination'));
+      AddOneToOnescheme('command','',FetchModuleTextShort(session,'nat_grid_command'));
+      AddOneToOnescheme('ipversion','',FetchModuleTextShort(session,'nat_grid_ipversion'));
+
+      AddMatchingReferencedField(['SRC_ADDR>TFRE_DB_IP'],'ip','src_ip','',false);
+      AddOneToOnescheme('src_port','','',dt_string,false);
       AddMatchingReferencedField(['DST_ADDR>TFRE_DB_IP'],'ip','dst_ip','',false);
       AddOneToOnescheme('dst_port_1','','',dt_string,false);
-      AddOneToOnescheme('dst_port_1','','',dt_string,false);
+      AddOneToOnescheme('dst_port_2','','',dt_string,false);
       AddOneToOnescheme('dst_port_mode','','',dt_string,false);
-      AddOneToOnescheme('ipversion','',FetchModuleTextShort(session,'nat_grid_ipversion'));
       AddOneToOnescheme('descr','','',dt_description);
       AddMatchingReferencedField(['SRC_TO_ADDR>TFRE_DB_IP'],'ip','src_to_ip','',false);
       AddOneToOnescheme('option_frag','','',dt_string,false);
@@ -659,14 +727,14 @@ begin
       SetSimpleFuncTransformNested(@_setNATColumns,[FetchModuleTextShort(session,'nat_grid_descr_delimiter'),FetchModuleTextShort(session,'nat_grid_descr_source_to'),FetchModuleTextShort(session,'nat_grid_descr_frag'),
                                                     FetchModuleTextShort(session,'nat_grid_descr_age'),FetchModuleTextShort(session,'nat_grid_descr_clamp'),FetchModuleTextShort(session,'nat_grid_descr_round_robin'),
                                                     FetchModuleTextShort(session,'nat_grid_descr_proxy')]);
-      AddFulltextFilterOnTransformed(['number']);
+      //AddFulltextFilterOnTransformed(['number']);
     end;
 
     dc := session.NewDerivedCollection('FIREWALL_NAT_GRID');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_NAT_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_NATMenu),nil,CWSF(@WEB_NATSC));
+      SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_NATMenu),nil,CWSF(@WEB_NATSC));
       SetUseDependencyAsUidFilter('fw_uid');
       servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);
@@ -678,14 +746,14 @@ begin
     with transform do begin
       AddOneToOnescheme('number','','NUMBER');
       AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
-      AddFulltextFilterOnTransformed(['number']);
+      //AddFulltextFilterOnTransformed(['number']);
     end;
 
     dc := session.NewDerivedCollection('FIREWALL_POOLS_GRID');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_POOL_COLLECTION));
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[cdgf_ShowSearchbox],'',CWSF(@WEB_PoolsMenu),nil,CWSF(@WEB_PoolsSC));
+      SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_PoolsMenu),nil,CWSF(@WEB_PoolsSC));
       SetUseDependencyAsUidFilter('fw_uid');
       servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);

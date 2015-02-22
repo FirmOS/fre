@@ -2013,9 +2013,9 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
          result.SetDomainID(g_domain_id);
          result.Field('number').asuint32          := nr;
          inc(nr);
-         result.Field('action').asstring          := action;
-         result.Field('direction').asstring       := direction;
-         result.Field('ipversion').asstring       := ipversion;
+         result.Field('action').asstring          := UpperCase(action);
+         result.Field('direction').asstring       := UpperCase(direction);
+         result.Field('ipversion').asstring       := UpperCase(ipversion);
          if action = 'block' then
            result.Field('option_log').asboolean     := true;
        end;
@@ -2038,8 +2038,18 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
        end;
 
        procedure AddProtocol(const fwr:TFRE_DB_FIREWALL_RULE;const p:string);
+         function _protocolToEnum(const str:String):String;
+         begin
+           Result:='';
+           case str of
+             'tcp',
+             'icmp',
+             'udp': Result:=UpperCase(str);
+             'tcp/udp': Result:='TCP_UDP';
+           end;
+         end;
        begin
-         fwr.Field('protocol').Asstring:=p;
+         fwr.Field('protocol').Asstring:=_protocolToEnum(p);
        end;
 
        procedure SetKeep(const fwr:TFRE_DB_FIREWALL_RULE);
@@ -2239,7 +2249,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      r.Field('src_addr').AsObjectLink:=lan_ip_id;
      r.Field('src_addr_host').Asboolean:=true;
      r.Field('src_port_1').asuint16:=80;
-     r.Field('src_port_comparator').asstring:=':';
+     r.Field('src_port_comparator').asstring:='RANGE';
      r.Field('src_port_2').asuint16:=88;
      r.Field('dst_addr').AsObjectLink:=lan_ip_id;
      r.Field('dst_addr_not').asboolean:=true;
@@ -2251,7 +2261,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
      r:=AddRule('pass','in','ipv4');
      AddInterface(r,lan_link_id);
      r.Field('src_port_1').asuint16:=80;
-     r.Field('src_port_comparator').asstring:=':';
+     r.Field('src_port_comparator').asstring:='RANGE';
      r.Field('src_port_2').asuint16:=88;
      r.Field('dst_port_1').asuint16:=99;
      AddProtocol(r,'tcp');
