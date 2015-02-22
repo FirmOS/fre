@@ -1753,11 +1753,11 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
         begin
           subnet_id := GetOrCreateSubnetV4(domain_id,ip_str,strtoint(subnet));
           ip := TFRE_DB_IPV4.CreateForDB;
-          ip.Field('ip').AsString:=ip_str;
+          ip.Field('ip').AsString := ip_str;
+          ip.Objectname           := ip_str;
           ip.Field('subnet').AsObjectLink := subnet_id;
         end
       else begin
-        exit;
         ip := TFRE_DB_IPV4_DHCP.CreateForDB;
         ip.ObjectName:='DHCP';
       end;
@@ -1842,10 +1842,10 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
           subnet_id := GetOrCreateSubnetV6(domain_id,ip_str,strtoint(subnet));
           ip := TFRE_DB_IPV6.CreateForDB;
           ip.Field('ip').AsString:=ip_str;
+          ip.ObjectName          :=ip_str;
           ip.Field('subnet').AsObjectLink := subnet_id;
         end
       else begin
-        exit;
         ip := TFRE_DB_IPV6_SLAAC.CreateForDB;
         ip.ObjectName:='SLAAC';
       end;
@@ -3166,6 +3166,7 @@ begin
   lan_ip_id   := AddIPV4('192.168.3.1','24',link_id,g_domain_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,e0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:a7:7b:de','mgmt','Global NFS');
   AddIPV4('172.22.1.2','16',link_id,g_def_domain_id);
+  AddIPV4('','',link_id,g_def_domain_id);
   vf_id:=CreateVFiler(zone_id,'Test Virtual Fileserver');
   CreateShare(vf_id,pool_id,'syspool/domains/demo/demo/zonedata/vfiler/sales','Sales',10240,10240);
   CreateShare(vf_id,pool_id,'syspool/domains/demo/demo/zonedata/vfiler/development','Development',10240,10240);
@@ -3174,7 +3175,7 @@ begin
   CreateShare(vf_id,pool_id,'syspool/domains/mydomain/newzone0/zonedata/secfiler/securefiles','SecureFiles',10240,10240);
   AddFirewall(zone_id);
 
-//  DumpMachineDBO(host_id);
+  DumpMachineDBO(host_id);
 
 
   //CheckDbResult(conn.FetchI(zone_id,obj));

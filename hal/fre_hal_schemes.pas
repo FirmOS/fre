@@ -351,28 +351,6 @@ type
      function        RIF_DeleteService      (const running_ctx  : TObject) : IFRE_DB_Object; override;
    end;
 
-   //{ TFRE_DB_IP_HOSTNET }
-   //
-   //TFRE_DB_IP_HOSTNET=class(TFRE_DB_SERVICE)
-   //protected
-   //  procedure       InternalSetIPCIDR      (const value:TFRE_DB_String); virtual;
-   //  function        InternalGetNetbasewithSubnetIPV4: string;
-   //  function        InternalGetNetbasewithSubnetIPV6: string;
-   //  function        GetHostOnlySubnetBits  : int16; virtual; abstract;
-   //  function        GetAddrObjAlias        : string; virtual;
-   //public
-   //  class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-   //  class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-   //  class function  getAllHostnetClasses   : TFRE_DB_StringArray;
-   //  function        GetFMRI                : TFRE_DB_String; override;
-   //  procedure       SetIPCIDR              (const value:TFRE_DB_String);
-   //  function        GetIPWithoutSubnet     : TFRE_DB_String; virtual;
-   //  function        GetIPWithSubnet        : TFRE_DB_String; virtual;
-   //  function        GetNetbaseIPWithSubnet : TFRE_DB_String; virtual; abstract;
-   //published
-   //  function        RIF_CreateOrUpdateService : IFRE_DB_Object; override;
-   //end;
-
    { TFRE_DB_IP_SUBNET }
 
    TFRE_DB_IP_SUBNET=class(TFRE_DB_SERVICE)
@@ -383,11 +361,8 @@ type
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
      function        GetNetbaseIPWithSubnet (const conn:IFRE_DB_CONNECTION): TFRE_DB_String;  virtual;
-     function        GetIPWithSubnet        : TFRE_DB_String; virtual;
      function        IsIPValidinSubnet      (const conn:IFRE_DB_CONNECTION;const ip:string): boolean; virtual; abstract;
      class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; virtual; abstract;
-   public
-//     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_IPV4_SUBNET }
@@ -400,9 +375,6 @@ type
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
      function        IsIPValidinSubnet      (const conn:IFRE_DB_CONNECTION;const ip:string):boolean; override;
      class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; override;
-   published
-     function        StartService           : IFRE_DB_Object; override;
-     function        StopService            : IFRE_DB_Object; override;
    end;
 
    TFRE_DB_IPV4_SUBNET_DEFAULT=class(TFRE_DB_IPV4_SUBNET);
@@ -415,9 +387,6 @@ type
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
      class function  CalcBaseIPforSubnet    (const ip:string; const subnet:int16):string; override;
      function        IsIPValidinSubnet      (const conn:IFRE_DB_CONNECTION;const ip:string): boolean; override;
-   published
-     function        StartService           : IFRE_DB_Object; override;
-     function        StopService            : IFRE_DB_Object; override;
    end;
 
    TFRE_DB_IPV6_SUBNET_DEFAULT=class(TFRE_DB_IPV6_SUBNET);
@@ -431,6 +400,14 @@ type
      class function  getAllIPClasses        : TFRE_DB_StringArray;
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+     procedure       Embed                  (const conn: IFRE_DB_CONNECTION); override;
+     function        GetFMRI                : TFRE_DB_String; override;
+     function        GetAddrObjAlias        : string;
+     function        GetEmbeddedIPWithSubnet      : string;
+     function        GetEmbeddedIPorBaseWithSubnet: string;
+     function        GetIPWithoutSubnet           : string;
+   published
+     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_IPV4 }
@@ -441,11 +418,17 @@ type
    public
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+   published
+     function        StartService           : IFRE_DB_Object; override;
+     function        StopService            : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_IPV4_DHCP }
 
    TFRE_DB_IPV4_DHCP=class(TFRE_DB_IP)
+   published
+     function        StartService           : IFRE_DB_Object; override;
+     function        StopService            : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_IPV6 }
@@ -456,11 +439,17 @@ type
    public
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+   published
+     function        StartService           : IFRE_DB_Object; override;
+     function        StopService            : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_IPV6_SLAAC }
 
    TFRE_DB_IPV6_SLAAC=class(TFRE_DB_IP)
+   published
+     function        StartService           : IFRE_DB_Object; override;
+     function        StopService            : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_IP_ROUTE }
@@ -470,6 +459,11 @@ type
      class function  getAllRouteClasses     : TFRE_DB_StringArray;
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+     function        GetFMRI                : TFRE_DB_String; override;
+     procedure       Embed                  (const conn: IFRE_DB_CONNECTION); override;
+     function        GetEmbeddedBaseIPWithSubnet: string;
+   published
+     function        RIF_CreateOrUpdateService (const running_ctx : TObject) : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_IPV4_ROUTE }
@@ -478,6 +472,9 @@ type
    public
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+   published
+     function        StartService           : IFRE_DB_Object; override;
+     function        StopService            : IFRE_DB_Object; override;
    end;
 
 
@@ -487,6 +484,9 @@ type
    public
      class procedure RegisterSystemScheme   (const scheme: IFRE_DB_SCHEMEOBJECT); override;
      class procedure InstallDBObjects       (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+   published
+     function        StartService           : IFRE_DB_Object; override;
+     function        StopService            : IFRE_DB_Object; override;
    end;
 
    { TFRE_DB_DATALINK_STUB }
@@ -1557,6 +1557,92 @@ implementation
    result   := gresult;
   end;
 
+{ TFRE_DB_IPV6_SLAAC }
+
+function TFRE_DB_IPV6_SLAAC.StartService: IFRE_DB_Object;
+var linkname    : string;
+   aliasname   : string;
+   errorstring : string;
+begin
+{$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV6 START');
+  linkname   := Field('datalinkname').asstring;
+  aliasname  := GetAddrObjAlias;
+  if create_ipv6slaac(linkname,'addrconf',errorstring) then
+    begin
+      result.Field('STARTED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STARTED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end
+{$ENDIF}
+ end;
+
+function TFRE_DB_IPV6_SLAAC.StopService: IFRE_DB_Object;
+var linkname    : string;
+    aliasname   : string;
+    errorstring : string;
+begin
+  {$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV6 SLAAC STOP');
+  result.Field('STOPPED').asboolean:=true;  // dont remove addrconf on link, no further add or remove of ipv6 possible after that
+  exit;
+  {$ENDIF}
+end;
+
+{ TFRE_DB_IPV4_DHCP }
+
+function TFRE_DB_IPV4_DHCP.StartService: IFRE_DB_Object;
+var linkname    : string;
+    aliasname   : string;
+    errorstring : string;
+    gateway     : string;
+    res         : boolean;
+begin
+{$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV4 DHCP START');
+  linkname   := Field('datalinkname').asstring;
+  aliasname  := GetAddrObjAlias;
+  res := create_ipv4dhcp(linkname,aliasname,errorstring)
+  if res then
+    begin
+      result.Field('STARTED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STARTED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end;
+{$ENDIF}
+end;
+
+function TFRE_DB_IPV4_DHCP.StopService: IFRE_DB_Object;
+var linkname    : string;
+    aliasname   : string;
+    errorstring : string;
+begin
+{$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV4 DHCP STOP');
+  linkname   := Field('datalinkname').asstring;
+  aliasname  := GetAddrObjAlias;
+  if delete_ipaddress(linkname,aliasname,errorstring) then
+    begin
+      result.Field('STOPPED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STOPPED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end
+{$ENDIF}
+end;
+
 { TFRE_DB_IPV6 }
 
 function TFRE_DB_IPV6.GetHostOnlySubnetBits: int16;
@@ -1587,6 +1673,53 @@ begin
   end;
 end;
 
+function TFRE_DB_IPV6.StartService: IFRE_DB_Object;
+var linkname    : string;
+   aliasname   : string;
+   ip_hostnet  : string;
+   errorstring : string;
+begin
+{$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV6 START');
+  linkname   := Field('datalinkname').asstring;
+  aliasname  := GetAddrObjAlias;
+  create_ipv6slaac(linkname,'addrconf',errorstring);  // ignore result, has to be activated before fixed ipv6 addressess
+  ip_hostnet := GetEmbeddedIPWithSubnet;
+  if create_ipv6address(linkname,aliasname,ip_hostnet,errorstring) then
+    begin
+      result.Field('STARTED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STARTED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end
+{$ENDIF}
+ end;
+
+function TFRE_DB_IPV6.StopService: IFRE_DB_Object;
+var linkname    : string;
+    aliasname   : string;
+    errorstring : string;
+begin
+  {$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV6 STOP');
+  linkname   := Field('datalinkname').asstring;
+  aliasname  := GetAddrObjAlias;
+  if delete_ipaddress(linkname,aliasname,errorstring) then
+    begin
+      result.Field('STOPPED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STOPPED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end;
+  {$ENDIF}
+end;
+
 { TFRE_DB_IP_ROUTE }
 
 class function TFRE_DB_IP_ROUTE.getAllRouteClasses: TFRE_DB_StringArray;
@@ -1607,6 +1740,56 @@ begin
  if currentVersionId='' then begin
    currentVersionId := '1.0';
  end;
+end;
+
+function TFRE_DB_IP_ROUTE.GetFMRI: TFRE_DB_String;
+begin
+  result := 'svc:/fos/fos_routing_'+UID.AsHexString
+end;
+
+procedure TFRE_DB_IP_ROUTE.Embed(const conn: IFRE_DB_CONNECTION);
+var
+  obj         : IFRE_DB_Object;
+  sn          : TFRE_DB_IP_SUBNET;
+  ip          : TFRE_DB_IP;
+begin
+  CheckDbResult(conn.Fetch(field('subnet').AsObjectLink,obj));
+  if obj.IsA(TFRE_DB_IP_SUBNET,sn) then
+    begin
+      Field('base_ip').AsString    := sn.GetNetbaseIPWithSubnet(conn);
+      Field('subnet_bits').asint16 := sn.Field('subnet_bits').asint16;
+    end;
+  obj.Finalize;
+  CheckDbResult(conn.Fetch(field('gateway').AsObjectLink,obj));
+  if obj.IsA(TFRE_DB_IP,ip) then
+    begin
+      Field('gateway_ip').AsString    := ip.Field('ip').asstring;
+    end;
+  obj.Finalize;
+end;
+
+function TFRE_DB_IP_ROUTE.GetEmbeddedBaseIPWithSubnet: string;
+begin
+  result:=Field('base_ip').asstring+'/'+Field('subnet_bits').asstring;
+end;
+
+function TFRE_DB_IP_ROUTE.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var servicename : string;
+begin
+  {$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  servicename := Copy(GetFMRI,6,maxint);
+  writeln('SWL: CREATE SVC ROUTING ',ObjectName,' ',servicename);
+  SetSvcNameandType(servicename,'FirmOS Routing Service '+Field('ip').asstring+' '+Field('gateway').asstring,'transient','core,signal',true);
+  SetSvcEnvironment('/opt/local/fre','root','root','LANG=C');
+  SetSvcStart('/opt/local/fre/bin/fossvc --start --routing='+UID.AsHexString,60);
+  SetSvcStop('/opt/local/fre/bin/fossvc --stop --routing='+UID.AsHexString,60);
+  AddSvcDependency('fosip','svc:/fos/fosip','require_all','none');
+  AddSvcDependent (StringReplace(servicename,'/','',[rfReplaceAll]),'svc:/milestone/network','require_all','none');
+  fre_create_service(self);
+
+  result.Field('fmri').asstring:=servicename;
+  {$ENDIF}
 end;
 
 { TFRE_DB_IPV4 }
@@ -1637,6 +1820,54 @@ begin
     StoreTranslateableText(conn,'scheme_main_group','General Information');
     StoreTranslateableText(conn,'scheme_ip','IP');
   end;
+end;
+
+function TFRE_DB_IPV4.StartService: IFRE_DB_Object;
+var linkname    : string;
+    aliasname   : string;
+    ip_hostnet  : string;
+    errorstring : string;
+    res         : boolean;
+begin
+{$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV4 START');
+  linkname   := Field('datalinkname').asstring;
+  aliasname  := GetAddrObjAlias;
+  ip_hostnet := GetEmbeddedIPWithSubnet;
+  res := create_ipv4address(linkname,aliasname,ip_hostnet,errorstring);
+  if res then
+    begin
+      result.Field('STARTED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STARTED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end;
+{$ENDIF}
+end;
+
+function TFRE_DB_IPV4.StopService: IFRE_DB_Object;
+var linkname    : string;
+    aliasname   : string;
+    errorstring : string;
+begin
+{$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV4 STOP');
+  linkname   := Field('datalinkname').asstring;
+  aliasname  := GetAddrObjAlias;
+  if delete_ipaddress(linkname,aliasname,errorstring) then
+    begin
+      result.Field('STOPPED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STOPPED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end
+{$ENDIF}
 end;
 
 { TFRE_DB_IP }
@@ -1680,6 +1911,72 @@ begin
   end;
 end;
 
+procedure TFRE_DB_IP.Embed(const conn: IFRE_DB_CONNECTION);
+var
+  obj         : IFRE_DB_Object;
+  sn          : TFRE_DB_IP_SUBNET;
+begin
+  if FieldExists('subnet') then
+    begin
+      CheckDbResult(conn.Fetch(field('subnet').AsObjectLink,obj));
+      if obj.IsA(TFRE_DB_IP_SUBNET,sn) then
+        begin
+          Field('base_ip').AsString    := sn.GetNetbaseIPWithSubnet(conn);
+          Field('subnet_bits').asint16 := sn.Field('subnet_bits').asint16;
+        end;
+      obj.Finalize;
+    end;
+end;
+
+function TFRE_DB_IP.GetFMRI: TFRE_DB_String;
+begin
+  result := 'svc:/fos/fos_ip_'+Field('datalinkname').asstring+'_'+UID.AsHexString;
+end;
+
+function TFRE_DB_IP.GetAddrObjAlias: string;
+begin
+  result :='v'+Copy(UID.AsHexString,1,24); // 30 works for ipv4, 28 for ipv6
+end;
+
+function TFRE_DB_IP.GetEmbeddedIPWithSubnet: string;
+begin
+  result :=Field('ip').asstring+'/'+Field('subnet_bits').asstring;
+end;
+
+function TFRE_DB_IP.GetEmbeddedIPorBaseWithSubnet: string;
+begin
+  if Field('ip_type').asstring='BASE' then
+    result :=Field('base_ip').asstring+'/'+Field('subnet_bits').asstring
+  else
+    result :=Field('ip').asstring+'/'+inttostr(GetHostOnlySubnetBits);
+end;
+
+function TFRE_DB_IP.GetIPWithoutSubnet: string;
+begin
+  result := Field('ip').asstring;
+end;
+
+function TFRE_DB_IP.RIF_CreateOrUpdateService(const running_ctx: TObject): IFRE_DB_Object;
+var servicename : string;
+begin
+  {$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  servicename := Copy(GetFMRI,6,maxint);
+  writeln('SWL: CREATE SVC IP HOSTNET ',ObjectName,' ',servicename);
+
+  SetSvcNameandType(servicename,'FirmOS IP Service '+Field('ip').asstring,'transient','core,signal',true);
+  SetSvcEnvironment('/opt/local/fre','root','root','LANG=C');
+  SetSvcStart('/opt/local/fre/bin/fossvc --start --ip='+UID.AsHexString,60);
+  SetSvcStop('/opt/local/fre/bin/fossvc --stop --ip='+UID.AsHexString,60);
+  AddSvcDependency('foscfg','svc:/fos/foscfg','require_all','none');
+  AddSvcDependent (StringReplace(servicename,'/','',[rfReplaceAll]),'svc:/fos/fosip','require_all','none');
+  fre_create_service(self);
+
+  result.Field('fmri').asstring:=servicename;
+  {$ENDIF}
+end;
+
+
 { TFRE_DB_IP_SUBNET }
 
 class function TFRE_DB_IP_SUBNET.getAllSubnetClasses: TFRE_DB_StringArray;
@@ -1712,11 +2009,6 @@ begin
   finally
     obj.Finalize;
   end;
-end;
-
-function TFRE_DB_IP_SUBNET.GetIPWithSubnet: TFRE_DB_String;
-begin
-  Result:=''; //FIXXME
 end;
 
 { TFRE_DB_FIREWALL_NAT }
@@ -1896,10 +2188,13 @@ var
   obj       : IFRE_DB_Object;
 
   procedure EmbedObject(const fieldname:string);
+  var ip: TFRE_DB_IP;
   begin
     if FieldExists(fieldname) then
       begin
         CheckDbResult(conn.Fetch(Field(fieldname).AsObjectLink,obj));
+        if obj.IsA(TFRE_DB_IP,ip) then
+          ip.embed(conn);
         field(fieldname+'_embed').asobject:=obj;
         DeleteField(fieldname);
       end;
@@ -1932,13 +2227,10 @@ begin
           cmd := cmd +' from';
       if Field('src_addr_embed').asobject.IsA(TFRE_DB_IP,ip) then
         begin
-          if FieldExists('src_addr_host') and Field('src_addr_host').asboolean then
-            cmd:=cmd+' '+ip.Field('ip').AsString+'/'+inttostr(ip.GetHostOnlySubnetBits)
-          //else
-            //cmd:=cmd+' '+ip.GetNetbaseIPWithSubnet; //FIXXME
+          cmd:=cmd+' '+ip.GetEmbeddedIPorBaseWithSubnet;
         end
       else
-        raise EFRE_DB_Exception.Create('SRC_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('src_addr_embed').asobject.DumpToString);
+        raise EFRE_DB_Exception.Create('SRC_ADDR OBJECT IS NOT A TFRE_DB_IP '+Field('src_addr_embed').asobject.DumpToString);
     end
   else
     raise EFRE_DB_Exception.Create('NO SOURCE ADDR EMBED'+DumpToString);
@@ -1947,10 +2239,7 @@ begin
     begin
       if Field('src_to_addr_embed').asobject.IsA(TFRE_DB_IP,ip) then
         begin
-          if FieldExists('src_to_addr_host') and Field('src_to_addr_host').asboolean then
-            cmd:=cmd+' to '+ip.Field('ip').AsString+'/'+inttostr(ip.GetHostOnlySubnetBits)
-          //else
-            //cmd:=cmd+' to '+ip.GetNetbaseIPWithSubnet; //FIXXME
+          cmd:=cmd+' '+ip.GetEmbeddedIPorBaseWithSubnet;
         end
       else
         raise EFRE_DB_Exception.Create('SRC_TO_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('src_to_addr_embed').asobject.DumpToString);
@@ -1972,10 +2261,7 @@ begin
             cmd:=cmd+' '+ip.Field('ip').AsString
           else
             begin
-              if FieldExists('dst_addr_host') and Field('dst_addr_host').asboolean then
-                cmd:=cmd+' '+ip.Field('ip').AsString+'/'+inttostr(ip.GetHostOnlySubnetBits)
-              //else
-                //cmd:=cmd+' '+ip.GetNetbaseIPWithSubnet; //FIXXME
+              cmd:=cmd+' '+ip.GetEmbeddedIPorBaseWithSubnet;
             end;
         end
       else
@@ -2100,10 +2386,13 @@ var
   obj       : IFRE_DB_Object;
 
   procedure EmbedObject(const fieldname:string);
+  var ip:TFRE_DB_IP;
   begin
     if FieldExists(fieldname) then
       begin
         CheckDbResult(conn.Fetch(Field(fieldname).AsObjectLink,obj));
+        if obj.IsA(TFRE_DB_IP,ip) then
+          ip.embed(conn);
         field(fieldname+'_embed').asobject:=obj;
         DeleteField(fieldname);
       end;
@@ -2127,10 +2416,7 @@ begin
             result:=' !'
           else
             result:=' ';
-          if FieldExists('ip_host') and Field('ip_host').asboolean then
-            result:=result+ip.Field('ip').AsString+'/'+inttostr(ip.GetHostOnlySubnetBits);
-          //else
-            //result:=result+ip.GetNetbaseIPWithSubnet; ///FIXXME
+          result:=result+ip.GetEmbeddedIPorBaseWithSubnet;
           if FieldExists('group') then
             result := result+', group = '+field('group').asstring;
           result:=result+';';
@@ -2316,14 +2602,12 @@ begin
 
   scheme.AddSchemeField('src_addr',fdbft_ObjLink);
   scheme.AddSchemeField('src_addr_not',fdbft_Boolean);
-  scheme.AddSchemeField('src_addr_host',fdbft_Boolean);
   scheme.AddSchemeField('src_port_1',fdbft_UInt16);
   scheme.AddSchemeField('src_port_comparator',fdbft_String);          //enum
   scheme.AddSchemeField('src_port_2',fdbft_UInt16);                   //show only if src_port_comparator is "range"
 
   scheme.AddSchemeField('dst_addr',fdbft_ObjLink);
   scheme.AddSchemeField('dst_addr_not',fdbft_Boolean);
-  scheme.AddSchemeField('dst_addr_host',fdbft_Boolean);
   scheme.AddSchemeField('dst_port_1',fdbft_UInt16);
   scheme.AddSchemeField('dst_port_comparator',fdbft_String);          //enum
   scheme.AddSchemeField('dst_port_2',fdbft_UInt16);                   //show only if dst_port_comparator is "range"
@@ -2396,10 +2680,13 @@ var
   obj       : IFRE_DB_Object;
 
   procedure EmbedObject(const fieldname:string);
+  var ip:TFRE_DB_IP;
   begin
     if FieldExists(fieldname) then
       begin
         CheckDbResult(conn.Fetch(Field(fieldname).AsObjectLink,obj));
+        if obj.IsA(TFRE_DB_IP,ip) then
+          ip.embed(conn);
         field(fieldname+'_embed').asobject:=obj;
         DeleteField(fieldname);
       end;
@@ -2571,10 +2858,7 @@ begin
             ftfrom:='!'
           else
             ftfrom:='';
-          if FieldExists('src_addr_host') and Field('src_addr_host').asboolean then
-            ftfrom:=ftfrom+ip.Field('ip').AsString
-          //else
-            //ftfrom:=ftfrom+ip.GetIPWithSubnet; //FIXXME
+          ftfrom:=ftfrom+ip.GetEmbeddedIPorBaseWithSubnet;
         end
       else
         raise EFRE_DB_Exception.Create('SRC_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('src_addr_embed').asobject.DumpToString);
@@ -2601,10 +2885,7 @@ begin
             ftto:='!'
           else
             ftto:='';
-          if FieldExists('dst_addr_host') and Field('dst_addr_host').asboolean then
-            ftto:=ftto+ip.Field('ip').AsString;
-          //else
-            //ftto:=ftto+ip.GetIPWithSubnet;  //FIXXME
+          ftto:=ftto+ip.GetEmbeddedIPorBaseWithSubnet;
         end
       else
         raise EFRE_DB_Exception.Create('DST_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('dst_addr_embed').asobject.DumpToString);
@@ -3081,6 +3362,52 @@ begin
   end;
 end;
 
+function TFRE_DB_IPV6_ROUTE.StartService: IFRE_DB_Object;
+var ip_hostnet  : string;
+    errorstring : string;
+    gateway     : string;
+begin
+{$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV6 START');
+  ip_hostnet := GetEmbeddedBaseIPWithSubnet;
+  gateway    := Field('gateway_ip').asstring;
+  writeln('SWL: ADD ROUTING ',ip_hostnet,' GW ',gateway);
+  if add_ipv6routing(gateway,ip_hostnet,errorstring) then
+    begin
+      result.Field('STARTED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STARTED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end;
+{$ENDIF}
+end;
+
+function TFRE_DB_IPV6_ROUTE.StopService: IFRE_DB_Object;
+var errorstring : string;
+    ip_hostnet  : string;
+    gateway     : string;
+begin
+  {$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  writeln('SWL: IPV6 ROUTE STOP');
+  ip_hostnet := GetEmbeddedBaseIPWithSubnet;
+  gateway    := Field('gateway_ip').asstring;
+  writeln('SWL: DELETE ROUTING ',ip_hostnet,' GW ',gateway);
+  if delete_ipv6routing(gateway,ip_hostnet,errorstring) then
+    begin
+      result.Field('STOPPED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STOPPED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end;
+  {$ENDIF}
+end;
+
 { TFRE_DB_IPV4_ROUTE }
 
 class procedure TFRE_DB_IPV4_ROUTE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -3112,6 +3439,51 @@ begin
     DeleteTranslateableText(conn,'scheme_ip');
     DeleteTranslateableText(conn,'scheme_ip_net_group');
   end;
+end;
+
+function TFRE_DB_IPV4_ROUTE.StartService: IFRE_DB_Object;
+var ip_hostnet  : string;
+    errorstring : string;
+    gateway     : string;
+    res         : boolean;
+begin
+  {$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  ip_hostnet := GetEmbeddedBaseIPWithSubnet;
+  gateway    := Field('gateway_ip').asstring;
+  writeln('SWL: ADD ROUTING ',ip_hostnet,' GW ',gateway);
+  if add_ipv4routing(gateway,ip_hostnet,errorstring) then
+    begin
+      result.Field('STARTED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STARTED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end;
+  {$ENDIF}
+end;
+
+function TFRE_DB_IPV4_ROUTE.StopService: IFRE_DB_Object;
+var ip_hostnet  : string;
+    errorstring : string;
+    gateway     : string;
+begin
+  {$IFDEF SOLARIS}
+  result := GFRE_DBI.NewObject;
+  ip_hostnet := GetEmbeddedBaseIPWithSubnet;
+  gateway    := Field('gateway_ip').asstring;
+  writeln('SWL: DELETE ROUTING ',ip_hostnet,' GW ',gateway);
+  if delete_ipv4routing(gateway,ip_hostnet,errorstring) then
+    begin
+      result.Field('STOPPED').asboolean:=true;
+    end
+  else
+    begin
+      result.Field('STOPPED').asboolean:= false;
+      result.Field('ERROR').asstring   := errorstring;
+    end;
+  {$ENDIF}
 end;
 
 { TFRE_DB_IMAGE_FILE }
@@ -4471,132 +4843,6 @@ begin
   {$ENDIF}
 end;
 
-{ TFRE_DB_IP_ADDRESS }
-
-//procedure TFRE_DB_IP_HOSTNET.InternalSetIPCIDR(const value: TFRE_DB_String);
-//var p: integer;
-//begin
-//  p:= Pos('/',value);
-//  if p>0 then
-//    begin
-//      Field('ip').AsString     :=GFRE_BT.SepLeft(value,'/');
-//      Field('subnet').asint16  := strtoint(GFRE_BT.SepRight(value,'/'));
-//    end
-//  else
-//    begin
-//      Field('ip').AsString     := value;
-//      Field('subnet').asint16  := GetHostOnlySubnetBits;
-//    end;
-//end;
-//
-//function TFRE_DB_IP_HOSTNET.InternalGetNetbasewithSubnetIPV4: string;
-//var maskip:TFRE_HAL_IP4;
-//    netip :TFRE_HAL_IP4;
-//    ip    :string;
-//    s     :string;
-//begin
-// ip    := Field('ip').AsString;
-// maskip:= NMask(Field('subnet').asint16);
-// netip := StringtoIP4(ip);
-//
-// netip._long := netip._long and maskip._long;
-// result      := IP4toString(netip)+'/'+Field('subnet').asstring;
-//end;
-//
-//function TFRE_DB_IP_HOSTNET.InternalGetNetbasewithSubnetIPV6: string;
-//begin  //FIXXME IMPLEMENT CALCULATION
-//  result      := Field('ip').asstring+'/'+Field('subnet').asstring;
-//end;
-//
-//function TFRE_DB_IP_HOSTNET.GetAddrObjAlias: string;
-//begin
-//  result :='v'+Copy(UID.AsHexString,1,24); // 30 works for ipv4, 28 for ipv6
-//end;
-//
-//class procedure TFRE_DB_IP_HOSTNET.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-//begin
-//  inherited RegisterSystemScheme(scheme);
-//  scheme.SetParentSchemeByName(TFRE_DB_SERVICE.Classname);
-//  scheme.AddSchemeField('datalinkParent',fdbft_ObjLink).multiValues:=false;
-//end;
-//
-//class procedure TFRE_DB_IP_HOSTNET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
-//begin
-//  newVersionId:='1.0';
-//  if currentVersionId='' then begin
-//    currentVersionId := '1.0';
-//  end;
-//end;
-//
-//class function TFRE_DB_IP_HOSTNET.getAllHostnetClasses: TFRE_DB_StringArray;
-//begin
-//  Result:=TFRE_DB_StringArray.create(TFRE_DB_IPV4_SUBNET.ClassName,TFRE_DB_IPV6_SUBNET.ClassName,TFRE_DB_IPV4_ROUTE.ClassName,TFRE_DB_IPV6_ROUTE.ClassName);
-//end;
-//
-//function TFRE_DB_IP_HOSTNET.GetFMRI: TFRE_DB_String;
-//begin
-//  if FieldExists('gateway') then
-//    result := 'svc:/fos/fos_routing_'+UID.AsHexString
-//  else
-//    result := 'svc:/fos/fos_ip_'+Field('datalinkname').asstring+'_'+UID.AsHexString;
-//end;
-//
-//procedure TFRE_DB_IP_HOSTNET.SetIPCIDR(const value: TFRE_DB_String);
-//begin
-//  InternalSetIPCIDR(value);
-//end;
-//
-//function TFRE_DB_IP_HOSTNET.GetIPWithoutSubnet: TFRE_DB_String;
-//begin
-//  result := Field('ip').asstring;
-//end;
-//
-//function TFRE_DB_IP_HOSTNET.GetIPWithSubnet: TFRE_DB_String;
-//begin
-//  result := Field('ip').asstring;
-//  if FieldExists('subnet') then
-//    result := result +'/'+inttostr(Field('subnet').asint16)
-//  else
-//    result := result +'/'+inttostr(GetHostOnlySubnetBits)
-//end;
-//
-//
-//function TFRE_DB_IP_HOSTNET.RIF_CreateOrUpdateService: IFRE_DB_Object;
-//var servicename : string;
-//begin
-//  {$IFDEF SOLARIS}
-//  result := GFRE_DBI.NewObject;
-//  if FieldExists('gateway') then
-//    begin
-//      servicename := Copy(GetFMRI,6,maxint);
-//      writeln('SWL: CREATE SVC ROUTING ',ObjectName,' ',servicename);
-//      SetSvcNameandType(servicename,'FirmOS Routing Service '+Field('ip').asstring+' '+Field('gateway').asstring,'transient','core,signal',true);
-//      SetSvcEnvironment('/opt/local/fre','root','root','LANG=C');
-//      SetSvcStart('/opt/local/fre/bin/fossvc --start --routing='+UID.AsHexString,60);
-//      SetSvcStop('/opt/local/fre/bin/fossvc --stop --routing='+UID.AsHexString,60);
-//      AddSvcDependency('fosip','svc:/fos/fosip','require_all','none');
-//      AddSvcDependent (StringReplace(servicename,'/','',[rfReplaceAll]),'svc:/milestone/network','require_all','none');
-//    end
-//  else
-//    begin
-//      servicename := Copy(GetFMRI,6,maxint);
-//      writeln('SWL: CREATE SVC IP HOSTNET ',ObjectName,' ',servicename);
-//
-//      SetSvcNameandType(servicename,'FirmOS IP Service '+Field('ip').asstring,'transient','core,signal',true);
-//      SetSvcEnvironment('/opt/local/fre','root','root','LANG=C');
-//      SetSvcStart('/opt/local/fre/bin/fossvc --start --ip='+UID.AsHexString,60);
-//      SetSvcStop('/opt/local/fre/bin/fossvc --stop --ip='+UID.AsHexString,60);
-//      AddSvcDependency('foscfg','svc:/fos/foscfg','require_all','none');
-//      AddSvcDependent (StringReplace(servicename,'/','',[rfReplaceAll]),'svc:/fos/fosip','require_all','none');
-//    end;
-//  fre_create_service(self);
-//
-//  result.Field('fmri').asstring:=servicename;
-//  {$ENDIF}
-//end;
-
-
-
 { TFRE_DB_IPV6_SUBNET }
 
 class procedure TFRE_DB_IPV6_SUBNET.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -4631,112 +4877,6 @@ end;
 function TFRE_DB_IPV6_SUBNET.IsIPValidinSubnet(const conn: IFRE_DB_CONNECTION; const ip: string): boolean;
 begin
   result := false ; //FIXXME
-end;
-
-function TFRE_DB_IPV6_SUBNET.StartService: IFRE_DB_Object;
-var linkname    : string;
-    aliasname   : string;
-    ip_hostnet  : string;
-    errorstring : string;
-    gateway     : string;
-begin
-  {$IFDEF SOLARIS}
-  result := GFRE_DBI.NewObject;
-  writeln('SWL: IPV6 START');
-  if FieldExists('gateway') then
-    begin
-      ip_hostnet := GetIPWithSubnet;
-      gateway    := Field('gateway').asstring;
-      writeln('SWL: ADD ROUTING ',ip_hostnet,' GW ',gateway);
-      if add_ipv6routing(gateway,ip_hostnet,errorstring) then
-        begin
-          result.Field('STARTED').asboolean:=true;
-        end
-      else
-        begin
-          result.Field('STARTED').asboolean:= false;
-          result.Field('ERROR').asstring   := errorstring;
-        end;
-    end
-  else
-    begin
-      linkname   := Field('datalinkname').asstring;
-//      aliasname  := GetAddrObjAlias;  //FIXXME
-      if FieldExists('slaac') and Field('slaac').AsBoolean=true then
-        begin
-         if create_ipv6slaac(linkname,'addrconf',errorstring) then
-           begin
-             result.Field('STARTED').asboolean:=true;
-           end
-         else
-           begin
-             result.Field('STARTED').asboolean:= false;
-             result.Field('ERROR').asstring   := errorstring;
-           end
-        end
-      else
-        begin
-          create_ipv6slaac(linkname,'addrconf',errorstring);  // ignore result, has to be activated before fixed ipv6 addressess
-          ip_hostnet := GetIPWithSubnet;
-          if create_ipv6address(linkname,aliasname,ip_hostnet,errorstring) then
-            begin
-              result.Field('STARTED').asboolean:=true;
-            end
-          else
-            begin
-              result.Field('STARTED').asboolean:= false;
-              result.Field('ERROR').asstring   := errorstring;
-            end
-        end;
-     end;
-  {$ENDIF}
-end;
-
-function TFRE_DB_IPV6_SUBNET.StopService: IFRE_DB_Object;
-var linkname    : string;
-    aliasname   : string;
-    errorstring : string;
-    ip_hostnet  : string;
-    gateway     : string;
-begin
-  {$IFDEF SOLARIS}
-  result := GFRE_DBI.NewObject;
-  writeln('SWL: IPV6 STOP');
-  if FieldExists('gateway') then
-    begin
-      ip_hostnet := GetIPWithSubnet;
-      gateway    := Field('gateway').asstring;
-      writeln('SWL: DELETE ROUTING ',ip_hostnet,' GW ',gateway);
-      if delete_ipv6routing(gateway,ip_hostnet,errorstring) then
-        begin
-          result.Field('STOPPED').asboolean:=true;
-        end
-      else
-        begin
-          result.Field('STOPPED').asboolean:= false;
-          result.Field('ERROR').asstring   := errorstring;
-        end;
-    end
-  else
-    begin
-      linkname   := Field('datalinkname').asstring;
-//      aliasname  := GetAddrObjAlias;  //FIXXME
-      if FieldExists('slaac') and Field('slaac').AsBoolean=true then
-        begin
-          result.Field('STOPPED').asboolean:=true;  // dont remove addrconf on link, no further add or remove of ipv6 possible after that
-          exit;
-        end;
-      if delete_ipaddress(linkname,aliasname,errorstring) then
-        begin
-          result.Field('STOPPED').asboolean:=true;
-        end
-      else
-        begin
-          result.Field('STOPPED').asboolean:= false;
-          result.Field('ERROR').asstring   := errorstring;
-        end;
-    end;
-  {$ENDIF}
 end;
 
 { TFRE_DB_IPV4_SUBNET }
@@ -4794,96 +4934,6 @@ begin
 end;
 
 
-function TFRE_DB_IPV4_SUBNET.StartService: IFRE_DB_Object;
-var linkname    : string;
-    aliasname   : string;
-    ip_hostnet  : string;
-    errorstring : string;
-    gateway     : string;
-    res         : boolean;
-begin
-  {$IFDEF SOLARIS}
-  result := GFRE_DBI.NewObject;
-  if FieldExists('gateway') then
-    begin
-      ip_hostnet := GetIPWithSubnet;
-      gateway    := Field('gateway').asstring;
-      writeln('SWL: ADD ROUTING ',ip_hostnet,' GW ',gateway);
-      if add_ipv4routing(gateway,ip_hostnet,errorstring) then
-        begin
-          result.Field('STARTED').asboolean:=true;
-        end
-      else
-        begin
-          result.Field('STARTED').asboolean:= false;
-          result.Field('ERROR').asstring   := errorstring;
-        end;
-    end
-  else
-    begin
-      writeln('SWL: IPV4 START');
-      linkname   := Field('datalinkname').asstring;
-//      aliasname  := GetAddrObjAlias;  //FIXXME
-      ip_hostnet := GetIPWithSubnet;
-      if FieldExists('dhcp') and Field('dhcp').AsBoolean=true then
-        res := create_ipv4dhcp(linkname,aliasname,errorstring)
-      else
-        res := create_ipv4address(linkname,aliasname,ip_hostnet,errorstring);
-      if res then
-        begin
-          result.Field('STARTED').asboolean:=true;
-        end
-      else
-        begin
-          result.Field('STARTED').asboolean:= false;
-          result.Field('ERROR').asstring   := errorstring;
-        end;
-     end;
-  {$ENDIF}
-end;
-
-function TFRE_DB_IPV4_SUBNET.StopService: IFRE_DB_Object;
-var linkname    : string;
-    aliasname   : string;
-    ip_hostnet  : string;
-    errorstring : string;
-    gateway     : string;
-begin
-  {$IFDEF SOLARIS}
-  result := GFRE_DBI.NewObject;
-  if FieldExists('gateway') then
-    begin
-      ip_hostnet := GetIPWithSubnet;
-      gateway    := Field('gateway').asstring;
-      writeln('SWL: DELETE ROUTING ',ip_hostnet,' GW ',gateway);
-      if delete_ipv4routing(gateway,ip_hostnet,errorstring) then
-        begin
-          result.Field('STOPPED').asboolean:=true;
-        end
-      else
-        begin
-          result.Field('STOPPED').asboolean:= false;
-          result.Field('ERROR').asstring   := errorstring;
-        end;
-    end
-  else
-    begin
-      writeln('SWL: IPV4 STOP');
-      linkname   := Field('datalinkname').asstring;
-//      aliasname  := GetAddrObjAlias;  //FIXXME
-      if delete_ipaddress(linkname,aliasname,errorstring) then
-        begin
-          result.Field('STOPPED').asboolean:=true;
-        end
-      else
-        begin
-          result.Field('STOPPED').asboolean:= false;
-          result.Field('ERROR').asstring   := errorstring;
-        end
-     end;
-  {$ENDIF}
-end;
-
 { TFRE_DB_CPE_NETWORK_SERVICE }
 
 class procedure TFRE_DB_CPE_NETWORK_SERVICE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -4909,15 +4959,17 @@ var icount     : integer;
   procedure _NetIterator(const device:IFRE_DB_Object);
   var phys       : TFRE_DB_DATALINK_PHYS;
       iptun      : TFRE_DB_DATALINK_IPTUN;
-      ipv4       : TFRE_DB_IPV4_SUBNET;
-      ipv6       : TFRE_DB_IPV6_SUBNET;
+      ipv4       : TFRE_DB_IPV4;
+      ipv6       : TFRE_DB_IPV6;
       resultcode : integer;
       param      : string;
+
+    //FIXXME
 
     procedure _IPIterator (const ip:IFRE_DB_Object);
     var devname:string;
     begin
-      if ip.IsA(TFRE_DB_IPV4_SUBNET,ipv4) then
+      if ip.IsA(TFRE_DB_IPV4,ipv4) then
         begin
           if icount=0 then
             devname := phys.ObjectName
@@ -4935,17 +4987,17 @@ var icount     : integer;
               ExecuteProcess('/sbin/dhclient',param,[]);
             end
           else
-            if ipv4.GetIPWithSubnet<>'' then
-              ExecuteCMD('ifconfig '+devname+' '+ipv4.GetIPWithSubnet+' up',outstring);
+            if ipv4.GetEmbeddedIPWithSubnet<>'' then
+              ExecuteCMD('ifconfig '+devname+' '+ipv4.GetEmbeddedIPWithSubnet+' up',outstring);
         end;
-      if ip.IsA(TFRE_DB_IPV6_SUBNET,ipv6) then
+      if ip.IsA(TFRE_DB_IPV6,ipv6) then
         begin
           devname := phys.ObjectName;
           if (ipv6.FieldExists('slaac')) and (ipv6.Field('slaac').asboolean=true) then
             ExecuteCMD('ifconfig '+devname+' inet6 up',outstring)
           else
-            if ipv6.GetIPWithSubnet<>'' then
-              ExecuteCMD('ifconfig '+devname+' add '+ipv6.GetIPWithSubnet+' up',outstring);
+            if ipv6.GetEmbeddedIPWithSubnet<>'' then
+              ExecuteCMD('ifconfig '+devname+' add '+ipv6.GetEmbeddedIPWithSubnet+' up',outstring);
         end;
     end;
 
@@ -4953,15 +5005,15 @@ var icount     : integer;
     var devname:string;
     begin
       devname := iptun.ObjectName;
-      if ip.IsA(TFRE_DB_IPV4_SUBNET,ipv4) then
+      if ip.IsA(TFRE_DB_IPV4,ipv4) then
         begin
-          if ipv4.GetIPWithSubnet<>'' then
-            ExecuteCMD('ip addr add '+ipv4.GetIPWithSubnet+' dev '+devname,outstring);
+          if ipv4.GetEmbeddedIPWithSubnet<>'' then
+            ExecuteCMD('ip addr add '+ipv4.GetEmbeddedIPWithSubnet+' dev '+devname,outstring);
         end;
-      if ip.IsA(TFRE_DB_IPV6_SUBNET,ipv6) then
+      if ip.IsA(TFRE_DB_IPV6,ipv6) then
         begin
-          if ipv6.GetIPWithSubnet<>'' then
-            ExecuteCMD('ip -6 addr add '+ipv6.GetIPWithSubnet+' dev '+devname,outstring);
+          if ipv6.GetEmbeddedIPWithSubnet<>'' then
+            ExecuteCMD('ip -6 addr add '+ipv6.GetEmbeddedIPWithSubnet+' dev '+devname,outstring);
         end;
     end;
 
@@ -4991,20 +5043,20 @@ var icount     : integer;
         device.ForAllObjects(@_IPTunIterator);
         ExecuteCMD('ip link set '+iptun.Objectname+' up',outstring,true);
       end;
-    if device.IsA(TFRE_DB_IPV6_SUBNET,ipv6) then
+    if device.IsA(TFRE_DB_IPV6,ipv6) then
       begin
         if ipv6.FieldExists('gateway') then
           begin
             writeln('ROUTE6:',ipv6.ObjectName);
-            ExecuteCMD('ip -6 route add '+ ipv6.GetIPWithSubnet+' via '+ipv6.Field('gateway').asstring,outstring,false);
+            ExecuteCMD('ip -6 route add '+ ipv6.GetEmbeddedIPWithSubnet+' via '+ipv6.Field('gateway_ip').asstring,outstring,false);
           end;
       end;
-    if device.IsA(TFRE_DB_IPV4_SUBNET,ipv4) then
+    if device.IsA(TFRE_DB_IPV4,ipv4) then
       begin
         if ipv4.FieldExists('gateway') then
           begin
             writeln('ROUTE4:',ipv4.ObjectName);
-            ExecuteCMD('ip route add '+ ipv4.GetIPWithSubnet+' via '+ipv4.Field('gateway').asstring,outstring,false);
+            ExecuteCMD('ip route add '+ ipv4.GetEmbeddedIPWithSubnet+' via '+ipv4.Field('gateway_ip').asstring,outstring,false);
           end;
       end;
 
@@ -8561,7 +8613,10 @@ end;
        CheckDbResult(conn.Fetch(refs[i].linked_uid,obj),' could not fetch referencing object '+refs[i].linked_uid.AsHexString);
 //         writeln(obj.DumpToString());
        if obj.IsA(TFRE_DB_IP,ip) then
-         self.Field(obj.UID.AsHexString).AsObject:=ip
+         begin
+           ip.Embed(conn);
+           Field(obj.UID.AsHexString).AsObject:=ip
+         end
        else
          if obj.IsA(TFRE_DB_DATALINK,dl) then
            begin
