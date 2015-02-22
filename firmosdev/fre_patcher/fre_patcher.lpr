@@ -2441,7 +2441,6 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
          fw.Embed(conn);
          writeln('SWL FW EMBEDED ',fw.DumpToString);
          fw.DumpRulesPoolsNat;;
-         abort;
        end;
    end;
 
@@ -3170,7 +3169,6 @@ begin
   lan_ip_id   := AddIPV4('192.168.3.1','24',link_id,g_domain_id);
   link_id  := AddDatalink(TFRE_DB_DATALINK_VNIC.ClassName,'znfs0',zone_id,e0_id,0,2000,CFRE_DB_NullGUID,'02:08:20:a7:7b:de','mgmt','Global NFS');
   AddIPV4('172.22.1.2','16',link_id,g_def_domain_id);
-  AddIPV4('','',link_id,g_def_domain_id);
   vf_id:=CreateVFiler(zone_id,'Test Virtual Fileserver');
   CreateShare(vf_id,pool_id,'syspool/domains/demo/demo/zonedata/vfiler/sales','Sales',10240,10240);
   CreateShare(vf_id,pool_id,'syspool/domains/demo/demo/zonedata/vfiler/development','Development',10240,10240);
