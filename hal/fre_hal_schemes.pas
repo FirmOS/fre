@@ -1238,6 +1238,7 @@ type
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     function        GetFMRI              : TFRE_DB_STRING; override;
     procedure       Embed                (const conn: IFRE_DB_CONNECTION); override;
+    procedure       DumpRulesPoolsNat    ;
   published
     class function  GetCaption                (const conn: IFRE_DB_CONNECTION): String; override;
     function        RIF_EnableService    (const runnning_ctx : TObject) : IFRE_DB_Object; virtual;
@@ -2188,15 +2189,23 @@ var
   obj       : IFRE_DB_Object;
 
   procedure EmbedObject(const fieldname:string);
-  var ip: TFRE_DB_IP;
+  var ip:TFRE_DB_IP;
+      dl:TFRE_DB_DATALINK;
   begin
     if FieldExists(fieldname) then
       begin
         CheckDbResult(conn.Fetch(Field(fieldname).AsObjectLink,obj));
         if obj.IsA(TFRE_DB_IP,ip) then
-          ip.embed(conn);
-        field(fieldname+'_embed').asobject:=obj;
+          begin
+            ip.embed(conn);
+            field(fieldname+'_ip').asstring:=ip.GetEmbeddedIPorBaseWithSubnet;
+          end;
+        if obj.IsA(TFRE_DB_DATALINK,dl) then
+          begin
+            field(fieldname+'_name').asstring:=dl.ObjectName;
+          end;
         DeleteField(fieldname);
+        obj.Finalize;
       end;
   end;
 
@@ -2213,36 +2222,23 @@ var cmd    : string;
     intf   : TFRE_DB_DATALINK;
     ip     : TFRE_DB_IP;
 begin
-  natcmd := Field('command').asstring;
+  natcmd := lowercase(Field('command').asstring);
   cmd    := natcmd;
-  if Field('interface_embed').asobject.IsA(TFRE_DB_DATALINK,intf) then
-    cmd := cmd +' '+intf.ObjectName
-  else
-    raise EFRE_DB_Exception.Create('INTERFACE OBJECT IS NOT A TFRE_DB_DATALINK '+Field('interface_embed').asobject.DumpToString);
+  cmd := cmd +' '+Field('interface_name').asstring;
 
-  if FieldExists('src_addr_embed') then
+  if FieldExists('src_addr_ip') then
     begin
       if natcmd<>'rdr' then
-        if FieldExists('src_to_addr_embed') then
+        if FieldExists('src_to_addr_ip') then
           cmd := cmd +' from';
-      if Field('src_addr_embed').asobject.IsA(TFRE_DB_IP,ip) then
-        begin
-          cmd:=cmd+' '+ip.GetEmbeddedIPorBaseWithSubnet;
-        end
-      else
-        raise EFRE_DB_Exception.Create('SRC_ADDR OBJECT IS NOT A TFRE_DB_IP '+Field('src_addr_embed').asobject.DumpToString);
+        cmd:=cmd+' '+Field('src_addr_ip').asstring;
     end
   else
-    raise EFRE_DB_Exception.Create('NO SOURCE ADDR EMBED'+DumpToString);
+    raise EFRE_DB_Exception.Create('NO SOURCE ADDR IP'+DumpToString);
 
-  if FieldExists('src_to_addr_embed') then
+  if FieldExists('src_to_addr_ip') then
     begin
-      if Field('src_to_addr_embed').asobject.IsA(TFRE_DB_IP,ip) then
-        begin
-          cmd:=cmd+' '+ip.GetEmbeddedIPorBaseWithSubnet;
-        end
-      else
-        raise EFRE_DB_Exception.Create('SRC_TO_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('src_to_addr_embed').asobject.DumpToString);
+      cmd:=cmd+' '+Field('src_to_addr_ip').asstring;
     end;
 
   if natcmd = 'rdr' then
@@ -2253,19 +2249,12 @@ begin
 
   cmd := cmd+' ->';
 
-  if FieldExists('dst_addr_embed') then
+  if FieldExists('dst_addr_ip') then
     begin
-      if Field('dst_addr_embed').asobject.IsA(TFRE_DB_IP,ip) then
-        begin
           if (natcmd='rdr') then
-            cmd:=cmd+' '+ip.Field('ip').AsString
+            cmd:=cmd+' '+Field('dst_addr_ip').asstring
           else
-            begin
-              cmd:=cmd+' '+ip.GetEmbeddedIPorBaseWithSubnet;
-            end;
-        end
-      else
-        raise EFRE_DB_Exception.Create('DST_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('dst_addr_embed').asobject.DumpToString);
+            cmd:=cmd+' '+Field('dst_addr_ip').asstring;
     end
   else
     raise EFRE_DB_Exception.Create('NO DST ADDR EMBED'+DumpToString);
@@ -2275,10 +2264,10 @@ begin
     begin
       if FieldExists('dst_port_mode') then
         begin
-          if(Field('dst_port_mode').asstring='auto') then
-            cmd := cmd + ' portmap '+Field('protocol').asstring+' auto'
+          if(lowercase(Field('dst_port_mode').asstring)='auto') then
+            cmd := cmd + ' portmap '+lowercase(StringReplace(Field('protocol').asstring,'_','/',[]))+' auto'
           else
-            cmd := cmd + ' portmap '+Field('protocol').asstring+' '+ Field('dst_port_1').asstring+Field('dst_port_mode').asstring+Field('dst_port_2').asstring;
+            cmd := cmd + ' portmap '+lowercase(StringReplace(Field('protocol').asstring,'_','/',[]))+' '+ Field('dst_port_1').asstring+':'+Field('dst_port_2').asstring;
         end;
     end;
   if (natcmd='rdr') then
@@ -2287,7 +2276,7 @@ begin
         cmd := cmd+' port '+Field('dst_port_1').asstring
       else
         raise EFRE_DB_Exception.Create('NO DST PORT FOR REDIRECTION DEFINED '+DumpToString);
-      cmd := cmd+' '+Field('protocol').asstring;
+      cmd := cmd+' '+lowercase(StringReplace(Field('protocol').asstring,'_','/',[]));
     end;
 
   if (natcmd='map-block') then
@@ -2296,7 +2285,7 @@ begin
         cmd := cmd+' ports '+Field('dst_port_1').asstring
       else
         cmd := cmd+' ports auto';
-      cmd := cmd+' '+Field('protocol').asstring;
+      cmd := cmd+' '+lowercase(StringReplace(Field('protocol').asstring,'_','/',[]));
     end;
 
   if natcmd='rdr' then
@@ -2392,8 +2381,11 @@ var
       begin
         CheckDbResult(conn.Fetch(Field(fieldname).AsObjectLink,obj));
         if obj.IsA(TFRE_DB_IP,ip) then
-          ip.embed(conn);
-        field(fieldname+'_embed').asobject:=obj;
+          begin
+            ip.embed(conn);
+            field(fieldname+'_ip').asstring:=ip.GetEmbeddedIPorBaseWithSubnet;
+          end;
+        obj.Finalize;
         DeleteField(fieldname);
       end;
   end;
@@ -2408,21 +2400,16 @@ var
 
 begin
   result :='';
-  if FieldExists('ip_embed') then
+  if FieldExists('ip_ip') then
     begin
-      if Field('ip_embed').asobject.IsA(TFRE_DB_IP,ip) then
-        begin
-          if FieldExists('ip_not') and Field('ip_not').asboolean then
-            result:=' !'
-          else
-            result:=' ';
-          result:=result+ip.GetEmbeddedIPorBaseWithSubnet;
-          if FieldExists('group') then
-            result := result+', group = '+field('group').asstring;
-          result:=result+';';
-        end
+      if FieldExists('ip_not') and Field('ip_not').asboolean then
+        result:=' !'
       else
-        raise EFRE_DB_Exception.Create('SRC_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('src_addr_embed').asobject.DumpToString);
+        result:=' ';
+      result:=result+Field('ip_ip').asstring;
+      if FieldExists('group') then
+        result := result+', group = '+field('group').asstring;
+      result:=result+';';
     end;
 end;
 
@@ -2729,14 +2716,27 @@ var
 
   procedure EmbedObject(const fieldname:string);
   var ip:TFRE_DB_IP;
+      dl:TFRE_DB_DATALINK;
+      pl:TFRE_DB_FIREWALL_POOL;
   begin
     if FieldExists(fieldname) then
       begin
         CheckDbResult(conn.Fetch(Field(fieldname).AsObjectLink,obj));
         if obj.IsA(TFRE_DB_IP,ip) then
-          ip.embed(conn);
-        field(fieldname+'_embed').asobject:=obj;
+          begin
+            ip.embed(conn);
+            field(fieldname+'_ip').asstring:=ip.GetEmbeddedIPorBaseWithSubnet;
+          end;
+        if obj.IsA(TFRE_DB_DATALINK,dl) then
+          begin
+            field(fieldname+'_name').asstring:=dl.ObjectName;
+          end;
+        if obj.IsA(TFRE_DB_FIREWALL_POOL,pl) then
+          begin
+            field(fieldname+'_number').asstring:=pl.Field('number').asstring;
+          end;
         DeleteField(fieldname);
+        obj.Finalize;
       end;
   end;
 
@@ -2767,7 +2767,7 @@ var cmd    : string;
     i      : integer;
 
 begin
-  cmd := Field('action').asstring;
+  cmd := lowercase(Field('action').asstring);
   if Field('action').asstring='block' then
     begin
       if FieldExists('block_option') then
@@ -2792,16 +2792,16 @@ begin
 
   if Field('action').asstring='call' then
     begin
-      if Field('direction').asstring='in' then
-        if FieldExists('pool_in_embed') then
-          cmd := cmd+' now fr_srcgrpmap/'+Field('pool_in_embed').AsObject.Field('number').asstring;
+      if lowercase(Field('direction').asstring)='in' then
+        if FieldExists('pool_in_number') then
+          cmd := cmd+' now fr_srcgrpmap/'+Field('pool_in_number').asstring;
 
-      if Field('direction').asstring='out' then
-        if FieldExists('pool_out_embed') then
-          cmd := cmd+' now fr_dstgrpmap/'+Field('pool_out_embed').AsObject.Field('number').asstring;
+      if lowercase(Field('direction').asstring)='out' then
+        if FieldExists('pool_out_number') then
+          cmd := cmd+' now fr_dstgrpmap/'+Field('pool_out_number').asstring;
     end;
 
-  cmd := cmd+' '+field('direction').asstring;
+  cmd := cmd+' '+Lowercase(field('direction').asstring);
   if FieldExists('option_log') and Field('option_log').asboolean then
     begin
       cmd := cmd +' log';
@@ -2818,63 +2818,28 @@ begin
     begin
       cmd := cmd +' quick';
     end;
-  if FieldExists('interface_embed') then
+  if FieldExists('interface_name') then
+    cmd := cmd +' on '+Field('interface_name').asstring;
+
+  if FieldExists('option_dup_to_interface_name') then
     begin
-      if Field('interface_embed').asobject.IsA(TFRE_DB_DATALINK,intf) then
-        cmd := cmd +' on '+intf.ObjectName
-      else
-        raise EFRE_DB_Exception.Create('INTERFACE OBJECT IS NOT A TFRE_DB_DATALINK '+Field('interface_embed').asobject.DumpToString);
+      cmd := cmd +' dup-to '+Field('option_dup_to_interface_name').asstring;
+      if FieldExists('option_dup_to_ip_ip') then
+        cmd:= cmd +' : '+Field('option_dup_to_ip_ip').AsString
     end;
 
-  if FieldExists('option_dup_to_interface_embed') then
+  if FieldExists('option_to_interface_name') then
     begin
-      if Field('option_dup_to_interface_embed').asobject.IsA(TFRE_DB_DATALINK,intf) then
-        begin
-          cmd := cmd +' dup-to '+intf.ObjectName;
-          if FieldExists('option_dup_to_ip_embed') then
-            begin
-              if Field('option_dup_to_ip_embed').asobject.IsA(TFRE_DB_IP,ip) then
-                cmd:= cmd +' : '+ip.Field('ip').AsString
-              else
-                raise EFRE_DB_Exception.Create('DUP-TO ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('option_dup_to_interface_embed').asobject.DumpToString);
-            end;
-        end
-      else
-        raise EFRE_DB_Exception.Create('INTERFACE OBJECT IS NOT A TFRE_DB_DATALINK '+Field('option_dup_to_interface_embed').asobject.DumpToString);
+      cmd := cmd +' to '+Field('option_to_interface_name').asstring;
+      if FieldExists('option_to_ip_ip') then
+        cmd:= cmd +' : '+Field('option_to_ip_ip').AsString
     end;
 
-  if FieldExists('option_to_interface_embed') then
+  if FieldExists('option_reply_to_interface_name') then
     begin
-      if Field('option_to_interface_embed').asobject.IsA(TFRE_DB_DATALINK,intf) then
-        begin
-          cmd := cmd +' to '+intf.ObjectName;
-          if FieldExists('option_to_ip_embed') then
-            begin
-              if Field('option_to_ip_embed').asobject.IsA(TFRE_DB_IP,ip) then
-                cmd:= cmd +' : '+ip.Field('ip').AsString
-              else
-                raise EFRE_DB_Exception.Create('TO ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('option_to_interface_embed').asobject.DumpToString);
-            end;
-        end
-      else
-        raise EFRE_DB_Exception.Create('INTERFACE OBJECT IS NOT A TFRE_DB_DATALINK '+Field('option_to_interface_embed').asobject.DumpToString);
-    end;
-
-  if FieldExists('option_reply_to_interface_embed') then
-    begin
-      if Field('option_reply_to_interface_embed').asobject.IsA(TFRE_DB_DATALINK,intf) then
-        begin
-          cmd := cmd +' reply-to '+intf.ObjectName;
-          if FieldExists('option_reply_to_ip_embed') then
-            begin
-              if Field('option_reply_to_ip_embed').asobject.IsA(TFRE_DB_IP,ip) then
-                cmd:= cmd +' : '+ip.Field('ip').AsString
-              else
-                raise EFRE_DB_Exception.Create('REPLY_TO ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('option_reply_to_interface_embed').asobject.DumpToString);
-            end;
-        end
-      else
-        raise EFRE_DB_Exception.Create('INTERFACE OBJECT IS NOT A TFRE_DB_DATALINK '+Field('option_reply_to_interface_embed').asobject.DumpToString);
+      cmd := cmd +' reply-to '+Field('option_reply_to_interface_name').asstring;
+      if FieldExists('option_reply_to_ip_ip') then
+        cmd:= cmd +' : '+Field('option_reply_to_ip_ip').asstring;
     end;
 
 
@@ -2891,25 +2856,20 @@ begin
 
   if FieldExists('protocol') then
     begin
-      cmd := cmd +' proto '+Field('protocol').asstring;
+      cmd := cmd +' proto '+lowercase(Field('protocol').asstring);
     end;
 
   fromto :='all';
   ftto   :='any';
   ftfrom :='any';
 
-  if FieldExists('src_addr_embed') then
+  if FieldExists('src_addr_ip') then
     begin
-      if Field('src_addr_embed').asobject.IsA(TFRE_DB_IP,ip) then
-        begin
-          if FieldExists('src_addr_not') and Field('src_addr_not').asboolean then
-            ftfrom:='!'
-          else
-            ftfrom:='';
-          ftfrom:=ftfrom+ip.GetEmbeddedIPorBaseWithSubnet;
-        end
+      if FieldExists('src_addr_not') and Field('src_addr_not').asboolean then
+        ftfrom:='!'
       else
-        raise EFRE_DB_Exception.Create('SRC_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('src_addr_embed').asobject.DumpToString);
+        ftfrom:='';
+      ftfrom:=ftfrom+Field('src_addr_ip').asstring;
     end;
 
   if FieldExists('src_port_1') then
@@ -2925,18 +2885,13 @@ begin
         ftfrom := ftfrom+' '+comp+' '+Field('src_port_1').AsString;
     end;
 
-  if FieldExists('dst_addr_embed') then
+  if FieldExists('dst_addr_ip') then
     begin
-      if Field('dst_addr_embed').asobject.IsA(TFRE_DB_IP,ip) then
-        begin
-          if FieldExists('dst_addr_not') and Field('dst_addr_not').asboolean then
-            ftto:='!'
-          else
-            ftto:='';
-          ftto:=ftto+ip.GetEmbeddedIPorBaseWithSubnet;
-        end
+      if FieldExists('dst_addr_not') and Field('dst_addr_not').asboolean then
+        ftto:='!'
       else
-        raise EFRE_DB_Exception.Create('DST_ADDR OBJECT IS NOT A TFRE_DB_IP_HOSTNET '+Field('dst_addr_embed').asobject.DumpToString);
+        ftto:='';
+      ftto:=ftto+Field('dst_addr_ip').asstring;
     end;
 
   if FieldExists('dst_port_1') then
@@ -2969,7 +2924,7 @@ begin
   flags := '';
 
   if FieldExists('protocol') then
-    if Field('protocol').asstring='tcp' then
+    if lowercase(Field('protocol').asstring)='tcp' then
       begin
         if FieldExists('tcp_flag_fin') and Field('tcp_flag_fin').AsBoolean   then flags := flags +'F';
         if FieldExists('tcp_flag_syn') and Field('tcp_flag_syn').AsBoolean   then flags := flags +'S';
@@ -3229,6 +3184,14 @@ begin
           else
             obj.Finalize;
     end;
+end;
+
+procedure TFRE_DB_FIREWALL_SERVICE.DumpRulesPoolsNat;
+begin
+  writeln(GenerateIPFRulesIPv4);
+  writeln(GenerateIPFRulesIPv6);
+  writeln(GenerateIPFPools);
+  writeln(GenerateIPFNatRules);
 end;
 
 class function TFRE_DB_FIREWALL_SERVICE.GetCaption(const conn: IFRE_DB_CONNECTION): String;
@@ -7833,6 +7796,8 @@ end;
                    if tmpl.Field('serviceclasses').AsStringItem[i]=TFRE_DB_VIRTUAL_FILESERVER.ClassName then
                      continue;
                    if tmpl.Field('serviceclasses').AsStringItem[i]=TFRE_DB_VMACHINE.ClassName then
+                     continue;
+                   if tmpl.Field('serviceclasses').AsStringItem[i]=TFRE_DB_FIREWALL_SERVICE.ClassName then
                      continue;
                    if Pos('TFRE_DB_DATALINK',tmpl.Field('serviceclasses').AsStringItem[i])>0 then
                      continue;
