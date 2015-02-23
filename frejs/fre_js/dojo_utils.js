@@ -494,9 +494,12 @@ dojo.declare("FIRMOS.uiHandler", null, {
 
   updateStore: function(storeId, data) {
     var store = this.getStoreById(storeId);
+    console.log('********************');
+    console.log('UPDATE STORE START: ' + storeId);
+    console.log('********************');
     if (store) {
       if (data.deleted) {
-        store.store.deleteItems(data.deleted);
+        store.store.deleteItems(data.deleted,storeId);
       }
       if (data.new) {
         store.store.newItems(data.new,storeId);
@@ -507,6 +510,9 @@ dojo.declare("FIRMOS.uiHandler", null, {
     } else {
 //      console.warn('Store ' + storeId + ' not registered');
     }
+    console.log('********************');
+    console.log('UPDATE STORE END: ' + storeId);
+    console.log('********************');
   },
   
   registerStore: function(store) {
@@ -1543,7 +1549,9 @@ dojo.declare("FIRMOS.Store", null, {
   },
 //FIRMOS update API
   newItems: function(data,storeId) {
-    console.log('new '+JSON.stringify(data));
+    console.log('********************');
+    console.log('UPDATE STORE ' + storeId + ' NEW ITEMS: ' + JSON.stringify(data));
+    console.log('********************');
     for (var i=0;i<data.length;i++) {
       var event = new Object();
       event.type = 'add';
@@ -1558,8 +1566,10 @@ dojo.declare("FIRMOS.Store", null, {
       this.onAdd(event);
     }
   },
-  deleteItems: function(data) {
-    console.log('del '+JSON.stringify(data));
+  deleteItems: function(data,storeId) {
+    console.log('********************');
+    console.log('UPDATE STORE ' + storeId + ' DELETE ITEMS: ' + JSON.stringify(data));
+    console.log('********************');
     for (var i=0;i<data.length;i++) {
       var event = new Object();
       event.type = 'delete';
@@ -1570,7 +1580,9 @@ dojo.declare("FIRMOS.Store", null, {
     }
   },
   updateItems: function(data,storeId) {
-    console.log('upd '+JSON.stringify(data));
+    console.log('********************');
+    console.log('UPDATE STORE ' + storeId + ' UPDATE ITEMS: ' + JSON.stringify(data));
+    console.log('********************');
     for (var i=0; i<data.length; i++) {
       var event = new Object();
       event.type = 'update';
