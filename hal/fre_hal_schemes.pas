@@ -2569,6 +2569,7 @@ class procedure TFRE_DB_FIREWALL_RULE.RegisterSystemScheme(const scheme: IFRE_DB
 var
   group: IFRE_DB_InputGroupSchemeDefinition;
   enum : IFRE_DB_Enum;
+  fld  : IFRE_DB_FieldSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
@@ -2607,6 +2608,7 @@ begin
   enum.addEntry('GT',GetTranslateableTextKey('enum_fw_rule_comparator_gt'));
   enum.addEntry('LE',GetTranslateableTextKey('enum_fw_rule_comparator_le'));
   enum.addEntry('GE',GetTranslateableTextKey('enum_fw_rule_comparator_ge'));
+  enum.addEntry('RANGE',GetTranslateableTextKey('enum_fw_rule_comparator_range'));
   GFRE_DBI.RegisterSysEnum(enum);
 
 
@@ -2616,7 +2618,7 @@ begin
   scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(true,false,'fw_rule_direction');
   scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(true,false,'fw_rule_ipversion');
 
-  scheme.AddSchemeField('interface',fdbft_ObjLink);                   // datalink of the zone
+  scheme.AddSchemeField('interface',fdbft_ObjLink);
 
   scheme.AddSchemeField('option_log',fdbft_Boolean);
   scheme.AddSchemeField('option_quick',fdbft_Boolean);
@@ -2626,14 +2628,16 @@ begin
   scheme.AddSchemeField('src_addr',fdbft_ObjLink);
   scheme.AddSchemeField('src_addr_not',fdbft_Boolean);
   scheme.AddSchemeField('src_port_1',fdbft_UInt16);
-  scheme.AddSchemeField('src_port_comparator',fdbft_String);          //enum
-  scheme.AddSchemeField('src_port_2',fdbft_UInt16);                   //show only if src_port_comparator is "range"
+  fld:=scheme.AddSchemeField('src_port_comparator',fdbft_String).SetupFieldDef(false,false,'fw_rule_comparator');
+  scheme.AddSchemeField('src_port_2',fdbft_UInt16);
+  fld.addEnumDepField('src_port_2','RANGE',fdv_none,fdes_enabled);
 
   scheme.AddSchemeField('dst_addr',fdbft_ObjLink);
   scheme.AddSchemeField('dst_addr_not',fdbft_Boolean);
   scheme.AddSchemeField('dst_port_1',fdbft_UInt16);
-  scheme.AddSchemeField('dst_port_comparator',fdbft_String);          //enum
-  scheme.AddSchemeField('dst_port_2',fdbft_UInt16);                   //show only if dst_port_comparator is "range"
+  fld:=scheme.AddSchemeField('dst_port_comparator',fdbft_String).SetupFieldDef(false,false,'fw_rule_comparator');
+  scheme.AddSchemeField('dst_port_2',fdbft_UInt16);
+  fld.addEnumDepField('dst_port_2','RANGE',fdv_none,fdes_enabled);
 
   scheme.AddSchemeField('keep_state',fdbft_Boolean);
   scheme.AddSchemeField('keep_frags',fdbft_Boolean);
@@ -2694,25 +2698,25 @@ begin
   group:=scheme.AddInputGroup('src').Setup(GetTranslateableTextKey('scheme_src_group'));
   group.AddInput('src_addr',GetTranslateableTextKey('scheme_src_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
   group.AddInput('src_port_comparator',GetTranslateableTextKey('scheme_src_port_comparator'));
-  group:=scheme.AddInputGroup('src_ports').Setup(GetTranslateableTextKey('scheme_src_ports_group'));
+  group:=scheme.AddInputGroup('src_settings').Setup(GetTranslateableTextKey('scheme_src_settings_group'));
   group.AddInput('src_port_1',GetTranslateableTextKey('scheme_src_port_1'));
   group.AddInput('src_port_2',GetTranslateableTextKey('scheme_src_port_2'));
+  group.AddInput('src_addr_not',GetTranslateableTextKey('scheme_src_addr_not'));
 
   group:=scheme.AddInputGroup('dst').Setup(GetTranslateableTextKey('scheme_dst_group'));
   group.AddInput('dst_addr',GetTranslateableTextKey('scheme_dst_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
   group.AddInput('dst_port_comparator',GetTranslateableTextKey('scheme_dst_port_comparator'));
-  group:=scheme.AddInputGroup('dst_ports').Setup(GetTranslateableTextKey('scheme_dst_ports_group'));
+  group:=scheme.AddInputGroup('dst_settings').Setup(GetTranslateableTextKey('scheme_dst_settings_group'));
   group.AddInput('dst_port_1',GetTranslateableTextKey('scheme_dst_port_1'));
   group.AddInput('dst_port_2',GetTranslateableTextKey('scheme_dst_port_2'));
-
-  group.AddInput('number',GetTranslateableTextKey('scheme_number'));
+  group.AddInput('dst_addr_not',GetTranslateableTextKey('scheme_dst_addr_not'));
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.UseInputGroup(scheme.DefinedSchemeName,'general');
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src');
-  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src_ports','',true);
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src_settings','',true);
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst');
-  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst_ports','',true);
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst_settings','',true);
   //group.UseInputGroup(scheme.DefinedSchemeName,'advanced','',true,true,true);
 
 end;
@@ -2756,17 +2760,26 @@ begin
 
     StoreTranslateableText(conn,'scheme_src_group','Source');
     StoreTranslateableText(conn,'scheme_src_addr','Address');
+    StoreTranslateableText(conn,'scheme_src_addr_not','Invert');
     StoreTranslateableText(conn,'scheme_src_port_Comparator','Mode');
-    StoreTranslateableText(conn,'scheme_src_ports_group','');
+    StoreTranslateableText(conn,'scheme_src_settings_group','');
     StoreTranslateableText(conn,'scheme_src_port_1','Port 1');
     StoreTranslateableText(conn,'scheme_src_port_2','Port 2');
 
     StoreTranslateableText(conn,'scheme_dst_group','Destination');
     StoreTranslateableText(conn,'scheme_dst_addr','Address');
+    StoreTranslateableText(conn,'scheme_dst_addr_not','Invert');
     StoreTranslateableText(conn,'scheme_dst_port_Comparator','Mode');
-    StoreTranslateableText(conn,'scheme_dst_ports_group','');
+    StoreTranslateableText(conn,'scheme_dst_settings_group','');
     StoreTranslateableText(conn,'scheme_dst_port_1','Port 1');
     StoreTranslateableText(conn,'scheme_dst_port_2','Port 2');
+
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_eq','=');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_lt','<');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_gt','>');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_le','<=');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_ge','>=');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_range',':');
   end;
 end;
 
