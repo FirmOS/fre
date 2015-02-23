@@ -131,15 +131,21 @@ end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD._AddModifyRule(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify: Boolean): IFRE_DB_Object;
 var
-  scheme    : IFRE_DB_SchemeObject;
-  res       : TFRE_DB_FORM_DIALOG_DESC;
-  sf        : TFRE_DB_SERVER_FUNC_DESC;
-  diagCap   : TFRE_DB_String;
-  dbo       : IFRE_DB_Object;
-  ruleDBO   : IFRE_DB_Object;
-  service   : IFRE_DB_Object;
+  scheme     : IFRE_DB_SchemeObject;
+  res        : TFRE_DB_FORM_DIALOG_DESC;
+  sf         : TFRE_DB_SERVER_FUNC_DESC;
+  diagCap    : TFRE_DB_String;
+  dbo        : IFRE_DB_Object;
+  ruleDBO    : IFRE_DB_Object;
+  service    : IFRE_DB_Object;
+  baseAddIPSf: TFRE_DB_SERVER_FUNC_DESC;
+  canAddIPv4 : Boolean;
+  canAddIPv6 : Boolean;
+  dc         : IFRE_DB_DERIVED_COLLECTION;
 begin
   sf:=CWSF(@WEB_StoreRule);
+  baseAddIPSf:=CWSF(@WEB_AddIP);
+  CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID,service));
   if isModify then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
 
@@ -147,16 +153,33 @@ begin
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('ruleId',dbo.UID_String);
+    baseAddIPSf.AddParam.Describe('ruleId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'rule_modify_diag_cap');
   end else begin
-    CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID,service));
-
     if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_RULE,service.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('firewallId',service.UID_String);
+    baseAddIPSf.AddParam.Describe('firewallId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'rule_create_diag_cap');
   end;
+  canAddIPv4:=conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID);
+  canAddIPv6:=conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_SUBNET,service.DomainID);
+
+  dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC);
+  dc.Filters.RemoveFilter('zone');
+  dc.Filters.AddUIDFieldFilter('zone','zuid',service.Field('serviceParent').AsObjectLink,dbnf_OneValueFromFilter);
+  dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_IP_CHOOSER_DC);
+  dc.Filters.RemoveFilter('domain');
+  dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
+  dc.Filters.RemoveFilter('scheme');
+  dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4.ClassName]);
+  dc := ses.FetchDerivedCollection('FIREWALL_IPV6_CHOOSER_DC');
+  dc.Filters.RemoveFilter('domain');
+  dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
+  dc.Filters.RemoveFilter('scheme');
+  dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV6.ClassName]);
+
   GetSystemScheme(TFRE_DB_FIREWALL_RULE,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
@@ -488,9 +511,6 @@ var
   end;
 
   procedure _setRuleColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
-  var
-    delimiter: String;
-    proxy_str: TFRE_DB_String;
   begin
     //SOURCE
     transformed_object.Field('source').AsString:=transformed_object.Field('src_ip').AsString;
@@ -511,34 +531,6 @@ var
       end;
     end;
     //DESCR
-    delimiter:='';
-    if transformed_object.Field('src_to_ip').AsString<>'' then begin
-      transformed_object.Field('descr').AsString:=StringReplace(langres[1],'%src_to_str%',transformed_object.Field('src_to_ip').AsString,[rfReplaceAll]);
-      delimiter:=langres[0];
-    end;
-    if transformed_object.Field('option_frag').AsString='1' then begin
-      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + langres[2];
-      delimiter:=langres[0];
-    end;
-    if transformed_object.Field('option_age').AsString<>'' then begin
-      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[3],'%age_str%',transformed_object.Field('option_age').AsString,[rfReplaceAll]);
-      delimiter:=langres[0];
-    end;
-    if transformed_object.Field('option_clamp').AsString<>'' then begin
-      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[4],'%clamp_str%',transformed_object.Field('option_clamp').AsString,[rfReplaceAll]);
-      delimiter:=langres[0];
-    end;
-    if transformed_object.Field('option_roundrobin').AsString='1' then begin
-      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + langres[5];
-      delimiter:=langres[0];
-    end;
-    if transformed_object.Field('proxy_name').AsString<>'' then begin
-      proxy_str:=transformed_object.Field('proxy_name').AsString;
-      if transformed_object.Field('proxy_port').AsString<>'' then begin
-        proxy_str:=proxy_str + ':' + transformed_object.Field('proxy_port').AsString;
-      end;
-      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[6],'%proxy_str%',proxy_str,[rfReplaceAll]);
-    end;
   end;
 
   procedure _setNATColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
@@ -573,6 +565,34 @@ var
       end;
     end;
     //DESCR
+    delimiter:='';
+    if transformed_object.Field('src_to_ip').AsString<>'' then begin
+      transformed_object.Field('descr').AsString:=StringReplace(langres[1],'%src_to_str%',transformed_object.Field('src_to_ip').AsString,[rfReplaceAll]);
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('option_frag').AsString='1' then begin
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + langres[2];
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('option_age').AsString<>'' then begin
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[3],'%age_str%',transformed_object.Field('option_age').AsString,[rfReplaceAll]);
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('option_clamp').AsString<>'' then begin
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[4],'%clamp_str%',transformed_object.Field('option_clamp').AsString,[rfReplaceAll]);
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('option_roundrobin').AsString='1' then begin
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + langres[5];
+      delimiter:=langres[0];
+    end;
+    if transformed_object.Field('proxy_name').AsString<>'' then begin
+      proxy_str:=transformed_object.Field('proxy_name').AsString;
+      if transformed_object.Field('proxy_port').AsString<>'' then begin
+        proxy_str:=proxy_str + ':' + transformed_object.Field('proxy_port').AsString;
+      end;
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[6],'%proxy_str%',proxy_str,[rfReplaceAll]);
+    end;
   end;
 
 begin
@@ -663,7 +683,7 @@ begin
 
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
-    with transform do begin      //TFRE_DB_FIREWALL_RULE;
+    with transform do begin
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'rule_grid_number'));
       AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'rule_grid_interface'));
       AddOneToOnescheme('source','',FetchModuleTextShort(session,'rule_grid_source'));

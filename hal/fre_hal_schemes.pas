@@ -2601,11 +2601,20 @@ begin
   enum.addEntry('ICMP',GetTranslateableTextKey('enum_fw_rule_protocol_icmp'));
   GFRE_DBI.RegisterSysEnum(enum);
 
+  enum:=GFRE_DBI.NewEnum('fw_rule_comparator').Setup(GFRE_DBI.CreateText('$enum_fw_rule_comparator','Firewall Rule Comparator'));
+  enum.addEntry('EQ',GetTranslateableTextKey('enum_fw_rule_comparator_eq'));
+  enum.addEntry('LT',GetTranslateableTextKey('enum_fw_rule_comparator_lt'));
+  enum.addEntry('GT',GetTranslateableTextKey('enum_fw_rule_comparator_gt'));
+  enum.addEntry('LE',GetTranslateableTextKey('enum_fw_rule_comparator_le'));
+  enum.addEntry('GE',GetTranslateableTextKey('enum_fw_rule_comparator_ge'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
-  scheme.AddSchemeField('action',fdbft_String).SetupFieldDef(false,false,'fw_rule_action');
-  scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(false,false,'fw_rule_direction');
-  scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(false,false,'fw_rule_ipversion');
+  scheme.AddSchemeField('action',fdbft_String).SetupFieldDef(true,false,'fw_rule_action');
+  scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(true,false,'fw_rule_direction');
+  scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(true,false,'fw_rule_ipversion');
 
   scheme.AddSchemeField('interface',fdbft_ObjLink);                   // datalink of the zone
 
@@ -2674,8 +2683,38 @@ begin
   scheme.AddSchemeField('set_tag_nat',fdbft_string);
   scheme.AddSchemeField('set_tag_log',fdbft_int32);
 
-  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
+  group.AddInput('ipversion',GetTranslateableTextKey('scheme_ipversion'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
+  group.AddInput('action',GetTranslateableTextKey('scheme_action'));
+  group.AddInput('direction',GetTranslateableTextKey('scheme_direction'));
+  group.AddInput('interface',GetTranslateableTextKey('scheme_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('protocol',GetTranslateableTextKey('scheme_protocol'));
+
+  group:=scheme.AddInputGroup('src').Setup(GetTranslateableTextKey('scheme_src_group'));
+  group.AddInput('src_addr',GetTranslateableTextKey('scheme_src_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('src_port_comparator',GetTranslateableTextKey('scheme_src_port_comparator'));
+  group:=scheme.AddInputGroup('src_ports').Setup(GetTranslateableTextKey('scheme_src_ports_group'));
+  group.AddInput('src_port_1',GetTranslateableTextKey('scheme_src_port_1'));
+  group.AddInput('src_port_2',GetTranslateableTextKey('scheme_src_port_2'));
+
+  group:=scheme.AddInputGroup('dst').Setup(GetTranslateableTextKey('scheme_dst_group'));
+  group.AddInput('dst_addr',GetTranslateableTextKey('scheme_dst_addr'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('dst_port_comparator',GetTranslateableTextKey('scheme_dst_port_comparator'));
+  group:=scheme.AddInputGroup('dst_ports').Setup(GetTranslateableTextKey('scheme_dst_ports_group'));
+  group.AddInput('dst_port_1',GetTranslateableTextKey('scheme_dst_port_1'));
+  group.AddInput('dst_port_2',GetTranslateableTextKey('scheme_dst_port_2'));
+
+  group.AddInput('number',GetTranslateableTextKey('scheme_number'));
+
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'general');
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src');
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src_ports','',true);
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst');
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst_ports','',true);
+  //group.UseInputGroup(scheme.DefinedSchemeName,'advanced','',true,true,true);
+
 end;
 
 class procedure TFRE_DB_FIREWALL_RULE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -2687,9 +2726,6 @@ begin
   end;
   if currentVersionId='0.1' then begin
     currentVersionId := '0.2';
-    StoreTranslateableText(conn,'scheme_main_group','General Information');
-    StoreTranslateableText(conn,'scheme_number','Number');
-
     StoreTranslateableText(conn,'enum_fw_rule_ipversion_ipv4','IPv4');
     StoreTranslateableText(conn,'enum_fw_rule_ipversion_ipv6','IPv6');
 
@@ -2707,6 +2743,30 @@ begin
     StoreTranslateableText(conn,'enum_fw_rule_action_count','Count');
     StoreTranslateableText(conn,'enum_fw_rule_action_skip','Skip');
     StoreTranslateableText(conn,'enum_fw_rule_action_call','Call');
+
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_general_group','General Information');
+
+    StoreTranslateableText(conn,'scheme_number','Number');
+    StoreTranslateableText(conn,'scheme_ipversion','IP Version');
+    StoreTranslateableText(conn,'scheme_action','Action');
+    StoreTranslateableText(conn,'scheme_direction','Direction');
+    StoreTranslateableText(conn,'scheme_interface','Interface');
+    StoreTranslateableText(conn,'scheme_protocol','Protocol');
+
+    StoreTranslateableText(conn,'scheme_src_group','Source');
+    StoreTranslateableText(conn,'scheme_src_addr','Address');
+    StoreTranslateableText(conn,'scheme_src_port_Comparator','Mode');
+    StoreTranslateableText(conn,'scheme_src_ports_group','');
+    StoreTranslateableText(conn,'scheme_src_port_1','Port 1');
+    StoreTranslateableText(conn,'scheme_src_port_2','Port 2');
+
+    StoreTranslateableText(conn,'scheme_dst_group','Destination');
+    StoreTranslateableText(conn,'scheme_dst_addr','Address');
+    StoreTranslateableText(conn,'scheme_dst_port_Comparator','Mode');
+    StoreTranslateableText(conn,'scheme_dst_ports_group','');
+    StoreTranslateableText(conn,'scheme_dst_port_1','Port 1');
+    StoreTranslateableText(conn,'scheme_dst_port_2','Port 2');
   end;
 end;
 
