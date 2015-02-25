@@ -2064,7 +2064,7 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
          result.Field('firewall_id').AsObjectLink := fw_uid;
          result.SetDomainID(g_domain_id);
          result.Field('number').asuint32          := number;
-         result.Field('mapping').asstring         := mapping;
+         result.Field('mapping').asstring := UpperCase(mapping);
          if mapping = 'table' then
            result.Field('type').asstring          := ptype;
          if mapping = 'group-map' then
