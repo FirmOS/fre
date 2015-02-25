@@ -146,6 +146,8 @@ var
   ipversionch: TFRE_DB_INPUT_CHOOSER_DESC;
   block      : TFRE_DB_INPUT_BLOCK_DESC;
   addIPSf    : TFRE_DB_SERVER_FUNC_DESC;
+  ipv6dc     : IFRE_DB_DERIVED_COLLECTION;
+  ch         : TFRE_DB_INPUT_CHOOSER_DESC;
 begin
   sf:=CWSF(@WEB_StoreRule);
   baseAddIPSf:=CWSF(@WEB_AddIP);
@@ -179,14 +181,17 @@ begin
   dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
   dc.Filters.RemoveFilter('scheme');
   dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4.ClassName]);
-  dc := ses.FetchDerivedCollection('FIREWALL_IPV6_CHOOSER_DC');
+  dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_POOL_CHOOSER_DC);
   dc.Filters.RemoveFilter('domain');
   dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
-  dc.Filters.RemoveFilter('scheme');
-  dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV6.ClassName]);
+  ipv6dc := ses.FetchDerivedCollection('FIREWALL_IPV6_CHOOSER_DC');
+  ipv6dc.Filters.RemoveFilter('domain');
+  ipv6dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
+  ipv6dc.Filters.RemoveFilter('scheme');
+  ipv6dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV6.ClassName]);
 
   GetSystemScheme(TFRE_DB_FIREWALL_RULE,scheme);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,800);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
 
   ipversionch:=(res.GetFormElement('ipversion').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC);
@@ -212,14 +217,14 @@ begin
     block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'rule_diag_new_ip_button'),addIPSf,true);
   end;
 
-  (res.GetFormElement('src_ipv6.src_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  (res.GetFormElement('src_ipv6.src_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(ipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
   ipversionch.addDependentInput('src_ipv4_block','IPV4',fdv_visible);
   ipversionch.addDependentInput('src_ipv6_block','IPV6',fdv_visible);
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_src_settings_block'),'src_ipv6_settings_block',true);
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('src_settings'),ses,[],'src_ipv6');
 
-  (res.GetFormElement('src_ipv6.src_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  (res.GetFormElement('src_ipv6.src_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(ipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
   ipversionch.addDependentInput('src_ipv4_block','IPV4',fdv_visible);
   ipversionch.addDependentInput('src_ipv4_settings_block','IPV4',fdv_visible);
   ipversionch.addDependentInput('src_ipv6_block','IPV6',fdv_visible);
@@ -246,24 +251,107 @@ begin
     block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'rule_diag_new_ip_button'),addIPSf,true);
   end;
 
-  (res.GetFormElement('dst_ipv6.dst_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  (res.GetFormElement('dst_ipv6.dst_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(ipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
   ipversionch.addDependentInput('dst_ipv4_block','IPV4',fdv_visible);
   ipversionch.addDependentInput('dst_ipv6_block','IPV6',fdv_visible);
 
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_dst_settings_block'),'dst_ipv6_settings_block',true);
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('dst_settings'),ses,[],'dst_ipv6');
 
-  (res.GetFormElement('dst_ipv6.dst_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  (res.GetFormElement('dst_ipv6.dst_addr').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(ipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
   ipversionch.addDependentInput('dst_ipv4_block','IPV4',fdv_visible);
   ipversionch.addDependentInput('dst_ipv4_settings_block','IPV4',fdv_visible);
   ipversionch.addDependentInput('dst_ipv6_block','IPV6',fdv_visible);
   ipversionch.addDependentInput('dst_ipv6_settings_block','IPV6',fdv_visible);
+
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_keep_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('keep'),ses,[],'');
+
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'rule_diag_advanced_group'),true,true);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_options_log_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('options_log'),ses,[5,5,5,10]);
+
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_options_to_block'),'to_ipv4_block');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('option_to'),ses,[],'to_ipv4');
+
+  if canAddIPv4 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','to_ipv4.option_to_ip');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'rule_diag_new_ip_button'),addIPSf,true).contentId:='to_ipv4_add_ip_button';
+    (res.GetFormElement('to_ipv4.option_to_interface').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).AddDependence('to_ipv4_add_ip_button',false);
+  end;
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_options_to_block'),'to_ipv6_block');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('option_to'),ses,[],'to_ipv6');
+  if canAddIPv6 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','to_ipv6.option_to_ip');
+    addIPSf.AddParam.Describe('ipversion','ipv6');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'rule_diag_new_ip_button'),addIPSf,true).contentId:='to_ipv6_add_ip_button';
+    (res.GetFormElement('to_ipv6.option_to_interface').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).AddDependence('to_ipv6_add_ip_button',false);
+  end;
+  (res.GetFormElement('to_ipv6.option_to_ip').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(ipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  ipversionch.addDependentInput('to_ipv4_block','IPV4',fdv_visible);
+  ipversionch.addDependentInput('to_ipv6_block','IPV6',fdv_visible);
+
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_options_dup_to_block'),'dup_to_ipv4_block');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('option_dup_to'),ses,[],'dup_to_ipv4');
+  if canAddIPv4 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','dup_to_ipv4.option_dup_to_ip');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'rule_diag_new_ip_button'),addIPSf,true).contentId:='dup_to_ipv4_add_ip_button';
+    (res.GetFormElement('dup_to_ipv4.option_dup_to_interface').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).AddDependence('dup_to_ipv4_add_ip_button',false);
+  end;
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_options_dup_to_block'),'dup_to_ipv6_block');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('option_dup_to'),ses,[],'dup_to_ipv6');
+  if canAddIPv6 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','dup_to_ipv6.option_dup_to_ip');
+    addIPSf.AddParam.Describe('ipversion','ipv6');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'rule_diag_new_ip_button'),addIPSf,true).contentId:='dup_to_ipv6_add_ip_button';
+    (res.GetFormElement('dup_to_ipv6.option_dup_to_interface').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).AddDependence('dup_to_ipv6_add_ip_button',false);
+  end;
+  (res.GetFormElement('dup_to_ipv6.option_dup_to_ip').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(ipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  ipversionch.addDependentInput('dup_to_ipv4_block','IPV4',fdv_visible);
+  ipversionch.addDependentInput('dup_to_ipv6_block','IPV6',fdv_visible);
+
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_options_reply_to_block'),'reply_to_ipv4_block');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('option_reply_to'),ses,[],'reply_to_ipv4');
+  if canAddIPv4 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','reply_to_ipv4.option_reply_to_ip');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'rule_diag_new_ip_button'),addIPSf,true).contentId:='reply_to_ipv4_add_ip_button';
+    (res.GetFormElement('reply_to_ipv4.option_reply_to_interface').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).AddDependence('reply_to_ipv4_add_ip_button',false);
+  end;
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_options_reply_to_block'),'reply_to_ipv6_block');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('option_reply_to'),ses,[],'reply_to_ipv6');
+  if canAddIPv6 then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','reply_to_ipv6.option_reply_to_ip');
+    addIPSf.AddParam.Describe('ipversion','ipv6');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'rule_diag_new_ip_button'),addIPSf,true).contentId:='reply_to_ipv6_add_ip_button';
+    (res.GetFormElement('reply_to_ipv6.option_reply_to_interface').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).AddDependence('reply_to_ipv6_add_ip_button',false);
+  end;
+  (res.GetFormElement('reply_to_ipv6.option_reply_to_ip').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(ipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  ipversionch.addDependentInput('reply_to_ipv4_block','IPV4',fdv_visible);
+  ipversionch.addDependentInput('reply_to_ipv6_block','IPV6',fdv_visible);
+
+  group.AddSchemeFormGroup(scheme.GetInputGroup('expert'),ses,false,false,'',false,true);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   if isModify then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),ruleDBO));
     res.FillWithObjectValues(ruleDBO,ses);
+    if ruleDBO.Field('ipversion').AsString='IPV6' then begin
+      res.FillWithObjectValues(ruleDBO,ses,'src_ipv6');
+      res.FillWithObjectValues(ruleDBO,ses,'dst_ipv6');
+    end else begin
+      res.FillWithObjectValues(ruleDBO,ses,'src_ipv4');
+      res.FillWithObjectValues(ruleDBO,ses,'dst_ipv4');
+    end;
   end;
 
   Result:=res;
@@ -564,6 +652,13 @@ begin
     CreateModuleText(conn,'rule_diag_src_settings_block','');
     CreateModuleText(conn,'rule_diag_dst_block','Destination');
     CreateModuleText(conn,'rule_diag_dst_settings_block','');
+    CreateModuleText(conn,'rule_diag_keep_block','Keep');
+
+    CreateModuleText(conn,'rule_diag_advanced_group','Advanced');
+    CreateModuleText(conn,'rule_diag_options_log_block','Log Options');
+    CreateModuleText(conn,'rule_diag_options_to_block','To');
+    CreateModuleText(conn,'rule_diag_options_dup_to_block','Dub to');
+    CreateModuleText(conn,'rule_diag_options_reply_to_block','Reply to');
   end;
 end;
 
@@ -1281,6 +1376,14 @@ var
   ruleObj  : TFRE_DB_FIREWALL_RULE;
   isNew    : Boolean;
   service  : IFRE_DB_Object;
+  postFix: String;
+  true: boolean;
+
+  procedure _moveInputFields(const fld: IFRE_DB_Field);
+  begin
+    input.Field('data').AsObject.Field(fld.FieldName).AsString:=fld.AsString;
+  end;
+
 begin
   GetSystemScheme(TFRE_DB_FIREWALL_RULE,scheme);
 
@@ -1300,6 +1403,39 @@ begin
     ruleObj.Field('firewall_id').AsObjectLink:=service.UID;
     isNew:=true;
   end;
+
+  if input.Field('ipversion').AsString='IPV6' then begin
+    postFix:='ipv6';
+  end else begin
+    postFix:='ipv4';
+  end;
+
+  if input.FieldPathExists('data.src_'+postFix) then begin
+    input.FieldPath('data.src_'+postFix).AsObject.ForAllFields(@_moveInputFields,true);
+  end;
+  if input.FieldPathExists('data.dst_'+postFix) then begin
+    input.FieldPath('data.dst_'+postFix).AsObject.ForAllFields(@_moveInputFields,true);
+  end;
+  if input.FieldPathExists('data.to_'+postFix) then begin
+    input.FieldPath('data.to_'+postFix).AsObject.ForAllFields(@_moveInputFields,true);
+  end;
+  if input.FieldPathExists('data.dup_to_'+postFix) then begin
+    input.FieldPath('data.dup_to_'+postFix).AsObject.ForAllFields(@_moveInputFields,true);
+  end;
+  if input.FieldPathExists('data.reply_to_'+postFix) then begin
+    input.FieldPath('data.reply_to_'+postFix).AsObject.ForAllFields(@_moveInputFields,true);
+  end;
+
+  input.Field('data').AsObject.DeleteField('src_ipv4');
+  input.Field('data').AsObject.DeleteField('src_ipv6');
+  input.Field('data').AsObject.DeleteField('dst_ipv4');
+  input.Field('data').AsObject.DeleteField('dst_ipv6');
+  input.Field('data').AsObject.DeleteField('to_ipv4');
+  input.Field('data').AsObject.DeleteField('to_ipv6');
+  input.Field('data').AsObject.DeleteField('dup_to_ipv4');
+  input.Field('data').AsObject.DeleteField('dup_to_ipv6');
+  input.Field('data').AsObject.DeleteField('reply_to_ipv4');
+  input.Field('data').AsObject.DeleteField('reply_to_ipv6');
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,ruleObj,isNew,conn);
 
@@ -1734,13 +1870,13 @@ begin
   if input.Field('sourceDiag').AsString='nat' then begin
     ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE ADD NAT
     res:=_AddModifyNAT(input,ses,app,conn,input.FieldExists('selected')).Implementor_HC as TFRE_DB_FORM_DIALOG_DESC;
-    res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddIP_sourceDiagData').AsObject,ses);
+    res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddIP_sourceDiagData').AsObject,ses,'',false);
     Result:=res;
   end else begin
     if input.Field('sourceDiag').AsString='rule' then begin
       ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE ADD NAT
       res:=_AddModifyRule(input,ses,app,conn,input.FieldExists('selected')).Implementor_HC as TFRE_DB_FORM_DIALOG_DESC;
-      res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddIP_sourceDiagData').AsObject,ses);
+      res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddIP_sourceDiagData').AsObject,ses,'',false);
       Result:=res;
     end;
   end;

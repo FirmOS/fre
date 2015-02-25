@@ -94,6 +94,7 @@ const
   CFRE_DB_VMACHINE_HDD_CHOOSER_DC      = 'VMACHINE_HDD_CHOOSER_DC';
   CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC= 'FIREWALL_INTERFACE_CHOOSER_DC';
   CFRE_DB_FIREWALL_IP_CHOOSER_DC       = 'FIREWALL_IP_CHOOSER_DC';
+  CFRE_DB_FIREWALL_POOL_CHOOSER_DC     = 'FIREWALL_POOL_CHOOSER_DC';
 
 type
 
@@ -2567,9 +2568,12 @@ end;
 
 class procedure TFRE_DB_FIREWALL_RULE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 var
-  group: IFRE_DB_InputGroupSchemeDefinition;
-  enum : IFRE_DB_Enum;
-  fld  : IFRE_DB_FieldSchemeDefinition;
+  group : IFRE_DB_InputGroupSchemeDefinition;
+  enum  : IFRE_DB_Enum;
+  fld   : IFRE_DB_FieldSchemeDefinition;
+  pfld  : IFRE_DB_FieldSchemeDefinition;
+  afld  : IFRE_DB_FieldSchemeDefinition;
+  ipvfld: IFRE_DB_FieldSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
@@ -2611,19 +2615,122 @@ begin
   enum.addEntry('RANGE',GetTranslateableTextKey('enum_fw_rule_comparator_range'));
   GFRE_DBI.RegisterSysEnum(enum);
 
+  enum:=GFRE_DBI.NewEnum('fw_rule_log_level').Setup(GFRE_DBI.CreateText('$enum_fw_rule_log_level','Firewall Rule Log Level'));
+  enum.addEntry('EMERG',GetTranslateableTextKey('enum_fw_rule_log_level_emerg'));
+  enum.addEntry('ALERT',GetTranslateableTextKey('enum_fw_rule_log_level_alert'));
+  enum.addEntry('CRIT',GetTranslateableTextKey('enum_fw_rule_log_level_crit'));
+  enum.addEntry('ERR',GetTranslateableTextKey('enum_fw_rule_log_level_err'));
+  enum.addEntry('WARN',GetTranslateableTextKey('enum_fw_rule_log_level_warn'));
+  enum.addEntry('NOTICE',GetTranslateableTextKey('enum_fw_rule_log_level_notice'));
+  enum.addEntry('INFO',GetTranslateableTextKey('enum_fw_rule_log_level_info'));
+  enum.addEntry('DEBUG',GetTranslateableTextKey('enum_fw_rule_log_level_debug'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_icmp_type').Setup(GFRE_DBI.CreateText('$enum_fw_rule_icmp_type','Firewall ICMP Type'));
+  enum.addEntry('UNREACH',GetTranslateableTextKey('enum_fw_rule_icmp_type_unreach'));
+  enum.addEntry('ECHO',GetTranslateableTextKey('enum_fw_rule_icmp_type_echo'));
+  enum.addEntry('ECHOREP',GetTranslateableTextKey('enum_fw_rule_icmp_type_echorep'));
+  enum.addEntry('SQUENCH',GetTranslateableTextKey('enum_fw_rule_icmp_type_squench'));
+  enum.addEntry('REDIR',GetTranslateableTextKey('enum_fw_rule_icmp_type_redir'));
+  enum.addEntry('TIMEX',GetTranslateableTextKey('enum_fw_rule_icmp_type_timex'));
+  enum.addEntry('PARAMPROB',GetTranslateableTextKey('enum_fw_rule_icmp_type_paramprob'));
+  enum.addEntry('TIMEST',GetTranslateableTextKey('enum_fw_rule_icmp_type_timest'));
+  enum.addEntry('TIMESTREP',GetTranslateableTextKey('enum_fw_rule_icmp_type_timestrep'));
+  enum.addEntry('INFOREQ',GetTranslateableTextKey('enum_fw_rule_icmp_type_inforeq'));
+  enum.addEntry('INFOREP',GetTranslateableTextKey('enum_fw_rule_icmp_type_inforep'));
+  enum.addEntry('MASKREQ',GetTranslateableTextKey('enum_fw_rule_icmp_type_maskreq'));
+  enum.addEntry('MASKREP',GetTranslateableTextKey('enum_fw_rule_icmp_type_maskrep'));
+  enum.addEntry('DECNUMBER',GetTranslateableTextKey('enum_fw_rule_icmp_type_decnumber'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_block_options').Setup(GFRE_DBI.CreateText('$enum_fw_rule_block_options','Firewall Rule Block Options'));
+  enum.addEntry('RETURN_ICMP',GetTranslateableTextKey('enum_fw_rule_block_options_return_icmp'));
+  enum.addEntry('RETURN_ICMP_AS_DEST',GetTranslateableTextKey('enum_fw_rule_block_options_return_icmp_as_dest'));
+  enum.addEntry('RETURN_RST',GetTranslateableTextKey('enum_fw_rule_block_options_return_rst'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_block_options_icmp').Setup(GFRE_DBI.CreateText('$enum_fw_rule_block_options_icmp','Firewall Rule Block Options ICMP'));
+  enum.addEntry('NET_UNR',GetTranslateableTextKey('enum_fw_rule_block_options_net_unr'));
+  enum.addEntry('HOST_UNR',GetTranslateableTextKey('enum_fw_rule_block_options_host_unr'));
+  enum.addEntry('PROTO_UNR',GetTranslateableTextKey('enum_fw_rule_block_options_proto_unr'));
+  enum.addEntry('PORT_UNR',GetTranslateableTextKey('enum_fw_rule_block_options_port_unr'));
+  enum.addEntry('NEEDFRAG',GetTranslateableTextKey('enum_fw_rule_block_options_needfrag'));
+  enum.addEntry('SRCFAIL',GetTranslateableTextKey('enum_fw_rule_block_options_srcfail'));
+  enum.addEntry('NET_UNK',GetTranslateableTextKey('enum_fw_rule_block_options_net_unk'));
+  enum.addEntry('HOST_UNK',GetTranslateableTextKey('enum_fw_rule_block_options_host_unk'));
+  enum.addEntry('ISOLATE',GetTranslateableTextKey('enum_fw_rule_block_options_isolate'));
+  enum.addEntry('NET_PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_net_prohib'));
+  enum.addEntry('HOST_PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_host_prohib'));
+  enum.addEntry('NET_TOS',GetTranslateableTextKey('enum_fw_rule_block_options_net_tos'));
+  enum.addEntry('HOST_TOS',GetTranslateableTextKey('enum_fw_rule_block_options_host_tos'));
+  enum.addEntry('FILTER_PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_filter_prohib'));
+  enum.addEntry('HOST_PRECED',GetTranslateableTextKey('enum_fw_rule_block_options_host_preced'));
+  enum.addEntry('CUTOFF_PRECED',GetTranslateableTextKey('enum_fw_rule_block_options_cutoff_preced'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_with_options').Setup(GFRE_DBI.CreateText('$enum_fw_rule_with_options','Firewall Rule With Options'));
+  enum.addEntry('IPOPTS',GetTranslateableTextKey('enum_fw_rule_with_options_ipopts'));
+  enum.addEntry('SHORT',GetTranslateableTextKey('enum_fw_rule_with_options_short'));
+  enum.addEntry('FRAG',GetTranslateableTextKey('enum_fw_rule_with_options_frag'));
+  enum.addEntry('FRAG_BODY',GetTranslateableTextKey('enum_fw_rule_with_options_frag_body'));
+  enum.addEntry('FRAGS',GetTranslateableTextKey('enum_fw_rule_with_options_frags'));
+  enum.addEntry('NAT',GetTranslateableTextKey('enum_fw_rule_with_options_nat'));
+  enum.addEntry('MULTICAST',GetTranslateableTextKey('enum_fw_rule_with_options_multicast'));
+  enum.addEntry('BCAST',GetTranslateableTextKey('enum_fw_rule_with_options_bcast'));
+  enum.addEntry('MBCAST',GetTranslateableTextKey('enum_fw_rule_with_options_mbcast'));
+  enum.addEntry('STATE',GetTranslateableTextKey('enum_fw_rule_with_options_state'));
+  enum.addEntry('BAD_NAT',GetTranslateableTextKey('enum_fw_rule_with_options_bad_nat'));
+  enum.addEntry('BAD',GetTranslateableTextKey('enum_fw_rule_with_options_bad'));
+  enum.addEntry('OOW',GetTranslateableTextKey('enum_fw_rule_with_options_oow'));
+  enum.addEntry('LOWTTL',GetTranslateableTextKey('enum_fw_rule_with_options_lowttl'));
+  enum.addEntry('BAD_SRC',GetTranslateableTextKey('enum_fw_rule_with_options_bad_src'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_with_extra_options').Setup(GFRE_DBI.CreateText('$enum_fw_rule_with_extra_options','Firewall Rule With Extra Options'));
+  enum.addEntry('NOP',GetTranslateableTextKey('enum_fw_rule_with_options_nop'));
+  enum.addEntry('RR',GetTranslateableTextKey('enum_fw_rule_with_options_rr'));
+  enum.addEntry('ZSU',GetTranslateableTextKey('enum_fw_rule_with_options_zsu'));
+  enum.addEntry('MTUP',GetTranslateableTextKey('enum_fw_rule_with_options_mtup'));
+  enum.addEntry('MTUR',GetTranslateableTextKey('enum_fw_rule_with_options_mtur'));
+  enum.addEntry('ENCODE',GetTranslateableTextKey('enum_fw_rule_with_options_encode'));
+  enum.addEntry('TS',GetTranslateableTextKey('enum_fw_rule_with_options_ts'));
+  enum.addEntry('TR',GetTranslateableTextKey('enum_fw_rule_with_options_tr'));
+  enum.addEntry('SEC',GetTranslateableTextKey('enum_fw_rule_with_options_sec'));
+  enum.addEntry('LSRR',GetTranslateableTextKey('enum_fw_rule_with_options_lsrr'));
+  enum.addEntry('E_SEC',GetTranslateableTextKey('enum_fw_rule_with_options_e_sec'));
+  enum.addEntry('CIPSO',GetTranslateableTextKey('enum_fw_rule_with_options_cipso'));
+  enum.addEntry('SATID',GetTranslateableTextKey('enum_fw_rule_with_options_satid'));
+  enum.addEntry('SSRR',GetTranslateableTextKey('enum_fw_rule_with_options_ssrr'));
+  enum.addEntry('ADDEXT',GetTranslateableTextKey('enum_fw_rule_with_options_addext'));
+  enum.addEntry('VISA',GetTranslateableTextKey('enum_fw_rule_with_options_visa'));
+  enum.addEntry('IMITD',GetTranslateableTextKey('enum_fw_rule_with_options_imitd'));
+  enum.addEntry('EIP',GetTranslateableTextKey('enum_fw_rule_with_options_eip'));
+  enum.addEntry('FINN',GetTranslateableTextKey('enum_fw_rule_with_options_finn'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  enum:=GFRE_DBI.NewEnum('fw_rule_ipv6hdr').Setup(GFRE_DBI.CreateText('$enum_fw_rule_ipv6hdr','Firewall Rule IPv6 HDR'));
+  enum.addEntry('AH',GetTranslateableTextKey('enum_fw_rule_block_options_ah'));
+  enum.addEntry('ESP',GetTranslateableTextKey('enum_fw_rule_block_options_esp'));
+  enum.addEntry('DSTOPTS',GetTranslateableTextKey('enum_fw_rule_block_options_dstopts'));
+  enum.addEntry('HOPOPTS',GetTranslateableTextKey('enum_fw_rule_block_options_hopopts'));
+  enum.addEntry('IPV6',GetTranslateableTextKey('enum_fw_rule_block_options_ipv6'));
+  enum.addEntry('NONE',GetTranslateableTextKey('enum_fw_rule_block_options_none'));
+  enum.addEntry('ROUTING',GetTranslateableTextKey('enum_fw_rule_block_options_routing'));
+  enum.addEntry('FRAG',GetTranslateableTextKey('enum_fw_rule_block_options_frag'));
+  GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
-  scheme.AddSchemeField('action',fdbft_String).SetupFieldDef(true,false,'fw_rule_action');
+  afld:=scheme.AddSchemeField('action',fdbft_String).SetupFieldDef(true,false,'fw_rule_action');
   scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(true,false,'fw_rule_direction');
-  scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(true,false,'fw_rule_ipversion');
+  ipvfld:=scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(true,false,'fw_rule_ipversion');
 
   scheme.AddSchemeField('interface',fdbft_ObjLink);
 
   scheme.AddSchemeField('option_log',fdbft_Boolean);
   scheme.AddSchemeField('option_quick',fdbft_Boolean);
 
-  scheme.AddSchemeField('protocol',fdbft_String).SetupFieldDef(false,false,'fw_rule_protocol');
+  pfld:=scheme.AddSchemeField('protocol',fdbft_String).SetupFieldDef(false,false,'fw_rule_protocol');
 
   scheme.AddSchemeField('src_addr',fdbft_ObjLink);
   scheme.AddSchemeField('src_addr_not',fdbft_Boolean);
@@ -2649,43 +2756,70 @@ begin
   scheme.AddSchemeField('option_log_body',fdbft_Boolean);
   scheme.AddSchemeField('option_log_first',fdbft_Boolean);
   scheme.AddSchemeField('option_log_or_block',fdbft_Boolean);
-  scheme.AddSchemeField('option_log_loglevel',fdbft_String);          // enum
+  scheme.AddSchemeField('option_log_loglevel',fdbft_String).SetupFieldDef(false,false,'fw_rule_log_level');
 
-  scheme.AddSchemeField('option_to_interface',fdbft_ObjLink);
+  fld:=scheme.AddSchemeField('option_to_interface',fdbft_ObjLink);
   scheme.AddSchemeField('option_to_ip',fdbft_ObjLink);
-  scheme.AddSchemeField('option_dup_to_interface',fdbft_ObjLink);
+  fld.addDepField('option_to_ip',false);
+  fld:=scheme.AddSchemeField('option_dup_to_interface',fdbft_ObjLink);
   scheme.AddSchemeField('option_dup_to_ip',fdbft_ObjLink);            // show only if option_dup_to_interface is set
-  scheme.AddSchemeField('option_reply_to_interface',fdbft_ObjLink);
+  fld.addDepField('option_dup_to_ip',false);
+  fld:=scheme.AddSchemeField('option_reply_to_interface',fdbft_ObjLink);
   scheme.AddSchemeField('option_reply_to_ip',fdbft_ObjLink);          // show only if option_reply_to_interface is set
+  fld.addDepField('option_reply_to_ip',false);
 
   scheme.AddSchemeField('head',fdbft_int32);
   scheme.AddSchemeField('group',fdbft_int32);
-  scheme.AddSchemeField('pool',fdbft_ObjLink);
+  scheme.AddSchemeField('pool_in',fdbft_ObjLink);
+  scheme.AddSchemeField('pool_out',fdbft_ObjLink);
 
   scheme.AddSchemeField('tos',fdbft_Byte);
   scheme.AddSchemeField('ttl',fdbft_Byte);
 
   scheme.AddSchemeField('skip_count',fdbft_uint32);                   // show only if action skip
+  afld.addEnumDepField('skip_count','SKIP',fdv_none,fdes_enabled);
 
   scheme.AddSchemeField('tcp_flag_fin',fdbft_boolean);                // show if protocol tcp
+  pfld.addEnumDepField('tcp_flag_fin','TCP',fdv_none,fdes_enabled);
   scheme.AddSchemeField('tcp_flag_syn',fdbft_boolean);
+  pfld.addEnumDepField('tcp_flag_syn','TCP',fdv_none,fdes_enabled);
   scheme.AddSchemeField('tcp_flag_rst',fdbft_boolean);
+  pfld.addEnumDepField('tcp_flag_rst','TCP',fdv_none,fdes_enabled);
   scheme.AddSchemeField('tcp_flag_push',fdbft_boolean);
+  pfld.addEnumDepField('tcp_flag_push','TCP',fdv_none,fdes_enabled);
   scheme.AddSchemeField('tcp_flag_ack',fdbft_boolean);
+  pfld.addEnumDepField('tcp_flag_ack','TCP',fdv_none,fdes_enabled);
   scheme.AddSchemeField('tcp_flag_urg',fdbft_boolean);
+  pfld.addEnumDepField('tcp_flag_urg','TCP',fdv_none,fdes_enabled);
 
-  scheme.AddSchemeField('icmp_type',fdbft_string);                  // enum, show if protocol icmp
-  scheme.AddSchemeField('block_option',fdbft_string);               // enum, show if action is block
-  scheme.AddSchemeField('block_option_icmp',fdbft_string);          // enum
+  scheme.AddSchemeField('icmp_type',fdbft_string).SetupFieldDef(false,false,'fw_rule_log_level'); // show if protocol icmp
+  pfld.addEnumDepField('icmp_type','ICMP',fdv_none,fdes_enabled);
+  scheme.AddSchemeField('block_option',fdbft_string).SetupFieldDef(false,false,'fw_rule_block_options');          // show if action is block
+  afld.addEnumDepField('block_option','BLOCK',fdv_none,fdes_enabled);
+  pfld.addEnumDepField('block_option','ICMP',fdv_hidden);
+  scheme.AddSchemeField('block_option_icmp',fdbft_string).SetupFieldDef(false,false,'fw_rule_block_options_icmp');
+  afld.addEnumDepField('block_option_icmp','BLOCK',fdv_none,fdes_enabled);
+  pfld.addEnumDepField('block_option_icmp','ICMP',fdv_visible);
 
-  scheme.AddSchemeField('with_option',fdbft_string).MultiValues:=true;
-  scheme.AddSchemeField('with_option_not',fdbft_string).MultiValues:=true;
-  scheme.AddSchemeField('with_extra_opts',fdbft_string).MultiValues:=true;
-  scheme.AddSchemeField('ipv6hdr',fdbft_string);                    // enum, show if ipversion is ipv6
+  scheme.AddSchemeField('with_option',fdbft_string).SetupFieldDef(false,true,'fw_rule_with_options');
+  scheme.AddSchemeField('with_option_not',fdbft_string).SetupFieldDef(false,true,'fw_rule_with_options');
+  scheme.AddSchemeField('with_extra_opts',fdbft_string).SetupFieldDef(false,true,'fw_rule_with_extra_options');
+  scheme.AddSchemeField('ipv6hdr',fdbft_string).SetupFieldDef(false,true,'fw_rule_ipv6hdr');     // show if ipversion is ipv6
+  ipvfld.addEnumDepField('ipv6hdr','IPV6',fdv_none,fdes_enabled);
 
   scheme.AddSchemeField('match_tag_nat',fdbft_string);
   scheme.AddSchemeField('set_tag_nat',fdbft_string);
   scheme.AddSchemeField('set_tag_log',fdbft_int32);
+
+  group:=scheme.AddInputGroup('options').Setup(GetTranslateableTextKey('scheme_options_group'));
+  group.AddInput('option_log',GetTranslateableTextKey('scheme_option_log'));
+  group.AddInput('option_quick',GetTranslateableTextKey('scheme_option_quick'));
+
+  group:=scheme.AddInputGroup('options_log').Setup(GetTranslateableTextKey('scheme_options_log_group'));
+  group.AddInput('option_log_body',GetTranslateableTextKey('scheme_option_log_body'));
+  group.AddInput('option_log_first',GetTranslateableTextKey('scheme_option_log_first'));
+  group.AddInput('option_log_or_block',GetTranslateableTextKey('scheme_option_log_or_block'));
+  group.AddInput('option_log_loglevel',GetTranslateableTextKey('scheme_option_log_loglevel'));
 
   group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
   group.AddInput('ipversion',GetTranslateableTextKey('scheme_ipversion'));
@@ -2693,6 +2827,7 @@ begin
   group.AddInput('action',GetTranslateableTextKey('scheme_action'));
   group.AddInput('direction',GetTranslateableTextKey('scheme_direction'));
   group.AddInput('interface',GetTranslateableTextKey('scheme_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'options');
   group.AddInput('protocol',GetTranslateableTextKey('scheme_protocol'));
 
   group:=scheme.AddInputGroup('src').Setup(GetTranslateableTextKey('scheme_src_group'));
@@ -2711,14 +2846,65 @@ begin
   group.AddInput('dst_port_2',GetTranslateableTextKey('scheme_dst_port_2'));
   group.AddInput('dst_addr_not',GetTranslateableTextKey('scheme_dst_addr_not'));
 
+  group:=scheme.AddInputGroup('keep').Setup(GetTranslateableTextKey('scheme_keep_group'));
+  group.AddInput('keep_state',GetTranslateableTextKey('scheme_keep_state'));
+  group.AddInput('keep_frags',GetTranslateableTextKey('scheme_keep_frags'));
+
+  group:=scheme.AddInputGroup('tcp_flags').Setup(GetTranslateableTextKey('scheme_tcp_flags_group'));
+  group.AddInput('tcp_flag_fin',GetTranslateableTextKey('scheme_tcp_flag_fin'));
+  group.AddInput('tcp_flag_syn',GetTranslateableTextKey('scheme_tcp_flag_syn'));
+  group.AddInput('tcp_flag_rst',GetTranslateableTextKey('scheme_tcp_flag_rst'));
+  group.AddInput('tcp_flag_push',GetTranslateableTextKey('scheme_tcp_flag_push'));
+  group.AddInput('tcp_flag_ack',GetTranslateableTextKey('scheme_tcp_flag_ack'));
+  group.AddInput('tcp_flag_urg',GetTranslateableTextKey('scheme_tcp_flag_urg'));
+
+  group:=scheme.AddInputGroup('expert').Setup(GetTranslateableTextKey('scheme_expert_group'));
+  group.AddInput('head',GetTranslateableTextKey('scheme_head'));
+  group.AddInput('group',GetTranslateableTextKey('scheme_group'));
+  group.AddInput('pool_in',GetTranslateableTextKey('scheme_pool_in'),false,false,'',CFRE_DB_FIREWALL_POOL_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('pool_out',GetTranslateableTextKey('scheme_pool_out'),false,false,'',CFRE_DB_FIREWALL_POOL_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('tos',GetTranslateableTextKey('scheme_tos'));
+  group.AddInput('ttl',GetTranslateableTextKey('scheme_ttl'));
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'tcp_flags');
+  group.AddInput('icmp_type',GetTranslateableTextKey('scheme_icmp_type'));
+  group.AddInput('block_option',GetTranslateableTextKey('scheme_block_option'));
+  group.AddInput('block_option_icmp',GetTranslateableTextKey('scheme_block_option_icmp'));
+  group.AddInput('skip_count',GetTranslateableTextKey('scheme_skip_count'));
+  group.AddInput('with_option',GetTranslateableTextKey('scheme_with_option'),false,false,'','',false,dh_chooser_check);
+  group.AddInput('with_option_not',GetTranslateableTextKey('scheme_with_option_not'),false,false,'','',false,dh_chooser_check);
+  group.AddInput('with_extra_opts',GetTranslateableTextKey('scheme_with_extra_opts'),false,false,'','',false,dh_chooser_check);
+  group.AddInput('ipv6hdr',GetTranslateableTextKey('scheme_ipv6hdr'),false,false,'','',false,dh_chooser_check);
+  group.AddInput('match_tag_nat',GetTranslateableTextKey('scheme_match_tag_nat'));
+  group.AddInput('set_tag_nat',GetTranslateableTextKey('scheme_set_tag_nat'));
+  group.AddInput('set_tag_log',GetTranslateableTextKey('scheme_set_tag_log'));
+
+  group:=scheme.AddInputGroup('option_to').Setup(GetTranslateableTextKey('scheme_option_to_group'));
+  group.AddInput('option_to_interface',GetTranslateableTextKey('scheme_option_to_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true);
+  group.AddInput('option_to_ip',GetTranslateableTextKey('scheme_option_to_ip'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true);
+
+  group:=scheme.AddInputGroup('option_dup_to').Setup(GetTranslateableTextKey('scheme_option_dup_to_group'));
+  group.AddInput('option_dup_to_interface',GetTranslateableTextKey('scheme_option_to_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true);
+  group.AddInput('option_dup_to_ip',GetTranslateableTextKey('scheme_option_to_ip'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true);
+
+  group:=scheme.AddInputGroup('option_reply_to').Setup(GetTranslateableTextKey('scheme_option_reply_to_group'));
+  group.AddInput('option_reply_to_interface',GetTranslateableTextKey('scheme_option_to_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true);
+  group.AddInput('option_reply_to_ip',GetTranslateableTextKey('scheme_option_to_ip'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true);
+
+  group:=scheme.AddInputGroup('advanced').Setup(GetTranslateableTextKey('scheme_advanced_group'));
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'options_log','',true,TFRE_DB_Int32Array.create(5,5,5,10));
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'option_to','',true);
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'option_dup_to','',true);
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'option_reply_to','',true);
+  group.UseInputGroup(scheme.DefinedSchemeName,'expert');
+
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.UseInputGroup(scheme.DefinedSchemeName,'general');
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src');
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'src_settings','',true);
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst');
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'dst_settings','',true);
-  //group.UseInputGroup(scheme.DefinedSchemeName,'advanced','',true,true,true);
-
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'keep','',true);
+  group.UseInputGroup(scheme.DefinedSchemeName,'advanced','',true,true,true);
 end;
 
 class procedure TFRE_DB_FIREWALL_RULE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -2748,6 +2934,103 @@ begin
     StoreTranslateableText(conn,'enum_fw_rule_action_skip','Skip');
     StoreTranslateableText(conn,'enum_fw_rule_action_call','Call');
 
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_eq','=');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_lt','<');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_gt','>');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_le','<=');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_ge','>=');
+    StoreTranslateableText(conn,'enum_fw_rule_comparator_range',':');
+
+    StoreTranslateableText(conn,'enum_fw_rule_log_level_emerg','emerg');
+    StoreTranslateableText(conn,'enum_fw_rule_log_level_alert','alert');
+    StoreTranslateableText(conn,'enum_fw_rule_log_level_crit','crit');
+    StoreTranslateableText(conn,'enum_fw_rule_log_level_err','err');
+    StoreTranslateableText(conn,'enum_fw_rule_log_level_warn','warn');
+    StoreTranslateableText(conn,'enum_fw_rule_log_level_notice','notice');
+    StoreTranslateableText(conn,'enum_fw_rule_log_level_info','info');
+    StoreTranslateableText(conn,'enum_fw_rule_log_level_debug','debug');
+
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_unreach','unreach');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_echo','echo');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_echorep','echorep');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_squench','squench');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_redir','redir');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_timex','timex');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_paramprob','paramprob');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_timest','timest');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_timestrep','timestrep');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_inforeq','inforeq');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_inforep','inforep');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_maskreq','maskreq');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_maskrep','maskrep');
+    StoreTranslateableText(conn,'enum_fw_rule_icmp_type_decnumber','decnumber');
+
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_return_icmp','return-icmp');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_return_icmp_as_dest','return-icmp-as-dest');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_return_rst','return-rst');
+
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_net_unr','net-unr');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_host_unr','host-unr');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_proto_unr','proto-unr');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_port_unr','port-unr');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_needfrag','needfrag');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_srcfail','srcfail');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_net_unk','net-unk');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_host_unk','host-unk');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_isolate','isolate');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_net_prohib','net-prohib');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_host_prohib','host-prohib');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_net_tos','net-tos');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_host_tos','host-tos');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_filter_prohib','filter-prohib');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_host_preced','host-preced');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_cutoff_preced','cutoff-preced');
+
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_ipopts','ipopts');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_short','short');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_frag','frag');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_frag_body','frag-body');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_frags','frags');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_nat','nat');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_multicast','multicast');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_bcast','bcast');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_mbcast','mbcast');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_state','state');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_bad_nat','bad-nat');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_bad','bad');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_oow','oow');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_lowttl','lowttl');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_bad_src','bad-src');
+
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_nop','nop');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_rr','rr');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_zsu','zsu');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_mtup','mtup');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_mtur','mtur');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_encode','encode');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_ts','ts');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_tr','tr');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_sec','sec');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_lsrr','lsrr');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_e_sec','e-sec');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_cipso','cipso');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_satid','satid');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_ssrr','ssrr');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_addext','addext');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_visa','visa');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_imitd','imitd');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_eip','eip');
+    StoreTranslateableText(conn,'enum_fw_rule_with_options_finn','finn');
+
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_ah','ah');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_esp','esp');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_dstopts','dstopts');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_hopopts','hopopts');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_ipv6','ipv6');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_none','none');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_routing','routing');
+    StoreTranslateableText(conn,'enum_fw_rule_block_options_frag','frag');
+
     StoreTranslateableText(conn,'scheme_main_group','General Information');
     StoreTranslateableText(conn,'scheme_general_group','General Information');
 
@@ -2757,6 +3040,10 @@ begin
     StoreTranslateableText(conn,'scheme_direction','Direction');
     StoreTranslateableText(conn,'scheme_interface','Interface');
     StoreTranslateableText(conn,'scheme_protocol','Protocol');
+
+    StoreTranslateableText(conn,'scheme_options_group','Options');
+    StoreTranslateableText(conn,'scheme_option_log','Log');
+    StoreTranslateableText(conn,'scheme_option_quick','Quick');
 
     StoreTranslateableText(conn,'scheme_src_group','Source');
     StoreTranslateableText(conn,'scheme_src_addr','Address');
@@ -2774,12 +3061,54 @@ begin
     StoreTranslateableText(conn,'scheme_dst_port_1','Port 1');
     StoreTranslateableText(conn,'scheme_dst_port_2','Port 2');
 
-    StoreTranslateableText(conn,'enum_fw_rule_comparator_eq','=');
-    StoreTranslateableText(conn,'enum_fw_rule_comparator_lt','<');
-    StoreTranslateableText(conn,'enum_fw_rule_comparator_gt','>');
-    StoreTranslateableText(conn,'enum_fw_rule_comparator_le','<=');
-    StoreTranslateableText(conn,'enum_fw_rule_comparator_ge','>=');
-    StoreTranslateableText(conn,'enum_fw_rule_comparator_range',':');
+    StoreTranslateableText(conn,'scheme_keep_group','Keep');
+    StoreTranslateableText(conn,'scheme_keep_state','State');
+    StoreTranslateableText(conn,'scheme_keep_frags','Frag');
+
+    StoreTranslateableText(conn,'scheme_options_log_group','Log Options');
+    StoreTranslateableText(conn,'scheme_option_log_body','Body');
+    StoreTranslateableText(conn,'scheme_option_log_first','First');
+    StoreTranslateableText(conn,'scheme_option_log_or_block','Or-Block');
+    StoreTranslateableText(conn,'scheme_option_log_loglevel','Level');
+
+    StoreTranslateableText(conn,'scheme_head','Head');
+    StoreTranslateableText(conn,'scheme_group','Group');
+    StoreTranslateableText(conn,'scheme_pool_in','Pool in');
+    StoreTranslateableText(conn,'scheme_pool_out','Pool out');
+    StoreTranslateableText(conn,'scheme_tos','TOS');
+    StoreTranslateableText(conn,'scheme_ttl','TTL');
+
+    StoreTranslateableText(conn,'scheme_icmp_type','ICMP Type');
+    StoreTranslateableText(conn,'scheme_block_option','Block Options');
+    StoreTranslateableText(conn,'scheme_block_option_icmp','Block Options');
+    StoreTranslateableText(conn,'scheme_skip_count','Skip Count');
+    StoreTranslateableText(conn,'scheme_with_option','With Options');
+    StoreTranslateableText(conn,'scheme_with_option_not','With Options Not');
+    StoreTranslateableText(conn,'scheme_with_extra_opts','With Extra Options');
+    StoreTranslateableText(conn,'scheme_ipv6hdr','IPv6 Hdr');
+    StoreTranslateableText(conn,'scheme_match_tag_nat','Match Tag NAT');
+    StoreTranslateableText(conn,'scheme_set_tag_nat','Set Tag NAT');
+    StoreTranslateableText(conn,'scheme_set_tag_log','Set Tag Log');
+
+    StoreTranslateableText(conn,'scheme_tcp_flags_group','TCP Flags');
+
+    StoreTranslateableText(conn,'scheme_tcp_flag_fin','FIN');
+    StoreTranslateableText(conn,'scheme_tcp_flag_syn','SYN');
+    StoreTranslateableText(conn,'scheme_tcp_flag_rst','RST');
+    StoreTranslateableText(conn,'scheme_tcp_flag_push','PUSH');
+    StoreTranslateableText(conn,'scheme_tcp_flag_ack','ACK');
+    StoreTranslateableText(conn,'scheme_tcp_flag_urg','URG');
+
+    StoreTranslateableText(conn,'scheme_option_to_group','To');
+    StoreTranslateableText(conn,'scheme_option_dup_to_group','Dup to');
+    StoreTranslateableText(conn,'scheme_option_reply_to_group','Reply to');
+
+    StoreTranslateableText(conn,'scheme_option_to_interface','Interface');
+    StoreTranslateableText(conn,'scheme_option_to_ip','IP');
+    StoreTranslateableText(conn,'scheme_option_dup_to_interface','Interface');
+    StoreTranslateableText(conn,'scheme_option_dup_to_ip','IP');
+    StoreTranslateableText(conn,'scheme_option_reply_to_interface','Interface');
+    StoreTranslateableText(conn,'scheme_option_reply_to_ip','IP');
   end;
 end;
 
@@ -9082,6 +9411,7 @@ end;
      StoreTranslateableText(conn,'scheme_main_group','General Information');
      StoreTranslateableText(conn,'scheme_cpu_config_group','CPU');
      StoreTranslateableText(conn,'scheme_advanced_group','Advanced Information');
+     StoreTranslateableText(conn,'scheme_expert_group','Advanced Information');
      StoreTranslateableText(conn,'scheme_objname','Name');
      StoreTranslateableText(conn,'scheme_cpu','CPU');
      StoreTranslateableText(conn,'scheme_cores','Cores');
@@ -10427,7 +10757,7 @@ begin
     end;
   end;
 
-   //FIREWALL NAT
+   //FIREWALL
   if not session.HasDerivedCollection(CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC) then begin
    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
    with transform do begin
@@ -10455,6 +10785,23 @@ begin
    dc := session.NewDerivedCollection(CFRE_DB_FIREWALL_IP_CHOOSER_DC);
    with dc do begin
      SetDeriveParent(conn.GetCollection(CFRE_DB_IP_COLLECTION));
+     SetDeriveTransformation(transform);
+     SetDisplayType(cdt_Chooser,[],'');
+
+     SetDefaultOrderField('label',true);
+   end;
+ end;
+
+ if not session.HasDerivedCollection(CFRE_DB_FIREWALL_POOL_CHOOSER_DC) then begin
+   GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+   with transform do begin
+     AddOneToOnescheme('number','label');
+     AddOneToOnescheme('domainid');
+   end;
+
+   dc := session.NewDerivedCollection(CFRE_DB_FIREWALL_POOL_CHOOSER_DC);
+   with dc do begin
+     SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_POOL_COLLECTION));
      SetDeriveTransformation(transform);
      SetDisplayType(cdt_Chooser,[],'');
 
