@@ -398,7 +398,7 @@ type
     //@ Sets the input element with the given id required.
     procedure SetElementGroupRequired (const elementId:String);
     //@ Fills the form with the values of the given object.
-    procedure FillWithObjectValues    (const obj: IFRE_DB_Object; const session: IFRE_DB_UserSession; const groupPreFix:String='');
+    procedure FillWithObjectValues    (const obj: IFRE_DB_Object; const session: IFRE_DB_UserSession; const groupPreFix:String=''; const isDBO: Boolean=false);
     //@ Adds the given InputGroupSchemeDefinition to the form and returns the TFRE_DB_INPUT_GROUP_DESC.
     //@ if hideGroupHeader is set to true parameters collapsible and collapsed are ignored
     //@ See TFRE_DB_INPUT_GROUP_DESC.
@@ -1891,94 +1891,86 @@ implementation
     scheme := obj.GetScheme(true);
     obj.ForAllPlugins(@DoPreRender);
     for i := 0 to Field('elements').ValueCount - 1 do begin
-      if (Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_BLOCK_DESC) or (Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_GROUP_DESC) then
-        begin
-          (Field('elements').AsObjectItem[i].Implementor_HC as TFRE_DB_FORM_DESC)._FillWithObjectValues(obj,session,prefix);
-        end
-      else begin
-          if Field('elements').AsObjectItem[i].Field('confirms').AsString<>'' then begin
-            FieldPathStr:=Field('elements').AsObjectItem[i].Field('confirms').AsString;
+      if (Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_BLOCK_DESC) or (Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_GROUP_DESC) then begin
+        (Field('elements').AsObjectItem[i].Implementor_HC as TFRE_DB_FORM_DESC)._FillWithObjectValues(obj,session,prefix);
+      end else begin
+        if Field('elements').AsObjectItem[i].Field('confirms').AsString<>'' then begin
+          FieldPathStr:=Field('elements').AsObjectItem[i].Field('confirms').AsString;
+        end else begin
+          FieldPathStr:=Field('elements').AsObjectItem[i].Field('field').AsString;
+        end;
+        if (prefix<>'') then begin
+          if (pos(prefix,FieldPathStr)=1) then begin
+            FieldPathStr:=Copy(FieldPathStr,Length(prefix)+1,MaxInt);
+            objField:=obj.FieldPath(fieldPathStr,true);
           end else begin
-            FieldPathStr:=Field('elements').AsObjectItem[i].Field('field').AsString;
+            objField:=nil;
           end;
-          if (prefix<>'') then begin
-            if (pos(prefix,FieldPathStr)=1) then begin
-              FieldPathStr:=Copy(FieldPathStr,Length(prefix)+1,MaxInt);
-              objField:=obj.FieldPath(fieldPathStr,true);
+        end else begin
+          objField:=obj.FieldPath(fieldPathStr,true);
+        end;
+        if Assigned(objField) then begin
+          if objField.AsString = cFRE_DB_SYS_CLEAR_VAL_STR then continue; //skip clear value
+          objFieldN := objField.FieldName;
+          if (Field('elements').AsObjectItem[i].Implementor_HC  is TFRE_DB_INPUT_CHOOSER_DESC) then begin
+            if Field('elements').AsObjectItem[i].Field('cce').AsBoolean and (objField.FieldType=fdbft_Object) then begin
+              val  := Field('elements').AsObjectItem[i].Field('store').AsObject.field('id').AsString;
+             // val  := Field('elements').AsObjectItem[i].Field('store').AsString;
+              store:=GetStore(val);
+              val:=store.FindEntryByCaption(objField.AsObject.GetFormattedDisplay);
+              if val='' then begin
+                store.AddEntry.Describe(objField.AsObject.GetFormattedDisplay,'__deletedObjId__');
+                Field('elements').AsObjectItem[i].Field('defaultValue').AsString:='__deletedObjId__';
+              end else begin
+                Field('elements').AsObjectItem[i].Field('defaultValue').AsString:=val;
+              end;
             end else begin
-              objField:=nil;
+              Field('elements').AsObjectItem[i].Field('defaultValue').AsStringArr:=objField.AsStringArr;
             end;
           end else begin
-            objField:=obj.FieldPath(fieldPathStr,true);
-          end;
-          if Assigned(objField) then
-            begin
-              if objField.AsString = cFRE_DB_SYS_CLEAR_VAL_STR then continue; //skip clear value
-              objFieldN := objField.FieldName;
-              if (Field('elements').AsObjectItem[i].Implementor_HC  is TFRE_DB_INPUT_CHOOSER_DESC) and Field('elements').AsObjectItem[i].Field('cce').AsBoolean and (objField.FieldType=fdbft_Object) then
-                begin
-                  val  := Field('elements').AsObjectItem[i].Field('store').AsObject.field('id').AsString;
-                 // val  := Field('elements').AsObjectItem[i].Field('store').AsString;
-                  store:=GetStore(val);
-                  val:=store.FindEntryByCaption(objField.AsObject.GetFormattedDisplay);
-                  if val='' then begin
-                    store.AddEntry.Describe(objField.AsObject.GetFormattedDisplay,'__deletedObjId__');
-                    Field('elements').AsObjectItem[i].Field('defaultValue').AsString:='__deletedObjId__';
+            if objField.ValueCount > 1 then begin
+              val:='';
+              for j := 0 to objField.ValueCount - 1 do begin
+                if j<>0 then begin
+                  val:=val+'\n';
+                end;
+                val:=val+objField.AsStringItem[j];
+              end;
+            end else begin
+              if Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_DATE_DESC then begin
+                val:=IntToStr(objField.AsInt64);
+              end else begin
+                if assigned(scheme) and (scheme.GetSchemeField(objFieldN,fielddef)) then begin
+                  if fielddef.isPass then begin
+                    val := '*BAD*';
                   end else begin
-                    Field('elements').AsObjectItem[i].Field('defaultValue').AsString:=val;
+                    if fielddef.FieldType = fdbft_Stream then begin {Session Url Encode the Stream field, automagically, if field is empty no URL should be generated / no filename...}
+                      if obj.FieldExists(objFieldN) then begin
+                        val := session.GetDownLoadLink4StreamField(obj.UID,objFieldN,false,obj.Field(objFieldN+cFRE_DB_STKEY).AsString,'',obj.Field(objFieldN+cFRE_DB_ST_ETAG).AsString)
+                      end else begin
+                        val := '';
+                      end;
+                    end else begin
+                      { Fallback }
+                      if fielddef.FieldType = fdbft_ObjLink then begin
+                        val:=FREDB_G2H(objField.AsObjectLink);
+                      end else begin
+                        val:=objField.AsString;
+                      end;
+                    end;
+                  end;
+                end else begin
+                  if objField.FieldType = fdbft_ObjLink then begin
+                    val:=FREDB_G2H(objField.AsObjectLink);
+                  end else begin
+                    val:=objField.AsString;
                   end;
                 end
-              else
-                begin
-                  if objField.ValueCount > 1 then begin
-                    val:='';
-                    for j := 0 to objField.ValueCount - 1 do begin
-                      if j<>0 then begin
-                        val:=val+'\n';
-                      end;
-                      val:=val+objField.AsStringItem[j];
-                    end;
-                  end else begin
-                    if Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_DATE_DESC then begin
-                      val:=IntToStr(objField.AsInt64);
-                    end else
-                      begin
-                        if assigned(scheme)
-                           and (scheme.GetSchemeField(objFieldN,fielddef)) then
-                             begin
-                               if fielddef.isPass then
-                                 begin
-                                   val := '*BAD*';
-                                 end
-                               else
-                               if fielddef.FieldType = fdbft_Stream then
-                                 begin {Session Url Encode the Stream field, automagically, if field is empty no URL should be generated / no filename...}
-                                   if obj.FieldExists(objFieldN) then
-                                     val := session.GetDownLoadLink4StreamField(obj.UID,objFieldN,false,obj.Field(objFieldN+cFRE_DB_STKEY).AsString,'',obj.Field(objFieldN+cFRE_DB_ST_ETAG).AsString)
-                                   else
-                                     val := '';
-                                 end
-                               else
-                                 { Fallback }
-                                 if fielddef.FieldType = fdbft_ObjLink then begin
-                                   val:=FREDB_G2H(objField.AsObjectLink);
-                                 end else begin
-                                   val:=objField.AsString;
-                                 end;
-                             end
-                        else
-                          begin
-                            if objField.FieldType = fdbft_ObjLink then begin
-                              val:=FREDB_G2H(objField.AsObjectLink);
-                            end else begin
-                              val:=objField.AsString;
-                            end;
-                          end
-                      end;
-                  end;
-                  Field('elements').AsObjectItem[i].Field('defaultValue').AsString:=val;
-                end;
+              end;
             end;
+            Field('elements').AsObjectItem[i].Field('defaultValue').AsString:=val;
+          end;
+        end;
       end;
     end;
   end;
@@ -2343,7 +2335,7 @@ implementation
               newBlock:=block.AddBlock(blockSize);
             end;
             newBlock.Describe(_getText(inputGroup.CaptionKey),'',fields[i].GetIndentEC);
-            _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,withoutCaptions,nil,newBlock,[]);
+            _addFields(schemeGroup,session,inputGroup.GroupFields,newPrefix,groupPreFix,required,withoutCaptions,nil,newBlock,fields[i].GetBlockElemSizes);
           end;
         end;
       end else begin
@@ -2444,11 +2436,13 @@ implementation
     elem.Field('grouprequired').AsBoolean:=true;
   end;
 
-  procedure TFRE_DB_FORM_DESC.FillWithObjectValues(const obj: IFRE_DB_Object; const session: IFRE_DB_UserSession; const groupPreFix:String);
+  procedure TFRE_DB_FORM_DESC.FillWithObjectValues(const obj: IFRE_DB_Object; const session: IFRE_DB_UserSession; const groupPreFix: String; const isDBO: Boolean);
   var
     prefix: String;
   begin
-    AddDBO(obj.UID_String, session, groupPreFix);
+    if isDBO then begin
+      AddDBO(obj.UID_String, session, groupPreFix);
+    end;
     if groupPreFix<>'' then begin
       prefix:=groupPreFix + '.';
     end else begin

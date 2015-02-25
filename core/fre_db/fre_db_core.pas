@@ -978,26 +978,27 @@ type
 
   TFRE_DB_FieldDef4Group=class(TFRE_DB_Object,IFRE_DB_FieldDef4Group)
   private
-     FType         : TFRE_DB_FIELD;
-     FGroup        : TFRE_DB_FIELD;
-     FScheme       : TFRE_DB_FIELD;
-     FPrefix       : TFRE_DB_FIELD;
-     FIndentEC     : TFRE_DB_FIELD;
-     FRightClass   : TFRE_DB_FIELD;
-     FStdright     : TFRE_DB_FIELD;
-     FDataColl     : TFRE_DB_FIELD;
-     FStandardColl : TFRE_DB_FIELD;
-     FCaptionkey   : TFRE_DB_FIELD;
-     FFieldname    : TFRE_DB_FIELD;
-     FDefault      : TFRE_DB_FIELD;
-     FChooserType  : TFRE_DB_FIELD;
-     FValKey       : TFRE_DB_FIELD;
-     FValParams    : TFRE_DB_FIELD;
+     FType           : TFRE_DB_FIELD;
+     FGroup          : TFRE_DB_FIELD;
+     FScheme         : TFRE_DB_FIELD;
+     FPrefix         : TFRE_DB_FIELD;
+     FIndentEC       : TFRE_DB_FIELD;
+     FBlockElemSizes : TFRE_DB_FIELD;
+     FRightClass     : TFRE_DB_FIELD;
+     FStdright       : TFRE_DB_FIELD;
+     FDataColl       : TFRE_DB_FIELD;
+     FStandardColl   : TFRE_DB_FIELD;
+     FCaptionkey     : TFRE_DB_FIELD;
+     FFieldname      : TFRE_DB_FIELD;
+     FDefault        : TFRE_DB_FIELD;
+     FChooserType    : TFRE_DB_FIELD;
+     FValKey         : TFRE_DB_FIELD;
+     FValParams      : TFRE_DB_FIELD;
 
-     FProperties   : TFRE_DB_FIELD;
-     FFieldDefCache: IFRE_DB_FieldSchemeDefinition;
+     FProperties     : TFRE_DB_FIELD;
+     FFieldDefCache  : IFRE_DB_FieldSchemeDefinition;
 
-     FValidator    : TFRE_DB_ClientFieldValidator; { Cache, not owned }
+     FValidator      : TFRE_DB_ClientFieldValidator; { Cache, not owned }
 
      function      GetInputGroupFieldProperties: TFRE_DB_InputGroupFieldproperties;
      procedure     SetInputGroupFieldProperties(AValue: TFRE_DB_InputGroupFieldproperties);
@@ -1012,6 +1013,7 @@ type
      function GetGroup                : TFRE_DB_NameType;
      function GetPrefix               : TFRE_DB_String;
      function GetIndentEC             : Boolean;
+     function GetBlockElemSizes       : TFRE_DB_Int32Array;
      function GetScheme               : TFRE_DB_String;
      function GetStdRight             : TFRE_DB_STANDARD_RIGHT;
      function GetRightClass           : Shortstring;
@@ -1061,7 +1063,7 @@ type
     procedure   AddInput             (const schemefield: TFRE_DB_String; const cap_trans_key: TFRE_DB_String=''; const disabled: Boolean=false;const hidden:Boolean=false; const default_value:String=''; const field_backing_collection: TFRE_DB_String='';const fbCollectionIsDerivedCollection:Boolean=false; const chooser_type:TFRE_DB_CHOOSER_DH=dh_chooser_combo;const standard_coll:TFRE_DB_STANDARD_COLL=coll_NONE;const chooserAddEmptyForRequired: Boolean=false; const validator_key:TFRE_DB_NameType=''; const validator_params : IFRE_DB_Object=nil);
     procedure   AddDomainChooser     (const schemefield: TFRE_DB_String; const std_right:TFRE_DB_STANDARD_RIGHT; const rightClasstype: TClass; const hideSingle: Boolean; const cap_trans_key: TFRE_DB_String='');
     procedure   UseInputGroup        (const scheme,group: TFRE_DB_String; const addPrefix: TFRE_DB_String='';const as_gui_subgroup:boolean=false ; const collapsible:Boolean=false;const collapsed:Boolean=false);
-    procedure   UseInputGroupAsBlock (const scheme,group: TFRE_DB_String; const addPrefix: TFRE_DB_String='';const indentEmptyCaption: Boolean=true);
+    procedure   UseInputGroupAsBlock (const scheme,group: TFRE_DB_String; const addPrefix: TFRE_DB_String='';const indentEmptyCaption: Boolean=true; const blockElemSizes: TFRE_DB_Int32Array=nil);
     function    GroupFields          : IFRE_DB_FieldDef4GroupArr;
   end;
 
@@ -2889,22 +2891,23 @@ end;
 
 procedure TFRE_DB_FieldDef4Group.InternalSetup;
 begin
-  FCaptionkey   := Field('CK');
-  FChooserType  := Field('CT');
-  FDataColl     := Field('DC');
-  FFieldname    := Field('FN');
-  FDefault      := Field('DF');
-  FType         := Field('FT');
-  FProperties   := Field('FP');
-  FGroup        := Field('GR');
-  FStandardColl := Field('SC');
-  FScheme       := Field('SM');
-  FStdright     := Field('SR');
-  FPrefix       := Field('PR');
-  FIndentEC     := Field('IEC');
-  FRightClass   := Field('RC');
-  FValKey       := Field('VK');
-  FValParams    := Field('VP');
+  FCaptionkey     := Field('CK');
+  FChooserType    := Field('CT');
+  FDataColl       := Field('DC');
+  FFieldname      := Field('FN');
+  FDefault        := Field('DF');
+  FType           := Field('FT');
+  FProperties     := Field('FP');
+  FGroup          := Field('GR');
+  FStandardColl   := Field('SC');
+  FScheme         := Field('SM');
+  FStdright       := Field('SR');
+  FPrefix         := Field('PR');
+  FIndentEC       := Field('IEC');
+  FBlockElemSizes := Field('BES');
+  FRightClass     := Field('RC');
+  FValKey         := Field('VK');
+  FValParams      := Field('VP');
 end;
 
 function TFRE_DB_FieldDef4Group.GetType: TFRE_InputGroupDefType;
@@ -2925,6 +2928,11 @@ end;
 function TFRE_DB_FieldDef4Group.GetIndentEC: Boolean;
 begin
   result := FIndentEC.AsBoolean;
+end;
+
+function TFRE_DB_FieldDef4Group.GetBlockElemSizes: TFRE_DB_Int32Array;
+begin
+  Result := FBlockElemSizes.AsInt32Arr;
 end;
 
 function TFRE_DB_FieldDef4Group.GetScheme: TFRE_DB_String;
@@ -4599,7 +4607,7 @@ begin
   FInputs.Field('IN'+inttostr(fcount)).AsObject := fdg;
 end;
 
-procedure TFRE_DB_InputGroupSchemeDefinition.UseInputGroupAsBlock(const scheme, group: TFRE_DB_String; const addPrefix: TFRE_DB_String; const indentEmptyCaption: Boolean);
+procedure TFRE_DB_InputGroupSchemeDefinition.UseInputGroupAsBlock(const scheme, group: TFRE_DB_String; const addPrefix: TFRE_DB_String; const indentEmptyCaption: Boolean; const blockElemSizes: TFRE_DB_Int32Array);
 var
   fdg      : TFRE_DB_FieldDef4Group;
   props    : TFRE_DB_InputGroupFieldproperties;
@@ -4609,11 +4617,14 @@ begin
   props := [];
   fdg.FType.AsByte := ord(igd_BlockGroup);
 
-  fdg.Fscheme.AsString    := scheme;
-  fdg.FGroup.AsString     := uppercase(group);
-  fdg.FPrefix.AsString    := addPrefix;
-  fdg.FIndentEC.AsBoolean := indentEmptyCaption;
-  fdg.FieldProperties     := props;
+  fdg.Fscheme.AsString           := scheme;
+  fdg.FGroup.AsString            := uppercase(group);
+  fdg.FPrefix.AsString           := addPrefix;
+  fdg.FIndentEC.AsBoolean        := indentEmptyCaption;
+  if Assigned(blockElemSizes) then begin
+    fdg.FBlockElemSizes.AsInt32Arr := blockElemSizes;
+  end;
+  fdg.FieldProperties            := props;
 
   fcount := FInputs.FieldCount(true);
   FInputs.Field('IN'+inttostr(fcount)).AsObject := fdg;
