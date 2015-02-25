@@ -197,11 +197,11 @@ const
   cFRE_DB_CLN_CHILD_FLD          = 'children';
   cFRE_DB_CLN_CHILD_FLG          = 'UNCHECKED';
 
-  CFRE_DB_EPSILON_DBL                                               = 2.2204460492503131e-016; // Epsiolon for Double Compare (Zero / boolean)
-  CFRE_DB_EPSILON_SGL                                               = 1.192092896e-07;         // Epsiolon for Single Compare (Zero / boolean)
-  CFRE_DB_SIZE_ENCODING_SIZE                                        = Sizeof(TFRE_DB_SIZE_TYPE);
-  CFRE_DB_NullGUID : TFRE_DB_GUID                                          = ( D : (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0) );
-  CFRE_DB_MaxGUID  : TFRE_DB_GUID                                          = ( D : ($FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF ) );
+  CFRE_DB_EPSILON_DBL              = 2.2204460492503131e-016; { Epsiolon for Double Compare (Zero / boolean) }
+  CFRE_DB_EPSILON_SGL              = 1.192092896e-07;         { Epsiolon for Single Compare (Zero / boolean) }
+  CFRE_DB_SIZE_ENCODING_SIZE       = Sizeof(TFRE_DB_SIZE_TYPE);
+  CFRE_DB_NullGUID : TFRE_DB_GUID  = ( D : (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0) );
+  CFRE_DB_MaxGUID  : TFRE_DB_GUID  = ( D : ($FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF ) );
 
   cFOS_IID_COLLECTION       = 'ID_COL';
   cFOS_IID_DERIVED_COLL     = 'ID_CDC';
@@ -225,7 +225,7 @@ type
     procedure  SetFromRawByteString (const rb_string : TFRE_DB_RawByteString);
     function   CalcETag             : ShortString;
   end;
-  //{$modeswitch andvancedrecords}
+
 
   PFRE_DB_GUID          = ^TFRE_DB_GUID;
   TFRE_DB_GUIDArray     = Array of TFRE_DB_Guid;
@@ -791,6 +791,7 @@ type
     function        FieldPath                          (const name:TFRE_DB_String;const dont_raise_ex:boolean=false):IFRE_DB_FIELD;
     function        FieldPathCreate                    (const name:TFRE_DB_String):IFRE_DB_FIELD;
     function        FieldPathExists                    (const name:TFRE_DB_String):Boolean;
+    function        FieldPathExists                    (const name: TFRE_DB_String;out fld:IFRE_DB_Field): Boolean;
     function        FieldPathListFormat                (const field_list:TFRE_DB_NameTypeArray;const formats : TFRE_DB_String;const empty_val: TFRE_DB_String) : TFRE_DB_String;
     function        FieldCount                         (const without_system_fields:boolean): SizeInt;
     function        DeleteField                        (const name:TFRE_DB_String):Boolean;
@@ -1984,6 +1985,7 @@ type
     function        FieldPath                          (const name:TFRE_DB_String;const dont_raise_ex:boolean=false):IFRE_DB_FIELD;
     function        FieldPathCreate                    (const name:TFRE_DB_String):IFRE_DB_FIELD;
     function        FieldPathExists                    (const name:TFRE_DB_String):Boolean;
+    function        FieldPathExists                    (const name: TFRE_DB_String;out fld:IFRE_DB_Field): Boolean;
     function        FieldPathListFormat                (const field_list:TFRE_DB_NameTypeArray;const formats : TFRE_DB_String;const empty_val: TFRE_DB_String) : TFRE_DB_String;
     function        FieldCount                         (const without_system_fields:boolean): SizeInt;
     function        DeleteField                        (const name:TFRE_DB_String):Boolean;
@@ -9280,6 +9282,11 @@ end;
 function TFRE_DB_ObjectEx.FieldPathExists(const name: TFRE_DB_String): Boolean;
 begin
   result := FImplementor.FieldPathExists(name);
+end;
+
+function TFRE_DB_ObjectEx.FieldPathExists(const name: TFRE_DB_String; out fld: IFRE_DB_Field): Boolean;
+begin
+  result := FImplementor.FieldPathExists(name,fld);
 end;
 
 function TFRE_DB_ObjectEx.FieldPathListFormat(const field_list: TFRE_DB_NameTypeArray; const formats: TFRE_DB_String; const empty_val: TFRE_DB_String): TFRE_DB_String;

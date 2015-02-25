@@ -863,7 +863,8 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'rule_grid_number'));
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'descr','',true,false,false,dt_description);
+      //AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'descr','',true,false,false,dt_description);
+      AddOneToOnescheme('desc.txt','descr','',dt_description);
       AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'rule_grid_interface'));
       AddOneToOnescheme('source','',FetchModuleTextShort(session,'rule_grid_source'));
       AddOneToOnescheme('protocol','',FetchModuleTextShort(session,'rule_grid_protocol'));

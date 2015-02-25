@@ -646,6 +646,7 @@ type
     function        FieldPathCreate                    (const name:TFRE_DB_String):TFRE_DB_FIELD;
     function        FieldPathCreateI                   (const name:TFRE_DB_String):IFRE_DB_FIELD;
     function        FieldPathExists                    (const name: TFRE_DB_String): Boolean;
+    function        FieldPathExists                    (const name: TFRE_DB_String;out fld:IFRE_DB_Field): Boolean;
     function        FieldPathListFormat                (const field_list:TFRE_DB_NameTypeArray;const formats : TFRE_DB_String;const empty_val: TFRE_DB_String) : TFRE_DB_String;
     function        FieldCount                         (const without_system_fields:boolean): SizeInt;
     function        DeleteField                        (const name:TFRE_DB_String):Boolean;
@@ -4089,7 +4090,7 @@ begin
   FIconIdField     := iconID;
   FOpenIconIDField := openIconID;
   if FOutFieldName='' then
-    FOutFieldName:=lowercase(FInFieldName);
+    FOutFieldName := lowercase(StringReplace(FInFieldName,'.','_',[rfReplaceAll]));
   FDefaultValue    := defaultValue;
   FPluginclass     := Pluginclass;
 end;
@@ -4105,6 +4106,7 @@ var sa          : TFRE_DB_StringArray;
     classn      : shortstring;
     handle_enum : boolean;
     plugin      : TFRE_DB_OBJECT_PLUGIN_BASE;
+    fld         : IFRE_DB_Field;
 begin
   if assigned(FPluginclass) then
     begin
@@ -4116,35 +4118,38 @@ begin
   else
     transbase := input;
 
-  if assigned(transbase) and transbase.FieldExists(FInFieldName) then begin
-    handle_enum := false;
-    scheme := transbase.GetScheme;
-    if assigned(scheme) then
-      begin
-        if scheme.GetSchemeField(FInFieldName,scheme_field) then
-          if scheme_field.GetEnum(enum) then
-            handle_enum:=true;
-      end;
-    if FDisplay and handle_enum then
-       begin
-          enumVals:=enum.getEntries;
-          output.field(uppercase(FOutFieldName)).AsString:=transbase.Field(FInFieldName).AsString; //FALLBACK
-          for i := 0 to Length(enumVals) - 1 do begin
-            if transbase.Field(FInFieldName).AsString=enumVals[i].Field('v').AsString then begin
-              output.field(uppercase(FOutFieldName)).AsString:=conn.FetchTranslateableTextShort(enumVals[i].Field('c').AsString);
-              break;
+  if assigned(transbase) and transbase.FieldPathExists(FInFieldName,fld) then
+    begin
+      transbase   := fld.ParentObject;
+      handle_enum := false;
+      scheme      := transbase.GetScheme;
+      if assigned(scheme) then
+        begin
+          if scheme.GetSchemeField(FInFieldName,scheme_field) then
+            if scheme_field.GetEnum(enum) then
+              handle_enum:=true;
+        end;
+      if FDisplay and handle_enum then
+         begin
+            enumVals:=enum.getEntries;
+            output.field(uppercase(FOutFieldName)).AsString:=fld.AsString; //FALLBACK
+            for i := 0 to Length(enumVals) - 1 do begin
+              if fld.AsString=enumVals[i].Field('v').AsString then begin
+                output.field(uppercase(FOutFieldName)).AsString:=conn.FetchTranslateableTextShort(enumVals[i].Field('c').AsString);
+                break;
+              end;
             end;
-          end;
-       end
-    else
-      begin
-        output.field(uppercase(FOutFieldName)).CloneFromField(transbase.Field(FInFieldName).Implementor as TFRE_DB_FIELD);
-      end;
-  end else begin
-    if FDefaultValue<>'' then begin
-      output.field(uppercase(FOutFieldName)).AsString:=FDefaultValue;
+         end
+      else
+        begin
+          output.field(uppercase(FOutFieldName)).CloneFromField(fld);
+        end;
+    end
+  else
+    begin
+      if FDefaultValue<>'' then
+        output.field(uppercase(FOutFieldName)).AsString:=FDefaultValue;
     end;
-  end;
   case FGuiDisplaytype of
     dt_string: ;
     dt_description: ;
@@ -15618,6 +15623,30 @@ begin
 end;
 
 function TFRE_DB_Object.FieldPathExists(const name: TFRE_DB_String): Boolean;
+//var fp  : TFOSStringArray;
+//    i   : Integer;
+//    obj : TFRE_DB_Object;
+//    nam : TFRE_DB_String;
+var fld : IFRE_DB_Field;
+begin
+  result := FieldPathExists(name,fld);
+  //_InAccessibleCheck;
+  //result:=false;
+  //GFRE_BT.SeperateString(name,'.',fp);
+  //if Length(fp)>0 then begin
+  //  obj := self;
+  //  for i:=0 to high(fp)-1 do begin
+  //    if not obj.FieldExists(fp[i]) then exit;
+  //    obj := obj.Field(fp[i]).AsObject;
+  //    if not assigned(obj) then exit;
+  //  end;
+  //  nam := fp[high(fp)];
+  //  if not obj.FieldExists(nam) then exit;
+  //  result := true;
+  //end;
+end;
+
+function TFRE_DB_Object.FieldPathExists(const name: TFRE_DB_String; out fld: IFRE_DB_Field): Boolean;
 var fp  : TFOSStringArray;
     i   : Integer;
     obj : TFRE_DB_Object;
@@ -15625,16 +15654,20 @@ var fp  : TFOSStringArray;
 begin
   _InAccessibleCheck;
   result:=false;
+  fld   :=nil;
   GFRE_BT.SeperateString(name,'.',fp);
   if Length(fp)>0 then begin
     obj := self;
     for i:=0 to high(fp)-1 do begin
-      if not obj.FieldExists(fp[i]) then exit;
+      if not obj.FieldExists(fp[i]) then
+        exit;
       obj := obj.Field(fp[i]).AsObject;
-      if not assigned(obj) then exit;
+      if not assigned(obj) then
+        exit;
     end;
     nam := fp[high(fp)];
-    if not obj.FieldExists(nam) then exit;
+    if not obj.FieldOnlyExistingI(nam,fld) then
+      exit;
     result := true;
   end;
 end;

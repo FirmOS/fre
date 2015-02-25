@@ -5177,8 +5177,8 @@ begin
     trans_SingleInsert:
       begin
         ino_up_class := uppercase(single_in_object.Implementor_HC.ClassName);
-        util   := TFRE_DB_TRANSFORM_UTIL_DATA.Create;
-        tr_obj := FTransform.TransformInOut(FConnection,single_in_object,util);
+        util         := TFRE_DB_TRANSFORM_UTIL_DATA.Create;
+        tr_obj       := FTransform.TransformInOut(FConnection,single_in_object,util);
         util.UtilSetTransformedObject(tr_obj);
         util.SetParentPaths(parentpaths);
         SetSpecialFields(tr_obj,single_in_object);
