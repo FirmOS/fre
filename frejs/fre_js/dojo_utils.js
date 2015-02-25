@@ -4066,6 +4066,11 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     while (parent) {
       if (parent.isInstanceOf(FIRMOS.Dialog)) {
         parent.resize();
+        if (parent._relativePosition) {
+          parent._endDrag();
+        } else {
+          parent._position();
+        }
         break;
       }
       if (parent.isInstanceOf(dijit.layout.BorderContainer)) {
