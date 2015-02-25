@@ -2113,6 +2113,7 @@ begin
   group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
   group.AddInput('ipversion',GetTranslateableTextKey('scheme_ipversion'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
+  group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
   group.AddInput('command',GetTranslateableTextKey('scheme_command'));
   group.AddInput('interface',GetTranslateableTextKey('scheme_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
   group.AddInput('protocol',GetTranslateableTextKey('scheme_protocol'));
@@ -2153,6 +2154,7 @@ begin
     StoreTranslateableText(conn,'scheme_main_group','General Information');
     StoreTranslateableText(conn,'scheme_ipversion','IP Version');
     StoreTranslateableText(conn,'scheme_number','Number');
+    StoreTranslateableText(conn,'scheme_description','Description');
     StoreTranslateableText(conn,'scheme_command','Command');
     StoreTranslateableText(conn,'scheme_interface','Interface');
     StoreTranslateableText(conn,'scheme_protocol','Protocol');
@@ -2458,6 +2460,7 @@ begin
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
+  group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
   group.AddInput('mapping',GetTranslateableTextKey('scheme_mapping'),false,false,'','',false,dh_chooser_combo,coll_NONE,true);
   group.AddInput('type',GetTranslateableTextKey('scheme_type'),false,false,'','',false,dh_chooser_combo,coll_NONE,true);
   group.AddInput('direction',GetTranslateableTextKey('scheme_direction'),false,false,'','',false,dh_chooser_combo,coll_NONE,true);
@@ -2484,6 +2487,7 @@ begin
 
     StoreTranslateableText(conn,'scheme_main_group','General Information');
     StoreTranslateableText(conn,'scheme_number','Number');
+    StoreTranslateableText(conn,'scheme_description','Description');
     StoreTranslateableText(conn,'scheme_mapping','Mapping');
     StoreTranslateableText(conn,'scheme_type','Type');
     StoreTranslateableText(conn,'scheme_direction','Direction');
@@ -2644,35 +2648,35 @@ begin
   GFRE_DBI.RegisterSysEnum(enum);
 
   enum:=GFRE_DBI.NewEnum('fw_rule_block_options').Setup(GFRE_DBI.CreateText('$enum_fw_rule_block_options','Firewall Rule Block Options'));
-  enum.addEntry('RETURN_ICMP',GetTranslateableTextKey('enum_fw_rule_block_options_return_icmp'));
-  enum.addEntry('RETURN_ICMP_AS_DEST',GetTranslateableTextKey('enum_fw_rule_block_options_return_icmp_as_dest'));
-  enum.addEntry('RETURN_RST',GetTranslateableTextKey('enum_fw_rule_block_options_return_rst'));
+  enum.addEntry('RETURN-ICMP',GetTranslateableTextKey('enum_fw_rule_block_options_return_icmp'));
+  enum.addEntry('RETURN-ICMP-AS-DEST',GetTranslateableTextKey('enum_fw_rule_block_options_return_icmp_as_dest'));
+  enum.addEntry('RETURN-RST',GetTranslateableTextKey('enum_fw_rule_block_options_return_rst'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   enum:=GFRE_DBI.NewEnum('fw_rule_block_options_icmp').Setup(GFRE_DBI.CreateText('$enum_fw_rule_block_options_icmp','Firewall Rule Block Options ICMP'));
-  enum.addEntry('NET_UNR',GetTranslateableTextKey('enum_fw_rule_block_options_net_unr'));
-  enum.addEntry('HOST_UNR',GetTranslateableTextKey('enum_fw_rule_block_options_host_unr'));
-  enum.addEntry('PROTO_UNR',GetTranslateableTextKey('enum_fw_rule_block_options_proto_unr'));
-  enum.addEntry('PORT_UNR',GetTranslateableTextKey('enum_fw_rule_block_options_port_unr'));
+  enum.addEntry('NET-UNR',GetTranslateableTextKey('enum_fw_rule_block_options_net_unr'));
+  enum.addEntry('HOST-UNR',GetTranslateableTextKey('enum_fw_rule_block_options_host_unr'));
+  enum.addEntry('PROTO-UNR',GetTranslateableTextKey('enum_fw_rule_block_options_proto_unr'));
+  enum.addEntry('PORT-UNR',GetTranslateableTextKey('enum_fw_rule_block_options_port_unr'));
   enum.addEntry('NEEDFRAG',GetTranslateableTextKey('enum_fw_rule_block_options_needfrag'));
   enum.addEntry('SRCFAIL',GetTranslateableTextKey('enum_fw_rule_block_options_srcfail'));
-  enum.addEntry('NET_UNK',GetTranslateableTextKey('enum_fw_rule_block_options_net_unk'));
-  enum.addEntry('HOST_UNK',GetTranslateableTextKey('enum_fw_rule_block_options_host_unk'));
+  enum.addEntry('NET-UNK',GetTranslateableTextKey('enum_fw_rule_block_options_net_unk'));
+  enum.addEntry('HOST-UNK',GetTranslateableTextKey('enum_fw_rule_block_options_host_unk'));
   enum.addEntry('ISOLATE',GetTranslateableTextKey('enum_fw_rule_block_options_isolate'));
-  enum.addEntry('NET_PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_net_prohib'));
-  enum.addEntry('HOST_PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_host_prohib'));
-  enum.addEntry('NET_TOS',GetTranslateableTextKey('enum_fw_rule_block_options_net_tos'));
-  enum.addEntry('HOST_TOS',GetTranslateableTextKey('enum_fw_rule_block_options_host_tos'));
-  enum.addEntry('FILTER_PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_filter_prohib'));
-  enum.addEntry('HOST_PRECED',GetTranslateableTextKey('enum_fw_rule_block_options_host_preced'));
-  enum.addEntry('CUTOFF_PRECED',GetTranslateableTextKey('enum_fw_rule_block_options_cutoff_preced'));
+  enum.addEntry('NET-PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_net_prohib'));
+  enum.addEntry('HOST-PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_host_prohib'));
+  enum.addEntry('NET-TOS',GetTranslateableTextKey('enum_fw_rule_block_options_net_tos'));
+  enum.addEntry('HOST-TOS',GetTranslateableTextKey('enum_fw_rule_block_options_host_tos'));
+  enum.addEntry('FILTER-PROHIB',GetTranslateableTextKey('enum_fw_rule_block_options_filter_prohib'));
+  enum.addEntry('HOST-PRECED',GetTranslateableTextKey('enum_fw_rule_block_options_host_preced'));
+  enum.addEntry('CUTOFF-PRECED',GetTranslateableTextKey('enum_fw_rule_block_options_cutoff_preced'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   enum:=GFRE_DBI.NewEnum('fw_rule_with_options').Setup(GFRE_DBI.CreateText('$enum_fw_rule_with_options','Firewall Rule With Options'));
   enum.addEntry('IPOPTS',GetTranslateableTextKey('enum_fw_rule_with_options_ipopts'));
   enum.addEntry('SHORT',GetTranslateableTextKey('enum_fw_rule_with_options_short'));
   enum.addEntry('FRAG',GetTranslateableTextKey('enum_fw_rule_with_options_frag'));
-  enum.addEntry('FRAG_BODY',GetTranslateableTextKey('enum_fw_rule_with_options_frag_body'));
+  enum.addEntry('FRAG-BODY',GetTranslateableTextKey('enum_fw_rule_with_options_frag_body'));
   enum.addEntry('FRAGS',GetTranslateableTextKey('enum_fw_rule_with_options_frags'));
   enum.addEntry('NAT',GetTranslateableTextKey('enum_fw_rule_with_options_nat'));
   enum.addEntry('MULTICAST',GetTranslateableTextKey('enum_fw_rule_with_options_multicast'));
@@ -2683,7 +2687,7 @@ begin
   enum.addEntry('BAD',GetTranslateableTextKey('enum_fw_rule_with_options_bad'));
   enum.addEntry('OOW',GetTranslateableTextKey('enum_fw_rule_with_options_oow'));
   enum.addEntry('LOWTTL',GetTranslateableTextKey('enum_fw_rule_with_options_lowttl'));
-  enum.addEntry('BAD_SRC',GetTranslateableTextKey('enum_fw_rule_with_options_bad_src'));
+  enum.addEntry('BAD-SRC',GetTranslateableTextKey('enum_fw_rule_with_options_bad_src'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   enum:=GFRE_DBI.NewEnum('fw_rule_with_extra_options').Setup(GFRE_DBI.CreateText('$enum_fw_rule_with_extra_options','Firewall Rule With Extra Options'));
@@ -2697,7 +2701,7 @@ begin
   enum.addEntry('TR',GetTranslateableTextKey('enum_fw_rule_with_options_tr'));
   enum.addEntry('SEC',GetTranslateableTextKey('enum_fw_rule_with_options_sec'));
   enum.addEntry('LSRR',GetTranslateableTextKey('enum_fw_rule_with_options_lsrr'));
-  enum.addEntry('E_SEC',GetTranslateableTextKey('enum_fw_rule_with_options_e_sec'));
+  enum.addEntry('E-SEC',GetTranslateableTextKey('enum_fw_rule_with_options_e_sec'));
   enum.addEntry('CIPSO',GetTranslateableTextKey('enum_fw_rule_with_options_cipso'));
   enum.addEntry('SATID',GetTranslateableTextKey('enum_fw_rule_with_options_satid'));
   enum.addEntry('SSRR',GetTranslateableTextKey('enum_fw_rule_with_options_ssrr'));
@@ -2748,8 +2752,6 @@ begin
 
   scheme.AddSchemeField('keep_state',fdbft_Boolean);
   scheme.AddSchemeField('keep_frags',fdbft_Boolean);
-
-  // Description
 
   // Expert Mode
 
@@ -2824,6 +2826,7 @@ begin
   group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
   group.AddInput('ipversion',GetTranslateableTextKey('scheme_ipversion'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
+  group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
   group.AddInput('action',GetTranslateableTextKey('scheme_action'));
   group.AddInput('direction',GetTranslateableTextKey('scheme_direction'));
   group.AddInput('interface',GetTranslateableTextKey('scheme_interface'),false,false,'',CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
@@ -3035,6 +3038,7 @@ begin
     StoreTranslateableText(conn,'scheme_general_group','General Information');
 
     StoreTranslateableText(conn,'scheme_number','Number');
+    StoreTranslateableText(conn,'scheme_description','Description');
     StoreTranslateableText(conn,'scheme_ipversion','IP Version');
     StoreTranslateableText(conn,'scheme_action','Action');
     StoreTranslateableText(conn,'scheme_direction','Direction');
@@ -3928,15 +3932,15 @@ begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
 
   enum:=GFRE_DBI.NewEnum('qemu_net_model').Setup(GFRE_DBI.CreateText('$enum_qemu_net_model','Emulator'));
-  enum.addEntry('virtio',GetTranslateableTextKey('net_model_virtio'));
-  enum.addEntry('e1000',GetTranslateableTextKey('net_model_e1000'));
-  enum.addEntry('i82551',GetTranslateableTextKey('net_model_i82551'));
-  enum.addEntry('i82557b',GetTranslateableTextKey('net_model_i82557b'));
-  enum.addEntry('i82559er',GetTranslateableTextKey('net_model_i82559er'));
-  enum.addEntry('ne2k_pci',GetTranslateableTextKey('net_model_ne2k_pci'));
-  enum.addEntry('ne2k_is',GetTranslateableTextKey('net_model_ne2k_is'));
-  enum.addEntry('pcnet',GetTranslateableTextKey('net_model_pcnet'));
-  enum.addEntry('rtl8139',GetTranslateableTextKey('net_model_rtl8139'));
+  enum.addEntry('VIRTIO',GetTranslateableTextKey('net_model_virtio'));
+  enum.addEntry('E1000',GetTranslateableTextKey('net_model_e1000'));
+  enum.addEntry('I82551',GetTranslateableTextKey('net_model_i82551'));
+  enum.addEntry('I82557B',GetTranslateableTextKey('net_model_i82557b'));
+  enum.addEntry('I82559ER',GetTranslateableTextKey('net_model_i82559er'));
+  enum.addEntry('NE2K_PCI',GetTranslateableTextKey('net_model_ne2k_pci'));
+  enum.addEntry('NE2K_IS',GetTranslateableTextKey('net_model_ne2k_is'));
+  enum.addEntry('PCNET',GetTranslateableTextKey('net_model_pcnet'));
+  enum.addEntry('RTL8139',GetTranslateableTextKey('net_model_rtl8139'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.AddSchemeField('model',fdbft_String).SetupFieldDef(true,false,'qemu_net_model');
@@ -4024,16 +4028,16 @@ begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
 
   enum:=GFRE_DBI.NewEnum('qemu_hdd_type').Setup(GFRE_DBI.CreateText('$enum_qemu_hdd_type','HDD Type'));
-  enum.addEntry('ide',GetTranslateableTextKey('hdd_type_ide'));
-  enum.addEntry('virtio',GetTranslateableTextKey('hdd_type_virtio'));
-  enum.addEntry('scsi',GetTranslateableTextKey('hdd_type_scsi'));
+  enum.addEntry('IDE',GetTranslateableTextKey('hdd_type_ide'));
+  enum.addEntry('VIRTIO',GetTranslateableTextKey('hdd_type_virtio'));
+  enum.addEntry('SCSI',GetTranslateableTextKey('hdd_type_scsi'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   enum:=GFRE_DBI.NewEnum('qemu_media_type').Setup(GFRE_DBI.CreateText('$enum_qemu_media_type','Media Type'));
-  enum.addEntry('disk',GetTranslateableTextKey('media_type_disk'));
-  enum.addEntry('cdrom',GetTranslateableTextKey('media_type_cdrom'));
-  enum.addEntry('usb',GetTranslateableTextKey('media_type_usb'));
-  enum.addEntry('floppy',GetTranslateableTextKey('media_type_floppy'));
+  enum.addEntry('DISK',GetTranslateableTextKey('media_type_disk'));
+  enum.addEntry('CDROM',GetTranslateableTextKey('media_type_cdrom'));
+  enum.addEntry('USB',GetTranslateableTextKey('media_type_usb'));
+  enum.addEntry('FLOPPY',GetTranslateableTextKey('media_type_floppy'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.AddSchemeField('hdd_type',fdbft_String).SetupFieldDef(false,false,'qemu_hdd_type');
@@ -5190,8 +5194,8 @@ begin
   scheme.SetParentSchemeByName(TFRE_DB_DATALINK.ClassName);
 
   enum:=GFRE_DBI.NewEnum('ip_tun_mode').Setup(GFRE_DBI.CreateText('$enum_ip_tun_mode','ip tunnel mode Enum'));
-  enum.addEntry('ip6ip6',GetTranslateableTextKey('enum_ip_tun_mode_ip6ip6'));
-  enum.addEntry('sit',GetTranslateableTextKey('enum_ip_tun_mode_sit'));
+  enum.addEntry('IP6IP6',GetTranslateableTextKey('enum_ip_tun_mode_ip6ip6'));
+  enum.addEntry('SIT',GetTranslateableTextKey('enum_ip_tun_mode_sit'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.AddSchemeField('mode',fdbft_String).SetupFieldDef(true,false,'ip_tun_mode');
@@ -6151,10 +6155,10 @@ begin
   inherited RegisterSystemScheme(scheme);
 
   enum:=GFRE_DBI.NewEnum('tcr_signal_status').Setup(GFRE_DBI.CreateText('$enum_tcr_signal_status','signal status Enum'));
-  enum.addEntry('ok',GetTranslateableTextKey('enum_tcr_signal_status_ok'));
-  enum.addEntry('warning',GetTranslateableTextKey('enum_tcr_signal_status_warning'));
-  enum.addEntry('failure',GetTranslateableTextKey('enum_tcr_signal_status_failure'));
-  enum.addEntry('unknown',GetTranslateableTextKey('enum_tcr_signal_status_unknown'));
+  enum.addEntry('OK',GetTranslateableTextKey('enum_tcr_signal_status_ok'));
+  enum.addEntry('WARNING',GetTranslateableTextKey('enum_tcr_signal_status_warning'));
+  enum.addEntry('FAILURE',GetTranslateableTextKey('enum_tcr_signal_status_failure'));
+  enum.addEntry('UNKNOWN',GetTranslateableTextKey('enum_tcr_signal_status_unknown'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.SetParentSchemeByName('TFRE_DB_ACCESSPOINT');
@@ -8957,13 +8961,13 @@ end;
    scheme.SetParentSchemeByName(TFRE_DB_SERVICE.Classname);
 
    enum:=GFRE_DBI.NewEnum('datalink_network_type').Setup(GFRE_DBI.CreateText('$datalink_network_type','Datalink Network Type'));
-   enum.addEntry('generic',GetTranslateableTextKey('datalink_network_type_generic'));
-   enum.addEntry('internet',GetTranslateableTextKey('datalink_network_type_internet'));
-   enum.addEntry('lan',GetTranslateableTextKey('datalink_network_type_lan'));
-   enum.addEntry('mgmt',GetTranslateableTextKey('datalink_network_type_mgmt'));
-   enum.addEntry('cpe',GetTranslateableTextKey('datalink_network_type_cpe'));
-   enum.addEntry('vm',GetTranslateableTextKey('datalink_network_type_vm'));
-   enum.addEntry('link',GetTranslateableTextKey('datalink_network_type_link'));
+   enum.addEntry('GENERIC',GetTranslateableTextKey('datalink_network_type_generic'));
+   enum.addEntry('INTERNET',GetTranslateableTextKey('datalink_network_type_internet'));
+   enum.addEntry('LAN',GetTranslateableTextKey('datalink_network_type_lan'));
+   enum.addEntry('MGMT',GetTranslateableTextKey('datalink_network_type_mgmt'));
+   enum.addEntry('CPE',GetTranslateableTextKey('datalink_network_type_cpe'));
+   enum.addEntry('VM',GetTranslateableTextKey('datalink_network_type_vm'));
+   enum.addEntry('LINK',GetTranslateableTextKey('datalink_network_type_link'));
    GFRE_DBI.RegisterSysEnum(enum);
 
    scheme.GetSchemeField('objname').required:=true;
@@ -9217,86 +9221,86 @@ end;
    scheme.SetParentSchemeByName(TFRE_DB_VHOST.ClassName);
 
    enum:=GFRE_DBI.NewEnum('qemu_cpu').Setup(GFRE_DBI.CreateText('$enum_qemu_cpu','CPU'));
-   enum.addEntry('qemu64',GetTranslateableTextKey('enum_cpu_qemu64'));
-   enum.addEntry('Opteron_G3',GetTranslateableTextKey('enum_cpu_Opteron_G3'));
-   enum.addEntry('Opteron_G2',GetTranslateableTextKey('enum_cpu_Opteron_G2'));
-   enum.addEntry('Opteron_G1',GetTranslateableTextKey('enum_cpu_Opteron_G1'));
-   enum.addEntry('SandyBridge',GetTranslateableTextKey('enum_cpu_SandyBridge'));
-   enum.addEntry('Westmere',GetTranslateableTextKey('enum_cpu_Westmere'));
-   enum.addEntry('Nehalem',GetTranslateableTextKey('enum_cpu_Nehalem'));
-   enum.addEntry('Penryn',GetTranslateableTextKey('enum_cpu_Penryn'));
-   enum.addEntry('Conroe',GetTranslateableTextKey('enum_cpu_Conroe'));
-   enum.addEntry('n270',GetTranslateableTextKey('enum_cpu_n270'));
-   enum.addEntry('athlon',GetTranslateableTextKey('enum_cpu_athlon'));
-   enum.addEntry('pentium3',GetTranslateableTextKey('enum_cpu_pentium3'));
-   enum.addEntry('pentium2',GetTranslateableTextKey('enum_cpu_pentium2'));
-   enum.addEntry('pentium',GetTranslateableTextKey('enum_cpu_pentium'));
-   enum.addEntry('coreduo',GetTranslateableTextKey('enum_cpu_coreduo'));
-   enum.addEntry('kvm32',GetTranslateableTextKey('enum_cpu_kvm32'));
-   enum.addEntry('qemu32',GetTranslateableTextKey('enum_cpu_qemu32'));
-   enum.addEntry('kvm64',GetTranslateableTextKey('enum_cpu_kvm64'));
-   enum.addEntry('core2duo',GetTranslateableTextKey('enum_cpu_core2duo'));
-   enum.addEntry('phenom',GetTranslateableTextKey('enum_cpu_phenom'));
-   enum.addEntry('host',GetTranslateableTextKey('enum_cpu_host'));
+   enum.addEntry('QEMU64',GetTranslateableTextKey('enum_cpu_qemu64'));
+   enum.addEntry('OPTERON_G3',GetTranslateableTextKey('enum_cpu_Opteron_G3'));
+   enum.addEntry('OPTERON_G2',GetTranslateableTextKey('enum_cpu_Opteron_G2'));
+   enum.addEntry('OPTERON_G1',GetTranslateableTextKey('enum_cpu_Opteron_G1'));
+   enum.addEntry('SANDYBRIDGE',GetTranslateableTextKey('enum_cpu_SandyBridge'));
+   enum.addEntry('WESTMERE',GetTranslateableTextKey('enum_cpu_Westmere'));
+   enum.addEntry('NEHALEM',GetTranslateableTextKey('enum_cpu_Nehalem'));
+   enum.addEntry('PENRYN',GetTranslateableTextKey('enum_cpu_Penryn'));
+   enum.addEntry('CONROE',GetTranslateableTextKey('enum_cpu_Conroe'));
+   enum.addEntry('N270',GetTranslateableTextKey('enum_cpu_n270'));
+   enum.addEntry('ATHLON',GetTranslateableTextKey('enum_cpu_athlon'));
+   enum.addEntry('PENTIUM3',GetTranslateableTextKey('enum_cpu_pentium3'));
+   enum.addEntry('PENTIUM2',GetTranslateableTextKey('enum_cpu_pentium2'));
+   enum.addEntry('PENTIUM',GetTranslateableTextKey('enum_cpu_pentium'));
+   enum.addEntry('COREDUO',GetTranslateableTextKey('enum_cpu_coreduo'));
+   enum.addEntry('KVM32',GetTranslateableTextKey('enum_cpu_kvm32'));
+   enum.addEntry('QEMU32',GetTranslateableTextKey('enum_cpu_qemu32'));
+   enum.addEntry('KVM64',GetTranslateableTextKey('enum_cpu_kvm64'));
+   enum.addEntry('CORE2DUO',GetTranslateableTextKey('enum_cpu_core2duo'));
+   enum.addEntry('PHENOM',GetTranslateableTextKey('enum_cpu_phenom'));
+   enum.addEntry('HOST',GetTranslateableTextKey('enum_cpu_host'));
 
    GFRE_DBI.RegisterSysEnum(enum);
    enum:=GFRE_DBI.NewEnum('qemu_language').Setup(GFRE_DBI.CreateText('$enum_qemu_language','Language'));
    GFRE_DBI.RegisterSysEnum(enum);
-   enum.addEntry('de',GetTranslateableTextKey('enum_language_de'));
-   enum.addEntry('de-ch',GetTranslateableTextKey('enum_language_de-ch'));
-   enum.addEntry('en-gb',GetTranslateableTextKey('enum_language_en-gb'));
-   enum.addEntry('en-us',GetTranslateableTextKey('enum_language_en-us'));
-   enum.addEntry('it',GetTranslateableTextKey('enum_language_it'));
-   enum.addEntry('es',GetTranslateableTextKey('enum_language_es'));
-   enum.addEntry('fr',GetTranslateableTextKey('enum_language_fr'));
-   enum.addEntry('fr-ch',GetTranslateableTextKey('enum_language_fr-ch'));
-   enum.addEntry('fr-ca',GetTranslateableTextKey('enum_language_fr-ca'));
-   enum.addEntry('ar',GetTranslateableTextKey('enum_language_ar'));
-   enum.addEntry('fo',GetTranslateableTextKey('enum_language_fo'));
-   enum.addEntry('hu',GetTranslateableTextKey('enum_language_hu'));
-   enum.addEntry('ja',GetTranslateableTextKey('enum_language_ja'));
-   enum.addEntry('mk',GetTranslateableTextKey('enum_language_mk'));
-   enum.addEntry('no',GetTranslateableTextKey('enum_language_no'));
-   enum.addEntry('pt-br',GetTranslateableTextKey('enum_language_pt-br'));
-   enum.addEntry('sv',GetTranslateableTextKey('enum_language_sv'));
-   enum.addEntry('da',GetTranslateableTextKey('enum_language_da'));
-   enum.addEntry('et',GetTranslateableTextKey('enum_language_et'));
-   enum.addEntry('is',GetTranslateableTextKey('enum_language_is'));
-   enum.addEntry('lt',GetTranslateableTextKey('enum_language_lt'));
-   enum.addEntry('nl',GetTranslateableTextKey('enum_language_nl'));
-   enum.addEntry('pl',GetTranslateableTextKey('enum_language_pl'));
-   enum.addEntry('ru',GetTranslateableTextKey('enum_language_ru'));
-   enum.addEntry('th',GetTranslateableTextKey('enum_language_th'));
-   enum.addEntry('fi',GetTranslateableTextKey('enum_language_fi'));
-   enum.addEntry('fr-be',GetTranslateableTextKey('enum_language_fr-be'));
-   enum.addEntry('hr',GetTranslateableTextKey('enum_language_hr'));
-   enum.addEntry('lv',GetTranslateableTextKey('enum_language_lv'));
-   enum.addEntry('nl-be',GetTranslateableTextKey('enum_language_nl-be'));
-   enum.addEntry('pt',GetTranslateableTextKey('enum_language_pt'));
-   enum.addEntry('sl',GetTranslateableTextKey('enum_language_sl'));
-   enum.addEntry('tr',GetTranslateableTextKey('enum_language_tr'));
+   enum.addEntry('DE',GetTranslateableTextKey('enum_language_de'));
+   enum.addEntry('DE-CH',GetTranslateableTextKey('enum_language_de-ch'));
+   enum.addEntry('EN-GB',GetTranslateableTextKey('enum_language_en-gb'));
+   enum.addEntry('EN-US',GetTranslateableTextKey('enum_language_en-us'));
+   enum.addEntry('IT',GetTranslateableTextKey('enum_language_it'));
+   enum.addEntry('ES',GetTranslateableTextKey('enum_language_es'));
+   enum.addEntry('FR',GetTranslateableTextKey('enum_language_fr'));
+   enum.addEntry('FR-CH',GetTranslateableTextKey('enum_language_fr-ch'));
+   enum.addEntry('FR-CA',GetTranslateableTextKey('enum_language_fr-ca'));
+   enum.addEntry('AR',GetTranslateableTextKey('enum_language_ar'));
+   enum.addEntry('FO',GetTranslateableTextKey('enum_language_fo'));
+   enum.addEntry('HU',GetTranslateableTextKey('enum_language_hu'));
+   enum.addEntry('JA',GetTranslateableTextKey('enum_language_ja'));
+   enum.addEntry('MK',GetTranslateableTextKey('enum_language_mk'));
+   enum.addEntry('NO',GetTranslateableTextKey('enum_language_no'));
+   enum.addEntry('PT-BR',GetTranslateableTextKey('enum_language_pt-br'));
+   enum.addEntry('SV',GetTranslateableTextKey('enum_language_sv'));
+   enum.addEntry('DA',GetTranslateableTextKey('enum_language_da'));
+   enum.addEntry('ET',GetTranslateableTextKey('enum_language_et'));
+   enum.addEntry('IS',GetTranslateableTextKey('enum_language_is'));
+   enum.addEntry('LT',GetTranslateableTextKey('enum_language_lt'));
+   enum.addEntry('NL',GetTranslateableTextKey('enum_language_nl'));
+   enum.addEntry('PL',GetTranslateableTextKey('enum_language_pl'));
+   enum.addEntry('RU',GetTranslateableTextKey('enum_language_ru'));
+   enum.addEntry('TH',GetTranslateableTextKey('enum_language_th'));
+   enum.addEntry('FI',GetTranslateableTextKey('enum_language_fi'));
+   enum.addEntry('FR-BE',GetTranslateableTextKey('enum_language_fr-be'));
+   enum.addEntry('HR',GetTranslateableTextKey('enum_language_hr'));
+   enum.addEntry('LV',GetTranslateableTextKey('enum_language_lv'));
+   enum.addEntry('NL-BE',GetTranslateableTextKey('enum_language_nl-be'));
+   enum.addEntry('PT',GetTranslateableTextKey('enum_language_pt'));
+   enum.addEntry('SL',GetTranslateableTextKey('enum_language_sl'));
+   enum.addEntry('TR',GetTranslateableTextKey('enum_language_tr'));
    enum:=GFRE_DBI.NewEnum('qemu_vga').Setup(GFRE_DBI.CreateText('$enum_qemu_vga','VGA'));
-   enum.addEntry('cirrus',GetTranslateableTextKey('enum_vga_cirrus'));
-   enum.addEntry('qxl',GetTranslateableTextKey('enum_vga_qxl'));
+   enum.addEntry('CIRRUS',GetTranslateableTextKey('enum_vga_cirrus'));
+   enum.addEntry('QXL',GetTranslateableTextKey('enum_vga_qxl'));
    GFRE_DBI.RegisterSysEnum(enum);
    enum:=GFRE_DBI.NewEnum('qemu_mouse').Setup(GFRE_DBI.CreateText('$enum_qemu_mouse','Mouse'));
-   enum.addEntry('tablet',GetTranslateableTextKey('enum_mouse_tablet'));
-   enum.addEntry('usb',GetTranslateableTextKey('enum_mouse_usb'));
-   enum.addEntry('ps2',GetTranslateableTextKey('enum_mouse_ps2'));
-   enum.addEntry('wacom_tablet',GetTranslateableTextKey('enum_mouse_wacom_tablet'));
+   enum.addEntry('TABLET',GetTranslateableTextKey('enum_mouse_tablet'));
+   enum.addEntry('USB',GetTranslateableTextKey('enum_mouse_usb'));
+   enum.addEntry('PS2',GetTranslateableTextKey('enum_mouse_ps2'));
+   enum.addEntry('WACOM-TABLET',GetTranslateableTextKey('enum_mouse_wacom_tablet'));
    GFRE_DBI.RegisterSysEnum(enum);
    enum:=GFRE_DBI.NewEnum('qemu_keyboard').Setup(GFRE_DBI.CreateText('$enum_qemu_keyboard','Keyboard'));
-   enum.addEntry('ps2',GetTranslateableTextKey('enum_keyboard_ps2'));
-   enum.addEntry('usb',GetTranslateableTextKey('enum_keyboard_usb'));
+   enum.addEntry('PS2',GetTranslateableTextKey('enum_keyboard_ps2'));
+   enum.addEntry('USB',GetTranslateableTextKey('enum_keyboard_usb'));
    GFRE_DBI.RegisterSysEnum(enum);
    enum:=GFRE_DBI.NewEnum('qemu_boot').Setup(GFRE_DBI.CreateText('$enum_qemu_boot','Boot'));
-   enum.addEntry('cd',GetTranslateableTextKey('enum_boot_cd'));
-   enum.addEntry('dc',GetTranslateableTextKey('enum_boot_dc'));
-   enum.addEntry('acd',GetTranslateableTextKey('enum_boot_acd'));
+   enum.addEntry('CD',GetTranslateableTextKey('enum_boot_cd'));
+   enum.addEntry('DC',GetTranslateableTextKey('enum_boot_dc'));
+   enum.addEntry('ACD',GetTranslateableTextKey('enum_boot_acd'));
    GFRE_DBI.RegisterSysEnum(enum);
    enum:=GFRE_DBI.NewEnum('qemu_balloon').Setup(GFRE_DBI.CreateText('$enum_qemu_balloon','Balloon'));
-   enum.addEntry('none',GetTranslateableTextKey('enum_balloon_none'));
-   enum.addEntry('virtio',GetTranslateableTextKey('enum_balloon_virtio'));
+   enum.addEntry('NONE',GetTranslateableTextKey('enum_balloon_none'));
+   enum.addEntry('VIRTIO',GetTranslateableTextKey('enum_balloon_virtio'));
    GFRE_DBI.RegisterSysEnum(enum);
    enum:=GFRE_DBI.NewEnum('qemu_emulator').Setup(GFRE_DBI.CreateText('$enum_qemu_emulator','Emulator'));
    enum.addEntry('1.1.2',GetTranslateableTextKey('enum_emulator_1_1_2'));

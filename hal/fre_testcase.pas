@@ -645,10 +645,10 @@ begin
   inherited RegisterSystemScheme(scheme);
 
   enum:=GFRE_DBI.NewEnum('tcs_signal_status').Setup(GFRE_DBI.CreateText('$enum_tcs_signal_status','signal status Enum'));
-  enum.addEntry('ok',GetTranslateableTextKey('enum_tcs_signal_status_ok'));
-  enum.addEntry('warning',GetTranslateableTextKey('enum_tcs_signal_status_warning'));
-  enum.addEntry('failure',GetTranslateableTextKey('enum_tcs_signal_status_failure'));
-  enum.addEntry('unknown',GetTranslateableTextKey('enum_tcs_signal_status_unknown'));
+  enum.addEntry('OK',GetTranslateableTextKey('enum_tcs_signal_status_ok'));
+  enum.addEntry('WARNING',GetTranslateableTextKey('enum_tcs_signal_status_warning'));
+  enum.addEntry('FAILURE',GetTranslateableTextKey('enum_tcs_signal_status_failure'));
+  enum.addEntry('UNKNOWN',GetTranslateableTextKey('enum_tcs_signal_status_unknown'));
   GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
