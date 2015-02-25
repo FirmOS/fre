@@ -692,32 +692,6 @@ var
   begin
     //SOURCE
     transformed_object.Field('source').AsString:=transformed_object.Field('src_ip').AsString;
-    if transformed_object.Field('src_port').AsString<>'' then begin
-      transformed_object.Field('source').AsString:=transformed_object.Field('source').AsString + ':' + input.Field('src_port').AsString;
-    end;
-    //DESTINATION
-    transformed_object.Field('destination').AsString:=transformed_object.Field('dst_ip').AsString;
-    if transformed_object.Field('dst_port_mode').AsString='AUTO' then begin
-      transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ' (auto)';
-    end else begin
-      if (transformed_object.Field('dst_port_1').AsString<>'') and (transformed_object.Field('dst_port_2').AsString<>'') then begin
-        transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ' ('+input.Field('dst_port_1').AsString+':'+input.Field('dst_port_2').AsString+')';
-      end else begin
-        if (transformed_object.Field('dst_port_1').AsString<>'') then begin
-          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ':'+input.Field('dst_port_1').AsString;
-        end;
-      end;
-    end;
-    //DESCR
-  end;
-
-  procedure _setNATColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
-  var
-    delimiter: String;
-    proxy_str: TFRE_DB_String;
-  begin
-    //SOURCE
-    transformed_object.Field('source').AsString:=transformed_object.Field('src_ip').AsString;
     if transformed_object.Field('src_port_1').AsString<>'' then begin
       if (transformed_object.Field('src_port_comparator').AsString='RANGE') then begin
         if transformed_object.Field('src_port_2').AsString<>'' then begin
@@ -736,10 +710,40 @@ var
         if transformed_object.Field('dst_port_2').AsString<>'' then begin
           transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ' ('+transformed_object.Field('dst_port_1').AsString + ':'+ input.Field('dst_port_2').AsString + ')';
         end else begin
-          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ':'+ input.Field('dst_port_2').AsString + ')';
+          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ':'+ input.Field('dst_port_1').AsString;
         end;
       end else begin
-        transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString+transformed_object.Field('dst_port_comparator').AsString + input.Field('dst_port_1').AsString;
+        if transformed_object.Field('dst_port_comparator').AsString='' then begin
+          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString+':'+ input.Field('dst_port_1').AsString;
+        end else begin
+          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + transformed_object.Field('dst_port_comparator').AsString + input.Field('dst_port_1').AsString;
+        end;
+      end;
+    end;
+    //DESCR
+  end;
+
+  procedure _setNATColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    delimiter: String;
+    proxy_str: TFRE_DB_String;
+  begin
+    //SOURCE
+    transformed_object.Field('source').AsString:=transformed_object.Field('src_ip').AsString;
+    if transformed_object.Field('src_port').AsString<>'' then begin
+      transformed_object.Field('source').AsString:=transformed_object.Field('source').AsString + ':' + input.Field('src_port').AsString;
+    end;
+    //DESTINATION
+    transformed_object.Field('destination').AsString:=transformed_object.Field('dst_ip').AsString;
+    if transformed_object.Field('dst_port_mode').AsString='AUTO' then begin
+      transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ' (auto)';
+    end else begin
+      if (transformed_object.Field('dst_port_1').AsString<>'') and (transformed_object.Field('dst_port_2').AsString<>'') then begin
+        transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ' ('+input.Field('dst_port_1').AsString+':'+input.Field('dst_port_2').AsString+')';
+      end else begin
+        if (transformed_object.Field('dst_port_1').AsString<>'') then begin
+          transformed_object.Field('destination').AsString:=transformed_object.Field('destination').AsString + ':'+input.Field('dst_port_1').AsString;
+        end;
       end;
     end;
     //DESCR
@@ -850,15 +854,6 @@ begin
       Filters.AddStringFieldFilter('disabledSCs','disabledSCs',TFRE_DB_FIREWALL_SERVICE.ClassName,dbft_EXACTVALUEINARRAY,false,true);
       Filters.AddStringFieldFilter('used','firewall','OK',dbft_EXACT);
     end;
-
-
-    //scheme.AddSchemeField('option_log',fdbft_Boolean);
-    //scheme.AddSchemeField('option_quick',fdbft_Boolean);
-    //scheme.AddSchemeField('src_addr_not',fdbft_Boolean);
-    //scheme.AddSchemeField('dst_addr_not',fdbft_Boolean);
-    //scheme.AddSchemeField('keep_state',fdbft_Boolean);
-    //scheme.AddSchemeField('keep_frags',fdbft_Boolean);
-
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
