@@ -659,6 +659,9 @@ begin
     CreateModuleText(conn,'rule_diag_options_to_block','To');
     CreateModuleText(conn,'rule_diag_options_dup_to_block','Dub to');
     CreateModuleText(conn,'rule_diag_options_reply_to_block','Reply to');
+
+    CreateModuleText(conn,'pools_grid_number','Number');
+    CreateModuleText(conn,'pools_grid_mapping','Mapping');
   end;
 end;
 
@@ -747,9 +750,11 @@ var
       end;
     end;
     //DESCR
-    delimiter:='';
+    if transformed_object.Field('descr').AsString<>'' then begin
+      delimiter:=langres[0];
+    end;
     if transformed_object.Field('src_to_ip').AsString<>'' then begin
-      transformed_object.Field('descr').AsString:=StringReplace(langres[1],'%src_to_str%',transformed_object.Field('src_to_ip').AsString,[rfReplaceAll]);
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[1],'%src_to_str%',transformed_object.Field('src_to_ip').AsString,[rfReplaceAll]);
       delimiter:=langres[0];
     end;
     if transformed_object.Field('option_frag').AsString='1' then begin
@@ -858,6 +863,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'rule_grid_number'));
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'descr','',true,false,false,dt_description);
       AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'rule_grid_interface'));
       AddOneToOnescheme('source','',FetchModuleTextShort(session,'rule_grid_source'));
       AddOneToOnescheme('protocol','',FetchModuleTextShort(session,'rule_grid_protocol'));
@@ -874,7 +880,6 @@ begin
       AddOneToOnescheme('dst_port_1','','',dt_string,false);
       AddOneToOnescheme('dst_port_2','','',dt_string,false);
       AddOneToOnescheme('dst_port_comparator','','',dt_string,false);
-      AddOneToOnescheme('descr','','',dt_description);
       AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
       SetSimpleFuncTransformNested(@_setRuleColumns,[FetchModuleTextShort(session,'rule_grid_descr_delimiter')]);
 
@@ -895,6 +900,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'nat_grid_number'));
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'descr','',true,false,false,dt_description);
       AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'nat_grid_interface'));
       AddOneToOnescheme('source','',FetchModuleTextShort(session,'nat_grid_source'));
       AddOneToOnescheme('protocol','',FetchModuleTextShort(session,'nat_grid_protocol'));
@@ -908,7 +914,6 @@ begin
       AddOneToOnescheme('dst_port_1','','',dt_string,false);
       AddOneToOnescheme('dst_port_2','','',dt_string,false);
       AddOneToOnescheme('dst_port_mode','','',dt_string,false);
-      AddOneToOnescheme('descr','','',dt_description);
       AddMatchingReferencedField(['SRC_TO_ADDR>TFRE_DB_IP'],'ip','src_to_ip','',false);
       AddOneToOnescheme('option_frag','','',dt_string,false);
       AddOneToOnescheme('option_age','','',dt_string,false);
@@ -937,7 +942,9 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('number','','NUMBER');
+      AddOneToOnescheme('number','',FetchModuleTextShort(session,'pools_grid_number'));
+      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'descr','',true,false,false,dt_description);
+      AddOneToOnescheme('mapping','',FetchModuleTextShort(session,'pools_grid_mapping'));
       AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
       //AddFulltextFilterOnTransformed(['number']);
     end;
