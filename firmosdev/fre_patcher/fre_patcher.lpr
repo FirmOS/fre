@@ -2066,10 +2066,10 @@ var coll,dccoll    : IFRE_DB_COLLECTION;
          result.Field('number').asuint32          := number;
          result.Field('mapping').asstring := UpperCase(mapping);
          if mapping = 'table' then
-           result.Field('type').asstring          := ptype;
+           result.Field('type').asstring          := UpperCase(ptype);
          if mapping = 'group-map' then
            begin
-             result.Field('direction').asstring       := direction;
+             result.Field('direction').asstring       := UpperCase(direction);
              if default_group<>0 then
                result.Field('default_group').asuint32 := default_group;
            end;

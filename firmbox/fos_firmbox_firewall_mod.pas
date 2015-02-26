@@ -662,6 +662,13 @@ begin
 
     CreateModuleText(conn,'pools_grid_number','Number');
     CreateModuleText(conn,'pools_grid_mapping','Mapping');
+
+    CreateModuleText(conn,'pools_grid_descr_delimiter',' - ');
+    CreateModuleText(conn,'pools_grid_descr_type','Type: %type_str%');
+    CreateModuleText(conn,'pools_grid_descr_direction','Direciton: %direction_str%');
+    CreateModuleText(conn,'pools_grid_descr_default_group','Default Group: %default_group_str%');
+    CreateModuleText(conn,'pools_grid_descr_hash_size','Hash Size: %hash_size_str%');
+    CreateModuleText(conn,'pools_grid_descr_hash_seed','Hash Seed: %hash_seed_str%');
   end;
 end;
 
@@ -782,6 +789,38 @@ var
     end;
   end;
 
+  procedure _setPoolColumns(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    delimiter: String;
+  begin
+    //DESCR
+    if input.Field('mapping').AsString='TABLE' then begin
+      if transformed_object.Field('descr').AsString<>'' then begin
+        delimiter:=langres[0];
+      end;
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[1],'%type_str%',transformed_object.Field('type').AsString,[rfReplaceAll]);
+      delimiter:=langres[0];
+      if input.Field('type').AsString='HASH' then begin
+        if transformed_object.Field('hash_size').AsString<>'' then begin
+          transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[4],'%hash_size_str%',transformed_object.Field('hash_size').AsString,[rfReplaceAll]);
+        end;
+        if transformed_object.Field('hash_seed').AsString<>'' then begin
+          transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[5],'%hash_seed_str%',transformed_object.Field('hash_seed').AsString,[rfReplaceAll]);
+        end;
+      end;
+    end;
+    if input.Field('mapping').AsString='GROUP-MAP' then begin
+      if transformed_object.Field('descr').AsString<>'' then begin
+        delimiter:=langres[0];
+      end;
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[2],'%direction_str%',transformed_object.Field('direction').AsString,[rfReplaceAll]);
+      delimiter:=langres[0];
+      if transformed_object.Field('default_group').AsString<>'' then begin
+        transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + StringReplace(langres[3],'%default_group_str%',transformed_object.Field('default_group').AsString,[rfReplaceAll]);
+      end;
+    end;
+  end;
+
 begin
   inherited MySessionInitializeModule(session);
   if session.IsInteractiveSession then begin
@@ -863,7 +902,6 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'rule_grid_number'));
-      //AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'descr','',true,false,false,dt_description);
       AddOneToOnescheme('desc.txt','descr','',dt_description);
       AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'rule_grid_interface'));
       AddOneToOnescheme('source','',FetchModuleTextShort(session,'rule_grid_source'));
@@ -901,7 +939,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'nat_grid_number'));
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'descr','',true,false,false,dt_description);
+      AddOneToOnescheme('desc.txt','descr','',dt_description);
       AddMatchingReferencedField(['INTERFACE>'],'objname','interface',FetchModuleTextShort(session,'nat_grid_interface'));
       AddOneToOnescheme('source','',FetchModuleTextShort(session,'nat_grid_source'));
       AddOneToOnescheme('protocol','',FetchModuleTextShort(session,'nat_grid_protocol'));
@@ -944,9 +982,17 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('number','',FetchModuleTextShort(session,'pools_grid_number'));
-      AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'descr','',true,false,false,dt_description);
+      AddOneToOnescheme('desc.txt','descr','',dt_description);
       AddOneToOnescheme('mapping','',FetchModuleTextShort(session,'pools_grid_mapping'));
+
+      AddOneToOnescheme('type','','',dt_string,false);
+      AddOneToOnescheme('direction','','',dt_string,false);
+      AddOneToOnescheme('default_group','','',dt_string,false);
+      AddOneToOnescheme('hash_size','','',dt_string,false);
+      AddOneToOnescheme('hash_seed','','',dt_string,false);
       AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
+      SetSimpleFuncTransformNested(@_setPoolColumns,[FetchModuleTextShort(session,'pools_grid_descr_delimiter'),FetchModuleTextShort(session,'pools_grid_descr_type'),FetchModuleTextShort(session,'pools_grid_descr_direction'),
+                                                    FetchModuleTextShort(session,'pools_grid_descr_default_group'),FetchModuleTextShort(session,'pools_grid_descr_hash_size'),FetchModuleTextShort(session,'pools_grid_descr_hash_seed')]);
       //AddFulltextFilterOnTransformed(['number']);
     end;
 

@@ -1455,8 +1455,8 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_ext_name'),dt_string,true,true,false,2);
-      AddOneToOnescheme('number','',FetchModuleTextShort(session,'grid_ext_number'),dt_number,true,true,false,1);
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_ext_name'),dt_string,true,true,false,true,2);
+      AddOneToOnescheme('number','',FetchModuleTextShort(session,'grid_ext_number'),dt_number,true,true,false,true,1);
       AddMatchingReferencedFieldArray(['VOIP_SERVICE>TFOS_DB_CITYCOM_VOIP_SERVICE'],'uid','vs_uid','',false);
       AddFulltextFilterOnTransformed(['objname','number']);
     end;
@@ -1474,11 +1474,11 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_ext_name'),dt_string,true,true,false,4);
-      AddOneToOnescheme('number','',FetchModuleTextShort(session,'grid_ext_number'),dt_number,true,true,false,2);
-      AddOneToOnescheme('type','',FetchModuleTextShort(session,'grid_ext_type'),dt_string,true,true,true,2,'','','',enum.getCaptions(conn));
-      AddOneToOnescheme('provisioning','',FetchModuleTextShort(session,'grid_ext_provisioning'),dt_boolean,true,false,false,1);
-      AddOneToOnescheme('recording','',FetchModuleTextShort(session,'grid_ext_recording'),dt_boolean,true,false,false,1);
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_ext_name'),dt_string,true,true,false,true,4);
+      AddOneToOnescheme('number','',FetchModuleTextShort(session,'grid_ext_number'),dt_number,true,true,false,true,2);
+      AddOneToOnescheme('type','',FetchModuleTextShort(session,'grid_ext_type'),dt_string,true,true,true,true,2,'','','',enum.getCaptions(conn));
+      AddOneToOnescheme('provisioning','',FetchModuleTextShort(session,'grid_ext_provisioning'),dt_boolean,true,false,false,true,1);
+      AddOneToOnescheme('recording','',FetchModuleTextShort(session,'grid_ext_recording'),dt_boolean,true,false,false,true,1);
       AddOneToOnescheme('description','','',dt_description);
       AddMatchingReferencedField('telephone>TFOS_DB_CITYCOM_VOIP_HARDWARE','objname','hwname','',false);
       AddOneToOnescheme('ip','','',dt_string,false);

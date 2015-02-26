@@ -410,7 +410,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,datalink_tr_Grid);
     with datalink_tr_Grid do begin
       //AddOneToOnescheme('icon','',app.FetchAppTextShort(conn,'datalink_icon'),dt_icon);
-      AddOneToOnescheme('objname','linkname',app.FetchAppTextShort(session,'datalink_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('objname','linkname',app.FetchAppTextShort(session,'datalink_name'),dt_string,true,false,false,true,1,'icon');
 //      AddOneToOnescheme('zoned','zoned',app.FetchAppTextShort(conn,'datalink_zoned'));
       AddCollectorscheme('%s',TFRE_DB_NameTypeArray.Create('desc.txt') ,'description', app.FetchAppTextShort(session,'datalink_desc'));
     end;
@@ -589,13 +589,13 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'gc_vm_customer'),true,dt_string,true,true,4,'',FetchModuleTextShort(session,'gc_vm_customer_default_value'),nil,false,'domainid');
-      AddOneToOnescheme('Objname','',FetchModuleTextShort(session,'gc_vm_name'),dt_string,true,false,false,4);
+      AddOneToOnescheme('Objname','',FetchModuleTextShort(session,'gc_vm_name'),dt_string,true,false,false,true,4);
       AddOneToOnescheme('MType','',FetchModuleTextShort(session,'gc_vm_type'));
       AddOneToOnescheme('StateIcon','',FetchModuleTextShort(session,'gc_vm_state'),dt_icon);
-      AddOneToOnescheme('PERFPCPU','',FetchModuleTextShort(session,'gc_vm_cpu'),dt_number,true,false,false,2);
-      AddOneToOnescheme('PERFPMEM','',FetchModuleTextShort(session,'gc_vm_used_mem'),dt_number,true,false,false,2);
-      AddOneToOnescheme('PERFRSS','',FetchModuleTextShort(session,'gc_vm_paged_mem'),dt_number,true,false,false,2);
-      AddOneToOnescheme('PERFVSZ','',FetchModuleTextShort(session,'gc_vm_virtual_mem'),dt_number,true,false,false,2);
+      AddOneToOnescheme('PERFPCPU','',FetchModuleTextShort(session,'gc_vm_cpu'),dt_number,true,false,false,true,2);
+      AddOneToOnescheme('PERFPMEM','',FetchModuleTextShort(session,'gc_vm_used_mem'),dt_number,true,false,false,true,2);
+      AddOneToOnescheme('PERFRSS','',FetchModuleTextShort(session,'gc_vm_paged_mem'),dt_number,true,false,false,true,2);
+      AddOneToOnescheme('PERFVSZ','',FetchModuleTextShort(session,'gc_vm_virtual_mem'),dt_number,true,false,false,true,2);
     end;
     vmc  := session.NewDerivedCollection('VM_GRID');
     with VMC do begin

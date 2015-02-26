@@ -194,7 +194,7 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,true,1,'icon');
       AddPluginField(TFRE_DB_ZONESTATUS_PLUGIN,'ZSTATE','',FetchModuleTextShort(session,'grid_status'));
       //AddOneToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));
       //AddStatisticToOnescheme('status','',FetchModuleTextShort(session,'grid_status'));

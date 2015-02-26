@@ -678,7 +678,7 @@ begin
 
     with tr_Grid do begin
       AddMultiToOnescheme(TFRE_DB_NameTypeArray.Create('caption','displayname'),'caption',FetchModuleTextShort(session,'pools_grid_caption'),dt_string,true,false,false,2,'icon');
-      AddOneToOnescheme('icon','','',dt_string,false,false,false,1,'','',FREDB_getThemedResource('images_apps/firmbox_storage/Undefined.png'));
+      AddOneToOnescheme('icon','','',dt_string,false,false,false,true,1,'','',FREDB_getThemedResource('images_apps/firmbox_storage/Undefined.png'));
       AddOneToOnescheme('uid','uid','',dt_string,false);
       //AddMultiToOnescheme(TFRE_DB_NameTypeArray.create('pool_uid','uid'),'pool_uid','',dt_string,false);
       //AddMatchingReferencedField('TFRE_DB_ZPOOL_IOSTAT<ZFS_OBJ_ID','ZIO_TYPE_READ_OPS','iops_r',FetchModuleTextShort(session,'pools_grid_iops_r'));

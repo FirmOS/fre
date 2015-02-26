@@ -2449,14 +2449,14 @@ begin
   fd_type:=scheme.AddSchemeField('type',fdbft_String).SetupFieldDef(true,false,'fw_pool_type');
   scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(true,false,'fw_pool_direction');
   scheme.AddSchemeField('default_group',fdbft_UInt32);
-  fd_map.addEnumDepField('type','GROUP-MAP',fdv_visible);
+  fd_map.addEnumDepField('type','TABLE',fdv_visible);
   fd_map.addEnumDepField('direction','GROUP-MAP',fdv_visible);
   fd_map.addEnumDepField('default_group','GROUP-MAP',fdv_visible);
 
   scheme.AddSchemeField('hash_size',fdbft_Uint32);
   scheme.AddSchemeField('hash_seed',fdbft_Uint32);
-  fd_type.addEnumDepField('hash_size','HASH',fdv_visible);
-  fd_type.addEnumDepField('hash_seed','HASH',fdv_visible);
+  fd_type.addEnumDepField('hash_size','HASH',fdv_none,fdes_enabled);
+  fd_type.addEnumDepField('hash_seed','HASH',fdv_none,fdes_enabled);
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));

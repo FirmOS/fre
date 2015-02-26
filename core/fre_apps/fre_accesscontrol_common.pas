@@ -299,7 +299,7 @@ begin
     conn:=session.GetDBConnection;
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_domain);
     with tr_domain do begin
-      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'gc_domain'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'gc_domain'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('suspended','','',dt_boolean,False);
       AddOneToOnescheme('internal','','',dt_boolean,False);
@@ -319,7 +319,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_UserIn);
     with tr_UserIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,true,1,'icon');
       AddConstString('icon',FREDB_getThemedResource('images_apps/share/user_ico.svg'));
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddMatchingReferencedFieldArray(['DOMAINIDLINK>TFRE_DB_DOMAIN'],'uid','dom_uid','',false);
@@ -340,7 +340,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_GroupIn);
     with tr_groupIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,true,1,'icon');
       AddConstString('icon',FREDB_getThemedResource('images_apps/share/group_ico.svg'));
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddOneToOnescheme('disabled','','',dt_boolean,False);
@@ -363,7 +363,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_RoleIn);
     with tr_RoleIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,true,1,'icon');
       AddConstString('icon',FREDB_getThemedResource('images_apps/accesscontrol/role_ico.svg'));
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddOneToOnescheme('disabled','','',dt_boolean,False);
@@ -887,10 +887,10 @@ begin
       end else begin
         grid_column_cap:=FetchModuleTextShort(session,'gc_role');
       end;
-      AddOneToOnescheme('displayname','displayname',grid_column_cap,dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','displayname',grid_column_cap,dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
-      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,1,'','','false');
+      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,true,1,'','','false');
       AddOneToOnescheme('domainidlink','','',dt_string,False);
       AddOneToOnescheme('schemeclass','sc','',dt_string,False);
       SetSimpleFuncTransformNested(@G_setDisplaynameGRD,[]);
@@ -918,7 +918,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_UserIn);
     with tr_UserIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddMatchingReferencedFieldArray(['USERGROUPIDS>TFRE_DB_GROUP','ROLEIDS>TFRE_DB_ROLE'],'uid','role_uid','FILTER1',false);
@@ -941,7 +941,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_UserOut);
     with tr_UserOut do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddMatchingReferencedFieldArray(['USERGROUPIDS>TFRE_DB_GROUP','ROLEIDS>TFRE_DB_ROLE'],'uid','role_uid','FILTER2',false);
@@ -964,7 +964,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_GroupIn);
     with tr_groupIn do begin
-      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('protected','','',dt_boolean,False);
       AddOneToOnescheme('protected','_disabledrag_','',dt_boolean,false);
@@ -990,7 +990,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_GroupOut);
     with tr_GroupOut do begin
-      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','displayname',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('protected','_disabledrag_','',dt_boolean,false);
       AddOneToOnescheme('protected','','',dt_boolean,False);
@@ -1763,13 +1763,13 @@ begin
       end else begin
         grid_column_cap:=FetchModuleTextShort(session,'gc_group');
       end;
-      AddOneToOnescheme('displayname','',grid_column_cap,dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',grid_column_cap,dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('domainidlink','','',dt_string,False);
       AddOneToOnescheme('protected','','',dt_boolean,False);
       AddOneToOnescheme('internal','','',dt_boolean,False);
-      AddOneToOnescheme('disabled','','',dt_boolean,False,false,false,1,'','','false');
-      AddOneToOnescheme('delegation','','',dt_boolean,False,false,false,1,'','','false');
+      AddOneToOnescheme('disabled','','',dt_boolean,False,false,false,true,1,'','','false');
+      AddOneToOnescheme('delegation','','',dt_boolean,False,false,false,true,1,'','','false');
       AddOneToOnescheme('schemeclass','sc','',dt_string,False);
       SetSimpleFuncTransformNested(@G_setDisplaynameGRD,[]);
       SetFinalRightTransformFunction(@CalculateGroupFields,[]);
@@ -1796,7 +1796,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_UserIn);
     with tr_UserIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
       SetSimpleFuncTransformNested(@G_setDisplaynameUser,[]);
@@ -1819,7 +1819,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_UserOut);
     with tr_UserOut do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_user'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddMatchingReferencedFieldArray(['USERGROUPIDS>TFRE_DB_GROUP'],'uid','group_uid','',false);
@@ -1842,7 +1842,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_RoleIn);
     with tr_RoleIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('_disabledrag_','','',dt_boolean,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
@@ -1866,7 +1866,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_RoleOut);
     with tr_RoleOut do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,6,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,true,6,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('_disabledrag_','','',dt_boolean,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
@@ -1892,11 +1892,11 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_GroupIn);
     with tr_GroupIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddOneToOnescheme('protected','','',dt_boolean,False);
-      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,1,'','','false');
+      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,true,1,'','','false');
       AddOneToOnescheme('domainidlink','','',dt_string,False);
       SetSimpleFuncTransformNested(@G_setDisplaynameGRD,[]);
       AddMatchingReferencedField('DOMAINIDLINK>TFRE_DB_DOMAIN','objname','domain',FetchModuleTextShort(session,'gc_domain'),_showGroupDomains(session,conn));
@@ -1919,12 +1919,12 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_groupOut);
     with tr_groupOut do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddOneToOnescheme('protected','','',dt_boolean,False);
-      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,1,'','','false');
-      AddOneToOnescheme('delegation','','',dt_boolean,False,false,false,1,'','','false');
+      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,true,1,'','','false');
+      AddOneToOnescheme('delegation','','',dt_boolean,False,false,false,true,1,'','','false');
       AddOneToOnescheme('domainidlink','','',dt_string,False);
       SetSimpleFuncTransformNested(@G_setDisplaynameGRD,[]);
       AddMatchingReferencedField('DOMAINIDLINK>TFRE_DB_DOMAIN','objname','domain',FetchModuleTextShort(session,'gc_domain'),_showGroupDomains(session,conn),dt_string,false,true,1,'','',conn.SYS.GetDomainNamesForClassRight(sr_FETCH,TFRE_DB_GROUP));
@@ -3087,7 +3087,7 @@ begin
       end else begin
         grid_column_cap:=FetchModuleTextShort(session,'gc_user');
       end;
-      AddOneToOnescheme('displayname','',grid_column_cap,dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',grid_column_cap,dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
       AddOneToOnescheme('schemeclass','sc','',dt_string,False);
@@ -3115,12 +3115,12 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_GridIn);
     with tr_GridIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('_disabledrag_','','',dt_boolean,false);
       AddOneToOnescheme('protected','','',dt_boolean,False);
       AddOneToOnescheme('internal','','',dt_boolean,False);
-      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,1,'','','false');
+      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,true,1,'','','false');
       AddOneToOnescheme('domainidlink','','',dt_string,False);
       AddMatchingReferencedFieldArray(['TFRE_DB_USER<USERGROUPIDS'],'uid','user_uid','useruid',false);
       SetSimpleFuncTransformNested(@G_setDisplaynameGRD,[]);
@@ -3144,12 +3144,12 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_GridOut);
     with tr_GridOut do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_group'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('_disabledrag_','','',dt_boolean,false);
       AddOneToOnescheme('protected','','',dt_boolean,False);
       AddOneToOnescheme('internal','','',dt_boolean,False);
-      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,1,'','','false');
+      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,true,1,'','','false');
       AddOneToOnescheme('domainidlink','','',dt_string,False);
       AddMatchingReferencedFieldArray(['TFRE_DB_USER<USERGROUPIDS'],'uid','user_uid','useruid',false);
       AddMatchingReferencedField('DOMAINIDLINK>TFRE_DB_DOMAIN','objname','domain',FetchModuleTextShort(session,'gc_domain'),_showGroupDomains(session,conn),dt_string,false,true,1,'','',conn.SYS.GetDomainNamesForClassRight(sr_FETCH,TFRE_DB_GROUP));
@@ -3173,10 +3173,10 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_RoleIn);
     with tr_RoleIn do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
-      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,1,'','','false');
+      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,true,1,'','','false');
       AddOneToOnescheme('domainidlink','','',dt_string,False);
       AddMatchingReferencedField('DOMAINIDLINK>TFRE_DB_DOMAIN','objname','domain',FetchModuleTextShort(session,'gc_domain'),_showRoleDomains(session,conn));
       AddMatchingReferencedFieldArray(['TFRE_DB_GROUP<ROLEIDS','TFRE_DB_USER<USERGROUPIDS'],'uid','user_uid','',false);
@@ -3200,10 +3200,10 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_RoleOut);
     with tr_RoleOut do begin
-      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('displayname','',FetchModuleTextShort(session,'gc_role'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('icon','','',dt_string,false);
       AddOneToOnescheme('internal','','',dt_boolean,False);
-      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,1,'','','false');
+      AddOneToOnescheme('disabled','','',dt_boolean,false,false,false,true,1,'','','false');
       AddOneToOnescheme('domainidlink','','',dt_string,False);
       AddMatchingReferencedFieldArray(['TFRE_DB_GROUP<ROLEIDS','TFRE_DB_USER<USERGROUPIDS'],'uid','user_uid','',false);
       AddMatchingReferencedField('DOMAINIDLINK>TFRE_DB_DOMAIN','objname','domain',FetchModuleTextShort(session,'gc_domain'),_showRoleDomains(session,conn),dt_string,false,true,1,'','',conn.SYS.GetDomainNamesForClassRight(sr_FETCH,TFRE_DB_ROLE));

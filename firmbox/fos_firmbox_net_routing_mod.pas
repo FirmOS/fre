@@ -1020,7 +1020,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('_sortorder_','','',dt_string,false);
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
@@ -1060,7 +1060,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,true,1,'icon');
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_DATALINK_IPMP'],'objname','ipmp','',true,dt_description);
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'objname','czone',FetchModuleTextShort(session,'grid_delegation_zone'),true,dt_string);
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_GLOBAL_ZONE'],'uid','zuid','',false);
@@ -1080,7 +1080,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,true,1,'icon');
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_DATALINK_IPMP'],'objname','ipmp','',true,dt_description);
       AddMatchingReferencedField(['DATALINKPARENT>TFRE_DB_ZONE'],'uid','zuid','',false);
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);

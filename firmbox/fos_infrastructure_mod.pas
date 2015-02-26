@@ -851,7 +851,7 @@ begin
   if session.IsInteractiveSession then begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,true,1,'icon');
       AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_nameserver_customer'),true,dt_description,true,true,1,'','',nil,false,'domainid');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
@@ -883,8 +883,8 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname');
-      AddOneToOnescheme('global','','',dt_boolean,False,false,false,1,'','','false');
-      AddOneToOnescheme('deprecated','','',dt_boolean,False,false,false,1,'','','false');
+      AddOneToOnescheme('global','','',dt_boolean,False,false,false,true,1,'','','false');
+      AddOneToOnescheme('deprecated','','',dt_boolean,False,false,false,true,1,'','','false');
     end;
     dc := session.NewDerivedCollection('TEMPLATE_CHOOSER');
     with dc do begin
@@ -959,7 +959,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_service_name'),dt_string,true,false,false,1,'icon');
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_service_name'),dt_string,true,false,false,true,1,'icon');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
       SetFinalRightTransformFunction(@CalculateIcon,[]);

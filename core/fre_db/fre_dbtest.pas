@@ -933,7 +933,7 @@ begin
     DC_Grid := session.NewDerivedCollection('FILEBROWSER');
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,tr_Grid);
     with tr_Grid do begin
-      AddOneToOnescheme('name','','Name',dt_string,true,false,false,3,'icon','icon_open');
+      AddOneToOnescheme('name','','Name',dt_string,true,false,false,true,3,'icon','icon_open');
       AddOneToOnescheme('sizeHR','','Size',dt_string);
       AddOneToOnescheme('typeHR','','Type',dt_string);
       AddOneToOnescheme('date','','Date',dt_date);
