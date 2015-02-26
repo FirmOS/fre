@@ -41,8 +41,9 @@ body.firmos{background-color:#485062;}
 .firmos .dgrid-details{width:30px;text-align:center;}
 .firmos .dgrid-row-table tr td:nth-child(odd){background:white;}
 .firmos .dgrid-row-table tr td:nth-child(even){background:whitesmoke;}
-.firmos .dgrid-selected .dgrid-row-table tr td{background:inherit;}
 .firmos .dgrid-row-table:hover tr td{background:inherit;}
+.firmos .dojoDndItemOver .dgrid-row-table tr td{background:inherit;}
+.firmos .dgrid-selected .dgrid-row-table tr td{background:inherit;}
 .firmos .dgrid-description-row,.firmos .dgrid-description-row-tree{margin-left:16px;font-size:75%;}
 .firmos .firmosIconNodeDiv{display:inline-block;vertical-align:middle;margin-right:5px;}
 .firmos .firmosIconNodeContentSpan{display:inline-block;vertical-align:middle;}
