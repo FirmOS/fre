@@ -1249,7 +1249,7 @@ type
   { TFRE_DB_FIREWALL_RULE }
 
   TFRE_DB_FIREWALL_RULE=class(TFRE_DB_ObjectEx)
-public
+  public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     procedure       Embed                (const conn: IFRE_DB_CONNECTION);
@@ -2050,7 +2050,7 @@ begin
 
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(true,false,'fw_nat_ipversion');
-  scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
+  scheme.AddSchemeField('number',fdbft_String).Required:=true;
   cfld:=scheme.AddSchemeField('command',fdbft_String).SetupFieldDef(true,false,'fw_nat_command');
 
   scheme.AddSchemeField('interface',fdbft_ObjLink).Required:=true;    // datalink of the zone
@@ -2319,12 +2319,23 @@ end;
 { TFRE_DB_FIREWALL_POOLENTRY_GROUP }
 
 class procedure TFRE_DB_FIREWALL_POOLENTRY_GROUP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group: IFRE_DB_InputGroupSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_FIREWALL_POOLENTRY.ClassName);
   inherited RegisterSystemScheme(scheme);
 
   scheme.AddSchemeField('group',fdbft_UInt32);
 
+  group:=scheme.AddInputGroup('ip').Setup(GetTranslateableTextKey('scheme_ip_group'));
+  group.AddInput('ip',GetTranslateableTextKey('scheme_ip'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
+  group.AddInput('group',GetTranslateableTextKey('scheme_group'));
+
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'ip');
+  group.UseInputGroup(scheme.DefinedSchemeName,'general');
 end;
 
 class procedure TFRE_DB_FIREWALL_POOLENTRY_GROUP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -2332,17 +2343,35 @@ begin
   newVersionId:='0.1';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_ip_group','IP');
+    StoreTranslateableText(conn,'scheme_general_group','General Information');
+    StoreTranslateableText(conn,'scheme_ip','IP');
+    StoreTranslateableText(conn,'scheme_group','Group');
   end;
 end;
 
 { TFRE_DB_FIREWALL_POOLENTRY_TABLE }
 
 class procedure TFRE_DB_FIREWALL_POOLENTRY_TABLE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group: IFRE_DB_InputGroupSchemeDefinition;
 begin
   scheme.SetParentSchemeByName(TFRE_DB_FIREWALL_POOLENTRY.ClassName);
   inherited RegisterSystemScheme(scheme);
 
   scheme.AddSchemeField('ip_not',fdbft_boolean);
+
+  group:=scheme.AddInputGroup('ip').Setup(GetTranslateableTextKey('scheme_ip_group'));
+  group.AddInput('ip',GetTranslateableTextKey('scheme_ip'),false,false,'',CFRE_DB_FIREWALL_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
+  group.AddInput('ip_not',GetTranslateableTextKey('scheme_ip_not'));
+
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'ip');
+  group.UseInputGroup(scheme.DefinedSchemeName,'general');
 end;
 
 class procedure TFRE_DB_FIREWALL_POOLENTRY_TABLE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -2350,6 +2379,12 @@ begin
   newVersionId:='0.1';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
+
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_ip_group','IP');
+    StoreTranslateableText(conn,'scheme_general_group','General Information');
+    StoreTranslateableText(conn,'scheme_ip','IP');
+    StoreTranslateableText(conn,'scheme_ip_not','Exlude');
   end;
 end;
 
@@ -2362,7 +2397,6 @@ begin
 
   scheme.AddSchemeField('firewallpool_id',fdbft_ObjLink).Required:=true;
   scheme.AddSchemeField('ip',fdbft_ObjLink).Required:=true;
-  scheme.AddSchemeField('ip_host',fdbft_Boolean);
 end;
 
 class procedure TFRE_DB_FIREWALL_POOLENTRY.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -2428,6 +2462,11 @@ begin
   scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
   inherited RegisterSystemScheme(scheme);
 
+  enum:=GFRE_DBI.NewEnum('fw_pool_ipversion').Setup(GFRE_DBI.CreateText('$enum_fw_pool_ipversion','Firewall Pool IP Version'));
+  enum.addEntry('IPV4',GetTranslateableTextKey('enum_fw_pool_ipversion_ipv4'));
+  enum.addEntry('IPV6',GetTranslateableTextKey('enum_fw_pool_ipversion_ipv6'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
   enum:=GFRE_DBI.NewEnum('fw_pool_mapping').Setup(GFRE_DBI.CreateText('$enum_fw_pool_mapping','Firewall Pool Mapping'));
   enum.addEntry('TABLE',GetTranslateableTextKey('enum_fw_pool_mapping_table'));
   enum.addEntry('GROUP-MAP',GetTranslateableTextKey('enum_fw_pool_mappping_group_map'));
@@ -2444,7 +2483,8 @@ begin
   GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
-  scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
+  scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(true,false,'fw_pool_ipversion');
+  scheme.AddSchemeField('number',fdbft_String).Required:=true;
   fd_map:=scheme.AddSchemeField('mapping',fdbft_String).SetupFieldDef(true,false,'fw_pool_mapping');
   fd_type:=scheme.AddSchemeField('type',fdbft_String).SetupFieldDef(true,false,'fw_pool_type');
   scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(true,false,'fw_pool_direction');
@@ -2459,6 +2499,7 @@ begin
   fd_type.addEnumDepField('hash_seed','HASH',fdv_none,fdes_enabled);
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('ipversion',GetTranslateableTextKey('scheme_ipversion'));
   group.AddInput('number',GetTranslateableTextKey('scheme_number'));
   group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
   group.AddInput('mapping',GetTranslateableTextKey('scheme_mapping'),false,false,'','',false,dh_chooser_combo,coll_NONE,true);
@@ -2485,7 +2526,11 @@ begin
     StoreTranslateableText(conn,'enum_fw_pool_direction_in','In');
     StoreTranslateableText(conn,'enum_fw_pool_direction_out','Out');
 
+    StoreTranslateableText(conn,'enum_fw_pool_ipversion_ipv4','IPv4');
+    StoreTranslateableText(conn,'enum_fw_pool_ipversion_ipv6','IPv6');
+
     StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_ipversion','IP Version');
     StoreTranslateableText(conn,'scheme_number','Number');
     StoreTranslateableText(conn,'scheme_description','Description');
     StoreTranslateableText(conn,'scheme_mapping','Mapping');
@@ -2724,7 +2769,7 @@ begin
   GFRE_DBI.RegisterSysEnum(enum);
 
   scheme.AddSchemeField('firewall_id',fdbft_ObjLink).Required:=true;
-  scheme.AddSchemeField('number',fdbft_UInt32).Required:=true;
+  scheme.AddSchemeField('number',fdbft_String).Required:=true;
   afld:=scheme.AddSchemeField('action',fdbft_String).SetupFieldDef(true,false,'fw_rule_action');
   scheme.AddSchemeField('direction',fdbft_String).SetupFieldDef(true,false,'fw_rule_direction');
   ipvfld:=scheme.AddSchemeField('ipversion',fdbft_String).SetupFieldDef(true,false,'fw_rule_ipversion');
@@ -2861,11 +2906,13 @@ begin
   group.AddInput('tcp_flag_ack',GetTranslateableTextKey('scheme_tcp_flag_ack'));
   group.AddInput('tcp_flag_urg',GetTranslateableTextKey('scheme_tcp_flag_urg'));
 
+  group:=scheme.AddInputGroup('pool').Setup(GetTranslateableTextKey('scheme_pool_group'));
+  group.AddInput('pool_in',GetTranslateableTextKey('scheme_pool_in'),false,false,'',CFRE_DB_FIREWALL_POOL_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('pool_out',GetTranslateableTextKey('scheme_pool_out'),false,false,'',CFRE_DB_FIREWALL_POOL_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
   group:=scheme.AddInputGroup('expert').Setup(GetTranslateableTextKey('scheme_expert_group'));
   group.AddInput('head',GetTranslateableTextKey('scheme_head'));
   group.AddInput('group',GetTranslateableTextKey('scheme_group'));
-  group.AddInput('pool_in',GetTranslateableTextKey('scheme_pool_in'),false,false,'',CFRE_DB_FIREWALL_POOL_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
-  group.AddInput('pool_out',GetTranslateableTextKey('scheme_pool_out'),false,false,'',CFRE_DB_FIREWALL_POOL_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
   group.AddInput('tos',GetTranslateableTextKey('scheme_tos'));
   group.AddInput('ttl',GetTranslateableTextKey('scheme_ttl'));
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'tcp_flags');
@@ -2898,6 +2945,7 @@ begin
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'option_to','',true);
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'option_dup_to','',true);
   group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'option_reply_to','',true);
+  group.UseInputGroupAsBlock(scheme.DefinedSchemeName,'pool');
   group.UseInputGroup(scheme.DefinedSchemeName,'expert');
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
@@ -3077,8 +3125,10 @@ begin
 
     StoreTranslateableText(conn,'scheme_head','Head');
     StoreTranslateableText(conn,'scheme_group','Group');
-    StoreTranslateableText(conn,'scheme_pool_in','Pool in');
-    StoreTranslateableText(conn,'scheme_pool_out','Pool out');
+
+    StoreTranslateableText(conn,'scheme_pool_group','Pool');
+    StoreTranslateableText(conn,'scheme_pool_in','In');
+    StoreTranslateableText(conn,'scheme_pool_out','Out');
     StoreTranslateableText(conn,'scheme_tos','TOS');
     StoreTranslateableText(conn,'scheme_ttl','TTL');
 
@@ -4195,7 +4245,7 @@ var
   group: IFRE_DB_InputGroupSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
-  group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main'));
+  group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('objname',GetTranslateableTextKey('scheme_name'),true);
 end;
 
@@ -8108,13 +8158,13 @@ end;
    scheme.AddSchemeField('zonedbodataset',fdbft_String);
    scheme.AddSchemeField('templatedataset',fdbft_String);
 
-   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main'));
+   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
    group.AddInput('objname',GetTranslateableTextKey('scheme_name'));
 end;
 
  class procedure TFRE_DB_ZONE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
  begin
-   newVersionId:='1.1';
+   newVersionId:='1.2';
    if currentVersionId='' then begin
      currentVersionId := '1.0';
      StoreTranslateableText(conn,'scheme_main','General Information');
@@ -8126,6 +8176,11 @@ end;
      DeleteTranslateableText(conn,'scheme_name');
      StoreTranslateableText(conn,'scheme_name','Zone Name');
      DeleteTranslateableText(conn,'scheme_description');
+   end;
+   if currentVersionId='1.1' then begin
+     currentVersionId := '1.2';
+     DeleteTranslateableText(conn,'scheme_main');
+     StoreTranslateableText(conn,'scheme_main_group','General Information');
    end;
  end;
 
@@ -8452,19 +8507,24 @@ end;
    inherited RegisterSystemScheme(scheme);
    scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.Classname);
    scheme.GetSchemeField('objname').required:=true;
-   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main'));
+   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
    group.AddInput('objname',GetTranslateableTextKey('scheme_name'),true);
    group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'),true);
  end;
 
  class procedure TFRE_DB_MACHINE_SETTING.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
  begin
-   newVersionId:='1.0';
+   newVersionId:='1.1';
    if currentVersionId='' then begin
      currentVersionId := '1.0';
      StoreTranslateableText(conn,'scheme_main','Properties');
      StoreTranslateableText(conn,'scheme_name','Name');
      StoreTranslateableText(conn,'scheme_description','Description');
+   end;
+   if currentVersionId='1.0' then begin
+     currentVersionId := '1.1';
+     DeleteTranslateableText(conn,'scheme_main');
+     StoreTranslateableText(conn,'scheme_main_group','General Information');
    end;
  end;
 
@@ -8491,7 +8551,7 @@ end;
    scheme.AddSchemeField('currentspeed',fdbft_String);
    scheme.AddSchemeField('nodewwn',fdbft_String);
 
-   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main'));
+   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
    group.AddInput('objname',GetTranslateableTextKey('scheme_wwn'),true);
    group.AddInput('desc.txt',GetTranslateableTextKey('scheme_description'));
    group.AddInput('targetmode',GetTranslateableTextKey('scheme_targetmode'));
@@ -8512,7 +8572,7 @@ end;
 
  class procedure TFRE_DB_FC_PORT.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
  begin
-   newVersionId:='1.0';
+   newVersionId:='1.1';
    if currentVersionId='' then begin
      currentVersionId := '1.0';
      StoreTranslateableText(conn,'scheme_main','FC Adapter Port');
@@ -8532,6 +8592,11 @@ end;
      StoreTranslateableText(conn,'scheme_supportedspeeds','Supported Speeds');
      StoreTranslateableText(conn,'scheme_currentspeed','Current Speed');
      StoreTranslateableText(conn,'scheme_nodewwn','Node WWN');
+   end;
+   if currentVersionId='1.0' then begin
+     currentVersionId := '1.1';
+     DeleteTranslateableText(conn,'scheme_main');
+     StoreTranslateableText(conn,'scheme_main_group','General Information');
    end;
  end;
 
@@ -9785,14 +9850,14 @@ end;
    group.UseInputGroup('TFRE_DB_ADDRESS','main','address');
    group.UseInputGroup('TFRE_DB_GEOPOSITION','main','position');
 
-   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main'));
+   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
    group.AddInput('objname',GetTranslateableTextKey('scheme_name'));
    group.AddInput('provisioningmac',GetTranslateableTextKey('scheme_provisioningmac'));
 end;
 
  class procedure TFRE_DB_MACHINE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
  begin
-   newVersionId:='1.1';
+   newVersionId:='1.2';
    if currentVersionId='' then begin
      currentVersionId := '1.0';
      StoreTranslateableText(conn,'scheme_address_group','Site Address');
@@ -9807,6 +9872,11 @@ end;
      DeleteTranslateableText(conn,'scheme_main');
      StoreTranslateableText(conn,'scheme_main','General Information');
      StoreTranslateableText(conn,'scheme_provisioningmac','Mac');
+   end;
+   if currentVersionId='1.1' then begin
+     currentVersionId := '1.2';
+     DeleteTranslateableText(conn,'scheme_main');
+     StoreTranslateableText(conn,'scheme_main_group','General Information');
    end;
  end;
 
@@ -10800,6 +10870,8 @@ begin
    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
    with transform do begin
      AddOneToOnescheme('number','label');
+     AddOneToOnescheme('ipversion');
+     AddOneToOnescheme('firewall_id');
      AddOneToOnescheme('domainid');
    end;
 

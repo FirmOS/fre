@@ -18,56 +18,61 @@ type
 
   TFRE_FIRMBOX_FIREWALL_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
-    function        _AddModifyPool             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
-    function        _getPoolName               (const dbo:IFRE_DB_Object):String;
-    function        _AddModifyRule             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
-    function        _getRuleName               (const dbo:IFRE_DB_Object):String;
-    function        _AddModifyNAT              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
-    function        _getNATName                (const dbo:IFRE_DB_Object):String;
+    function        _AddModifyPool               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
+    function        _getPoolName                 (const dbo:IFRE_DB_Object):String;
+    function        _AddModifyPoolEntry          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
+    function        _getPoolEntryName            (const dbo:IFRE_DB_Object):String;
+    function        _AddModifyRule               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
+    function        _getRuleName                 (const dbo:IFRE_DB_Object):String;
+    function        _AddModifyNAT                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
+    function        _getNATName                  (const dbo:IFRE_DB_Object):String;
   protected
-    procedure       SetupAppModuleStructure    ; override;
+    procedure       SetupAppModuleStructure      ; override;
   public
-    class procedure RegisterSystemScheme       (const scheme: IFRE_DB_SCHEMEOBJECT); override;
-    class procedure InstallDBObjects           (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    procedure       MySessionInitializeModule  (const session : TFRE_DB_UserSession);override;
-    function        canAddFirewall             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const zone: TFRE_DB_ZONE): Boolean;
+    class procedure RegisterSystemScheme         (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects             (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+    procedure       MySessionInitializeModule    (const session : TFRE_DB_UserSession);override;
+    function        canAddFirewall               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const zone: TFRE_DB_ZONE): Boolean;
   published
-    function        WEB_Content                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
-    function        WEB_ContentPools           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentRules           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ContentNAT             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_Content                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;override;
+    function        WEB_ContentPools             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentRules             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ContentNAT               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
-    function        WEB_AddFirewall            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_CreateFirewall         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ServiceSC              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddFirewall              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CreateFirewall           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ServiceSC                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
-    function        WEB_AddPool                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ModifyPool             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_StorePool              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DeletePool             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DeletePoolConfirmed    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolsSC                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_PoolsMenu              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddPool                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ModifyPoolObj            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StorePool                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeletePoolObj            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeletePoolConfirmed      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeletePoolEntryConfirmed (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddPoolEntry             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StorePoolEntry           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolsSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_PoolsMenu                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
-    function        WEB_AddRule                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ModifyRule             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_StoreRule              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DeleteRule             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DeleteRuleConfirmed    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_RulesSC                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_RulesMenu              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddRule                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ModifyRule               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreRule                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteRule               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteRuleConfirmed      (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RulesSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_RulesMenu                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
-    function        WEB_AddNAT                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_ModifyNAT              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_StoreNAT               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DeleteNAT              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_DeleteNATConfirmed     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NATSC                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_NATMenu                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddNAT                   (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ModifyNAT                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreNAT                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteNAT                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteNATConfirmed       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NATSC                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_NATMenu                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
-    function        WEB_AddIP                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_StoreIP                (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
-    function        WEB_CleanupAddIP           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddIP                    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreIP                  (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CleanupAddIP             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
   end;
 
 procedure Register_DB_Extensions;
@@ -82,26 +87,26 @@ end;
 
 { TFRE_FIRMBOX_FIREWALL_MOD }
 
-function TFRE_FIRMBOX_FIREWALL_MOD._AddModifyPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify: Boolean): IFRE_DB_Object;
+function TFRE_FIRMBOX_FIREWALL_MOD._AddModifyPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo: IFRE_DB_Object): IFRE_DB_Object;
 var
   scheme    : IFRE_DB_SchemeObject;
   res       : TFRE_DB_FORM_DIALOG_DESC;
   sf        : TFRE_DB_SERVER_FUNC_DESC;
   diagCap   : TFRE_DB_String;
-  dbo       : IFRE_DB_Object;
   poolDBO   : IFRE_DB_Object;
   service   : IFRE_DB_Object;
+  isModify  : Boolean;
 begin
   sf:=CWSF(@WEB_StorePool);
-  if isModify then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
-
+  if Assigned(dbo) then begin
+    isModify:=true;
     if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_POOL,dbo.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('poolId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'pool_modify_diag_cap');
   end else begin
+    isModify:=false;
     CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedFirewall').AsGUID,service));
 
     if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOL,service.DomainID) then
@@ -117,14 +122,101 @@ begin
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   if isModify then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),poolDBO));
-    res.FillWithObjectValues(poolDBO,ses);
+    res.FillWithObjectValues(dbo,ses);
   end;
 
   Result:=res;
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD._getPoolName(const dbo: IFRE_DB_Object): String;
+begin
+  Result:=dbo.Field('number').AsString;
+end;
+
+function TFRE_FIRMBOX_FIREWALL_MOD._AddModifyPoolEntry(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object): IFRE_DB_Object;
+var
+  scheme    : IFRE_DB_SchemeObject;
+  res       : TFRE_DB_FORM_DIALOG_DESC;
+  sf        : TFRE_DB_SERVER_FUNC_DESC;
+  diagCap   : TFRE_DB_String;
+  isModify  : Boolean;
+  poolDBO   : IFRE_DB_Object;
+  dc        : IFRE_DB_DERIVED_COLLECTION;
+  group     : TFRE_DB_INPUT_GROUP_DESC;
+  block     : TFRE_DB_INPUT_BLOCK_DESC;
+  addIPSf   : TFRE_DB_SERVER_FUNC_DESC;
+begin
+  sf:=CWSF(@WEB_StorePoolEntry);
+  addIPSf:=CWSF(@WEB_AddIP);
+  if Assigned(dbo) then begin
+    isModify:=true;
+    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,dbo.Implementor_HC.ClassType,dbo.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    CheckDbResult(conn.Fetch(dbo.Field('firewallpool_id').AsObjectLink,poolDBO));
+
+    GetSystemScheme(dbo.Implementor_HC.ClassType,scheme);
+
+    sf.AddParam.Describe('entryId',dbo.UID_String);
+    addIPSf.AddParam.Describe('selected',dbo.UID_String);
+    diagCap:=FetchModuleTextShort(ses,'pool_entry_modify_diag_cap');
+  end else begin
+    isModify:=false;
+    CheckDbResult(conn.Fetch(input.Field('selected').AsGUID,poolDBO));
+
+    if poolDBO.Field('mapping').AsString='TABLE' then begin
+      if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,poolDBO.DomainID) then
+        raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+      GetSystemScheme(TFRE_DB_FIREWALL_POOLENTRY_TABLE,scheme);
+    end else begin
+      if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,poolDBO.DomainID) then
+        raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+      GetSystemScheme(TFRE_DB_FIREWALL_POOLENTRY_GROUP,scheme);
+    end;
+
+    sf.AddParam.Describe('poolId',poolDBO.UID_String);
+    addIPSf.AddParam.Describe('parentId',poolDBO.UID_String);
+    diagCap:=FetchModuleTextShort(ses,'pool_entry_create_diag_cap');
+  end;
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'pool_entry_diag_main_group'));
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'pool_entry_diag_ip_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ip'),ses,[],'',true,true);
+  addIPSf.AddParam.Describe('field','ip');
+  addIPSf.AddParam.Describe('sourceDiag','pool_entry');
+
+  dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_IP_CHOOSER_DC);
+  dc.Filters.RemoveFilter('domain');
+  dc.Filters.AddUIDFieldFilter('domain','domainid',poolDBO.DomainID,dbnf_OneValueFromFilter);
+  dc.Filters.RemoveFilter('scheme');
+  if poolDBO.Field('ipversion').AsString='IPV6' then begin
+    dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV6.ClassName]);
+    if conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6,poolDBO.DomainID) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV6_SUBNET,poolDBO.DomainID) then begin
+      addIPSf.AddParam.Describe('ipversion','ipv6');
+      block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'pool_entry_diag_new_ip_button'),addIPSf,true);
+    end;
+  end else begin
+    dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4.ClassName]);
+    if conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,poolDBO.DomainID) and conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,poolDBO.DomainID) then begin
+      addIPSf.AddParam.Describe('ipversion','ipv4');
+      block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'pool_entry_diag_new_ip_button'),addIPSf,true);
+    end;
+  end;
+  group.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses,false,false,'',true,true);
+
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+
+  if isModify then begin
+    res.FillWithObjectValues(dbo,ses);
+  end;
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_FIREWALL_MOD._getPoolEntryName(const dbo: IFRE_DB_Object): String;
 begin
   Result:=dbo.Field('number').AsString;
 end;
@@ -136,7 +228,6 @@ var
   sf         : TFRE_DB_SERVER_FUNC_DESC;
   diagCap    : TFRE_DB_String;
   dbo        : IFRE_DB_Object;
-  ruleDBO    : IFRE_DB_Object;
   service    : IFRE_DB_Object;
   baseAddIPSf: TFRE_DB_SERVER_FUNC_DESC;
   canAddIPv4 : Boolean;
@@ -147,6 +238,7 @@ var
   block      : TFRE_DB_INPUT_BLOCK_DESC;
   addIPSf    : TFRE_DB_SERVER_FUNC_DESC;
   ipv6dc     : IFRE_DB_DERIVED_COLLECTION;
+  pipv6dc    : IFRE_DB_DERIVED_COLLECTION;
   ch         : TFRE_DB_INPUT_CHOOSER_DESC;
 begin
   sf:=CWSF(@WEB_StoreRule);
@@ -166,7 +258,7 @@ begin
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('firewallId',service.UID_String);
-    baseAddIPSf.AddParam.Describe('firewallId',service.UID_String);
+    baseAddIPSf.AddParam.Describe('parentId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'rule_create_diag_cap');
   end;
   baseAddIPSf.AddParam.Describe('sourceDiag','rule');
@@ -184,6 +276,19 @@ begin
   dc := ses.FetchDerivedCollection(CFRE_DB_FIREWALL_POOL_CHOOSER_DC);
   dc.Filters.RemoveFilter('domain');
   dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
+  dc.Filters.RemoveFilter('ipversion');
+  dc.Filters.AddStringFieldFilter('ipversion','ipversion','IPV4',dbft_EXACT);
+  dc.Filters.RemoveFilter('firewall');
+  dc.Filters.AddUIDFieldFilter('firewall','firewall_id',[service.UID],dbnf_OneValueFromFilter);
+
+  pipv6dc := ses.FetchDerivedCollection('FIREWALL_POOL_IPV6_CHOOSER_DC');
+  pipv6dc.Filters.RemoveFilter('domain');
+  pipv6dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
+  pipv6dc.Filters.RemoveFilter('ipversion');
+  pipv6dc.Filters.AddStringFieldFilter('ipversion','ipversion','IPV6',dbft_EXACT);
+  pipv6dc.Filters.RemoveFilter('firewall');
+  pipv6dc.Filters.AddUIDFieldFilter('firewall','firewall_id',[service.UID],dbnf_OneValueFromFilter);
+
   ipv6dc := ses.FetchDerivedCollection('FIREWALL_IPV6_CHOOSER_DC');
   ipv6dc.Filters.RemoveFilter('domain');
   ipv6dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
@@ -338,22 +443,37 @@ begin
   ipversionch.addDependentInput('reply_to_ipv4_block','IPV4',fdv_visible);
   ipversionch.addDependentInput('reply_to_ipv6_block','IPV6',fdv_visible);
 
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_pool_block'),'pool_ipv4_block');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('pool'),ses,[],'pool_ipv4');
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'rule_diag_pool_block'),'pool_ipv6_block');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('pool'),ses,[],'pool_ipv6');
+  (res.GetFormElement('pool_ipv6.pool_in').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(pipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  (res.GetFormElement('pool_ipv6.pool_out').Implementor_HC as TFRE_DB_INPUT_CHOOSER_DESC).setStore(pipv6dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  ipversionch.addDependentInput('pool_ipv4_block','IPV4',fdv_visible);
+  ipversionch.addDependentInput('pool_ipv6_block','IPV6',fdv_visible);
+
   group.AddSchemeFormGroup(scheme.GetInputGroup('expert'),ses,false,false,'',false,true);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   if isModify then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),ruleDBO));
-    res.FillWithObjectValues(ruleDBO,ses);
-    if ruleDBO.Field('ipversion').AsString='IPV6' then begin
-      res.FillWithObjectValues(ruleDBO,ses,'src_ipv6');
-      res.FillWithObjectValues(ruleDBO,ses,'dst_ipv6');
+    res.FillWithObjectValues(dbo,ses);
+    if dbo.Field('ipversion').AsString='IPV6' then begin
+      res.FillWithObjectValues(dbo,ses,'src_ipv6');
+      res.FillWithObjectValues(dbo,ses,'dst_ipv6');
+      res.FillWithObjectValues(dbo,ses,'to_ipv6');
+      res.FillWithObjectValues(dbo,ses,'dup_to_ipv6');
+      res.FillWithObjectValues(dbo,ses,'reply_to_ipv6');
+      res.FillWithObjectValues(dbo,ses,'pool_ipv6');
     end else begin
-      res.FillWithObjectValues(ruleDBO,ses,'src_ipv4');
-      res.FillWithObjectValues(ruleDBO,ses,'dst_ipv4');
+      res.FillWithObjectValues(dbo,ses,'src_ipv4');
+      res.FillWithObjectValues(dbo,ses,'dst_ipv4');
+      res.FillWithObjectValues(dbo,ses,'to_ipv4');
+      res.FillWithObjectValues(dbo,ses,'dup_to_ipv4');
+      res.FillWithObjectValues(dbo,ses,'reply_to_ipv4');
+      res.FillWithObjectValues(dbo,ses,'pool_ipv4');
     end;
   end;
-
   Result:=res;
 end;
 
@@ -369,7 +489,6 @@ var
   sf          : TFRE_DB_SERVER_FUNC_DESC;
   diagCap     : TFRE_DB_String;
   dbo         : IFRE_DB_Object;
-  natDBO      : IFRE_DB_Object;
   service     : IFRE_DB_Object;
   dc          : IFRE_DB_DERIVED_COLLECTION;
   group       : TFRE_DB_INPUT_GROUP_DESC;
@@ -397,7 +516,7 @@ begin
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('firewallId',service.UID_String);
-    baseAddIPSf.AddParam.Describe('firewallId',service.UID_String);
+    baseAddIPSf.AddParam.Describe('parentId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'nat_create_diag_cap');
   end;
   baseAddIPSf.AddParam.Describe('sourceDiag','nat');
@@ -503,16 +622,15 @@ begin
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   if isModify then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),natDBO));
-    res.FillWithObjectValues(natDBO,ses);
-    if natDBO.Field('ipversion').AsString='IPV6' then begin
-      res.FillWithObjectValues(natDBO,ses,'src_ipv6');
-      res.FillWithObjectValues(natDBO,ses,'dst_ipv6');
-      res.FillWithObjectValues(natDBO,ses,'src_to_ipv6');
+    res.FillWithObjectValues(dbo,ses);
+    if dbo.Field('ipversion').AsString='IPV6' then begin
+      res.FillWithObjectValues(dbo,ses,'src_ipv6');
+      res.FillWithObjectValues(dbo,ses,'dst_ipv6');
+      res.FillWithObjectValues(dbo,ses,'src_to_ipv6');
     end else begin
-      res.FillWithObjectValues(natDBO,ses,'src_ipv4');
-      res.FillWithObjectValues(natDBO,ses,'dst_ipv4');
-      res.FillWithObjectValues(natDBO,ses,'src_to_ipv4');
+      res.FillWithObjectValues(dbo,ses,'src_ipv4');
+      res.FillWithObjectValues(dbo,ses,'dst_ipv4');
+      res.FillWithObjectValues(dbo,ses,'src_to_ipv4');
     end;
   end;
 
@@ -556,11 +674,23 @@ begin
     CreateModuleText(conn,'pool_delete_error_used_diag_cap','Delete Firewall Pool');
     CreateModuleText(conn,'pool_delete_error_used_diag_msg','Firewall Pool cannot be deleted because it is used in at least on Firewall Rule.');
 
+    CreateModuleText(conn,'pool_entry_create_diag_cap','Add Firewall Pool Entry');
+    CreateModuleText(conn,'pool_entry_modify_diag_cap','Modify Firewall Pool Entry');
+    CreateModuleText(conn,'pool_entry_delete_diag_cap','Delete Firewall Pool Entry');
+    CreateModuleText(conn,'pool_entry_delete_diag_msg','Delete Firewall Pool Entry %pool_entry_str%?');
+
+    CreateModuleText(conn,'pool_entry_diag_main_group','General Information');
+    CreateModuleText(conn,'pool_entry_diag_ip_block','IP');
+    CreateModuleText(conn,'pool_entry_diag_new_ip_button','New IP');
+
     CreateModuleText(conn,'tb_create_pool','Add');
-    CreateModuleText(conn,'tb_modify_pool','Modify');
-    CreateModuleText(conn,'tb_delete_pool','Delete');
-    CreateModuleText(conn,'cm_modify_pool','Modify');
-    CreateModuleText(conn,'cm_delete_pool','Delete');
+    CreateModuleText(conn,'tb_add_pool_entry','Add Entry');
+    CreateModuleText(conn,'cm_add_pool_entry','Add Entry');
+
+    CreateModuleText(conn,'tb_modify_pool_obj','Modify');
+    CreateModuleText(conn,'tb_delete_pool_obj','Delete');
+    CreateModuleText(conn,'cm_modify_pool_obj','Modify');
+    CreateModuleText(conn,'cm_delete_pool_obj','Delete');
 
     CreateModuleText(conn,'rule_create_diag_cap','Add Firewall Rule');
     CreateModuleText(conn,'rule_modify_diag_cap','Modify Firewall Rule');
@@ -659,9 +789,11 @@ begin
     CreateModuleText(conn,'rule_diag_options_to_block','To');
     CreateModuleText(conn,'rule_diag_options_dup_to_block','Dub to');
     CreateModuleText(conn,'rule_diag_options_reply_to_block','Reply to');
+    CreateModuleText(conn,'rule_diag_pool_block','Pool');
 
     CreateModuleText(conn,'pools_grid_number','Number');
     CreateModuleText(conn,'pools_grid_mapping','Mapping');
+    CreateModuleText(conn,'pools_grid_ipversion','IP Version');
 
     CreateModuleText(conn,'pools_grid_descr_delimiter',' - ');
     CreateModuleText(conn,'pools_grid_descr_type','Type: %type_str%');
@@ -669,6 +801,9 @@ begin
     CreateModuleText(conn,'pools_grid_descr_default_group','Default Group: %default_group_str%');
     CreateModuleText(conn,'pools_grid_descr_hash_size','Hash Size: %hash_size_str%');
     CreateModuleText(conn,'pools_grid_descr_hash_seed','Hash Seed: %hash_seed_str%');
+
+    CreateModuleText(conn,'pools_grid_entry_caption_not_extension',' (exclude)');
+    CreateModuleText(conn,'pools_grid_entry_caption_group_extension',' (%group_str%)');
   end;
 end;
 
@@ -793,6 +928,17 @@ var
   var
     delimiter: String;
   begin
+    if transformed_object.Field('number').AsString<>'' then begin
+      transformed_object.Field('caption').AsString:=transformed_object.Field('number').AsString;
+    end else begin
+      transformed_object.Field('caption').AsString:=transformed_object.Field('ip').AsString;
+      if transformed_object.Field('ip_not').AsString='1' then begin
+        transformed_object.Field('caption').AsString:=transformed_object.Field('caption').AsString + langres[6];
+      end;
+      if transformed_object.Field('group').AsString<>'' then begin
+        transformed_object.Field('caption').AsString:=transformed_object.Field('caption').AsString + StringReplace(langres[7],'%group_str%',transformed_object.Field('group').AsString,[rfReplaceAll]);
+      end;
+    end;
     //DESCR
     if input.Field('mapping').AsString='TABLE' then begin
       if transformed_object.Field('descr').AsString<>'' then begin
@@ -860,6 +1006,22 @@ begin
       SetDefaultOrderField('label',true);
     end;
 
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('number','label');
+      AddOneToOnescheme('ipversion');
+      AddOneToOnescheme('firewall_id');
+      AddOneToOnescheme('domainid');
+    end;
+
+    dc := session.NewDerivedCollection('FIREWALL_POOL_IPV6_CHOOSER_DC');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_POOL_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+
+      SetDefaultOrderField('label',true);
+    end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
@@ -981,9 +1143,15 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('number','',FetchModuleTextShort(session,'pools_grid_number'));
-      AddOneToOnescheme('desc.txt','descr','',dt_description);
+      AddOneToOnescheme('caption','',FetchModuleTextShort(session,'pools_grid_number'));
       AddOneToOnescheme('mapping','',FetchModuleTextShort(session,'pools_grid_mapping'));
+      AddOneToOnescheme('ipversion','',FetchModuleTextShort(session,'pools_grid_ipversion'));
+
+      AddOneToOnescheme('number','','',dt_string,false);
+      AddMatchingReferencedField(['IP>TFRE_DB_IP'],'ip','ip','',false);
+      AddOneToOnescheme('group','','',dt_string,false);
+      AddOneToOnescheme('ip_not','','',dt_string,false);
+      AddOneToOnescheme('desc.txt','descr','',dt_description);
 
       AddOneToOnescheme('type','','',dt_string,false);
       AddOneToOnescheme('direction','','',dt_string,false);
@@ -992,15 +1160,17 @@ begin
       AddOneToOnescheme('hash_seed','','',dt_string,false);
       AddMatchingReferencedFieldArray(['FIREWALL_ID>TFRE_DB_FIREWALL_SERVICE'],'uid','fw_uid','',false);
       SetSimpleFuncTransformNested(@_setPoolColumns,[FetchModuleTextShort(session,'pools_grid_descr_delimiter'),FetchModuleTextShort(session,'pools_grid_descr_type'),FetchModuleTextShort(session,'pools_grid_descr_direction'),
-                                                    FetchModuleTextShort(session,'pools_grid_descr_default_group'),FetchModuleTextShort(session,'pools_grid_descr_hash_size'),FetchModuleTextShort(session,'pools_grid_descr_hash_seed')]);
+                                                     FetchModuleTextShort(session,'pools_grid_descr_default_group'),FetchModuleTextShort(session,'pools_grid_descr_hash_size'),FetchModuleTextShort(session,'pools_grid_descr_hash_seed'),
+                                                     FetchModuleTextShort(session,'pools_grid_entry_caption_not_extension'),FetchModuleTextShort(session,'pools_grid_entry_caption_group_extension')]);
       //AddFulltextFilterOnTransformed(['number']);
     end;
 
     dc := session.NewDerivedCollection('FIREWALL_POOLS_GRID');
     with dc do begin
       SetDeriveParent(conn.GetCollection(CFRE_DB_FIREWALL_POOL_COLLECTION));
+      SetParentToChildLinkField('<FIREWALLPOOL_ID');
       SetDeriveTransformation(transform);
-      SetDisplayType(cdt_Listview,[],'',CWSF(@WEB_PoolsMenu),nil,CWSF(@WEB_PoolsSC));
+      SetDisplayType(cdt_Listview,[cdgf_Children],'',CWSF(@WEB_PoolsMenu),nil,CWSF(@WEB_PoolsSC));
       SetUseDependencyAsUidFilter('fw_uid');
       servicesGrid.AddSelectionDependencyEvent(CollectionName);
       SetDefaultOrderField('number',true);
@@ -1083,13 +1253,16 @@ begin
     end;
     res.AddButton.DescribeManualType('add_pool',CWSF(@WEB_AddPool),'',FetchModuleTextShort(ses,'tb_create_pool'),FetchModuleTextHint(ses,'tb_create_pool'),addDisabled);
   end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_FIREWALL_POOLENTRY_GROUP) or conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_FIREWALL_POOLENTRY_TABLE) then begin
+    res.AddButton.DescribeManualType('add_pool_entry',CWSF(@WEB_AddPoolEntry),'',FetchModuleTextShort(ses,'tb_add_pool_entry'),FetchModuleTextHint(ses,'tb_add_pool_entry'),true);
+  end;
   if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_FIREWALL_POOL) then begin
-    res.AddButton.DescribeManualType('modify_pool',CWSF(@WEB_ModifyPool),'',FetchModuleTextShort(ses,'tb_modify_pool'),FetchModuleTextHint(ses,'tb_modify_pool'),true);
+    res.AddButton.DescribeManualType('modify_pool',CWSF(@WEB_ModifyPoolObj),'',FetchModuleTextShort(ses,'tb_modify_pool_obj'),FetchModuleTextHint(ses,'tb_modify_pool_obj'),true);
   end;
   if (conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_FIREWALL_POOL) and
       conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_GROUP) and
       conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_TABLE)) then begin
-    res.AddButton.DescribeManualType('delete_pool',CWSF(@WEB_DeletePool),'',FetchModuleTextShort(ses,'tb_delete_pool'),FetchModuleTextHint(ses,'tb_delete_pool'),true);
+    res.AddButton.DescribeManualType('delete_pool',CWSF(@WEB_DeletePoolObj),'',FetchModuleTextShort(ses,'tb_delete_pool_obj'),FetchModuleTextHint(ses,'tb_delete_pool_obj'),true);
   end;
   Result:=res;
 end;
@@ -1248,12 +1421,19 @@ end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_AddPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
-  Result:=_AddModifyPool(input,ses,app,conn,false);
+  Result:=_AddModifyPool(input,ses,app,conn,nil);
 end;
 
-function TFRE_FIRMBOX_FIREWALL_MOD.WEB_ModifyPool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_FIREWALL_MOD.WEB_ModifyPoolObj(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  dbo: IFRE_DB_Object;
 begin
-  Result:=_AddModifyPool(input,ses,app,conn,true);
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
+  if dbo.Implementor_HC is TFRE_DB_FIREWALL_POOL then begin
+    Result:=_AddModifyPool(input,ses,app,conn,dbo);
+  end else begin
+    Result:=_AddModifyPoolEntry(input,ses,app,conn,dbo);
+  end;
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_StorePool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -1293,32 +1473,44 @@ begin
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
-function TFRE_FIRMBOX_FIREWALL_MOD.WEB_DeletePool(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+function TFRE_FIRMBOX_FIREWALL_MOD.WEB_DeletePoolObj(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   sf        : TFRE_DB_SERVER_FUNC_DESC;
   cap,msg   : String;
-  pool      : IFRE_DB_Object;
+  poolObj   : IFRE_DB_Object;
 begin
   if input.Field('selected').ValueCount<>1 then raise EFRE_DB_Exception.Create(FetchModuleTextShort(ses,'error_delete_single_select'));
 
-  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),pool));
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),poolObj));
 
-  if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOL,pool.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,pool.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,pool.DomainID)) then
-    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+  if (poolObj.Implementor_HC is TFRE_DB_FIREWALL_POOL) then begin
+    if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOL,poolObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,poolObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,poolObj.DomainID)) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
-  if (conn.GetReferencesCount(pool.UID,false,'','pool_in') + conn.GetReferencesCount(pool.UID,false,'','pool_out'))>0 then begin
-    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'pool_delete_error_used_diag_cap'),FetchModuleTextShort(ses,'pool_delete_error_used_diag_msg'),fdbmt_error);
-    exit;
+    if (conn.GetReferencesCount(poolObj.UID,false,'','pool_in') + conn.GetReferencesCount(poolObj.UID,false,'','pool_out'))>0 then begin
+      Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'pool_delete_error_used_diag_cap'),FetchModuleTextShort(ses,'pool_delete_error_used_diag_msg'),fdbmt_error);
+      exit;
+    end;
+
+    sf:=CWSF(@WEB_DeletePoolConfirmed);
+    sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+    cap:=FetchModuleTextShort(ses,'pool_delete_diag_cap');
+
+    msg:=StringReplace(FetchModuleTextShort(ses,'pool_delete_diag_msg'),'%pool_str%',_getPoolName(poolObj),[rfReplaceAll]);
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
+  end else begin  //TFRE_DB_FIREWALL_POOLENTRY
+    if not conn.sys.CheckClassRight4DomainId(sr_DELETE,poolObj.Implementor_HC.ClassType,poolObj.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    sf:=CWSF(@WEB_DeletePoolEntryConfirmed);
+    sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+    cap:=FetchModuleTextShort(ses,'pool_entry_delete_diag_cap');
+
+    msg:=StringReplace(FetchModuleTextShort(ses,'pool_entry_delete_diag_msg'),'%pool_entry_str%',_getPoolEntryName(poolObj),[rfReplaceAll]);
+    Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
   end;
-
-  sf:=CWSF(@WEB_DeletePoolConfirmed);
-  sf.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-  cap:=FetchModuleTextShort(ses,'pool_delete_diag_cap');
-
-  msg:=StringReplace(FetchModuleTextShort(ses,'pool_delete_diag_msg'),'%pool_str%',_getPoolName(pool),[rfReplaceAll]);
-  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(cap,msg,fdbmt_confirm,sf);
 end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_DeletePoolConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -1349,35 +1541,124 @@ begin
   end;
 end;
 
+function TFRE_FIRMBOX_FIREWALL_MOD.WEB_AddPoolEntry(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  Result:=_AddModifyPoolEntry(input,ses,app,conn,nil);
+end;
+
+function TFRE_FIRMBOX_FIREWALL_MOD.WEB_StorePoolEntry(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme   : IFRE_DB_SchemeObject;
+  entryObj : TFRE_DB_FIREWALL_POOLENTRY;
+  poolObj  : TFRE_DB_FIREWALL_POOL;
+  isNew    : Boolean;
+begin
+
+  if input.FieldExists('entryId') then begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('entryId').AsString),TFRE_DB_FIREWALL_POOLENTRY,entryObj));
+    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,entryObj.Implementor_HC.ClassType,entryObj.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    GetSystemScheme(entryObj.Implementor_HC.ClassType,scheme);
+
+    isNew:=false;
+  end else begin
+    CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('poolId').AsString),TFRE_DB_FIREWALL_POOL,poolObj));
+    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOL,poolObj.DomainID) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    if poolObj.Field('mapping').AsString='TABLE' then begin
+      entryObj:=TFRE_DB_FIREWALL_POOLENTRY_TABLE.CreateForDB;
+      GetSystemScheme(TFRE_DB_FIREWALL_POOLENTRY_TABLE,scheme);
+    end else begin
+      entryObj:=TFRE_DB_FIREWALL_POOLENTRY_GROUP.CreateForDB;
+      GetSystemScheme(TFRE_DB_FIREWALL_POOLENTRY_GROUP,scheme);
+    end;
+    entryObj.SetDomainID(poolObj.DomainID);
+    entryObj.Field('firewallpool_id').AsObjectLink:=poolObj.UID;
+    isNew:=true;
+  end;
+
+  scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,entryObj,isNew,conn);
+
+  if isNew then begin
+    CheckDbResult(conn.GetCollection(CFRE_DB_FIREWALL_POOLENTRY_COLLECTION).Store(entryObj));
+  end else begin
+    CheckDbResult(conn.Update(entryObj));
+  end;
+
+  Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
+end;
+
+function TFRE_FIRMBOX_FIREWALL_MOD.WEB_DeletePoolEntryConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  i         : NativeInt;
+  poolEntry : IFRE_DB_Object;
+begin
+  if input.field('confirmed').AsBoolean then begin
+    for i:= 0 to input.Field('selected').ValueCount-1 do begin
+      CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[i]),poolEntry));
+
+      if not conn.sys.CheckClassRight4DomainId(sr_DELETE,poolEntry.Implementor_HC.ClassType,poolEntry.DomainID) then
+          raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+      CheckDbResult(conn.Delete(poolEntry.UID));
+    end;
+    result := GFRE_DB_NIL_DESC;
+  end else begin
+    result := GFRE_DB_NIL_DESC;
+  end;
+end;
+
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_PoolsSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  modify_disabled : Boolean;
-  del_disabled    : Boolean;
-  pool            : IFRE_DB_Object;
+  modify_disabled    : Boolean;
+  del_disabled       : Boolean;
+  add_entry_disabled : Boolean;
+  poolObj            : IFRE_DB_Object;
 begin
   CheckClassVisibility4AnyDomain(ses);
 
   modify_disabled:=true;
   del_disabled:=true;
+  add_entry_disabled:=true;
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),pool));
-    if pool.Implementor_HC is TFRE_DB_FIREWALL_POOL then begin
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),poolObj));
+    if poolObj.Implementor_HC is TFRE_DB_FIREWALL_POOL then begin
       //ses.GetSessionModuleData(ClassName).Field('selectedPool').AsStringArr:=input.Field('selected').AsStringArr;
-      if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_POOL,pool.DomainID) then begin
+      if (poolObj.Field('mapping').AsString='TABLE') then begin
+        if conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,poolObj.DomainID) then begin
+          add_entry_disabled:=false;
+        end;
+      end else begin //GROUP-MAP
+        if conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,poolObj.DomainID) then begin
+          add_entry_disabled:=false;
+        end;
+      end;
+      if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_POOL,poolObj.DomainID) then begin
         modify_disabled:=false;
       end;
-      if (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOL,pool.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,pool.DomainID) and
-          conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,pool.DomainID)) then begin
+      if (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOL,poolObj.DomainID) and
+          conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,poolObj.DomainID) and
+          conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,poolObj.DomainID)) then begin
         del_disabled:=false;
       end;
     end else begin
+      if poolObj.Implementor_HC is TFRE_DB_FIREWALL_POOLENTRY then begin
+        if conn.sys.CheckClassRight4DomainId(sr_UPDATE,poolObj.Implementor_HC.ClassType,poolObj.DomainID) then begin
+          modify_disabled:=false;
+        end;
+        if conn.sys.CheckClassRight4DomainId(sr_DELETE,poolObj.Implementor_HC.ClassType,poolObj.DomainID) then begin
+          del_disabled:=false;
+        end;
+      end;
       //ses.GetSessionModuleData(ClassName).DeleteField('selectedPool');
     end;
   end else begin
     //ses.GetSessionModuleData(ClassName).DeleteField('selectedPool');
   end;
 
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('add_pool_entry',add_entry_disabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('modify_pool',modify_disabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('delete_pool',del_disabled));
   Result:=GFRE_DB_NIL_DESC;
@@ -1385,25 +1666,49 @@ end;
 
 function TFRE_FIRMBOX_FIREWALL_MOD.WEB_PoolsMenu(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res   : TFRE_DB_MENU_DESC;
-  func  : TFRE_DB_SERVER_FUNC_DESC;
-  pool  : IFRE_DB_Object;
+  res     : TFRE_DB_MENU_DESC;
+  func    : TFRE_DB_SERVER_FUNC_DESC;
+  poolObj : IFRE_DB_Object;
 begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
-  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),pool));
+  CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),poolObj));
 
-  if pool.Implementor_HC is TFRE_DB_FIREWALL_POOL then begin
-    if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_POOL,pool.DomainID) then begin
-      func:=CWSF(@WEB_ModifyPool);
-      func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_pool'),'',func);
+  if poolObj.Implementor_HC is TFRE_DB_FIREWALL_POOL then begin
+    if (poolObj.Field('mapping').AsString='TABLE') then begin
+      if conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,poolObj.DomainID) then begin
+        func:=CWSF(@WEB_AddPoolEntry);
+        func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+        res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_add_pool_entry'),'',func);
+      end;
+    end else begin //GROUP-MAP
+      if conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,poolObj.DomainID) then begin
+        func:=CWSF(@WEB_AddPoolEntry);
+        func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+        res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_add_pool_entry'),'',func);
+      end;
     end;
-    if (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOL,pool.DomainID) and
-        conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,pool.DomainID) and
-        conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,pool.DomainID)) then begin
-      func:=CWSF(@WEB_DeletePool);
+    if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_POOL,poolObj.DomainID) then begin
+      func:=CWSF(@WEB_ModifyPoolObj);
       func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_pool'),'',func);
+      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_pool_obj'),'',func);
+    end;
+    if (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOL,poolObj.DomainID) and
+        conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_GROUP,poolObj.DomainID) and
+        conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_POOLENTRY_TABLE,poolObj.DomainID)) then begin
+      func:=CWSF(@WEB_DeletePoolObj);
+      func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_pool_obj'),'',func);
+    end;
+  end else begin
+    if conn.sys.CheckClassRight4DomainId(sr_UPDATE,poolObj.Implementor_HC.ClassType,poolObj.DomainID) then begin
+      func:=CWSF(@WEB_ModifyPoolObj);
+      func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_pool_obj'),'',func);
+    end;
+    if conn.sys.CheckClassRight4DomainId(sr_DELETE,poolObj.Implementor_HC.ClassType,poolObj.DomainID) then begin
+      func:=CWSF(@WEB_DeletePoolObj);
+      func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_pool_obj'),'',func);
     end;
   end;
   Result:=res;
@@ -1474,6 +1779,9 @@ begin
   if input.FieldPathExists('data.reply_to_'+postFix) then begin
     input.FieldPath('data.reply_to_'+postFix).AsObject.ForAllFields(@_moveInputFields,true);
   end;
+  if input.FieldPathExists('data.pool_'+postFix) then begin
+    input.FieldPath('data.pool_'+postFix).AsObject.ForAllFields(@_moveInputFields,true);
+  end;
 
   input.Field('data').AsObject.DeleteField('src_ipv4');
   input.Field('data').AsObject.DeleteField('src_ipv6');
@@ -1485,6 +1793,8 @@ begin
   input.Field('data').AsObject.DeleteField('dup_to_ipv6');
   input.Field('data').AsObject.DeleteField('reply_to_ipv4');
   input.Field('data').AsObject.DeleteField('reply_to_ipv6');
+  input.Field('data').AsObject.DeleteField('pool_ipv4');
+  input.Field('data').AsObject.DeleteField('pool_ipv6');
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,ruleObj,isNew,conn);
 
@@ -1773,8 +2083,8 @@ begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
     sf.AddParam.Describe('selected',input.Field('selected').AsString);
   end else begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('firewallId').AsString),dbo));
-    sf.AddParam.Describe('firewallId',input.Field('firewallId').AsString);
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('parentId').AsString),dbo));
+    sf.AddParam.Describe('parentId',input.Field('parentId').AsString);
   end;
   sf.AddParam.Describe('ipversion',input.Field('ipversion').AsString);
   sf.AddParam.Describe('field',input.Field('field').AsString);
@@ -1832,11 +2142,12 @@ var
   ipDbo    : IFRE_DB_ObjectArray;
   IP       : TFRE_DB_IP;
   isIP4    : Boolean;
+  peDbo    : IFRE_DB_Object;
 begin
   if input.FieldExists('selected') then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
   end else begin
-    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('firewallId').AsString),dbo));
+    CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('parentId').AsString),dbo));
   end;
 
   if input.Field('ipversion').AsString='ipv4' then begin
@@ -1923,10 +2234,23 @@ begin
     Result:=res;
   end else begin
     if input.Field('sourceDiag').AsString='rule' then begin
-      ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE ADD NAT
+      ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE ADD RULE
       res:=_AddModifyRule(input,ses,app,conn,input.FieldExists('selected')).Implementor_HC as TFRE_DB_FORM_DIALOG_DESC;
       res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddIP_sourceDiagData').AsObject,ses,'',false);
       Result:=res;
+    end else begin
+      if input.Field('sourceDiag').AsString='pool_entry' then begin
+        ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE ADD POOL ENTRY
+        if input.FieldExists('parentId') then begin
+          input.Field('selected').AsString:=input.Field('parentId').AsString;
+          peDbo:=nil;
+        end else begin
+          CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),peDbo));
+        end;
+        res:=_AddModifyPoolEntry(input,ses,app,conn,peDbo).Implementor_HC as TFRE_DB_FORM_DIALOG_DESC;
+        res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddIP_sourceDiagData').AsObject,ses,'',false);
+        Result:=res;
+      end;
     end;
   end;
   WEB_CleanupAddIP(input,ses,app,conn);
