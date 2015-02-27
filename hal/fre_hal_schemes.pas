@@ -1009,6 +1009,7 @@ type
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
     function        GetFMRI              : TFRE_DB_STRING; override;
+    class function  OnlyOneServicePerZone: boolean; override;
   published
     function IMI_Content                 (const input:IFRE_DB_Object) : IFRE_DB_Object;
     function IMI_Menu                    (const input:IFRE_DB_Object) : IFRE_DB_Object;
@@ -6937,29 +6938,14 @@ end;
 { TFRE_DB_DHCP }
 
 class procedure TFRE_DB_DHCP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-var group : IFRE_DB_InputGroupSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_SERVICE');
-  scheme.AddSchemeField('default_domainname',fdbft_String).required:=true;
-  scheme.AddSchemeField('default_dns',fdbft_String).required:=true;
-  scheme.AddSchemeField('default_leasetime',fdbft_Int16).required:=true;
-  scheme.AddSchemeField('fixed_start',fdbft_String).required:=true;
-  scheme.AddSchemeField('fixed_end',fdbft_String).required:=true;
-
-
-  group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
-  group.UseInputGroup('TFRE_DB_SERVICE','main');
-  group.AddInput('default_domainname',GetTranslateableTextKey('scheme_default_domainname'));
-  group.AddInput('default_dns',GetTranslateableTextKey('scheme_default_domainname'));
-  group.AddInput('default_leasetime',GetTranslateableTextKey('scheme_default_leasetime'));
-  group.AddInput('fixed_start',GetTranslateableTextKey('scheme_fixed_start'));
-  group.AddInput('fixed_end',GetTranslateableTextKey('scheme_fixed_end'));
 end;
 
 class procedure TFRE_DB_DHCP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='1.1';
+  newVersionId:='1.2';
   if currentVersionId='' then begin
     currentVersionId := '1.0';
     StoreTranslateableText(conn,'scheme_main_group','General Information');
@@ -6973,11 +6959,27 @@ begin
     currentVersionId := '1.1';
     StoreTranslateableText(conn,'caption','DHCP');
   end;
+  if currentVersionId='1.1' then begin
+    currentVersionId := '1.2';
+
+    DeleteTranslateableText(conn,'scheme_default_domainname');
+    DeleteTranslateableText(conn,'scheme_default_dns');
+    DeleteTranslateableText(conn,'scheme_default_leasetime');
+    DeleteTranslateableText(conn,'scheme_fixed_start');
+    DeleteTranslateableText(conn,'scheme_fixed_end');
+
+    StoreTranslateableText(conn,'scheme_objname','Name');
+  end;
 end;
 
 function TFRE_DB_DHCP.GetFMRI: TFRE_DB_STRING;
 begin
   result := 'svc:/fos/fos_dhcpd';
+end;
+
+class function TFRE_DB_DHCP.OnlyOneServicePerZone: boolean;
+begin
+  Result:=true;
 end;
 
 function TFRE_DB_DHCP.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;

@@ -29,6 +29,7 @@ uses
   fos_citycom_voip_mod,
   fos_firmbox_vm_machines_mod,
   fos_firmbox_firewall_mod,
+  fos_firmbox_dhcp_mod,
   fos_firmbox_pool_mod;
   //fre_diff_transport;
 
@@ -42,6 +43,7 @@ type
     fVoIPMod                                            : TFOS_CITYCOM_VOIP_SERVICE_MOD;
     fVMMod                                              : TFRE_FIRMBOX_VM_MACHINES_MOD;
     fFirewallMod                                        : TFRE_FIRMBOX_FIREWALL_MOD;
+    fDHCPMod                                            : TFRE_FIRMBOX_DHCP_MOD;
     function        _canAddDC                           (const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canDeleteDC                        (const conn: IFRE_DB_CONNECTION): Boolean;
     function        _canDeleteDC                        (const conn: IFRE_DB_CONNECTION; const dId: TFRE_DB_GUID): Boolean;
@@ -719,6 +721,8 @@ begin
   AddApplicationModule(fVMMod);
   fFirewallMod:=TFRE_FIRMBOX_FIREWALL_MOD.create;
   AddApplicationModule(fFirewallMod);
+  fDHCPMod:=TFRE_FIRMBOX_DHCP_MOD.create;
+  AddApplicationModule(fDHCPMod);
   InitModuleDesc('infrastructure_description');
 end;
 
@@ -1322,7 +1326,10 @@ begin
                              end;
         'TFRE_DB_FIREWALL_SERVICE' : begin
                                        canAddService:=fFirewallMod.canAddFirewall(input,ses,app,conn,zone);
-                                     end
+                                     end;
+        'TFRE_DB_DHCP' : begin
+                           canAddService:=fDHCPMod.canAddDHCP(input,ses,app,conn,zone);
+                         end
         else begin
           canAddService:=conn.SYS.CheckClassRight4DomainId(sr_STORE,serviceClass,zone.DomainID);
         end;
@@ -1498,7 +1505,10 @@ begin
                          end;
     'TFRE_DB_FIREWALL_SERVICE' : begin
                                    Result:=fFirewallMod.WEB_AddFirewall(input,ses,app,conn);
-                                 end
+                                 end;
+    'TFRE_DB_DHCP' : begin
+                       Result:=fDHCPMod.WEB_AddDHCP(input,ses,app,conn);
+                     end
     else begin
       exClass:=GFRE_DBI.GetObjectClassEx(serviceClass);
       conf:=exClass.Invoke_DBIMC_Method('GetConfig',input,ses,app,conn);
