@@ -95,10 +95,13 @@ const
 
   CFRE_DB_VMACHINE_VNIC_CHOOSER_DC     = 'VMACHINE_VNIC_CHOOSER_DC';
   CFRE_DB_VMACHINE_HDD_CHOOSER_DC      = 'VMACHINE_HDD_CHOOSER_DC';
+
   CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC= 'FIREWALL_INTERFACE_CHOOSER_DC';
   CFRE_DB_FIREWALL_IP_CHOOSER_DC       = 'FIREWALL_IP_CHOOSER_DC';
   CFRE_DB_FIREWALL_POOL_CHOOSER_DC     = 'FIREWALL_POOL_CHOOSER_DC';
 
+  CFRE_DB_DHCP_IP_CHOOSER_DC           = 'DHCP_IP_CHOOSER_DC';
+  CFRE_DB_DHCP_SUBNET_CHOOSER_DC       = 'DHCP_SUBNET_CHOOSER_DC';
 type
 
    { TFRE_DB_HALCONFIG }
@@ -6862,25 +6865,20 @@ var
   group : IFRE_DB_InputGroupSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
-  scheme.AddSchemeField('dhcp',fdbft_ObjLink).required:=true;
+  scheme.AddSchemeField('dhcp_id',fdbft_ObjLink).required:=true;
   scheme.GetSchemeField('objname').required:=true;
-  scheme.AddSchemeField('mac',fdbft_String).required:=true;
-  scheme.AddSchemeField('ip',fdbft_String).required:=true;
-  scheme.AddSchemeField('router',fdbft_String).multiValues:=true;
-  scheme.AddSchemeField('dns',fdbft_String).multiValues:=true;
+  scheme.AddSchemeField('mac',fdbft_String).SetupFieldDef(true,false,'','mac');
+  scheme.AddSchemeField('ip',fdbft_ObjLink).required:=true;
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
-  group.AddInput('dhcp','',false,true);
   group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
   group.AddInput('mac',GetTranslateableTextKey('scheme_mac'));
-  group.AddInput('ip',GetTranslateableTextKey('scheme_ip'));
-  group.AddInput('router',GetTranslateableTextKey('scheme_router'));
-  group.AddInput('dns',GetTranslateableTextKey('scheme_dns'));
+  group.AddInput('ip',GetTranslateableTextKey('scheme_ip'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
 end;
 
 class procedure TFRE_DB_DHCP_FIXED.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='1.0';
+  newVersionId:='1.1';
   if currentVersionId='' then begin
     currentVersionId := '1.0';
     StoreTranslateableText(conn,'scheme_main_group','DHCP Fixed');
@@ -6889,6 +6887,14 @@ begin
     StoreTranslateableText(conn,'scheme_ip','Ip');
     StoreTranslateableText(conn,'scheme_router','Router');
     StoreTranslateableText(conn,'scheme_dns','DNS');
+  end;
+  if currentVersionId='1.0' then begin
+    currentVersionId := '1.1';
+    DeleteTranslateableText(conn,'scheme_router');
+    DeleteTranslateableText(conn,'scheme_dns');
+
+    DeleteTranslateableText(conn,'scheme_main_group');
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
   end;
 end;
 
@@ -6899,25 +6905,22 @@ var
   group : IFRE_DB_InputGroupSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
-  scheme.AddSchemeField('dhcp',fdbft_ObjLink).required:=true;
-  scheme.AddSchemeField('subnet',fdbft_String).required:=true;
-  scheme.AddSchemeField('range_start',fdbft_String).required:=true;
-  scheme.AddSchemeField('range_end',fdbft_String).required:=true;
-  scheme.AddSchemeField('router',fdbft_String).multiValues:=true;
-  scheme.AddSchemeField('dns',fdbft_String).multiValues:=true;
+  scheme.AddSchemeField('dhcp_id',fdbft_ObjLink).required:=true;
+  scheme.GetSchemeField('objname').required:=true;
+  scheme.AddSchemeField('subnet',fdbft_ObjLink).required:=true;
+  scheme.AddSchemeField('range_start',fdbft_Int64).required:=true;
+  scheme.AddSchemeField('range_end',fdbft_Int64).required:=true;
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
-  group.AddInput('dhcp','',false,true);
-  group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+  group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'),false,false,'',CFRE_DB_DHCP_SUBNET_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
   group.AddInput('range_start',GetTranslateableTextKey('scheme_range_start'));
   group.AddInput('range_end',GetTranslateableTextKey('scheme_range_end'));
-  group.AddInput('router',GetTranslateableTextKey('scheme_router'));
-  group.AddInput('dns',GetTranslateableTextKey('scheme_dns'));
 end;
 
 class procedure TFRE_DB_DHCP_SUBNET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='1.0';
+  newVersionId:='1.1';
   if currentVersionId='' then begin
     currentVersionId := '1.0';
     StoreTranslateableText(conn,'scheme_main_group','DHCP Subnet');
@@ -6926,6 +6929,15 @@ begin
     StoreTranslateableText(conn,'scheme_range_end','Range End');
     StoreTranslateableText(conn,'scheme_router','Router');
     StoreTranslateableText(conn,'scheme_dns','DNS');
+  end;
+  if currentVersionId='1.0' then begin
+    currentVersionId := '1.1';
+    DeleteTranslateableText(conn,'scheme_router');
+    DeleteTranslateableText(conn,'scheme_dns');
+
+    DeleteTranslateableText(conn,'scheme_main_group');
+    StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_objname','Name');
   end;
 end;
 
@@ -10802,6 +10814,12 @@ procedure InitDerivedCollections(const session: TFRE_DB_UserSession; const conn:
 var
   transform: IFRE_DB_SIMPLE_TRANSFORM;
   dc       : IFRE_DB_DERIVED_COLLECTION;
+
+   procedure _setSubnetLabel(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+   begin
+     transformed_object.Field('label').AsString:=transformed_object.Field('ip').AsString + '/' + transformed_object.Field('subnet_bits').AsString;
+   end;
+
 begin
    //VM
   if not session.HasDerivedCollection(CFRE_DB_VMACHINE_VNIC_CHOOSER_DC) then begin
@@ -10888,6 +10906,45 @@ begin
      SetDefaultOrderField('label',true);
    end;
  end;
+
+   //DHCP
+  if not session.HasDerivedCollection(CFRE_DB_DHCP_IP_CHOOSER_DC) then begin
+   GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+   with transform do begin
+     AddOneToOnescheme('ip','label');
+     AddOneToOnescheme('domainid');
+   end;
+
+   dc := session.NewDerivedCollection(CFRE_DB_DHCP_IP_CHOOSER_DC);
+   with dc do begin
+     SetDeriveParent(conn.GetCollection(CFRE_DB_IP_COLLECTION));
+     SetDeriveTransformation(transform);
+     SetDisplayType(cdt_Chooser,[],'');
+
+     SetDefaultOrderField('label',true);
+   end;
+  end;
+
+  if not session.HasDerivedCollection(CFRE_DB_DHCP_SUBNET_CHOOSER_DC) then begin
+   GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+   with transform do begin
+     AddOneToOnescheme('label','');
+     AddOneToOnescheme('subnet_bits');
+     AddMatchingReferencedField(['BASE_IP>TFRE_DB_IP'],'ip','ip');
+     AddOneToOnescheme('domainid');
+     SetSimpleFuncTransformNested(@_setSubnetLabel,[]);
+   end;
+
+   dc := session.NewDerivedCollection(CFRE_DB_DHCP_SUBNET_CHOOSER_DC);
+   with dc do begin
+     SetDeriveParent(conn.GetCollection(CFRE_DB_SUBNET_COLLECTION));
+     SetDeriveTransformation(transform);
+     SetDisplayType(cdt_Chooser,[],'');
+
+     SetDefaultOrderField('label',true);
+   end;
+  end;
+
 end;
 
 
