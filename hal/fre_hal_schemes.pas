@@ -84,11 +84,14 @@ const
   CFRE_DB_ROUTING_COLLECTION           = 'routing';
   CFRE_DB_VM_COMPONENTS_COLLECTION     = 'vmcomponents';
   CFRE_DB_IMAGEFILE_COLLECTION         = 'imagefiles';
+  //firewall
   CFRE_DB_FIREWALL_RULE_COLLECTION     = 'fwrule';
   CFRE_DB_FIREWALL_POOL_COLLECTION     = 'fwpool';
   CFRE_DB_FIREWALL_POOLENTRY_COLLECTION= 'fwpoolentry';
   CFRE_DB_FIREWALL_NAT_COLLECTION      = 'fwnat';
-
+  //dhcp
+  CFRE_DB_DHCP_TEMPLATE_COLLECTION     = 'dhcptemplate';
+  CFRE_DB_DHCP_ENTRY_COLLECTION        = 'dhcpentry';
 
   CFRE_DB_VMACHINE_VNIC_CHOOSER_DC     = 'VMACHINE_VNIC_CHOOSER_DC';
   CFRE_DB_VMACHINE_HDD_CHOOSER_DC      = 'VMACHINE_HDD_CHOOSER_DC';
@@ -1020,26 +1023,28 @@ type
     function RIF_CreateOrUpdateService   (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
-  { TFRE_DB_DHCP_Subnet }
+  { TFRE_DB_DHCP_TEMPLATE }
 
-  TFRE_DB_DHCP_Subnet = class(TFRE_DB_ObjectEx)
+  TFRE_DB_DHCP_TEMPLATE = class(TFRE_DB_ObjectEx)
   public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  published
-    function IMI_Content                 (const input:IFRE_DB_Object) : IFRE_DB_Object;
-    function IMI_Menu                    (const input:IFRE_DB_Object) : IFRE_DB_Object;
   end;
 
-  { TFRE_DB_DHCP_Fixed }
+  { TFRE_DB_DHCP_SUBNET }
 
-  TFRE_DB_DHCP_Fixed = class(TFRE_DB_ObjectEx)
+  TFRE_DB_DHCP_SUBNET = class(TFRE_DB_ObjectEx)
   public
     class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-  published
-    function IMI_Content                 (const input:IFRE_DB_Object) : IFRE_DB_Object;
-    function IMI_Menu                    (const input:IFRE_DB_Object) : IFRE_DB_Object;
+  end;
+
+  { TFRE_DB_DHCP_FIXED }
+
+  TFRE_DB_DHCP_FIXED = class(TFRE_DB_ObjectEx)
+  public
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
 
   { TFRE_DB_VPN }
@@ -1559,6 +1564,32 @@ implementation
 
    result   := gresult;
   end;
+
+{ TFRE_DB_DHCP_TEMPLATE }
+
+class procedure TFRE_DB_DHCP_TEMPLATE.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group : IFRE_DB_InputGroupSchemeDefinition;
+begin
+ scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
+ inherited RegisterSystemScheme(scheme);
+
+ scheme.AddSchemeField('dhcp_id',fdbft_ObjLink).Required:=true;
+
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+end;
+
+class procedure TFRE_DB_DHCP_TEMPLATE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+ newVersionId:='0.1';
+ if currentVersionId='' then begin
+   currentVersionId := '0.1';
+
+   StoreTranslateableText(conn,'scheme_main_group','General Information');
+   StoreTranslateableText(conn,'scheme_objname','Name');
+ end;
+end;
 
 { TFRE_DB_IPV6_SLAAC }
 
@@ -6824,10 +6855,11 @@ begin
   {$ENDIF}
 end;
 
-{ TFRE_DB_DHCP_Fixed }
+{ TFRE_DB_DHCP_FIXED }
 
-class procedure TFRE_DB_DHCP_Fixed.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-var group : IFRE_DB_InputGroupSchemeDefinition;
+class procedure TFRE_DB_DHCP_FIXED.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  group : IFRE_DB_InputGroupSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.AddSchemeField('dhcp',fdbft_ObjLink).required:=true;
@@ -6846,7 +6878,7 @@ begin
   group.AddInput('dns',GetTranslateableTextKey('scheme_dns'));
 end;
 
-class procedure TFRE_DB_DHCP_Fixed.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+class procedure TFRE_DB_DHCP_FIXED.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
   if currentVersionId='' then begin
@@ -6860,29 +6892,11 @@ begin
   end;
 end;
 
-function TFRE_DB_DHCP_Fixed.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
+{ TFRE_DB_DHCP_SUBNET }
+
+class procedure TFRE_DB_DHCP_SUBNET.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 var
-  res   : TFRE_DB_FORM_PANEL_DESC;
-begin
-  res:=TFRE_DB_FORM_PANEL_DESC.Create.Describe('Fixed Host');
-  res.AddSchemeFormGroup(getscheme.GetInputGroup('main'),GetSession(input));
-  res.FillWithObjectValues(Self,GetSession(input));
-  res.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(Self,'saveOperation'),fdbbt_submit);
-  Result:=res;
-end;
-
-function TFRE_DB_DHCP_Fixed.IMI_Menu(const input: IFRE_DB_Object): IFRE_DB_Object;
-var  res: TFRE_DB_MENU_DESC;
-begin
-  res:=TFRE_DB_MENU_DESC.create.Describe();
-  res.AddEntry.Describe('Delete','images_apps/cloudcontrol/delete_fixed_dhcp.png',TFRE_DB_SERVER_FUNC_DESC.Create.Describe(self,'deleteOperation'));
-  Result:=res;
-end;
-
-{ TFRE_DB_DHCP_Subnet }
-
-class procedure TFRE_DB_DHCP_Subnet.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
-var group : IFRE_DB_InputGroupSchemeDefinition;
+  group : IFRE_DB_InputGroupSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.AddSchemeField('dhcp',fdbft_ObjLink).required:=true;
@@ -6901,7 +6915,7 @@ begin
   group.AddInput('dns',GetTranslateableTextKey('scheme_dns'));
 end;
 
-class procedure TFRE_DB_DHCP_Subnet.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+class procedure TFRE_DB_DHCP_SUBNET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
   newVersionId:='1.0';
   if currentVersionId='' then begin
@@ -6913,26 +6927,6 @@ begin
     StoreTranslateableText(conn,'scheme_router','Router');
     StoreTranslateableText(conn,'scheme_dns','DNS');
   end;
-end;
-
-function TFRE_DB_DHCP_Subnet.IMI_Content(const input: IFRE_DB_Object): IFRE_DB_Object;
-var
-  res   : TFRE_DB_FORM_PANEL_DESC;
-begin
-  res:=TFRE_DB_FORM_PANEL_DESC.Create.Describe('Subnet');
-  res.AddSchemeFormGroup(getscheme.GetInputGroup('main'),GetSession(input));
-  res.FillWithObjectValues(Self,GetSession(input));
-  res.AddButton.Describe('Save',TFRE_DB_SERVER_FUNC_DESC.create.Describe(Self,'saveOperation'),fdbbt_submit);
-  Result:=res;
-end;
-
-function TFRE_DB_DHCP_Subnet.IMI_Menu(const input: IFRE_DB_Object): IFRE_DB_Object;
-var
-  res: TFRE_DB_MENU_DESC;
-begin
-  res:=TFRE_DB_MENU_DESC.create.Describe();
-  res.AddEntry.Describe('Delete','images_apps/cloudcontrol/delete_subnet.png',TFRE_DB_SERVER_FUNC_DESC.Create.Describe(self,'deleteOperation'));
-  Result:=res;
 end;
 
 { TFRE_DB_DHCP }
@@ -10647,8 +10641,9 @@ begin
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_CA);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_CERTIFICATE);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP);
-   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_Subnet);
-   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_Fixed);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_TEMPLATE);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_SUBNET);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_FIXED);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_VPN);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_RADIUS);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_Routing);
@@ -10794,6 +10789,13 @@ begin
     collection  := conn.CreateCollection(CFRE_DB_FIREWALL_NAT_COLLECTION);
   end;
 
+  if not conn.CollectionExists(CFRE_DB_DHCP_TEMPLATE_COLLECTION) then begin
+    collection  := conn.CreateCollection(CFRE_DB_DHCP_TEMPLATE_COLLECTION);
+  end;
+
+  if not conn.CollectionExists(CFRE_DB_DHCP_ENTRY_COLLECTION) then begin
+    collection  := conn.CreateCollection(CFRE_DB_DHCP_ENTRY_COLLECTION);
+  end;
 end;
 
 procedure InitDerivedCollections(const session: TFRE_DB_UserSession; const conn:IFRE_DB_CONNECTION);

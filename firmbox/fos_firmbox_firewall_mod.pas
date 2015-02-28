@@ -2028,15 +2028,12 @@ begin
   del_disabled:=true;
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),nat));
-    //ses.GetSessionModuleData(ClassName).Field('selectedNAT').AsStringArr:=input.Field('selected').AsStringArr;
     if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_FIREWALL_NAT,nat.DomainID) then begin
       modify_disabled:=false;
     end;
     if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_FIREWALL_NAT,nat.DomainID) then begin
       del_disabled:=false;
     end;
-  end else begin
-    //ses.GetSessionModuleData(ClassName).DeleteField('selectedNAT');
   end;
 
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('modify_nat',modify_disabled));
