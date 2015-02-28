@@ -36,6 +36,7 @@ type
 
     function        WEB_AddDHCP                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_CreateDHCP              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreDHCP               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ServiceSC               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
     function        WEB_AddTemplate             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -231,6 +232,7 @@ begin
     CreateModuleText(conn,'templates_tab','Templates');
 
     CreateModuleText(conn,'error_delete_single_select','Exactly one object has to be selected for deletion.');
+    CreateModuleText(conn,'dhcp_details_select_one','Please select a dhcp service to get detailed information');
 
     CreateModuleText(conn,'service_grid_objname','Name');
     CreateModuleText(conn,'service_grid_zone','Zone');
@@ -430,8 +432,36 @@ begin
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_ContentGeneral(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme      : IFRE_DB_SchemeObject;
+  res         : TFRE_DB_FORM_PANEL_DESC;
+  sf          : TFRE_DB_SERVER_FUNC_DESC;
+  service     : IFRE_DB_Object;
+  editable    : Boolean;
 begin
-  Result:=TFRE_DB_HTML_DESC.create.Describe('GENERAL');
+  CheckClassVisibility4AnyDomain(ses);
+
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedDHCP') and (ses.GetSessionModuleData(ClassName).Field('selectedDHCP').ValueCount=1) then begin
+
+    CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
+
+    editable:=conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID);
+
+    GetSystemScheme(TFRE_DB_DHCP,scheme);
+    res:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',false,editable);
+    res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+    res.FillWithObjectValues(service,ses);
+
+    if editable then begin
+      sf:=CWSF(@WEB_StoreDHCP);
+      sf.AddParam.Describe('serviceId',service.UID_String);
+      res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+    end;
+    Result:=res;
+  end else begin
+    Result:=TFRE_DB_HTML_DESC.create.Describe(FetchModuleTextShort(ses,'dhcp_details_select_one'));
+  end;
+  (Result.Implementor_HC as TFRE_DB_CONTENT_DESC).contentId:='DHCP_GENERAL';
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_ContentTemplates(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -565,6 +595,24 @@ begin
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
+function TFRE_FIRMBOX_DHCP_MOD.WEB_StoreDHCP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  scheme      : IFRE_DB_SchemeObject;
+  service     : TFRE_DB_DHCP;
+
+begin
+  GetSystemScheme(TFRE_DB_DHCP,scheme);
+
+  CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('serviceId').AsString),TFRE_DB_DHCP,service));
+  if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,service,false,conn);
+  CheckDbResult(conn.Update(service));
+
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
 function TFRE_FIRMBOX_DHCP_MOD.WEB_ServiceSC(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
   addTemplateDisabled: Boolean;
@@ -590,10 +638,16 @@ begin
   end else begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedDHCP');
   end;
+
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_template',addTemplateDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_subnet_entry',addSubnetDisabled));
   ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_fixed_entry',addFixedDisabled));
-  Result:=GFRE_DB_NIL_DESC;
+
+  if ses.isUpdatableContentVisible('DHCP_GENERAL') then begin
+    Result:=WEB_ContentGeneral(input,ses,app,conn);
+  end else begin
+    Result:=GFRE_DB_NIL_DESC;
+  end;
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_AddTemplate(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
