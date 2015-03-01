@@ -3053,6 +3053,7 @@ end;
     function    InvokeRemoteRequestMachineMac (const machine_mac : TFRE_DB_NameType ; const rclassname, rmethodname: TFRE_DB_NameType; const input: IFRE_DB_Object ; const SyncCallback: TFRE_DB_RemoteCB; const opaquedata: IFRE_DB_Object): TFRE_DB_Errortype;
 
     function    InvokeRemoteInterface         (const machineid   : TFRE_DB_GUID ; const RIFMethod:TFRE_DB_RIF_Method; const CompletionCallback: TFRE_DB_RemoteCB ; const opaquedata: IFRE_DB_Object=nil) : TFRE_DB_Errortype;
+    function    InternalSessInvokeMethod      (const class_name,method_name:string;const uid_path:TFRE_DB_GUIDArray;var input:IFRE_DB_Object):IFRE_DB_Object;
 
     function    RegisterTaskMethod           (const TaskMethod:IFRE_DB_WebTimerMethod ; const invocation_interval : integer ; const id  :TFRE_APSC_ID='TIMER') : boolean;
     function    RemoveTaskMethod             (const id:string='TIMER'):boolean;

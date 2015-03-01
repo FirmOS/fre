@@ -41,6 +41,7 @@ program fpmake_packages;
         AddUnit('fos_firmbox_net_routing_mod.pas');
         AddUnit('fos_firmbox_groupware_mod.pas');
         AddUnit('fos_firmbox_firewall_mod.pas');
+        AddUnit('fos_firmbox_subnet_ip_mod.pas');
         AddUnit('fos_firmboxfeed_client.pas');
        end;
     end;
