@@ -20627,11 +20627,11 @@ begin
                                                       GFRE_DBI.CreateText('$validator_image','Image File Validator'),
                                                       FREDB_GetGlobalTextKey('validator_image_help'),
                                                       '\d\.\/'));
-  GFRE_DBI.RegisterSysClientFieldValidator(GFRE_DBI.NewClientFieldValidator('ip').Setup('((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])',
+  GFRE_DBI.RegisterSysClientFieldValidator(GFRE_DBI.NewClientFieldValidator('ip').Setup('((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])',
                                                     GFRE_DBI.CreateText('$validator_ip','IP Validator'),
                                                     FREDB_GetGlobalTextKey('validator_ip_help'),
                                                     '\d\.\/'));
-  GFRE_DBI.RegisterSysClientFieldValidator(GFRE_DBI.NewClientFieldValidator('ip_subnet').Setup('((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])(/([0-9]|[1-2][0-9]|3[0-2]))',
+  GFRE_DBI.RegisterSysClientFieldValidator(GFRE_DBI.NewClientFieldValidator('ip_subnet').Setup('((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.)(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])(/([0-9]|[1-2][0-9]|3[0-2]))',
                                                     GFRE_DBI.CreateText('$validator_ip_subnet','IP Subnet Validator'),
                                                     FREDB_GetGlobalTextKey('validator_ip_subnet_help'),
                                                     '\d\.\/'));

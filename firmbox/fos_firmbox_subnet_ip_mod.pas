@@ -162,7 +162,7 @@ end;
 
 function TFRE_FIRMBOX_SUBNET_IP_MOD.WEB_StoreIP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res       : TFRE_DB_FORM_DIALOG_DESC;
+  res       : TFRE_DB_FORM_DESC;
   dbo       : IFRE_DB_Object;
   subnet    : TFRE_DB_IP_SUBNET;
   baseIp    : TFRE_DB_IP;
@@ -255,17 +255,20 @@ begin
 
   //SET INTO DATA
   ses.GetSessionModuleData(ClassName).Field('AddIP_sourceDiagData').AsObject.FieldPath(input.Field('field').AsString).AsString:=ip.UID_String;
-  //REBUILD DIALOG
-  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE ADD IP
-  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE SOURCE DIALOG
+  //CLOSE ADD IP
+  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe());
 
   Result:=GFRE_DB_NIL_DESC;
 
-  //CREATE SOURCE DIALOG
+  //CREATE SOURCE
   newInput:=GFRE_DBI.NewObject;
   newInput.Field('selected').AsString:=input.Field('selected').AsString;
   FREDB_SeperateString(input.Field('cbuidpath').AsString,',',cbuidpath);
-  res:=ses.InternalSessInvokeMethod(input.Field('cbclass').AsString,input.Field('cbfunc').AsString,FREDB_StringArray2UidArray(cbuidpath),newInput).Implementor_HC as TFRE_DB_FORM_DIALOG_DESC;
+
+  res:=ses.InternalSessInvokeMethod(input.Field('cbclass').AsString,input.Field('cbfunc').AsString,FREDB_StringArray2UidArray(cbuidpath),newInput).Implementor_HC as TFRE_DB_FORM_DESC;
+  if res.Implementor_HC is TFRE_DB_FORM_DIALOG_DESC then begin
+    ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe()); //CLOSE SOURCE DIALOG
+  end;
 
   res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('AddIP_sourceDiagData').AsObject,ses,'',false);
   Result:=res;
