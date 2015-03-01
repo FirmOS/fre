@@ -438,6 +438,7 @@ var
   sf          : TFRE_DB_SERVER_FUNC_DESC;
   service     : IFRE_DB_Object;
   editable    : Boolean;
+  dc          : IFRE_DB_DERIVED_COLLECTION;
 begin
   CheckClassVisibility4AnyDomain(ses);
 
@@ -449,8 +450,14 @@ begin
 
     GetSystemScheme(TFRE_DB_DHCP,scheme);
     res:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',false,editable);
-    res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+    res.AddSchemeFormGroup(scheme.GetInputGroup('main_edit'),ses);
     res.FillWithObjectValues(service,ses);
+
+    dc := ses.FetchDerivedCollection(CFRE_DB_DHCP_IP_CHOOSER_DC);
+    dc.Filters.RemoveFilter('domain');
+    dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
+    dc.Filters.RemoveFilter('scheme');
+    dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4.ClassName]);
 
     if editable then begin
       sf:=CWSF(@WEB_StoreDHCP);
@@ -557,6 +564,7 @@ begin
       res.AddChooser.Describe(FetchModuleTextShort(ses,'zone_chooser_label'),'zone',ses.FetchDerivedCollection('DHCP_ZONE_CHOOSER').GetStoreDescription.Implementor_HC as TFRE_DB_STORE_DESC,dh_chooser_combo,true);
     end;
   end;
+
   res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses,false,false,'',true,true);
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
   Result:=res;
@@ -589,6 +597,7 @@ begin
   dhcp.SetDomainID(zone.DomainID);
   dhcp.Field('serviceParent').AsObjectLink:=zone.UID;
   dhcp.Field('uniquephysicalid').AsString:=TFRE_DB_DHCP.ClassName + '@' + zone.UID_String;
+  dhcp.Field('all_interfaces').AsBoolean:=true;
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dhcp,true,conn);
 
   CheckDbResult(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION).Store(dhcp));

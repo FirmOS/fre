@@ -6944,9 +6944,33 @@ end;
 { TFRE_DB_DHCP }
 
 class procedure TFRE_DB_DHCP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+var
+  enum: IFRE_DB_Enum;
+  group: IFRE_DB_InputGroupSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_SERVICE');
+
+  enum:=GFRE_DBI.NewEnum('dhcp_duid_type').Setup(GFRE_DBI.CreateText('$enum_dhcp_duid_type','DHCP '));
+  enum.addEntry('LLT',GetTranslateableTextKey('$enum_dhcp_duid_type_llt'));
+  enum.addEntry('EN',GetTranslateableTextKey('$enum_dhcp_duid_type_en'));
+  enum.addEntry('LL',GetTranslateableTextKey('$enum_dhcp_duid_type_ll'));
+  GFRE_DBI.RegisterSysEnum(enum);
+
+  scheme.AddSchemeField('authoritative',fdbft_Boolean);
+  scheme.AddSchemeField('local_address',fdbft_ObjLink);
+  scheme.AddSchemeField('server_duid',fdbft_String).SetupFieldDef(false,false,'dhcp_duid_type');
+  scheme.AddSchemeField('all_interfaces',fdbft_Boolean);
+  scheme.AddSchemeField('interfaces',fdbft_ObjLink).MultiValues:=true;
+
+  group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+
+  group:=scheme.AddInputGroup('main_edit').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+  group.AddInput('local_address',GetTranslateableTextKey('scheme_local_address'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+  group.AddInput('server_duid',GetTranslateableTextKey('scheme_server_duid'));
+  group.AddInput('all_interfaces',GetTranslateableTextKey('scheme_all_interfaces'));
 end;
 
 class procedure TFRE_DB_DHCP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -6974,7 +6998,14 @@ begin
     DeleteTranslateableText(conn,'scheme_fixed_start');
     DeleteTranslateableText(conn,'scheme_fixed_end');
 
+    StoreTranslateableText(conn,'$enum_dhcp_duid_type_llt','LLT');
+    StoreTranslateableText(conn,'$enum_dhcp_duid_type_en','EN');
+    StoreTranslateableText(conn,'$enum_dhcp_duid_type_ll','LL');
+
     StoreTranslateableText(conn,'scheme_objname','Name');
+    StoreTranslateableText(conn,'scheme_local_address','Local Address');
+    StoreTranslateableText(conn,'scheme_server_duid','Device Unique Identifier');
+    StoreTranslateableText(conn,'scheme_all_interfaces','All Interfaces');
   end;
 end;
 
