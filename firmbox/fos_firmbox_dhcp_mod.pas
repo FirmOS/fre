@@ -128,9 +128,15 @@ var
   isModify    : Boolean;
   service     : IFRE_DB_Object;
   dc          : IFRE_DB_DERIVED_COLLECTION;
+  addSubnetSf : TFRE_DB_SERVER_FUNC_DESC;
+  group       : TFRE_DB_INPUT_GROUP_DESC;
+  block       : TFRE_DB_INPUT_BLOCK_DESC;
 begin
   sf:=CWSF(@WEB_StoreSubnetEntry);
 
+  addSubnetSf:=CWSF(@fSubnetIPMod.WEB_AddSubnet);
+  addSubnetSf.AddParam.Describe('cbclass',self.ClassName);
+  addSubnetSf.AddParam.Describe('cbuidpath',FREDB_CombineString(self.GetUIDPath,','));
   CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
   if Assigned(dbo) then begin
     isModify:=true;
@@ -139,6 +145,8 @@ begin
 
     sf.AddParam.Describe('entryId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'subnet_entry_modify_diag_cap');
+    addSubnetSf.AddParam.Describe('cbfunc','ModifyEntry');
+    addSubnetSf.AddParam.Describe('selected',dbo.UID_String);
   end else begin
     isModify:=false;
     if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) then
@@ -146,6 +154,8 @@ begin
 
     sf.AddParam.Describe('dhcpId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'subnet_entry_create_diag_cap');
+    addSubnetSf.AddParam.Describe('cbfunc','AddSubnetEntry');
+    addSubnetSf.AddParam.Describe('selected',service.UID_String);
   end;
 
   dc := ses.FetchDerivedCollection(CFRE_DB_DHCP_SUBNET_CHOOSER_DC);
@@ -156,7 +166,14 @@ begin
 
   GetSystemScheme(TFRE_DB_DHCP_SUBNET,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'subnet_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('subnet'),ses,[],'',false,true);
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
+    addSubnetSf.AddParam.Describe('field','subnet');
+    addSubnetSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_subnet_diag_new_subnet_button'),addSubnetSf,true);
+  end;
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
@@ -308,6 +325,9 @@ begin
 
     CreateModuleText(conn,'dhcp_fixed_diag_new_ip_button','New IP');
     CreateModuleText(conn,'ip_block','IP');
+
+    CreateModuleText(conn,'dhcp_subnet_diag_new_subnet_button','New Subnet');
+    CreateModuleText(conn,'subnet_block','Subnet');
   end;
 end;
 

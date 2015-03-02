@@ -6920,11 +6920,20 @@ begin
   scheme.AddSchemeField('range_start',fdbft_Int64).required:=true;
   scheme.AddSchemeField('range_end',fdbft_Int64).required:=true;
 
-  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
-  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+  group:=scheme.AddInputGroup('subnet').Setup(GetTranslateableTextKey('scheme_subnet_group'));
   group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'),false,false,'',CFRE_DB_DHCP_SUBNET_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+
+  group:=scheme.AddInputGroup('range').Setup(GetTranslateableTextKey('scheme_range_group'));
   group.AddInput('range_start',GetTranslateableTextKey('scheme_range_start'));
   group.AddInput('range_end',GetTranslateableTextKey('scheme_range_end'));
+
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'general');
+  group.UseInputGroup(scheme.DefinedSchemeName,'subnet');
+  group.UseInputGroup(scheme.DefinedSchemeName,'range');
 end;
 
 class procedure TFRE_DB_DHCP_SUBNET.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -6947,6 +6956,9 @@ begin
     DeleteTranslateableText(conn,'scheme_main_group');
     StoreTranslateableText(conn,'scheme_main_group','General Information');
     StoreTranslateableText(conn,'scheme_objname','Name');
+    StoreTranslateableText(conn,'scheme_general_group','General Information');
+    StoreTranslateableText(conn,'scheme_subnet_group','Subnet');
+    StoreTranslateableText(conn,'scheme_range_group','Range');
   end;
 end;
 
