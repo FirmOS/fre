@@ -176,9 +176,15 @@ var
   isModify    : Boolean;
   service     : IFRE_DB_Object;
   dc          : IFRE_DB_DERIVED_COLLECTION;
+  addIPSf     : TFRE_DB_SERVER_FUNC_DESC;
+  group       : TFRE_DB_INPUT_GROUP_DESC;
+  block       : TFRE_DB_INPUT_BLOCK_DESC;
 begin
   sf:=CWSF(@WEB_StoreFixedEntry);
 
+  addIPSf:=CWSF(@fSubnetIPMod.WEB_AddIP);
+  addIPSf.AddParam.Describe('cbclass',self.ClassName);
+  addIPSf.AddParam.Describe('cbuidpath',FREDB_CombineString(self.GetUIDPath,','));
   CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
   if Assigned(dbo) then begin
     isModify:=true;
@@ -187,6 +193,9 @@ begin
 
     sf.AddParam.Describe('entryId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'fixed_entry_modify_diag_cap');
+
+    addIPSf.AddParam.Describe('cbfunc','ModifyEntry');
+    addIPSf.AddParam.Describe('selected',dbo.UID_String);
   end else begin
     isModify:=false;
     if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) then
@@ -194,6 +203,9 @@ begin
 
     sf.AddParam.Describe('dhcpId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'fixed_entry_create_diag_cap');
+
+    addIPSf.AddParam.Describe('cbfunc','AddFixedEntry');
+    addIPSf.AddParam.Describe('selected',service.UID_String);
   end;
 
   dc := ses.FetchDerivedCollection(CFRE_DB_DHCP_IP_CHOOSER_DC);
@@ -204,7 +216,14 @@ begin
 
   GetSystemScheme(TFRE_DB_DHCP_FIXED,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+  group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'ip_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ip'),ses,[],'',false,true);
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
+    addIPSf.AddParam.Describe('field','ip');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_fixed_diag_new_ip_button'),addIPSf,true);
+  end;
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
@@ -286,6 +305,9 @@ begin
 
     CreateModuleText(conn,'dhcp_general_new_ip_button','New IP');
     CreateModuleText(conn,'local_address_block','Local Address');
+
+    CreateModuleText(conn,'dhcp_fixed_diag_new_ip_button','New IP');
+    CreateModuleText(conn,'ip_block','IP');
   end;
 end;
 

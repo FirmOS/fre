@@ -6871,10 +6871,16 @@ begin
   scheme.AddSchemeField('mac',fdbft_String).SetupFieldDef(true,false,'','mac');
   scheme.AddSchemeField('ip',fdbft_ObjLink).required:=true;
 
-  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group:=scheme.AddInputGroup('ip').Setup(GetTranslateableTextKey('scheme_ip_group'));
+  group.AddInput('ip',GetTranslateableTextKey('scheme_ip'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
   group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
   group.AddInput('mac',GetTranslateableTextKey('scheme_mac'));
-  group.AddInput('ip',GetTranslateableTextKey('scheme_ip'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'general');
+  group.UseInputGroup(scheme.DefinedSchemeName,'ip');
 end;
 
 class procedure TFRE_DB_DHCP_FIXED.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -6896,6 +6902,8 @@ begin
 
     DeleteTranslateableText(conn,'scheme_main_group');
     StoreTranslateableText(conn,'scheme_main_group','General Information');
+    StoreTranslateableText(conn,'scheme_ip_group','IP');
+    StoreTranslateableText(conn,'scheme_general_group','General Information');
   end;
 end;
 
@@ -6978,9 +6986,9 @@ begin
   group.AddInput('interfaces',GetTranslateableTextKey('scheme_interfaces'),false,false,'',CFRE_DB_DHCP_INTERFACE_CHOOSER_DC,true,dh_chooser_check);
 
   group:=scheme.AddInputGroup('main_edit').Setup(GetTranslateableTextKey('scheme_main_edit_group'));
-  group.UseInputGroup(scheme.DefinedSchemeName,'main','',true,true,true);
-  group.UseInputGroup(scheme.DefinedSchemeName,'local_address','',true,true,true);
-  group.UseInputGroup(scheme.DefinedSchemeName,'settings','',true,true,true);
+  group.UseInputGroup(scheme.DefinedSchemeName,'main');
+  group.UseInputGroup(scheme.DefinedSchemeName,'local_address');
+  group.UseInputGroup(scheme.DefinedSchemeName,'settings');
 end;
 
 class procedure TFRE_DB_DHCP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
