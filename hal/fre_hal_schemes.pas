@@ -102,6 +102,7 @@ const
 
   CFRE_DB_DHCP_IP_CHOOSER_DC           = 'DHCP_IP_CHOOSER_DC';
   CFRE_DB_DHCP_SUBNET_CHOOSER_DC       = 'DHCP_SUBNET_CHOOSER_DC';
+  CFRE_DB_DHCP_INTERFACE_CHOOSER_DC    = 'DHCP_INTERFACE_CHOOSER_DC';
 type
 
    { TFRE_DB_HALCONFIG }
@@ -6945,8 +6946,9 @@ end;
 
 class procedure TFRE_DB_DHCP.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
 var
-  enum: IFRE_DB_Enum;
+  enum : IFRE_DB_Enum;
   group: IFRE_DB_InputGroupSchemeDefinition;
+  fld  : IFRE_DB_FieldSchemeDefinition;
 begin
   inherited RegisterSystemScheme(scheme);
   scheme.SetParentSchemeByName('TFRE_DB_SERVICE');
@@ -6960,17 +6962,25 @@ begin
   scheme.AddSchemeField('authoritative',fdbft_Boolean);
   scheme.AddSchemeField('local_address',fdbft_ObjLink);
   scheme.AddSchemeField('server_duid',fdbft_String).SetupFieldDef(false,false,'dhcp_duid_type');
-  scheme.AddSchemeField('all_interfaces',fdbft_Boolean);
+  fld:=scheme.AddSchemeField('all_interfaces',fdbft_Boolean);
   scheme.AddSchemeField('interfaces',fdbft_ObjLink).MultiValues:=true;
+  fld.addDepField('interfaces',true);
 
   group:=scheme.ReplaceInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
   group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
 
-  group:=scheme.AddInputGroup('main_edit').Setup(GetTranslateableTextKey('scheme_main_group'));
-  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+  group:=scheme.AddInputGroup('local_address').Setup(GetTranslateableTextKey('scheme_local_address_group'));
   group.AddInput('local_address',GetTranslateableTextKey('scheme_local_address'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('settings').Setup(GetTranslateableTextKey('scheme_settings_group'));
   group.AddInput('server_duid',GetTranslateableTextKey('scheme_server_duid'));
   group.AddInput('all_interfaces',GetTranslateableTextKey('scheme_all_interfaces'));
+  group.AddInput('interfaces',GetTranslateableTextKey('scheme_interfaces'),false,false,'',CFRE_DB_DHCP_INTERFACE_CHOOSER_DC,true,dh_chooser_check);
+
+  group:=scheme.AddInputGroup('main_edit').Setup(GetTranslateableTextKey('scheme_main_edit_group'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'main','',true,true,true);
+  group.UseInputGroup(scheme.DefinedSchemeName,'local_address','',true,true,true);
+  group.UseInputGroup(scheme.DefinedSchemeName,'settings','',true,true,true);
 end;
 
 class procedure TFRE_DB_DHCP.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -7002,10 +7012,15 @@ begin
     StoreTranslateableText(conn,'$enum_dhcp_duid_type_en','EN');
     StoreTranslateableText(conn,'$enum_dhcp_duid_type_ll','LL');
 
+    StoreTranslateableText(conn,'scheme_main_edit_group','General Information');
+    StoreTranslateableText(conn,'scheme_local_address_group','Local Address');
+    StoreTranslateableText(conn,'scheme_settings_group','Settings');
+
     StoreTranslateableText(conn,'scheme_objname','Name');
     StoreTranslateableText(conn,'scheme_local_address','Local Address');
     StoreTranslateableText(conn,'scheme_server_duid','Device Unique Identifier');
     StoreTranslateableText(conn,'scheme_all_interfaces','All Interfaces');
+    StoreTranslateableText(conn,'scheme_interfaces','Interfaces');
   end;
 end;
 
@@ -10974,6 +10989,23 @@ begin
 
      SetDefaultOrderField('label',true);
    end;
+  end;
+
+  if not session.HasDerivedCollection(CFRE_DB_DHCP_INTERFACE_CHOOSER_DC) then begin
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname');
+      AddMatchingReferencedFieldArray(['DATALINKPARENT>>'],'uid','zuid','',false);
+    end;
+
+    dc := session.NewDerivedCollection(CFRE_DB_DHCP_INTERFACE_CHOOSER_DC);
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      Filters.AddSchemeObjectFilter('datalinks',TFRE_DB_DATALINK.getAllDataLinkClasses);
+      SetDefaultOrderField('objname',true);
+    end;
   end;
 
 end;

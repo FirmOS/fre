@@ -10,6 +10,7 @@ uses
   FOS_TOOL_INTERFACES,
   FRE_DB_INTERFACE,
   FRE_DB_COMMON,
+  fos_firmbox_subnet_ip_mod,
   fre_hal_schemes,fre_dbbusiness;
 
 type
@@ -18,6 +19,7 @@ type
 
   TFRE_FIRMBOX_DHCP_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
+    fSubnetIPMod    : TFRE_FIRMBOX_SUBNET_IP_MOD;
     function        _AddModifyTemplate          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
     function        _AddModifySubnetEntry       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
     function        _AddModifyFixedEntry        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
@@ -216,7 +218,10 @@ end;
 procedure TFRE_FIRMBOX_DHCP_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
-  InitModuleDesc('dhcp_description')
+  InitModuleDesc('dhcp_description');
+
+  fSubnetIPMod:=TFRE_FIRMBOX_SUBNET_IP_MOD.create;
+  AddApplicationModule(fSubnetIPMod);
 end;
 
 class procedure TFRE_FIRMBOX_DHCP_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -278,6 +283,9 @@ begin
     CreateModuleText(conn,'fixed_entry_delete_diag_cap','Delete Fixed IP');
     CreateModuleText(conn,'subnet_entry_delete_diag_msg','Delete Subnet %entry_str%?');
     CreateModuleText(conn,'fixed_entry_delete_diag_msg','Delete Fixed IP %entry_str%?');
+
+    CreateModuleText(conn,'dhcp_general_new_ip_button','New IP');
+    CreateModuleText(conn,'local_address_block','Local Address');
   end;
 end;
 
@@ -439,6 +447,10 @@ var
   service     : IFRE_DB_Object;
   editable    : Boolean;
   dc          : IFRE_DB_DERIVED_COLLECTION;
+  group       : TFRE_DB_INPUT_GROUP_DESC;
+  block       : TFRE_DB_INPUT_BLOCK_DESC;
+  addIPSf     : TFRE_DB_SERVER_FUNC_DESC;
+
 begin
   CheckClassVisibility4AnyDomain(ses);
 
@@ -450,7 +462,21 @@ begin
 
     GetSystemScheme(TFRE_DB_DHCP,scheme);
     res:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',false,editable);
-    res.AddSchemeFormGroup(scheme.GetInputGroup('main_edit'),ses);
+    group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+    block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'local_address_block'));
+    block.AddSchemeFormGroupInputs(scheme.GetInputGroup('local_address'),ses,[],'',false,true);
+    if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
+      addIPSf:=CWSF(@fSubnetIPMod.WEB_AddIP);
+      addIPSf.AddParam.Describe('cbclass',self.ClassName);
+      addIPSf.AddParam.Describe('cbuidpath',FREDB_CombineString(self.GetUIDPath,','));
+      addIPSf.AddParam.Describe('cbfunc','ContentGeneral');
+      addIPSf.AddParam.Describe('field','local_address');
+      addIPSf.AddParam.Describe('ipversion','ipv4');
+      addIPSf.AddParam.Describe('selected',service.UID_String);
+      block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_general_new_ip_button'),addIPSf,true);
+    end;
+    group.AddSchemeFormGroup(scheme.GetInputGroup('settings'),ses,false,false,'',true,true);
+
     res.FillWithObjectValues(service,ses);
 
     dc := ses.FetchDerivedCollection(CFRE_DB_DHCP_IP_CHOOSER_DC);
@@ -458,6 +484,10 @@ begin
     dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
     dc.Filters.RemoveFilter('scheme');
     dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4.ClassName]);
+
+    dc := ses.FetchDerivedCollection(CFRE_DB_DHCP_INTERFACE_CHOOSER_DC);
+    dc.Filters.RemoveFilter('zone');
+    dc.Filters.AddUIDFieldFilter('zone','zuid',service.Field('serviceParent').AsObjectLink,dbnf_OneValueFromFilter);
 
     if editable then begin
       sf:=CWSF(@WEB_StoreDHCP);
