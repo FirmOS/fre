@@ -584,6 +584,7 @@ implementation
   procedure TFRE_DB_WAPP_DOJO._BuildInputChooser(const session:TFRE_DB_UserSession; const co: TFRE_DB_INPUT_CHOOSER_DESC; const stores: IFRE_DB_ObjectArray);
   var
     store          : TFRE_DB_STORE_DESC;
+    tmpStore       : TFRE_DB_STORE_DESC;
     i,j            : Integer;
     conn           : IFRE_DB_CONNECTION;
     preFix         : String;
@@ -592,8 +593,43 @@ implementation
     caption        : String;
     defValue       : String;
     captionFields  : TFRE_DB_StringArray;
+    entry          : IFRE_DB_Object;
   begin
      store:=_getStoreById(co.FieldPath('store.id').AsString,stores);
+
+     if store.FieldExists('serverFunc') then begin
+       tmpStore:=TFRE_DB_STORE_DESC.create;
+       for i := 0 to store.Field('entries').ValueCount - 1 do begin
+         entry:=store.Field('entries').AsObjectItem[i];
+         tmpStore.AddEntry.Describe(entry.Field('caption').AsString,entry.Field('value').AsString);
+       end;
+
+       serverFunc:=store.Field('serverFunc').AsObject.Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;  // FIXXME: Refactor to get DC from session by name, use a DC function to internally fetch the data
+       serverFunc.AddParam.Describe('start','0');
+       serverFunc.AddParam.Describe('end','10000'); //FIXXME - define "ALL" parameter
+       store_res_descr:=serverFunc.InternalInvoke(session).Implementor_HC as TFRE_DB_STORE_DATA_DESC;
+
+       captionFields:=TFRE_DB_StringArray.create('displayname','label','objname');
+
+       for i:=0 to store_res_descr.Field('data').ValueCount - 1 do begin
+         for j:=0 to Length(captionFields) -1 do begin
+           if (store_res_descr.Field('data').AsObjectItem[i].FieldExists(captionFields[j])) then begin
+             caption:=_EscapeValueString(store_res_descr.Field('data').AsObjectItem[i].Field(captionFields[j]).AsString);
+             Break;
+           end;
+           caption:=store_res_descr.Field('data').AsObjectItem[i].Field(store.Field('idField').AsString).AsString;
+         end;
+         tmpStore.AddEntry.Describe(caption,store_res_descr.Field('data').AsObjectItem[i].Field(store.Field('idField').AsString).AsString);
+       end;
+       if store.FieldExists('destroyFunc') then begin
+         serverFunc:=store.Field('destroyFunc').AsObject.Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+         serverFunc.InternalInvoke(session);
+       end;
+     end else begin
+       tmpStore:=store;
+     end;
+
+
      case String2DBChooserDH(co.Field('displayHint').AsString) of
        dh_chooser_check: begin
                            jsContentAdd('"<select id='''+co.Field('id').AsString+''' name='''+co.Field('field').AsString+''' multiple=''true'' data-dojo-type=''dojox.form.CheckedMultiSelect''  style=''width:100%''"+');
@@ -612,8 +648,8 @@ implementation
                              jsContentAdd('" value: '+defValue+'"+');
                            end;
                            jsContentAdd('"''>"+');
-                           for i := 0 to store.Field('entries').ValueCount - 1 do begin
-                             jsContentAdd('"  <option value='''+store.Field('entries').AsObjectItem[i].Field('value').AsString+'''>'+_EscapeValueString(store.Field('entries').AsObjectItem[i].Field('caption').AsString)+'</option>"+');
+                           for i := 0 to tmpStore.Field('entries').ValueCount - 1 do begin
+                             jsContentAdd('"  <option value='''+tmpStore.Field('entries').AsObjectItem[i].Field('value').AsString+'''>'+_EscapeValueString(tmpStore.Field('entries').AsObjectItem[i].Field('caption').AsString)+'</option>"+');
                            end;
                            jsContentAdd('"</select>"+');
                          end;
@@ -628,8 +664,8 @@ implementation
                              jsContentAdd('" value: \"'+ _EscapeValueString(co.Field('defaultValue').AsString) +'\""+');
                            end;
                            jsContentAdd('"''>"+');
-                           for i := 0 to store.Field('entries').ValueCount - 1 do begin
-                             jsContentAdd('"  <option value='''+store.Field('entries').AsObjectItem[i].Field('value').AsString+'''>'+_EscapeValueString(store.Field('entries').AsObjectItem[i].Field('caption').AsString)+'</option>"+');
+                           for i := 0 to tmpStore.Field('entries').ValueCount - 1 do begin
+                             jsContentAdd('"  <option value='''+tmpStore.Field('entries').AsObjectItem[i].Field('value').AsString+'''>'+_EscapeValueString(tmpStore.Field('entries').AsObjectItem[i].Field('caption').AsString)+'</option>"+');
                            end;
                            jsContentAdd('"</select>"+');
                          end;
@@ -685,31 +721,8 @@ implementation
                            if not co.Field('required').AsBoolean or co.Field('addEmptyForRequired').AsBoolean then begin
                              jsContentAdd('"  <option value=''''></option>"+');
                            end;
-                           for i := 0 to store.Field('entries').ValueCount - 1 do begin
-                             jsContentAdd('"  <option value='''+store.Field('entries').AsObjectItem[i].Field('value').AsString+'''>'+_EscapeValueString(store.Field('entries').AsObjectItem[i].Field('caption').AsString)+'</option>"+');
-                           end;
-                           if store.FieldExists('serverFunc') then begin
-                             serverFunc:=store.Field('serverFunc').AsObject.Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;  // FIXXME: Refactor to get DC from session by name, use a DC function to internally fetch the data
-                             serverFunc.AddParam.Describe('start','0');
-                             serverFunc.AddParam.Describe('end','10000'); //FIXXME - define "ALL" parameter
-                             store_res_descr:=serverFunc.InternalInvoke(session).Implementor_HC as TFRE_DB_STORE_DATA_DESC;
-
-                             captionFields:=TFRE_DB_StringArray.create('displayname','label','objname');
-
-                             for i:=0 to store_res_descr.Field('data').ValueCount - 1 do begin
-                               for j:=0 to Length(captionFields) -1 do begin
-                                 if (store_res_descr.Field('data').AsObjectItem[i].FieldExists(captionFields[j])) then begin
-                                   caption:=_EscapeValueString(store_res_descr.Field('data').AsObjectItem[i].Field(captionFields[j]).AsString);
-                                   Break;
-                                 end;
-                                 caption:=store_res_descr.Field('data').AsObjectItem[i].Field(store.Field('idField').AsString).AsString;
-                               end;
-                               jsContentAdd('"  <option value='''+store_res_descr.Field('data').AsObjectItem[i].Field(store.Field('idField').AsString).AsString+'''>'+caption+'</option>"+');
-                             end;
-                             if store.FieldExists('destroyFunc') then begin
-                               serverFunc:=store.Field('destroyFunc').AsObject.Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
-                               serverFunc.InternalInvoke(session);
-                             end;
+                           for i := 0 to tmpStore.Field('entries').ValueCount - 1 do begin
+                             jsContentAdd('"  <option value='''+tmpStore.Field('entries').AsObjectItem[i].Field('value').AsString+'''>'+_EscapeValueString(tmpStore.Field('entries').AsObjectItem[i].Field('caption').AsString)+'</option>"+');
                            end;
                            jsContentAdd('"</select>"+');
        end;
