@@ -6870,6 +6870,7 @@ begin
   scheme.GetSchemeField('objname').required:=true;
   scheme.AddSchemeField('mac',fdbft_String).SetupFieldDef(true,false,'','mac');
   scheme.AddSchemeField('ip',fdbft_ObjLink).required:=true;
+  scheme.AddSchemeField('template',fdbft_ObjLink).MultiValues:=true;
 
   group:=scheme.AddInputGroup('ip').Setup(GetTranslateableTextKey('scheme_ip_group'));
   group.AddInput('ip',GetTranslateableTextKey('scheme_ip'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
@@ -6919,6 +6920,7 @@ begin
   scheme.AddSchemeField('subnet',fdbft_ObjLink).required:=true;
   scheme.AddSchemeField('range_start',fdbft_Int64).required:=true;
   scheme.AddSchemeField('range_end',fdbft_Int64).required:=true;
+  scheme.AddSchemeField('template',fdbft_ObjLink).MultiValues:=true;
 
   group:=scheme.AddInputGroup('subnet').Setup(GetTranslateableTextKey('scheme_subnet_group'));
   group.AddInput('subnet',GetTranslateableTextKey('scheme_subnet'),false,false,'',CFRE_DB_DHCP_SUBNET_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);

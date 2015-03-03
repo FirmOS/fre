@@ -110,22 +110,20 @@ begin
     CreateModuleText(conn,'ip_store_error_exists_msg','Error: The given IP already exists!');
     CreateModuleText(conn,'ip_store_error_base_exists_wrong_type_cap','Error');
     CreateModuleText(conn,'ip_store_error_base_exists_wrong_type_msg','Error: The given Base IP already exists and is not declared as Base IP!');
-  end;
-  CreateModuleText(conn,'add_ipv4_subnet_diag_caption','New IPv4 Subnet');
-  CreateModuleText(conn,'add_ipv6_subnet_diag_caption','New IPv6 Subnet');
 
-  CreateModuleText(conn,'add_subnet_diag_base_ip','Base IP');
-  CreateModuleText(conn,'add_subnet_diag_subnet_bits','Subnet');
-  CreateModuleText(conn,'add_subnet_diag_close_button','Close');
+    CreateModuleText(conn,'add_ipv4_subnet_diag_caption','New IPv4 Subnet');
+    CreateModuleText(conn,'add_ipv6_subnet_diag_caption','New IPv6 Subnet');
+
+    CreateModuleText(conn,'add_subnet_diag_base_ip','Base IP');
+    CreateModuleText(conn,'add_subnet_diag_subnet_bits','Subnet');
+    CreateModuleText(conn,'add_subnet_diag_close_button','Close');
+  end;
 end;
 
 procedure TFRE_FIRMBOX_SUBNET_IP_MOD.MySessionInitializeModule(const session: TFRE_DB_UserSession);
 var
   app          : TFRE_DB_APPLICATION;
   conn         : IFRE_DB_CONNECTION;
-  transform    : IFRE_DB_SIMPLE_TRANSFORM;
-  dc           : IFRE_DB_DERIVED_COLLECTION;
-  servicesGrid : IFRE_DB_DERIVED_COLLECTION;
 
 begin
   inherited MySessionInitializeModule(session);
@@ -202,7 +200,6 @@ end;
 
 function TFRE_FIRMBOX_SUBNET_IP_MOD.WEB_StoreIP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res       : TFRE_DB_FORM_DESC;
   dbo       : IFRE_DB_Object;
   subnet    : TFRE_DB_IP_SUBNET;
   baseIp    : TFRE_DB_IP;
@@ -210,8 +207,6 @@ var
   ipDbo     : IFRE_DB_ObjectArray;
   IP        : TFRE_DB_IP;
   isIP4     : Boolean;
-  cbuidpath : TFRE_DB_StringArray;
-  newInput  : IFRE_DB_Object;
 begin
   if input.FieldExists('selected') then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));

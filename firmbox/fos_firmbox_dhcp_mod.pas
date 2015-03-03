@@ -23,6 +23,8 @@ type
     function        _AddModifyTemplate          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
     function        _AddModifySubnetEntry       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
     function        _AddModifyFixedEntry        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
+    procedure       _StoreHandleTemplates       (const input:IFRE_DB_Object; const entryObj: IFRE_DB_Object);
+    procedure       _AddModifyHandleTemplates   (const ses: IFRE_DB_Usersession; const dbo: IFRE_DB_Object; const res: TFRE_DB_FORM_DESC; const store: TFRE_DB_STORE_DESC);
   protected
     procedure       SetupAppModuleStructure     ; override;
   public
@@ -164,6 +166,10 @@ begin
   dc.Filters.RemoveFilter('scheme');
   dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4_SUBNET.ClassName]);
 
+  dc := ses.FetchDerivedCollection('DHCP_TEMPLATE_CHOOSER');
+  dc.Filters.RemoveFilter('service');
+  dc.Filters.AddUIDFieldFilter('service','dhcp_uid',[service.UID],dbnf_OneValueFromFilter);
+
   GetSystemScheme(TFRE_DB_DHCP_SUBNET,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
@@ -174,6 +180,8 @@ begin
     addSubnetSf.AddParam.Describe('ipversion','ipv4');
     block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_subnet_diag_new_subnet_button'),addSubnetSf,true);
   end;
+
+  _AddModifyHandleTemplates(ses,dbo,res,dc.GetStoreDescription as TFRE_DB_STORE_DESC);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
@@ -231,6 +239,10 @@ begin
   dc.Filters.RemoveFilter('scheme');
   dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4.ClassName]);
 
+  dc := ses.FetchDerivedCollection('DHCP_TEMPLATE_CHOOSER');
+  dc.Filters.RemoveFilter('service');
+  dc.Filters.AddUIDFieldFilter('service','dhcp_uid',[service.UID],dbnf_OneValueFromFilter);
+
   GetSystemScheme(TFRE_DB_DHCP_FIXED,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
@@ -242,6 +254,8 @@ begin
     block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_fixed_diag_new_ip_button'),addIPSf,true);
   end;
 
+  _AddModifyHandleTemplates(ses,dbo,res,dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
   if isModify then begin
@@ -249,6 +263,42 @@ begin
   end;
 
   Result:=res;
+end;
+
+procedure TFRE_FIRMBOX_DHCP_MOD._StoreHandleTemplates(const input: IFRE_DB_Object; const entryObj: IFRE_DB_Object);
+var
+  i       : Integer;
+  tPostFix: String;
+begin
+  entryObj.DeleteField('template');
+  for i := 0 to 3 do begin
+    tPostFix:=IntToStr(i);
+    if input.FieldPathExists('data.template_'+tPostFix) then begin
+      if not input.FieldPath('data.template_'+tPostFix).IsSpecialClearMarked then begin
+        entryObj.Field('template').AddObjectLink(FREDB_H2G(input.FieldPath('data.template_'+tPostFix).AsString));
+      end;
+      input.Field('data').AsObject.DeleteField('template_'+tPostFix);
+    end;
+  end;
+end;
+
+procedure TFRE_FIRMBOX_DHCP_MOD._AddModifyHandleTemplates(const ses: IFRE_DB_Usersession; const dbo: IFRE_DB_Object; const res: TFRE_DB_FORM_DESC; const store: TFRE_DB_STORE_DESC);
+var
+  default: String;
+  i      : Integer;
+  ch     : TFRE_DB_INPUT_CHOOSER_DESC;
+begin
+  for i := 0 to 3 do begin
+    if Assigned(dbo) and (dbo.Field('template').ValueCount>i) then begin
+      default:=FREDB_G2H(dbo.Field('template').AsObjectLinkItem[i]);
+    end else begin
+      default:='';
+    end;
+    ch:=res.AddChooser.Describe(FetchModuleTextShort(ses,'template_chooser_label'),'template_'+IntToStr(i),store,dh_chooser_combo,false,false,true,false,default);
+    if i<3 then begin
+      ch.addDependentInput('template_'+IntToStr(i+1),'',fdv_hidden);
+    end;
+  end;
 end;
 
 procedure TFRE_FIRMBOX_DHCP_MOD.SetupAppModuleStructure;
@@ -323,6 +373,8 @@ begin
     CreateModuleText(conn,'dhcp_general_new_ip_button','New IP');
     CreateModuleText(conn,'local_address_block','Local Address');
 
+    CreateModuleText(conn,'template_chooser_label','Template');
+
     CreateModuleText(conn,'dhcp_fixed_diag_new_ip_button','New IP');
     CreateModuleText(conn,'ip_block','IP');
 
@@ -380,6 +432,20 @@ begin
       Filters.AddStringFieldFilter('serviceclasses','serviceclasses',TFRE_DB_DHCP.ClassName,dbft_EXACTVALUEINARRAY);
       Filters.AddStringFieldFilter('disabledSCs','disabledSCs',TFRE_DB_DHCP.ClassName,dbft_EXACTVALUEINARRAY,false,true);
       Filters.AddStringFieldFilter('used','dhcp','OK',dbft_EXACT);
+    end;
+
+    GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
+    with transform do begin
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'entries_grid_objname'));
+      AddMatchingReferencedFieldArray(['DHCP_ID>TFRE_DB_DHCP'],'uid','dhcp_uid','',false);
+    end;
+
+    dc := session.NewDerivedCollection('DHCP_TEMPLATE_CHOOSER');
+    with dc do begin
+      SetDeriveParent(conn.GetCollection(CFRE_DB_DHCP_TEMPLATE_COLLECTION));
+      SetDeriveTransformation(transform);
+      SetDisplayType(cdt_Chooser,[],'');
+      SetDefaultOrderField('objname',true);
     end;
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
@@ -921,6 +987,8 @@ begin
     isNew:=true;
   end;
 
+  _StoreHandleTemplates(input,entryObj);
+
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,entryObj,isNew,conn);
 
   if isNew then begin
@@ -958,6 +1026,8 @@ begin
     entryObj.Field('dhcp_id').AsObjectLink:=service.UID;
     isNew:=true;
   end;
+
+  _StoreHandleTemplates(input,entryObj);
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,entryObj,isNew,conn);
 
