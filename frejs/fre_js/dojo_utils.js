@@ -3795,7 +3795,15 @@ dojo.declare("FIRMOS.Form", dijit.form.Form, {
     if (field.isInstanceOf(FIRMOS.BoolCheckBox)) {
       return 'false';
     } else {
-      return '';
+      if (field.isInstanceOf(FIRMOS.FilteringSelect)) {
+        if (field.store.data[0]) {
+          return field.store.data[0].value;
+        } else {
+          return '';
+        }
+      } else {
+        return '';
+      }
     }
   },
 
