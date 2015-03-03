@@ -71,38 +71,39 @@ uses
 
 const
 
-  CFRE_DB_CA_COLLECTION                = 'ca';
-  CFRE_DB_CERTIFICATE_COLLECTION       = 'certificate';
+  CFRE_DB_CA_COLLECTION                           = 'ca';
+  CFRE_DB_CERTIFICATE_COLLECTION                  = 'certificate';
 
-  CFOS_DB_SERVICES_COLLECTION          = 'services';
-  CFOS_DB_ZONES_COLLECTION             = 'zones';
-  CFRE_DB_ASSET_COLLECTION             = 'assets';
-  CFRE_DB_DATACENTER_COLLECTION        = 'datacenter';
-  CFRE_DB_TEMPLATE_COLLECTION          = 'templates';
-  CFRE_DB_IP_COLLECTION                = 'ip';
-  CFRE_DB_SUBNET_COLLECTION            = 'subnet';
-  CFRE_DB_ROUTING_COLLECTION           = 'routing';
-  CFRE_DB_VM_COMPONENTS_COLLECTION     = 'vmcomponents';
-  CFRE_DB_IMAGEFILE_COLLECTION         = 'imagefiles';
+  CFOS_DB_SERVICES_COLLECTION                     = 'services';
+  CFOS_DB_ZONES_COLLECTION                        = 'zones';
+  CFRE_DB_ASSET_COLLECTION                        = 'assets';
+  CFRE_DB_DATACENTER_COLLECTION                   = 'datacenter';
+  CFRE_DB_TEMPLATE_COLLECTION                     = 'templates';
+  CFRE_DB_IP_COLLECTION                           = 'ip';
+  CFRE_DB_SUBNET_COLLECTION                       = 'subnet';
+  CFRE_DB_ROUTING_COLLECTION                      = 'routing';
+  CFRE_DB_VM_COMPONENTS_COLLECTION                = 'vmcomponents';
+  CFRE_DB_IMAGEFILE_COLLECTION                    = 'imagefiles';
   //firewall
-  CFRE_DB_FIREWALL_RULE_COLLECTION     = 'fwrule';
-  CFRE_DB_FIREWALL_POOL_COLLECTION     = 'fwpool';
-  CFRE_DB_FIREWALL_POOLENTRY_COLLECTION= 'fwpoolentry';
-  CFRE_DB_FIREWALL_NAT_COLLECTION      = 'fwnat';
+  CFRE_DB_FIREWALL_RULE_COLLECTION                = 'fwrule';
+  CFRE_DB_FIREWALL_POOL_COLLECTION                = 'fwpool';
+  CFRE_DB_FIREWALL_POOLENTRY_COLLECTION           = 'fwpoolentry';
+  CFRE_DB_FIREWALL_NAT_COLLECTION                 = 'fwnat';
   //dhcp
-  CFRE_DB_DHCP_TEMPLATE_COLLECTION     = 'dhcptemplate';
-  CFRE_DB_DHCP_ENTRY_COLLECTION        = 'dhcpentry';
+  CFRE_DB_DHCP_TEMPLATE_COLLECTION                = 'dhcptemplate';
+  CFRE_DB_DHCP_ENTRY_COLLECTION                   = 'dhcpentry';
+  CFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION_COLLECTION = 'dhcpetrelation';
 
-  CFRE_DB_VMACHINE_VNIC_CHOOSER_DC     = 'VMACHINE_VNIC_CHOOSER_DC';
-  CFRE_DB_VMACHINE_HDD_CHOOSER_DC      = 'VMACHINE_HDD_CHOOSER_DC';
+  CFRE_DB_VMACHINE_VNIC_CHOOSER_DC                = 'VMACHINE_VNIC_CHOOSER_DC';
+  CFRE_DB_VMACHINE_HDD_CHOOSER_DC                 = 'VMACHINE_HDD_CHOOSER_DC';
 
-  CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC= 'FIREWALL_INTERFACE_CHOOSER_DC';
-  CFRE_DB_FIREWALL_IP_CHOOSER_DC       = 'FIREWALL_IP_CHOOSER_DC';
-  CFRE_DB_FIREWALL_POOL_CHOOSER_DC     = 'FIREWALL_POOL_CHOOSER_DC';
+  CFRE_DB_FIREWALL_INTERFACE_CHOOSER_DC           = 'FIREWALL_INTERFACE_CHOOSER_DC';
+  CFRE_DB_FIREWALL_IP_CHOOSER_DC                  = 'FIREWALL_IP_CHOOSER_DC';
+  CFRE_DB_FIREWALL_POOL_CHOOSER_DC                = 'FIREWALL_POOL_CHOOSER_DC';
 
-  CFRE_DB_DHCP_IP_CHOOSER_DC           = 'DHCP_IP_CHOOSER_DC';
-  CFRE_DB_DHCP_SUBNET_CHOOSER_DC       = 'DHCP_SUBNET_CHOOSER_DC';
-  CFRE_DB_DHCP_INTERFACE_CHOOSER_DC    = 'DHCP_INTERFACE_CHOOSER_DC';
+  CFRE_DB_DHCP_IP_CHOOSER_DC                      = 'DHCP_IP_CHOOSER_DC';
+  CFRE_DB_DHCP_SUBNET_CHOOSER_DC                  = 'DHCP_SUBNET_CHOOSER_DC';
+  CFRE_DB_DHCP_INTERFACE_CHOOSER_DC               = 'DHCP_INTERFACE_CHOOSER_DC';
 type
 
    { TFRE_DB_HALCONFIG }
@@ -1035,6 +1036,14 @@ type
     class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
   end;
 
+  { TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION }
+
+  TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION = class(TFRE_DB_ObjectEx)
+  public
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+  end;
+
   { TFRE_DB_DHCP_SUBNET }
 
   TFRE_DB_DHCP_SUBNET = class(TFRE_DB_ObjectEx)
@@ -1568,6 +1577,26 @@ implementation
 
    result   := gresult;
   end;
+
+{ TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION }
+
+class procedure TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
+  inherited RegisterSystemScheme(scheme);
+
+  scheme.AddSchemeField('template',fdbft_ObjLink).Required:=true;
+  scheme.AddSchemeField('class_type',fdbft_String);
+  scheme.AddSchemeField('class_value',fdbft_String);
+end;
+
+class procedure TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='0.1';
+  if currentVersionId='' then begin
+    currentVersionId := '0.1';
+  end;
+end;
 
 { TFRE_DB_DHCP_TEMPLATE }
 
@@ -10722,6 +10751,7 @@ begin
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_CERTIFICATE);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_TEMPLATE);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_SUBNET);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_FIXED);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_VPN);
@@ -10876,6 +10906,11 @@ begin
   if not conn.CollectionExists(CFRE_DB_DHCP_ENTRY_COLLECTION) then begin
     collection  := conn.CreateCollection(CFRE_DB_DHCP_ENTRY_COLLECTION);
   end;
+
+  if not conn.CollectionExists(CFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION_COLLECTION) then begin
+    collection  := conn.CreateCollection(CFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION_COLLECTION);
+  end;
+
 end;
 
 procedure InitDerivedCollections(const session: TFRE_DB_UserSession; const conn:IFRE_DB_CONNECTION);

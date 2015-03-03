@@ -23,8 +23,8 @@ type
     function        _AddModifyTemplate          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
     function        _AddModifySubnetEntry       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
     function        _AddModifyFixedEntry        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
-    procedure       _StoreHandleTemplates       (const input:IFRE_DB_Object; const entryObj: IFRE_DB_Object);
-    procedure       _AddModifyHandleTemplates   (const ses: IFRE_DB_Usersession; const dbo: IFRE_DB_Object; const res: TFRE_DB_FORM_DESC; const store: TFRE_DB_STORE_DESC);
+    procedure       _StoreHandleTemplates       (const conn: IFRE_DB_CONNECTION; const input:IFRE_DB_Object; const entryObj: IFRE_DB_Object);
+    procedure       _AddModifyHandleTemplates   (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_Usersession; const dbo: IFRE_DB_Object; const res: TFRE_DB_FORM_DESC; const store: TFRE_DB_STORE_DESC; const isSubnet: Boolean);
   protected
     procedure       SetupAppModuleStructure     ; override;
   public
@@ -181,7 +181,7 @@ begin
     block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_subnet_diag_new_subnet_button'),addSubnetSf,true);
   end;
 
-  _AddModifyHandleTemplates(ses,dbo,res,dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  _AddModifyHandleTemplates(conn,ses,dbo,res,dc.GetStoreDescription as TFRE_DB_STORE_DESC,true);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
@@ -254,7 +254,7 @@ begin
     block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_fixed_diag_new_ip_button'),addIPSf,true);
   end;
 
-  _AddModifyHandleTemplates(ses,dbo,res,dc.GetStoreDescription as TFRE_DB_STORE_DESC);
+  _AddModifyHandleTemplates(conn,ses,dbo,res,dc.GetStoreDescription as TFRE_DB_STORE_DESC,false);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
@@ -265,36 +265,101 @@ begin
   Result:=res;
 end;
 
-procedure TFRE_FIRMBOX_DHCP_MOD._StoreHandleTemplates(const input: IFRE_DB_Object; const entryObj: IFRE_DB_Object);
+procedure TFRE_FIRMBOX_DHCP_MOD._StoreHandleTemplates(const conn: IFRE_DB_CONNECTION; const input: IFRE_DB_Object; const entryObj: IFRE_DB_Object);
 var
-  i       : Integer;
-  tPostFix: String;
+  i           : Integer;
+  tPostFix    : String;
+  coll        : IFRE_DB_COLLECTION;
+  relObj      : TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION;
+  relObjExists: Boolean;
+  relObjs     : TFRE_DB_ObjLinkArray;
 begin
+  coll:=conn.GetCollection(CFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION_COLLECTION);
+
+  relObjs:=entryObj.Field('template').AsObjectLinkArray;
   entryObj.DeleteField('template');
+  CheckDbResult(conn.Update(entryObj.CloneToNewObject));
   for i := 0 to 3 do begin
     tPostFix:=IntToStr(i);
-    if input.FieldPathExists('data.template_'+tPostFix) then begin
-      if not input.FieldPath('data.template_'+tPostFix).IsSpecialClearMarked then begin
-        entryObj.Field('template').AddObjectLink(FREDB_H2G(input.FieldPath('data.template_'+tPostFix).AsString));
-      end;
-      input.Field('data').AsObject.DeleteField('template_'+tPostFix);
+    if Length(relObjs)>i then begin
+      CheckDbResult(conn.FetchAs(relObjs[i],TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,relObj));
+      relObjExists:=true;
+    end else begin
+      relObjExists:=false;
     end;
+    if input.FieldPathExists('data.template_'+tPostFix+'.template') and not input.FieldPath('data.template_'+tPostFix+'.template').IsSpecialClearMarked then begin
+      if not relObjExists then begin
+        relObj:=TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION.CreateForDB;
+      end;
+      relObj.Field('template').AsObjectLink:=FREDB_H2G(input.FieldPath('data.template_'+tPostFix+'.template').AsString);
+
+      if input.FieldPathExists('data.template_'+tPostFix+'.class_value') and not input.FieldPath('data.template_'+tPostFix+'.class_value').IsSpecialClearMarked then begin
+        relObj.Field('class_value').AsString:=input.FieldPath('data.template_'+tPostFix+'.class_value').AsString;
+        if input.FieldPathExists('data.template_'+tPostFix+'.class_type') and not input.FieldPath('data.template_'+tPostFix+'.class_type').IsSpecialClearMarked then begin
+          relObj.Field('class_type').AsString:=input.FieldPath('data.template_'+tPostFix+'.class_type').AsString;
+        end else begin
+          relObj.Field('class_type').AsString:='user_class';
+        end;
+      end else begin
+        if relObjExists then begin
+          relObj.DeleteField('class_type');
+          relObj.DeleteField('class_value');
+        end;
+      end;
+      if relObjExists then begin
+        CheckDbResult(conn.Update(relObj));
+      end else begin
+        CheckDbResult(coll.Store(relObj));
+      end;
+      entryObj.Field('template').AddObjectLink(relObj.UID);
+    end else begin
+      if relObjExists then begin //NO LONGER USED => DELETE
+        CheckDbResult(conn.Delete(relObj.UID));
+      end;
+    end;
+    input.Field('data').AsObject.DeleteField('template_'+tPostFix);
   end;
 end;
 
-procedure TFRE_FIRMBOX_DHCP_MOD._AddModifyHandleTemplates(const ses: IFRE_DB_Usersession; const dbo: IFRE_DB_Object; const res: TFRE_DB_FORM_DESC; const store: TFRE_DB_STORE_DESC);
+procedure TFRE_FIRMBOX_DHCP_MOD._AddModifyHandleTemplates(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_Usersession; const dbo: IFRE_DB_Object; const res: TFRE_DB_FORM_DESC; const store: TFRE_DB_STORE_DESC; const isSubnet: Boolean);
 var
-  default: String;
-  i      : Integer;
-  ch     : TFRE_DB_INPUT_CHOOSER_DESC;
+  default   : String;
+  defaultCV : String;
+  defaultCT : String;
+  i         : Integer;
+  ch        : TFRE_DB_INPUT_CHOOSER_DESC;
+  block     : TFRE_DB_INPUT_BLOCK_DESC;
+  cstore    : TFRE_DB_STORE_DESC;
+  relObj    : TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION;
+  postFix   : String;
 begin
+  if isSubnet then begin
+    cstore:=TFRE_DB_STORE_DESC.create.Describe('id');
+    cstore.AddEntry.Describe(FetchModuleTextShort(ses,'template_type_user_class'),'user_class');
+    cstore.AddEntry.Describe(FetchModuleTextShort(ses,'template_type_client_id'),'client_id');
+  end;
+
   for i := 0 to 3 do begin
     if Assigned(dbo) and (dbo.Field('template').ValueCount>i) then begin
-      default:=FREDB_G2H(dbo.Field('template').AsObjectLinkItem[i]);
+      CheckDbResult(conn.FetchAs(dbo.Field('template').AsObjectLinkItem[i],TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,relObj));
+      default:=FREDB_G2H(relObj.Field('template').AsObjectLink);
+      defaultCV:=relObj.Field('class_value').AsString;
+      defaultCT:=relObj.Field('class_type').AsString;
     end else begin
       default:='';
+      defaultCV:='';
+      defaultCT:='';
     end;
-    ch:=res.AddChooser.Describe(FetchModuleTextShort(ses,'template_chooser_label'),'template_'+IntToStr(i),store,dh_chooser_combo,false,false,true,false,default);
+    postFix:=IntToStr(i);
+    block:=res.AddBlock.Describe(FetchModuleTextShort(ses,'template_chooser_label'),'template_'+postFix);
+
+    ch:=block.AddChooser.Describe('','template_'+postFix+'.template',store,dh_chooser_combo,false,false,true,false,default);
+    if isSubnet then begin
+      block.AddChooser(5).Describe('','template_'+postFix+'.class_type',cstore,dh_chooser_combo,true,false,false,false,defaultCT);
+      block.AddInput(5).Describe('','template_'+postFix+'.class_value',false,false,false,false,defaultCV);
+    end else begin
+      block.AddInput(5).Describe(FetchModuleTextShort(ses,'template_user_class_label'),'template_'+postFix+'.class_value',false,false,false,false,defaultCV);
+    end;
     if i<3 then begin
       ch.addDependentInput('template_'+IntToStr(i+1),'',fdv_hidden);
     end;
@@ -374,6 +439,9 @@ begin
     CreateModuleText(conn,'local_address_block','Local Address');
 
     CreateModuleText(conn,'template_chooser_label','Template');
+    CreateModuleText(conn,'template_user_class_label','UserClass');
+    CreateModuleText(conn,'template_type_user_class','UserClass');
+    CreateModuleText(conn,'template_type_client_id','ClientID');
 
     CreateModuleText(conn,'dhcp_fixed_diag_new_ip_button','New IP');
     CreateModuleText(conn,'ip_block','IP');
@@ -987,7 +1055,7 @@ begin
     isNew:=true;
   end;
 
-  _StoreHandleTemplates(input,entryObj);
+  _StoreHandleTemplates(conn,input,entryObj);
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,entryObj,isNew,conn);
 
@@ -1027,7 +1095,7 @@ begin
     isNew:=true;
   end;
 
-  _StoreHandleTemplates(input,entryObj);
+  _StoreHandleTemplates(conn,input,entryObj);
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,entryObj,isNew,conn);
 
