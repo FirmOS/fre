@@ -1604,13 +1604,45 @@ class procedure TFRE_DB_DHCP_TEMPLATE.RegisterSystemScheme(const scheme: IFRE_DB
 var
   group : IFRE_DB_InputGroupSchemeDefinition;
 begin
- scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
- inherited RegisterSystemScheme(scheme);
+  scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
+  inherited RegisterSystemScheme(scheme);
 
- scheme.AddSchemeField('dhcp_id',fdbft_ObjLink).Required:=true;
+  scheme.GetSchemeField('objname').required:=true;
+  scheme.AddSchemeField('dhcp_id',fdbft_ObjLink).Required:=true;
+  scheme.AddSchemeField('routers',fdbft_ObjLink).MultiValues:=true;
+  scheme.AddSchemeField('ien116-name-servers',fdbft_ObjLink).MultiValues:=true;
+  scheme.AddSchemeField('host-name',fdbft_String);
+  scheme.AddSchemeField('domain-name',fdbft_String);
+  scheme.AddSchemeField('ntp-servers',fdbft_ObjLink).MultiValues:=true;
+  scheme.AddSchemeField('domain-search',fdbft_String).MultiValues:=true;
+  scheme.AddSchemeField('tftp-server-name',fdbft_String);
+  scheme.AddSchemeField('bootfile-name',fdbft_String);
+
+  group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
+  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+
+  group:=scheme.AddInputGroup('router').Setup(GetTranslateableTextKey('scheme_router_group'));
+  group.AddInput('routers',GetTranslateableTextKey('scheme_routers'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('dns').Setup(GetTranslateableTextKey('scheme_dns_group'));
+  group.AddInput('ien116-name-servers',GetTranslateableTextKey('scheme_ien116_name_servers'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('ntp').Setup(GetTranslateableTextKey('scheme_ntp_group'));
+  group.AddInput('ntp-servers',GetTranslateableTextKey('scheme_ntp_servers'),false,false,'',CFRE_DB_DHCP_IP_CHOOSER_DC,true,dh_chooser_combo,coll_NONE,true);
+
+  group:=scheme.AddInputGroup('settings').Setup(GetTranslateableTextKey('scheme_settings_group'));
+  group.AddInput('host-name',GetTranslateableTextKey('scheme_host_name'));
+  group.AddInput('domain-name',GetTranslateableTextKey('scheme_domain_name'));
+  group.AddInput('domain-search',GetTranslateableTextKey('scheme_domain_search'));
+  group.AddInput('tftp-server-name',GetTranslateableTextKey('scheme_tftp_server_name'));
+  group.AddInput('bootfile-name',GetTranslateableTextKey('scheme_bootfile_name'));
 
   group:=scheme.AddInputGroup('main').Setup(GetTranslateableTextKey('scheme_main_group'));
-  group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
+  group.UseInputGroup(scheme.DefinedSchemeName,'general');
+  group.UseInputGroup(scheme.DefinedSchemeName,'router');
+  group.UseInputGroup(scheme.DefinedSchemeName,'dns');
+  group.UseInputGroup(scheme.DefinedSchemeName,'ntp');
+  group.UseInputGroup(scheme.DefinedSchemeName,'settings');
 end;
 
 class procedure TFRE_DB_DHCP_TEMPLATE.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
@@ -1620,7 +1652,21 @@ begin
    currentVersionId := '0.1';
 
    StoreTranslateableText(conn,'scheme_main_group','General Information');
+   StoreTranslateableText(conn,'scheme_general_group','General Information');
+   StoreTranslateableText(conn,'scheme_router_group','Router');
+   StoreTranslateableText(conn,'scheme_dns_group','DNS');
+   StoreTranslateableText(conn,'scheme_ntp_group','NTP');
+   StoreTranslateableText(conn,'scheme_settings_group','Settings');
+
    StoreTranslateableText(conn,'scheme_objname','Name');
+   StoreTranslateableText(conn,'scheme_routers','Router');
+   StoreTranslateableText(conn,'scheme_ien116_name_servers','Name Server');
+   StoreTranslateableText(conn,'scheme_host_name','Hostname');
+   StoreTranslateableText(conn,'scheme_domain_name','Domain Name');
+   StoreTranslateableText(conn,'scheme_ntp_servers','NTP Servers');
+   StoreTranslateableText(conn,'scheme_domain_search','Domain Search');
+   StoreTranslateableText(conn,'scheme_tftp_server_name','Server Name');
+   StoreTranslateableText(conn,'scheme_bootfile_name','Bootfile Name');
  end;
 end;
 

@@ -23,7 +23,7 @@ type
     function        _AddModifyTemplate          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const isModify:Boolean):IFRE_DB_Object;
     function        _AddModifySubnetEntry       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
     function        _AddModifyFixedEntry        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
-    procedure       _StoreHandleTemplates       (const conn: IFRE_DB_CONNECTION; const input:IFRE_DB_Object; const entryObj: IFRE_DB_Object);
+    procedure       _StoreHandleTemplates       (const conn: IFRE_DB_CONNECTION; const input:IFRE_DB_Object; const entryObj: IFRE_DB_Object; const isModify: Boolean);
     procedure       _AddModifyHandleTemplates   (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_Usersession; const dbo: IFRE_DB_Object; const res: TFRE_DB_FORM_DESC; const store: TFRE_DB_STORE_DESC; const isSubnet: Boolean);
   protected
     procedure       SetupAppModuleStructure     ; override;
@@ -88,9 +88,17 @@ var
   diagCap     : TFRE_DB_String;
   dbo         : IFRE_DB_Object;
   service     : IFRE_DB_Object;
+  dc          : IFRE_DB_DERIVED_COLLECTION;
+  group       : TFRE_DB_INPUT_GROUP_DESC;
+  block       : TFRE_DB_INPUT_BLOCK_DESC;
+  baseAddIPSf : TFRE_DB_SERVER_FUNC_DESC;
+  addIPSf     : TFRE_DB_SERVER_FUNC_DESC;
 begin
   sf:=CWSF(@WEB_StoreTemplate);
 
+  baseAddIPSf:=CWSF(@fSubnetIPMod.WEB_AddIP);
+  baseAddIPSf.AddParam.Describe('cbclass',self.ClassName);
+  baseAddIPSf.AddParam.Describe('cbuidpath',FREDB_CombineString(self.GetUIDPath,','));
   CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
   if isModify then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
@@ -100,17 +108,53 @@ begin
 
     sf.AddParam.Describe('templateId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'template_modify_diag_cap');
+    baseAddIPSf.AddParam.Describe('cbfunc','ModifyTemplate');
+    baseAddIPSf.AddParam.Describe('selected',dbo.UID_String);
   end else begin
     if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('dhcpId',service.UID_String);
     diagCap:=FetchModuleTextShort(ses,'template_create_diag_cap');
+    baseAddIPSf.AddParam.Describe('cbfunc','AddTemplate');
+    baseAddIPSf.AddParam.Describe('selected',service.UID_String);
   end;
+
+  dc := ses.FetchDerivedCollection(CFRE_DB_DHCP_IP_CHOOSER_DC);
+  dc.Filters.RemoveFilter('domain');
+  dc.Filters.AddUIDFieldFilter('domain','domainid',service.DomainID,dbnf_OneValueFromFilter);
+  dc.Filters.RemoveFilter('scheme');
+  dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4.ClassName]);
 
   GetSystemScheme(TFRE_DB_DHCP_TEMPLATE,scheme);
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
-  res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
+
+  group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'router_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('router'),ses,[],'',false,true);
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','routers');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_new_ip_button'),addIPSf,true);
+  end;
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'dns_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('dns'),ses,[],'',false,true);
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','ien116-name-servers');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_new_ip_button'),addIPSf,true);
+  end;
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'ntp_block'));
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ntp'),ses,[],'',false,true);
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','ntp-servers');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_new_ip_button'),addIPSf,true);
+  end;
+  group.AddSchemeFormGroup(scheme.GetInputGroup('settings'),ses,false,false,'',true,true);
 
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
 
@@ -265,7 +309,7 @@ begin
   Result:=res;
 end;
 
-procedure TFRE_FIRMBOX_DHCP_MOD._StoreHandleTemplates(const conn: IFRE_DB_CONNECTION; const input: IFRE_DB_Object; const entryObj: IFRE_DB_Object);
+procedure TFRE_FIRMBOX_DHCP_MOD._StoreHandleTemplates(const conn: IFRE_DB_CONNECTION; const input: IFRE_DB_Object; const entryObj: IFRE_DB_Object; const isModify: Boolean);
 var
   i           : Integer;
   tPostFix    : String;
@@ -277,8 +321,10 @@ begin
   coll:=conn.GetCollection(CFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION_COLLECTION);
 
   relObjs:=entryObj.Field('template').AsObjectLinkArray;
-  entryObj.DeleteField('template');
-  CheckDbResult(conn.Update(entryObj.CloneToNewObject));
+  if isModify then begin
+    entryObj.DeleteField('template');
+    CheckDbResult(conn.Update(entryObj.CloneToNewObject));
+  end;
   for i := 0 to 3 do begin
     tPostFix:=IntToStr(i);
     if Length(relObjs)>i then begin
@@ -448,6 +494,11 @@ begin
 
     CreateModuleText(conn,'dhcp_subnet_diag_new_subnet_button','New Subnet');
     CreateModuleText(conn,'subnet_block','Subnet');
+
+    CreateModuleText(conn,'dhcp_template_diag_new_ip_button','New IP');
+    CreateModuleText(conn,'router_block','Router');
+    CreateModuleText(conn,'dns_block','Name Server');
+    CreateModuleText(conn,'ntp_block','NTP Server');
   end;
 end;
 
@@ -1055,7 +1106,7 @@ begin
     isNew:=true;
   end;
 
-  _StoreHandleTemplates(conn,input,entryObj);
+  _StoreHandleTemplates(conn,input,entryObj,not isNew);
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,entryObj,isNew,conn);
 
@@ -1095,7 +1146,7 @@ begin
     isNew:=true;
   end;
 
-  _StoreHandleTemplates(conn,input,entryObj);
+  _StoreHandleTemplates(conn,input,entryObj,not isNew);
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,entryObj,isNew,conn);
 
