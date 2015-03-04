@@ -146,6 +146,16 @@ begin
     addIPSf.AddParam.Describe('ipversion','ipv4');
     block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_new_ip_button'),addIPSf,true);
   end;
+
+  block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'dns_block'),'dns2');
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('dns'),ses,[],'dns2',false,true);
+  if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
+    addIPSf:=baseAddIPSf.CloneToNewObject(true).Implementor_HC as TFRE_DB_SERVER_FUNC_DESC;
+    addIPSf.AddParam.Describe('field','dns2.ien116-name-servers');
+    addIPSf.AddParam.Describe('ipversion','ipv4');
+    block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_new_ip_button'),addIPSf,true);
+  end;
+
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'ntp_block'));
   block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ntp'),ses,[],'',false,true);
   if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
@@ -160,6 +170,9 @@ begin
 
   if isModify then begin
     res.FillWithObjectValues(dbo,ses);
+    if dbo.Field('ien116-name-servers').ValueCount>1 then begin
+      res.SetElementValue('dns2.ien116-name-servers',FREDB_G2H(dbo.Field('ien116-name-servers').AsObjectLinkItem[1]));
+    end;
   end;
 
   Result:=res;
@@ -951,6 +964,11 @@ begin
     templateObj.SetDomainID(service.DomainID);
     templateObj.Field('dhcp_id').AsObjectLink:=service.UID;
     isNew:=true;
+  end;
+
+  if input.FieldPathExists('data.dns2.ien116-name-servers') then begin
+    input.FieldPathCreate('data.ien116-name-servers').AddString(input.FieldPath('data.dns2.ien116-name-servers').AsString);
+    input.FieldPath('data').AsObject.DeleteField('dns2');
   end;
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,templateObj,isNew,conn);
