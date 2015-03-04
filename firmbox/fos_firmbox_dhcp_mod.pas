@@ -50,6 +50,13 @@ type
     function        WEB_DeleteTemplateConfirmed (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TemplateSC              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_TemplateMenu            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddStandardOption       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreStandardOption     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_AddCustomOption         (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_StoreCustomOption       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_DeleteOption            (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CleanupTemplateDiag     (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_CleanupAddOptionDiag    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
     function        WEB_AddSubnetEntry          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_AddFixedEntry           (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -93,6 +100,8 @@ var
   block       : TFRE_DB_INPUT_BLOCK_DESC;
   baseAddIPSf : TFRE_DB_SERVER_FUNC_DESC;
   addIPSf     : TFRE_DB_SERVER_FUNC_DESC;
+  opSf        : TFRE_DB_SERVER_FUNC_DESC;
+  i           : Integer;
 begin
   sf:=CWSF(@WEB_StoreTemplate);
 
@@ -105,6 +114,15 @@ begin
 
     if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,dbo.DomainID) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    if not ses.GetSessionModuleData(ClassName).FieldExists('templateDiagData') then begin //FIRST CALL - REFILL templateDiagData
+      for i := 0 to dbo.Field('standard_options').ValueCount - 1 do begin
+        ses.GetSessionModuleData(ClassName).FieldPathCreate('templateDiagData.standard').AddObject(dbo.Field('standard_options').AsObjectItem[i].CloneToNewObject());
+      end;
+      for i := 0 to dbo.Field('custom_options').ValueCount - 1 do begin
+        ses.GetSessionModuleData(ClassName).FieldPathCreate('templateDiagData.custom').AddObject(dbo.Field('custom_options').AsObjectItem[i].CloneToNewObject());
+      end;
+    end;
 
     sf.AddParam.Describe('templateId',dbo.UID_String);
     diagCap:=FetchModuleTextShort(ses,'template_modify_diag_cap');
@@ -127,7 +145,7 @@ begin
   dc.filters.AddSchemeObjectFilter('scheme',[TFRE_DB_IPV4.ClassName]);
 
   GetSystemScheme(TFRE_DB_DHCP_TEMPLATE,scheme);
-  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600,false);
 
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'router_block'));
@@ -166,7 +184,44 @@ begin
   end;
   group.AddSchemeFormGroup(scheme.GetInputGroup('settings'),ses,false,false,'',true,true);
 
+  group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'dhcp_template_diag_advanced_group'),true,input.Field('advancedCollapsed').AsBoolean);
+
+  if ses.GetSessionModuleData(ClassName).FieldExists('templateDiagData') then begin
+    for i := 0 to ses.GetSessionModuleData(ClassName).Field('templateDiagData').AsObject.Field('standard').ValueCount-1 do begin
+      block:=group.AddBlock.Describe(StringReplace(FetchModuleTextShort(ses,'dhcp_template_diag_standard_option_label'),'%number_str%',ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.standard').AsObjectItem[i].Field('number').AsString,[rfReplaceAll]));
+      block.AddInput.Describe('',ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.standard').AsObjectItem[i].UID_String,false,false,true,false,
+                              ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.standard').AsObjectItem[i].Field('value').AsString);
+      opSf:=CWSF(@WEB_DeleteOption);
+      opSf.AddParam.Describe('selected',input.Field('selected').AsString);
+      opSf.AddParam.Describe('idx',IntToStr(i));
+      opSf.AddParam.Describe('type','standard');
+      block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_delete_option'),opSf,true);
+    end;
+
+    for i := 0 to ses.GetSessionModuleData(ClassName).Field('templateDiagData').AsObject.Field('custom').ValueCount-1 do begin
+      group.AddInput.Describe(FetchModuleTextShort(ses,'dhcp_template_diag_custom_option_label'),ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.custom').AsObjectItem[i].UID_String+'_d',false,false,true,false,
+                              ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.custom').AsObjectItem[i].Field('declaration').AsString);
+      block:=group.AddBlock.Describe('','',true);
+      block.AddInput.Describe('',ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.custom').AsObjectItem[i].UID_String+'_u',false,false,true,false,
+                              ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.custom').AsObjectItem[i].Field('usage').AsString);
+      opSf:=CWSF(@WEB_DeleteOption);
+      opSf.AddParam.Describe('selected',input.Field('selected').AsString);
+      opSf.AddParam.Describe('idx',IntToStr(i));
+      opSf.AddParam.Describe('type','custom');
+      block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_delete_option'),opSf,true);
+    end;
+  end;
+
+  block:=group.AddBlock.Describe();
+  opSf:=CWSF(@WEB_AddStandardOption);
+  opSf.AddParam.Describe('selected',input.Field('selected').AsString);
+  block.AddInputButton().Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_add_standard_option'),opSf,true);
+  opSf:=CWSF(@WEB_AddCustomOption);
+  opSf.AddParam.Describe('selected',input.Field('selected').AsString);
+  block.AddInputButton().Describe('',FetchModuleTextShort(ses,'dhcp_template_diag_add_custom_option'),opSf,true);
+
   res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  res.AddButton.Describe(FetchModuleTextShort(ses,'dhcp_template_diag_close_button'),CWSF(@WEB_CleanupTemplateDiag),fdbbt_close);
 
   if isModify then begin
     res.FillWithObjectValues(dbo,ses);
@@ -199,7 +254,10 @@ begin
   CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
   if Assigned(dbo) then begin
     isModify:=true;
-    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,dbo.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('entryId',dbo.UID_String);
@@ -208,7 +266,10 @@ begin
     addSubnetSf.AddParam.Describe('selected',dbo.UID_String);
   end else begin
     isModify:=false;
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('dhcpId',service.UID_String);
@@ -270,7 +331,10 @@ begin
   CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
   if Assigned(dbo) then begin
     isModify:=true;
-    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,dbo.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('entryId',dbo.UID_String);
@@ -280,7 +344,10 @@ begin
     addIPSf.AddParam.Describe('selected',dbo.UID_String);
   end else begin
     isModify:=false;
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('dhcpId',service.UID_String);
@@ -436,12 +503,16 @@ end;
 
 class procedure TFRE_FIRMBOX_DHCP_MOD.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
 begin
-  newVersionId:='0.1';
+  newVersionId:='0.2';
   if currentVersionId='' then begin
     currentVersionId := '0.1';
 
     CreateModuleText(conn,'dhcp_description','DHCP','DHCP','DHCP');
 
+  end;
+
+  if currentVersionId='0.1' then begin
+    currentVersionId := '0.2';
     CreateModuleText(conn,'general_tab','General');
     CreateModuleText(conn,'hosts_tab','Ranges/Hosts');
     CreateModuleText(conn,'templates_tab','Templates');
@@ -512,6 +583,22 @@ begin
     CreateModuleText(conn,'router_block','Router');
     CreateModuleText(conn,'dns_block','Name Server');
     CreateModuleText(conn,'ntp_block','NTP Server');
+
+    CreateModuleText(conn,'dhcp_template_diag_advanced_group','Advanced');
+    CreateModuleText(conn,'dhcp_template_diag_add_standard_option','Add Standard Option');
+    CreateModuleText(conn,'dhcp_template_diag_add_custom_option','Add Custom Option');
+
+    CreateModuleText(conn,'dhcp_template_diag_close_button','Close');
+    CreateModuleText(conn,'dhcp_template_diag_standard_option_label','Standard Option %number_str%');
+    CreateModuleText(conn,'dhcp_template_diag_custom_option_label','Custom Option');
+    CreateModuleText(conn,'dhcp_template_diag_delete_option','Delete');
+
+    CreateModuleText(conn,'dhcp_template_add_standard_option_diag_cap','Add Standard Option');
+    CreateModuleText(conn,'dhcp_template_add_standard_option_number','Number');
+    CreateModuleText(conn,'dhcp_template_add_standard_option_value','Value');
+    CreateModuleText(conn,'dhcp_template_add_custom_option_diag_cap','Add Custom Option');
+    CreateModuleText(conn,'dhcp_template_add_custom_option_declaration','Declaration');
+    CreateModuleText(conn,'dhcp_template_add_custom_option_usage','Usage');
   end;
 end;
 
@@ -931,11 +1018,15 @@ end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_AddTemplate(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
+  WEB_CleanupTemplateDiag(input,ses,app,conn);
+  input.Field('advancedCollapsed').AsBoolean:=true;
   Result:=_AddModifyTemplate(input,ses,app,conn,false);
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_ModifyTemplate(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 begin
+  WEB_CleanupTemplateDiag(input,ses,app,conn);
+  input.Field('advancedCollapsed').AsBoolean:=true;
   Result:=_AddModifyTemplate(input,ses,app,conn,true);
 end;
 
@@ -945,6 +1036,7 @@ var
   templateObj : TFRE_DB_DHCP_TEMPLATE;
   isNew       : Boolean;
   service     : IFRE_DB_Object;
+  i: Integer;
 
 begin
   GetSystemScheme(TFRE_DB_DHCP_TEMPLATE,scheme);
@@ -966,12 +1058,23 @@ begin
     isNew:=true;
   end;
 
-  if input.FieldPathExists('data.dns2.ien116-name-servers') then begin
+  if input.FieldPathExists('data.dns2.ien116-name-servers') and not input.FieldPath('data.dns2.ien116-name-servers').IsSpecialClearMarked then begin
     input.FieldPathCreate('data.ien116-name-servers').AddString(input.FieldPath('data.dns2.ien116-name-servers').AsString);
-    input.FieldPath('data').AsObject.DeleteField('dns2');
   end;
+  input.Field('data').AsObject.DeleteField('dns2');
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,templateObj,isNew,conn);
+
+  templateObj.DeleteField('standard_options');
+  templateObj.DeleteField('custom_options');
+  if ses.GetSessionModuleData(ClassName).FieldExists('templateDiagData') then begin
+    for i := 0 to ses.GetSessionModuleData(ClassName).Field('templateDiagData').AsObject.Field('standard').ValueCount-1 do begin
+      templateObj.Field('standard_options').AddObject(ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.standard').AsObjectItem[i].CloneToNewObject());
+    end;
+    for i := 0 to ses.GetSessionModuleData(ClassName).Field('templateDiagData').AsObject.Field('custom').ValueCount-1 do begin
+      templateObj.Field('custom_options').AddObject(ses.GetSessionModuleData(ClassName).FieldPath('templateDiagData.custom').AsObjectItem[i].CloneToNewObject());
+    end;
+  end;
 
   if isNew then begin
     CheckDbResult(conn.GetCollection(CFRE_DB_DHCP_TEMPLATE_COLLECTION).Store(templateObj));
@@ -1073,6 +1176,117 @@ begin
     res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_template'),'',func);
   end;
   Result:=res;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_AddStandardOption(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res: TFRE_DB_FORM_DIALOG_DESC;
+  sf : TFRE_DB_SERVER_FUNC_DESC;
+begin
+  CheckClassVisibility4AnyDomain(ses);
+  ses.GetSessionModuleData(ClassName).Field('Add_templateDiagData').AsObject:=input.Field('data').AsObject.CloneToNewObject();
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'dhcp_template_add_standard_option_diag_cap'),600,false);
+  res.AddNumber.Describe(FetchModuleTextShort(ses,'dhcp_template_add_standard_option_number'),'number',true,false,false,false,'',0);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'dhcp_template_add_standard_option_value'),'value',true);
+
+  sf:=CWSF(@WEB_StoreStandardOption);
+  sf.AddParam.Describe('selected',input.Field('selected').AsString);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  res.AddButton.Describe(FetchModuleTextShort(ses,'dhcp_template_diag_close_button'),CWSF(@WEB_CleanupAddOptionDiag),fdbbt_close);
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_StoreStandardOption(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  obj : IFRE_DB_Object;
+  res : TFRE_DB_FORM_DIALOG_DESC;
+begin
+  obj:=GFRE_DBI.NewObject;
+  obj.Field('number').AsInt32:=input.FieldPath('data.number').AsInt32;
+  obj.Field('value').AsString:=input.FieldPath('data.value').AsString;
+  ses.GetSessionModuleData(ClassName).Field('templateDiagData').AsObject.Field('standard').AddObject(obj);
+  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe); //CLOSE ADD
+  ses.GetSessionModuleData(ClassName).Field('templateDiagRefresh').AsBoolean:=true;
+  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe); //CLOSE TEMPLATE DIAG
+
+  input.DeleteField('data');
+  input.Field('advancedCollapsed').AsBoolean:=false;
+  res:=_AddModifyTemplate(input,ses,app,conn,input.Field('selected').AsString<>'').Implementor_HC as TFRE_DB_FORM_DIALOG_DESC ; //REBUILD TEMPLATE DIAG
+  res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('Add_templateDiagData').AsObject,ses,'',false);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_AddCustomOption(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res: TFRE_DB_FORM_DIALOG_DESC;
+  sf : TFRE_DB_SERVER_FUNC_DESC;
+begin
+  CheckClassVisibility4AnyDomain(ses);
+  ses.GetSessionModuleData(ClassName).Field('Add_templateDiagData').AsObject:=input.Field('data').AsObject.CloneToNewObject();
+
+  res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(FetchModuleTextShort(ses,'dhcp_template_add_custom_option_diag_cap'),600,false);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'dhcp_template_add_custom_option_declaration'),'declaration',true);
+  res.AddInput.Describe(FetchModuleTextShort(ses,'dhcp_template_add_custom_option_usage'),'usage',true);
+
+  sf:=CWSF(@WEB_StoreCustomOption);
+  sf.AddParam.Describe('selected',input.Field('selected').AsString);
+  res.AddButton.Describe(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('button_save')),sf,fdbbt_submit);
+  res.AddButton.Describe(FetchModuleTextShort(ses,'dhcp_template_diag_close_button'),CWSF(@WEB_CleanupAddOptionDiag),fdbbt_close);
+
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_StoreCustomOption(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  obj  : IFRE_DB_Object;
+  res  : TFRE_DB_FORM_DIALOG_DESC;
+begin
+  obj:=GFRE_DBI.NewObject;
+  obj.Field('declaration').AsString:=input.FieldPath('data.declaration').AsString;
+  obj.Field('usage').AsString:=input.FieldPath('data.usage').AsString;
+  ses.GetSessionModuleData(ClassName).Field('templateDiagData').AsObject.Field('custom').AddObject(obj);
+  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe); //CLOSE ADD
+  ses.GetSessionModuleData(ClassName).Field('templateDiagRefresh').AsBoolean:=true;
+  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe); //CLOSE TEMPLATE DIAG
+
+  input.DeleteField('data');
+  input.Field('advancedCollapsed').AsBoolean:=false;
+  res:=_AddModifyTemplate(input,ses,app,conn,input.Field('selected').AsString<>'').Implementor_HC as TFRE_DB_FORM_DIALOG_DESC ; //REBUILD TEMPLATE DIAG
+  res.FillWithObjectValues(ses.GetSessionModuleData(ClassName).Field('Add_templateDiagData').AsObject,ses,'',false);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_DeleteOption(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  res  : TFRE_DB_FORM_DIALOG_DESC;
+begin
+  ses.GetSessionModuleData(ClassName).Field('templateDiagData').AsObject.Field(input.Field('type').AsString).RemoveObject(input.Field('idx').AsInt32);
+
+  ses.GetSessionModuleData(ClassName).Field('templateDiagRefresh').AsBoolean:=true;
+  ses.SendServerClientRequest(TFRE_DB_CLOSE_DIALOG_DESC.create.Describe); //CLOSE TEMPLATE DIAG
+
+  input.Field('advancedCollapsed').AsBoolean:=false;
+  res:=_AddModifyTemplate(input,ses,app,conn,input.Field('selected').AsString<>'').Implementor_HC as TFRE_DB_FORM_DIALOG_DESC ; //REBUILD TEMPLATE DIAG
+  res.FillWithObjectValues(input.Field('data').AsObject,ses,'',false);
+  Result:=res;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_CleanupTemplateDiag(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  if ses.GetSessionModuleData(ClassName).FieldExists('templateDiagRefresh') then begin
+    ses.GetSessionModuleData(ClassName).DeleteField('templateDiagRefresh');
+  end else begin
+    ses.GetSessionModuleData(ClassName).DeleteField('templateDiagData');
+  end;
+  Result:=GFRE_DB_NIL_DESC;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_CleanupAddOptionDiag(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+begin
+  ses.GetSessionModuleData(ClassName).DeleteField('Add_templateDiagData');
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_AddSubnetEntry(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;

@@ -1028,6 +1028,22 @@ type
     function RIF_CreateOrUpdateService   (const running_ctx : TObject) : IFRE_DB_Object; override;
   end;
 
+  { TFRE_DB_DHCP_TEMPLATE_STANDARD_OPTION }
+
+  TFRE_DB_DHCP_TEMPLATE_STANDARD_OPTION = class(TFRE_DB_ObjectEx)
+  public
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+  end;
+
+  { TFRE_DB_DHCP_TEMPLATE_CUSTOM_OPTION }
+
+  TFRE_DB_DHCP_TEMPLATE_CUSTOM_OPTION = class(TFRE_DB_ObjectEx)
+  public
+    class procedure RegisterSystemScheme (const scheme: IFRE_DB_SCHEMEOBJECT); override;
+    class procedure InstallDBObjects     (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+  end;
+
   { TFRE_DB_DHCP_TEMPLATE }
 
   TFRE_DB_DHCP_TEMPLATE = class(TFRE_DB_ObjectEx)
@@ -1578,6 +1594,44 @@ implementation
    result   := gresult;
   end;
 
+{ TFRE_DB_DHCP_TEMPLATE_CUSTOM_OPTION }
+
+class procedure TFRE_DB_DHCP_TEMPLATE_CUSTOM_OPTION.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
+  inherited RegisterSystemScheme(scheme);
+
+  scheme.AddSchemeField('declaration',fdbft_String).required:=true;
+  scheme.AddSchemeField('usage',fdbft_String).Required:=true;
+end;
+
+class procedure TFRE_DB_DHCP_TEMPLATE_CUSTOM_OPTION.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='0.1';
+  if currentVersionId='' then begin
+    currentVersionId := '0.1';
+  end;
+end;
+
+{ TFRE_DB_DHCP_TEMPLATE_STANDARD_OPTION }
+
+class procedure TFRE_DB_DHCP_TEMPLATE_STANDARD_OPTION.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  scheme.SetParentSchemeByName(TFRE_DB_ObjectEx.ClassName);
+  inherited RegisterSystemScheme(scheme);
+
+  scheme.AddSchemeField('number',fdbft_Int32).required:=true;
+  scheme.AddSchemeField('value',fdbft_String).Required:=true;
+end;
+
+class procedure TFRE_DB_DHCP_TEMPLATE_STANDARD_OPTION.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='0.1';
+  if currentVersionId='' then begin
+    currentVersionId := '0.1';
+  end;
+end;
+
 { TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION }
 
 class procedure TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
@@ -1617,6 +1671,9 @@ begin
   scheme.AddSchemeField('domain-search',fdbft_String).MultiValues:=true;
   scheme.AddSchemeField('tftp-server-name',fdbft_String);
   scheme.AddSchemeField('bootfile-name',fdbft_String);
+
+  scheme.AddSchemeFieldSubscheme('standard_options',TFRE_DB_DHCP_TEMPLATE_STANDARD_OPTION.ClassName).MultiValues:=true;
+  scheme.AddSchemeFieldSubscheme('custom_options',TFRE_DB_DHCP_TEMPLATE_CUSTOM_OPTION.ClassName).MultiValues:=true;
 
   group:=scheme.AddInputGroup('general').Setup(GetTranslateableTextKey('scheme_general_group'));
   group.AddInput('objname',GetTranslateableTextKey('scheme_objname'));
@@ -10796,6 +10853,8 @@ begin
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_CA);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_CERTIFICATE);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_TEMPLATE_STANDARD_OPTION);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_TEMPLATE_CUSTOM_OPTION);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_TEMPLATE);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_DHCP_SUBNET);
