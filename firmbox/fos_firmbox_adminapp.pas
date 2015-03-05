@@ -642,7 +642,6 @@ begin
       FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Network/Firewall',FetchAppTextShort(session,'sitemap_firewall'),'images_apps/firmbox_admin/firewall.svg',TFRE_FIRMBOX_ADMIN_NETWORK_MOD.ClassName+':'+TFRE_FIRMBOX_FIREWALL_MOD.ClassName,0,true);
     end;
     FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Network/VPN',FetchAppTextShort(session,'sitemap_vpn'),'images_apps/firmbox_admin/vpn.svg',TFRE_FIRMBOX_ADMIN_NETWORK_MOD.ClassName,0,true);
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Network/Portsecurity',FetchAppTextShort(session,'sitemap_portsecurity'),'images_apps/firmbox_admin/portsecurity.svg',TFRE_FIRMBOX_ADMIN_NETWORK_MOD.ClassName,0,true);
     if conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_DHCP_MOD) then begin
       disableSection:=false;
       FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Network/DHCP',FetchAppTextShort(session,'sitemap_dhcp'),'images_apps/firmbox_admin/dhcp.svg',TFRE_FIRMBOX_ADMIN_NETWORK_MOD.ClassName+':'+TFRE_FIRMBOX_DHCP_MOD.ClassName,0,true);
@@ -664,21 +663,6 @@ begin
     FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Monitoring/Physical',FetchAppTextShort(session,'sitemap_monitoring_physical'),'images_apps/firmbox_admin/monphysical.svg',TFRE_FIRMBOX_ADMIN_MON_MOD.ClassName+':'+TFOS_CITYCOM_MOS_PHYSICAL_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFOS_CITYCOM_MOS_PHYSICAL_MOD));
     FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Monitoring/Logical',FetchAppTextShort(session,'sitemap_monitoring_logical'),'images_apps/firmbox_admin/monlogical.svg',TFRE_FIRMBOX_ADMIN_MON_MOD.ClassName+':'+TFOS_CITYCOM_MOS_LOGICAL_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFOS_CITYCOM_MOS_LOGICAL_MOD));
     FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Monitoring/Jobs',FetchAppTextShort(session,'sitemap_monitoring_jobs'),'images_apps/firmbox_admin/monjobs.svg',TFRE_FIRMBOX_ADMIN_MON_MOD.ClassName+':'+TFRE_COMMON_JOBS_MOD.ClassName,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_COMMON_JOBS_MOD));
-    disableApp:=false;
-  end;
-  //VM
-  if conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_ADMIN_VM_MOD) then begin //FIXXME
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Virtualisation',FetchAppTextShort(session,'sitemap_virtualisation'),'images_apps/firmbox_admin/virtualisation.svg',TFRE_FIRMBOX_ADMIN_VM_MOD.ClassName,0,true);
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Virtualisation/Datastore',FetchAppTextShort(session,'sitemap_datastore'),'images_apps/firmbox_admin/datastore.svg',TFRE_FIRMBOX_ADMIN_VM_MOD.ClassName+':'+TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Virtualisation/VM',FetchAppTextShort(session,'sitemap_vm'),'images_apps/firmbox_admin/vm.svg',TFRE_FIRMBOX_ADMIN_VM_MOD.ClassName+':'+TFRE_FIRMBOX_VM_MACHINES_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_MACHINES_MOD));
-    disableApp:=false;
-  end;
-  //ACCESS CONTROL
-  if conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_ADMIN_AC_MOD) then begin //FIXXME
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/AccessControl',FetchAppTextShort(session,'sitemap_accesscontrol'),'images_apps/firmbox_admin/accesscontrol.svg',TFRE_FIRMBOX_ADMIN_AC_MOD.ClassName,0,true);
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/AccessControl/Users',FetchAppTextShort(session,'sitemap_users'),'images_apps/firmbox_admin/user.svg',TFRE_FIRMBOX_ADMIN_AC_MOD.ClassName+':'+TFRE_COMMON_USER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_COMMON_USER_MOD));
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/AccessControl/Groups',FetchAppTextShort(session,'sitemap_groups'),'images_apps/firmbox_admin/group.svg',TFRE_FIRMBOX_ADMIN_AC_MOD.ClassName+':'+TFRE_COMMON_GROUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_COMMON_GROUP_MOD));
-    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/AccessControl/Roles',FetchAppTextShort(session,'sitemap_roles'),'images_apps/firmbox_admin/role.svg',TFRE_FIRMBOX_ADMIN_AC_MOD.ClassName+':'+TFRE_COMMON_ROLE_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_COMMON_ROLE_MOD));
     disableApp:=false;
   end;
   //SERVICES
@@ -713,6 +697,21 @@ begin
       disableApp:=false;
     end;
   end;
+  //ACCESS CONTROL
+  if conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_ADMIN_AC_MOD) then begin //FIXXME
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/AccessControl',FetchAppTextShort(session,'sitemap_accesscontrol'),'images_apps/firmbox_admin/accesscontrol.svg',TFRE_FIRMBOX_ADMIN_AC_MOD.ClassName,0,true);
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/AccessControl/Users',FetchAppTextShort(session,'sitemap_users'),'images_apps/firmbox_admin/user.svg',TFRE_FIRMBOX_ADMIN_AC_MOD.ClassName+':'+TFRE_COMMON_USER_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_COMMON_USER_MOD));
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/AccessControl/Groups',FetchAppTextShort(session,'sitemap_groups'),'images_apps/firmbox_admin/group.svg',TFRE_FIRMBOX_ADMIN_AC_MOD.ClassName+':'+TFRE_COMMON_GROUP_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_COMMON_GROUP_MOD));
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/AccessControl/Roles',FetchAppTextShort(session,'sitemap_roles'),'images_apps/firmbox_admin/role.svg',TFRE_FIRMBOX_ADMIN_AC_MOD.ClassName+':'+TFRE_COMMON_ROLE_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_COMMON_ROLE_MOD));
+    disableApp:=false;
+  end;
+  //VM
+  if conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_ADMIN_VM_MOD) then begin //FIXXME
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Virtualisation',FetchAppTextShort(session,'sitemap_virtualisation'),'images_apps/firmbox_admin/virtualisation.svg',TFRE_FIRMBOX_ADMIN_VM_MOD.ClassName,0,true);
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Virtualisation/Datastore',FetchAppTextShort(session,'sitemap_datastore'),'images_apps/firmbox_admin/datastore.svg',TFRE_FIRMBOX_ADMIN_VM_MOD.ClassName+':'+TFRE_FIRMBOX_VM_RESOURCES_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_RESOURCES_MOD));
+    FREDB_SiteMap_AddRadialEntry(SiteMapData,'Admin/Virtualisation/VM',FetchAppTextShort(session,'sitemap_vm'),'images_apps/firmbox_admin/vm.svg',TFRE_FIRMBOX_ADMIN_VM_MOD.ClassName+':'+TFRE_FIRMBOX_VM_MACHINES_MOD.Classname,0,conn.sys.CheckClassRight4AnyDomain(sr_FETCH,TFRE_FIRMBOX_VM_MACHINES_MOD));
+    disableApp:=false;
+  end;
   if disableApp then begin
     FREDB_SiteMap_DisableEntry(SiteMapData,'Admin');
   end;
@@ -735,7 +734,6 @@ begin
     CreateAppText(conn,'sitemap_netsrouting','Nets/Routing','','Nets/Routing');
     CreateAppText(conn,'sitemap_firewall','Firewall','','Firewall');
     CreateAppText(conn,'sitemap_vpn','VPN','','VPN');
-    CreateAppText(conn,'sitemap_portsecurity','Portsecurity','','Portsecurity');
     CreateAppText(conn,'sitemap_dhcp','DHCP','','DHCP');
     CreateAppText(conn,'sitemap_virtualisation','Virtualisation','','Virtualisation');
     CreateAppText(conn,'sitemap_vm','Virtual Machines','','Virtual Machines');
