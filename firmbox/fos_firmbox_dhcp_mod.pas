@@ -548,6 +548,9 @@ begin
     CreateModuleText(conn,'template_delete_error_used_diag_msg','DHCP Template cannot be deleted because it is used by at least on DHCP entry.');
 
     CreateModuleText(conn,'entries_grid_objname','Name');
+    CreateModuleText(conn,'entries_grid_details','Details');
+    CreateModuleText(conn,'entries_grid_details_fixed','Mac: %mac_str% IP: %ip_str%');
+    CreateModuleText(conn,'entries_grid_details_subnet','Subnet: %subnet_str% Range: %range_start_str% - %range_end_str%');
 
     CreateModuleText(conn,'tb_create_subnet_entry','Add Subnet');
     CreateModuleText(conn,'tb_create_fixed_entry','Add Fixed');
@@ -621,6 +624,21 @@ var
       str:=StringReplace(langres[1],'%zone_str%',transformed_object.Field('objname').AsString,[rfReplaceAll]);
     end;
     transformed_object.Field('label').AsString:=str;
+  end;
+
+  procedure _setEntryDetails(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  var
+    str: String;
+  begin
+    if (transformed_object.Field('subnet_ip').AsString<>'') then begin
+      str:=StringReplace(langres[1],'%subnet_str%',transformed_object.Field('subnet_ip').AsString + '/' + transformed_object.Field('subnet_bits').AsString,[rfReplaceAll]);
+      str:=StringReplace(str,'%range_start_str%',input.Field('range_start').AsString,[rfReplaceAll]);
+      str:=StringReplace(str,'%range_end_str%',input.Field('range_end').AsString,[rfReplaceAll]);
+    end else begin
+      str:=StringReplace(langres[0],'%mac_str%',input.Field('mac').AsString,[rfReplaceAll]);
+      str:=StringReplace(str,'%ip_str%',transformed_object.Field('fixed_ip').AsString,[rfReplaceAll]);
+    end;
+    transformed_object.Field('details').AsString:=str;
   end;
 
 begin
@@ -702,7 +720,12 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'entries_grid_objname'));
+      AddOneToOnescheme('details','',FetchModuleTextShort(session,'entries_grid_details'),dt_string);
+      AddMatchingReferencedFieldArray(['SUBNET>','BASE_IP>'],'ip','subnet_ip','',false);
+      AddMatchingReferencedFieldArray(['SUBNET>'],'subnet_bits','subnet_bits','',false);
+      AddMatchingReferencedFieldArray(['IP>'],'ip','fixed_ip','',false);
       AddMatchingReferencedFieldArray(['DHCP_ID>TFRE_DB_DHCP'],'uid','dhcp_uid','',false);
+      SetSimpleFuncTransformNested(@_setEntryDetails,[FetchModuleTextShort(session,'entries_grid_details_fixed'),FetchModuleTextShort(session,'entries_grid_details_subnet')]);
     end;
 
     dc := session.NewDerivedCollection('DHCP_ENTRIES_GRID');
