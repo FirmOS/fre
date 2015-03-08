@@ -853,7 +853,7 @@ implementation
           jsContentAdd('"class=''firmosFormInputTD''>"+');
           case elem.ClassName of
             'TFRE_DB_INPUT_DESCRIPTION_DESC': begin
-                                                jsContentAdd('"<div class=''firmosFormDescriptionField''>'+ _EscapeValueString(elem.Field('defaultValue').AsString) +'</div>"+');
+                                                jsContentAdd('"<input class=''firmosFormDescriptionField id='''+elem.Field('id').AsString+''' name='''+elem.Field('field').AsString+''' value= '''+ _EscapeValueString(elem.Field('defaultValue').AsString) + ''' dojoType=''FIRMOS.DescriptionTextBox'' type=''text'' style=''width:100%''>"+');
                                               end;
             'TFRE_DB_INPUT_BUTTON_DESC': begin
                                            jsContentAdd('"<div class=''firmosFormButtonField''>"+');
@@ -1524,7 +1524,7 @@ implementation
                            end;
                          end;
             dt_icon   : begin
-                          jsContentAdd('      ,renderCell: function(object, value, node, options) {return this.grid._renderIcons(object, value, node, options);}');
+                          jsContentAdd('      ,renderCell: function(object, value, node, options) {return this.grid._renderIcons(object, value, node, options, "'+elem.Field('tooltipId').AsString+'");}');
                           jsContentAdd('      ,className: "grid-' + co.Field('id').AsString + '-' + elem.Field('id').AsString + '-css.firmosGridIcon"');
                            if elem.Field('editable').AsBoolean then begin
                              jsContentAdd('      ,editor: FIRMOS.GridTextBox');

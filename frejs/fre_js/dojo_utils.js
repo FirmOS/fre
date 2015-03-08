@@ -2060,7 +2060,7 @@ dojo.declare("FIRMOS.GridBase", null, {
     div.appendChild(checkbox);
     return div;
   },
-  _renderIcons: function(object, value, node, options) {
+  _renderIcons: function(object, value, node, options, tooltipId) {
     var div = document.createElement('div'); 
     if (!value || (value=='')) {
      return '';
@@ -2072,7 +2072,13 @@ dojo.declare("FIRMOS.GridBase", null, {
     }
     var ret=''; 
     for (var i=0;i<vals.length;i++) {
-      ret = ret + '<img src="' + vals[i] + '">';
+      ret = ret + '<img src="' + vals[i] + '"';
+      if (tooltipId && (tooltipId!='')) {
+        if (object[tooltipId] && object[tooltipId][i]) {
+          ret = ret + ' title="'+object[tooltipId][i]+'"';
+        }
+      }
+      ret = ret + '>';
     } 
     div.innerHTML = ret;
     return div;
@@ -4833,6 +4839,14 @@ dojo.declare("FIRMOS.ValidationTextBox", dijit.form.ValidationTextBox, {
       form.checkDepAndGroupRequiredFields(this);
       form.submitOnChange(this);
     }
+  }
+});
+
+//DescriptionTextBox
+dojo.declare("FIRMOS.DescriptionTextBox", dijit.form.TextBox, {
+  disabled: true,
+  _updatePlaceHolder: function() {
+    this.domNode.innerHTML = this.value;
   }
 });
 
