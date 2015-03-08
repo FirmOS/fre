@@ -1021,7 +1021,7 @@ begin
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'service_grid_objname'));
       AddMatchingReferencedFieldArray(['SERVICEPARENT>TFRE_DB_ZONE'],'objname','zone',FetchModuleTextShort(session,'service_grid_zone'));
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,'',false,'domainid');
     end;
 
     servicesGrid := session.NewDerivedCollection('FIREWALL_SERVICES_GRID');
@@ -1036,7 +1036,7 @@ begin
     with transform do begin
       AddOneToOnescheme('objname');
       AddOneToOnescheme('label');
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_string,true,true,1,'','',nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_string,true,true,1,'','',nil,'',false,'domainid');
       AddMatchingReferencedField(['TEMPLATEID>TFRE_DB_FBZ_TEMPLATE'],'serviceclasses');
       AddMatchingReferencedField(['TFRE_DB_FIREWALL_SERVICE<SERVICEPARENT'],'uid','firewall','',false,dt_string,false,false,1,'','OK');
       AddOneToOnescheme('disabledSCs');

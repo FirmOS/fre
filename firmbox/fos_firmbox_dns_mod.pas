@@ -725,7 +725,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,'',false,'domainid');
       AddOneToOnescheme('objname','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddOneToOnescheme('default','default','',dt_description);
       AddMatchingReferencedField('<NETWORK_DOMAIN_DEFAULT','value','default_value','',false);
@@ -746,7 +746,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_network_domains_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,'',false,'domainid');
       AddOneToOnescheme('objname','name',FetchModuleTextShort(session,'grid_network_domains_name'),dt_string,true,true);
       AddOneToOnescheme('default','default','',dt_description);
       AddMatchingReferencedField('<NETWORK_DOMAIN_DEFAULT','value','default_value','',false);
@@ -827,7 +827,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_nameserver_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_nameserver_customer'),multidomain,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,'',false,'domainid');
       AddOneToOnescheme('host','host',FetchModuleTextShort(session,'grid_nameserver_records_host'),dt_string,true,true,false,true,1,'icon');
       AddOneToOnescheme('value','value',FetchModuleTextShort(session,'grid_nameserver_records_value'),dt_string);
       AddOneToOnescheme('ttl','ttl',FetchModuleTextShort(session,'grid_nameserver_records_ttl'),dt_number);

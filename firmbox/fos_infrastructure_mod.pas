@@ -26,7 +26,7 @@ uses
   fre_zfs,
   //fre_scsi,
   fre_hal_schemes,
-  fos_citycom_voip_mod,
+  //fos_citycom_voip_mod,
   fos_firmbox_vm_machines_mod,
   fos_firmbox_firewall_mod,
   fos_firmbox_dhcp_mod,
@@ -40,7 +40,7 @@ type
   TFOS_INFRASTRUCTURE_MOD = class (TFRE_DB_APPLICATION_MODULE)
   private
     fStoragePoolsMod                                    : TFOS_FIRMBOX_POOL_MOD;
-    fVoIPMod                                            : TFOS_CITYCOM_VOIP_SERVICE_MOD;
+    //fVoIPMod                                            : TFOS_CITYCOM_VOIP_SERVICE_MOD;
     fVMMod                                              : TFRE_FIRMBOX_VM_MACHINES_MOD;
     fFirewallMod                                        : TFRE_FIRMBOX_FIREWALL_MOD;
     fDHCPMod                                            : TFRE_FIRMBOX_DHCP_MOD;
@@ -715,8 +715,8 @@ begin
   inherited SetupAppModuleStructure;
   fStoragePoolsMod:=TFOS_FIRMBOX_POOL_MOD.create;
   AddApplicationModule(fStoragePoolsMod);
-  fVoIPMod:=TFOS_CITYCOM_VOIP_SERVICE_MOD.create;
-  AddApplicationModule(fVoIPMod);
+  //fVoIPMod:=TFOS_CITYCOM_VOIP_SERVICE_MOD.create;
+  //AddApplicationModule(fVoIPMod);
   fVMMod:=TFRE_FIRMBOX_VM_MACHINES_MOD.create;
   AddApplicationModule(fVMMod);
   fFirewallMod:=TFRE_FIRMBOX_FIREWALL_MOD.create;
@@ -856,7 +856,7 @@ begin
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'grid_name'),dt_string,true,false,false,true,1,'icon');
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_nameserver_customer'),true,dt_description,true,true,1,'','',nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_nameserver_customer'),true,dt_description,true,true,1,'','',nil,'',false,'domainid');
       AddOneToOnescheme('schemeclass','sc','',dt_string,false);
       AddOneToOnescheme('icon','','',dt_string,false);
       SetFinalRightTransformFunction(@CalculateIcon,[]);
@@ -1497,9 +1497,9 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   case serviceClass of
-    'TFOS_DB_CITYCOM_VOIP_SERVICE' : begin
-                                       Result:=fVoIPMod.WEB_AddService(input,ses,app,conn);
-                                     end;
+    //'TFOS_DB_CITYCOM_VOIP_SERVICE' : begin
+    //                                   Result:=fVoIPMod.WEB_AddService(input,ses,app,conn);
+    //                                 end;
     'TFRE_DB_VMACHINE' : begin
                            Result:=fVMMod.WEB_AddVM(input,ses,app,conn);
                          end;

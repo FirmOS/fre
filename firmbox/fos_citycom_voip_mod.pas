@@ -411,7 +411,7 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_customer_objname'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer',FetchModuleTextShort(session,'grid_customer_objname'),true,dt_string,true,true,1,'',FetchModuleTextShort(session,'grid_customer_default_value'),nil,'',false,'domainid');
       AddCollectorscheme('+%s%s%s',TFRE_DB_NameTypeArray.create('international_prefix','national_prefix','number'),'number',FetchModuleTextShort(session,'grid_number'));
       AddFulltextFilterOnTransformed(['customer','number']);
     end;
