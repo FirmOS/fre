@@ -25,6 +25,10 @@ type
     function        _AddModifyFixedEntry        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION; const dbo:IFRE_DB_Object):IFRE_DB_Object;
     procedure       _StoreHandleTemplates       (const conn: IFRE_DB_CONNECTION; const input:IFRE_DB_Object; const entryObj: IFRE_DB_Object; const isModify: Boolean);
     procedure       _AddModifyHandleTemplates   (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_Usersession; const dbo: IFRE_DB_Object; const res: TFRE_DB_FORM_DESC; const store: TFRE_DB_STORE_DESC; const isSubnet: Boolean);
+
+    procedure       _setConfigChanged           (const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_Usersession; const service: IFRE_DB_Object);
+    function        _getStatusText              (const ses: IFRE_DB_UserSession; const status: String):String;
+    function        _getConfigStatusText        (const ses: IFRE_DB_UserSession; const configStatus: String):String;
   protected
     procedure       SetupAppModuleStructure     ; override;
   public
@@ -37,6 +41,8 @@ type
     function        WEB_ContentGeneral          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentTemplates        (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ContentEntries          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ApplyConfig             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ApplyConfigConfirmed    (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
     function        WEB_AddDHCP                 (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_CreateDHCP              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -112,7 +118,7 @@ begin
   if isModify then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),dbo));
 
-    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,dbo.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,dbo.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,dbo.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     if not ses.GetSessionModuleData(ClassName).FieldExists('templateDiagData') then begin //FIRST CALL - REFILL templateDiagData
@@ -129,7 +135,7 @@ begin
     baseAddIPSf.AddParam.Describe('cbfunc','ModifyTemplate');
     baseAddIPSf.AddParam.Describe('selected',dbo.UID_String);
   end else begin
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('dhcpId',service.UID_String);
@@ -257,7 +263,8 @@ begin
     if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,dbo.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
-            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID)) then
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,dbo.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('entryId',dbo.UID_String);
@@ -269,7 +276,8 @@ begin
     if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
-            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID)) then
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('dhcpId',service.UID_String);
@@ -334,7 +342,8 @@ begin
     if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,dbo.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
-            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID)) then
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,dbo.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,dbo.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('entryId',dbo.UID_String);
@@ -347,7 +356,8 @@ begin
     if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
             conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
-            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID)) then
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     sf.AddParam.Describe('dhcpId',service.UID_String);
@@ -428,8 +438,8 @@ begin
         end;
       end else begin
         if relObjExists then begin
-          relObj.DeleteField('class_type');
-          relObj.DeleteField('class_value');
+          relObj.Field('class_type').AsString:='user_class';
+          relObj.Field('class_value').AsString:='';
         end;
       end;
       if relObjExists then begin
@@ -492,6 +502,48 @@ begin
   end;
 end;
 
+procedure TFRE_FIRMBOX_DHCP_MOD._setConfigChanged(const conn: IFRE_DB_CONNECTION; const ses: IFRE_DB_Usersession; const service: IFRE_DB_Object);
+var
+  servicePlugin: TFRE_DB_SERVICE_STATUS_PLUGIN;
+begin
+  if service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin) then begin
+    if servicePlugin.isConfigApplied then begin
+      servicePlugin.setConfigModified;
+      CheckDbResult(conn.Update(service.CloneToNewObject()));
+    end;
+  end else begin
+    servicePlugin := TFRE_DB_SERVICE_STATUS_PLUGIN.Create;
+    servicePlugin.setConfigModified;
+    service.AttachPlugin(servicePlugin);
+    CheckDbResult(conn.Update(service.CloneToNewObject()));
+  end;
+  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('apply_config',false));
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD._getStatusText(const ses: IFRE_DB_UserSession; const status: String): String;
+begin
+  case status of
+    'disabled': Result:=FetchModuleTextShort(ses,'service_status_disabled');
+    'online'  : Result:=FetchModuleTextShort(ses,'service_status_online');
+    'degraded': Result:=FetchModuleTextShort(ses,'service_status_degraded');
+    'offline' : Result:=FetchModuleTextShort(ses,'service_status_offline');
+    'faulted' : Result:=FetchModuleTextShort(ses,'service_status_faulted');
+  else
+    Result:=status;
+  end;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD._getConfigStatusText(const ses: IFRE_DB_UserSession; const configStatus: String): String;
+begin
+  case configStatus of
+    'planned' : Result:=FetchModuleTextShort(ses,'service_config_status_planned');
+    'modified': Result:=FetchModuleTextShort(ses,'service_config_status_modified');
+    'applied' : Result:=FetchModuleTextShort(ses,'service_config_status_applied');
+  else
+    Result:=configStatus;
+  end;
+end;
+
 procedure TFRE_FIRMBOX_DHCP_MOD.SetupAppModuleStructure;
 begin
   inherited SetupAppModuleStructure;
@@ -521,6 +573,7 @@ begin
     CreateModuleText(conn,'dhcp_details_select_one','Please select a dhcp service to get detailed information');
 
     CreateModuleText(conn,'service_grid_objname','Name');
+    CreateModuleText(conn,'service_grid_status','Status');
     CreateModuleText(conn,'service_grid_zone','Zone');
 
     CreateModuleText(conn,'tb_create_dhcp','Add');
@@ -538,6 +591,7 @@ begin
     CreateModuleText(conn,'tb_delete_template','Delete');
     CreateModuleText(conn,'cm_modify_template','Modify');
     CreateModuleText(conn,'cm_delete_template','Delete');
+    CreateModuleText(conn,'tb_apply_config','Apply Configuration');
 
     CreateModuleText(conn,'template_create_diag_cap','Add DHCP Template');
     CreateModuleText(conn,'template_modify_diag_cap','Modify DHCP Template');
@@ -551,6 +605,9 @@ begin
     CreateModuleText(conn,'entries_grid_details','Details');
     CreateModuleText(conn,'entries_grid_details_fixed','Mac: %mac_str% IP: %ip_str%');
     CreateModuleText(conn,'entries_grid_details_subnet','Subnet: %subnet_str% Range: %range_start_str% - %range_end_str%');
+    CreateModuleText(conn,'entries_grid_descr_template_entry','Template %template_str%');
+    CreateModuleText(conn,'entries_grid_descr_template_class_entry','Template %template_str% (%class_type%: %class_value%)');
+    CreateModuleText(conn,'entries_grid_descr_template_delimiter',' - ');
 
     CreateModuleText(conn,'tb_create_subnet_entry','Add Subnet');
     CreateModuleText(conn,'tb_create_fixed_entry','Add Fixed');
@@ -602,6 +659,22 @@ begin
     CreateModuleText(conn,'dhcp_template_add_custom_option_diag_cap','Add Custom Option');
     CreateModuleText(conn,'dhcp_template_add_custom_option_declaration','Declaration');
     CreateModuleText(conn,'dhcp_template_add_custom_option_usage','Usage');
+
+    CreateModuleText(conn,'service_status_disabled','Disabled');
+    CreateModuleText(conn,'service_status_online','Online');
+    CreateModuleText(conn,'service_status_degraded','Degraded');
+    CreateModuleText(conn,'service_status_offline','Offline');
+    CreateModuleText(conn,'service_status_faulted','Faulted');
+    CreateModuleText(conn,'service_config_status_planned','Planned');
+    CreateModuleText(conn,'service_config_status_modified','Modified');
+    CreateModuleText(conn,'service_config_status_applied','Applied');
+
+    CreateModuleText(conn,'apply_service_diag_cap','Apply Configuration');
+    CreateModuleText(conn,'apply_service_diag_msg','This will apply the DHCP configuration and restart the service! Are you sure?');
+
+    CreateModuleText(conn,'dhcp_general_status_group','Status Information');
+    CreateModuleText(conn,'dhcp_general_status_label','Service Status');
+    CreateModuleText(conn,'dhcp_general_config_status_label','Configuration Status');
   end;
 end;
 
@@ -612,6 +685,30 @@ var
   transform    : IFRE_DB_SIMPLE_TRANSFORM;
   dc           : IFRE_DB_DERIVED_COLLECTION;
   servicesGrid : IFRE_DB_DERIVED_COLLECTION;
+
+  procedure _setStatusFields(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
+  begin
+    transformed_object.Field('status_icons').AsString:=FREDB_getThemedResource('images_apps/firmbox_services/status_'+transformed_object.Field('status').AsString+'.png');
+    transformed_object.Field('status_icons').AddString(FREDB_getThemedResource('images_apps/firmbox_services/config_status_'+transformed_object.Field('config_status').AsString+'.png'));
+
+    case transformed_object.Field('status').AsString of
+      'disabled': transformed_object.Field('status_icon_tooltips').AsString:=langres[0];
+      'online'  : transformed_object.Field('status_icon_tooltips').AsString:=langres[1];
+      'degraded': transformed_object.Field('status_icon_tooltips').AsString:=langres[2];
+      'offline' : transformed_object.Field('status_icon_tooltips').AsString:=langres[3];
+      'faulted' : transformed_object.Field('status_icon_tooltips').AsString:=langres[4]
+    else
+      transformed_object.Field('status_icon_tooltips').AsString:=transformed_object.Field('status').AsString;
+    end;
+
+    case transformed_object.Field('config_status').AsString of
+      'planned' : transformed_object.Field('status_icon_tooltips').AddString(langres[5]);
+      'modified': transformed_object.Field('status_icon_tooltips').AddString(langres[6]);
+      'applied' : transformed_object.Field('status_icon_tooltips').AddString(langres[7])
+    else
+      transformed_object.Field('status_icon_tooltips').AddString(transformed_object.Field('config_status').AsString);
+    end;
+  end;
 
   procedure _setCaption(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
   var
@@ -628,7 +725,9 @@ var
 
   procedure _setEntryDetails(const input,transformed_object : IFRE_DB_Object;const langres: TFRE_DB_StringArray);
   var
-    str: String;
+    str      : String;
+    i        : Integer;
+    delimiter: String;
   begin
     if (transformed_object.Field('subnet_ip').AsString<>'') then begin
       str:=StringReplace(langres[1],'%subnet_str%',transformed_object.Field('subnet_ip').AsString + '/' + transformed_object.Field('subnet_bits').AsString,[rfReplaceAll]);
@@ -639,6 +738,18 @@ var
       str:=StringReplace(str,'%ip_str%',transformed_object.Field('fixed_ip').AsString,[rfReplaceAll]);
     end;
     transformed_object.Field('details').AsString:=str;
+    delimiter:='';
+    for i := 0 to transformed_object.Field('template').ValueCount - 1 do begin
+      //if (transformed_object.Field('template_ct').ValueCount>i) and (transformed_object.Field('template_cv').ValueCount>i) and (transformed_object.Field('template_cv').AsStringItem[i]<>'') then begin
+      //  str:=StringReplace(langres[3],'%template_str%',transformed_object.Field('template').AsStringItem[i],[rfReplaceAll]);
+      //  str:=StringReplace(str,'%class_type%',transformed_object.Field('template_ct').AsStringItem[i],[rfReplaceAll]);
+      //  str:=StringReplace(str,'%class_value%',transformed_object.Field('template_cv').AsStringItem[i],[rfReplaceAll]);
+      //end else begin
+        str:=StringReplace(langres[2],'%template_str%',transformed_object.Field('template').AsStringItem[i],[rfReplaceAll]);
+      //end;
+      transformed_object.Field('descr').AsString:=transformed_object.Field('descr').AsString + delimiter + str;
+      delimiter:=langres[4];
+    end;
   end;
 
 begin
@@ -652,7 +763,7 @@ begin
     with transform do begin
       AddOneToOnescheme('objname');
       AddOneToOnescheme('label');
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_string,true,true,1,'','',nil,false,'domainid');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_string,true,true,1,'','',nil,'',false,'domainid');
       AddMatchingReferencedField(['TEMPLATEID>TFRE_DB_FBZ_TEMPLATE'],'serviceclasses');
       AddMatchingReferencedField(['TFRE_DB_DHCP<SERVICEPARENT'],'uid','dhcp','',false,dt_string,false,false,1,'','OK');
       AddOneToOnescheme('disabledSCs');
@@ -687,9 +798,13 @@ begin
 
     GFRE_DBI.NewObjectIntf(IFRE_DB_SIMPLE_TRANSFORM,transform);
     with transform do begin
-      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'service_grid_objname'));
-      AddMatchingReferencedFieldArray(['SERVICEPARENT>TFRE_DB_ZONE'],'objname','zone',FetchModuleTextShort(session,'service_grid_zone'));
-      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,false,'domainid');
+      AddOneToOnescheme('objname','',FetchModuleTextShort(session,'service_grid_objname'),dt_string,true,false,false,true,4);
+      AddMatchingReferencedFieldArray(['SERVICEPARENT>TFRE_DB_ZONE'],'objname','zone',FetchModuleTextShort(session,'service_grid_zone'),true,dt_string,false,false,4);
+      AddOneToOnescheme('status_icons','',FetchModuleTextShort(session,'service_grid_status'),dt_icon,true,false,false,true,1,'','','',nil,'status_icon_tooltips');
+      AddMatchingReferencedField(['TFOS_DB_CITYCOM_CUSTOMER<SERVICEDOMAIN'],'objname','customer','',true,dt_description,false,false,1,'','',nil,'',false,'domainid');
+      SetSimpleFuncTransformNested(@_setStatusFields,[FetchModuleTextShort(session,'service_status_disabled'),FetchModuleTextShort(session,'service_status_online'),FetchModuleTextShort(session,'service_status_degraded'),
+                                                      FetchModuleTextShort(session,'service_status_offline'),FetchModuleTextShort(session,'service_status_faulted'),
+                                                      FetchModuleTextShort(session,'service_config_status_planned'),FetchModuleTextShort(session,'service_config_status_modified'),FetchModuleTextShort(session,'service_config_status_applied')]);
     end;
 
     servicesGrid := session.NewDerivedCollection('DHCP_SERVICES_GRID');
@@ -721,11 +836,16 @@ begin
     with transform do begin
       AddOneToOnescheme('objname','',FetchModuleTextShort(session,'entries_grid_objname'));
       AddOneToOnescheme('details','',FetchModuleTextShort(session,'entries_grid_details'),dt_string);
-      AddMatchingReferencedFieldArray(['SUBNET>','BASE_IP>'],'ip','subnet_ip','',false);
-      AddMatchingReferencedFieldArray(['SUBNET>'],'subnet_bits','subnet_bits','',false);
-      AddMatchingReferencedFieldArray(['IP>'],'ip','fixed_ip','',false);
+      AddOneToOnescheme('descr','','',dt_description);
+      AddMatchingReferencedField(['SUBNET>','BASE_IP>'],'ip','subnet_ip','',false);
+      AddMatchingReferencedField(['SUBNET>'],'subnet_bits','subnet_bits','',false);
+      AddMatchingReferencedField(['IP>'],'ip','fixed_ip','',false);
+      //AddMatchingReferencedFieldArray(['TEMPLATE>TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION'],'class_type','template_ct','',false); //FIXXME
+      //AddMatchingReferencedFieldArray(['TEMPLATE>TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION'],'class_value','template_cv','',false);
+      AddMatchingReferencedFieldArray(['TEMPLATE>TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION','TEMPLATE>TFRE_DB_DHCP_TEMPLATE'],'objname','template','',false);
       AddMatchingReferencedFieldArray(['DHCP_ID>TFRE_DB_DHCP'],'uid','dhcp_uid','',false);
-      SetSimpleFuncTransformNested(@_setEntryDetails,[FetchModuleTextShort(session,'entries_grid_details_fixed'),FetchModuleTextShort(session,'entries_grid_details_subnet')]);
+      SetSimpleFuncTransformNested(@_setEntryDetails,[FetchModuleTextShort(session,'entries_grid_details_fixed'),FetchModuleTextShort(session,'entries_grid_details_subnet'),
+                                                      FetchModuleTextShort(session,'entries_grid_descr_template_entry'),FetchModuleTextShort(session,'entries_grid_descr_template_class_entry'),FetchModuleTextShort(session,'entries_grid_descr_template_delimiter')]);
     end;
 
     dc := session.NewDerivedCollection('DHCP_ENTRIES_GRID');
@@ -791,15 +911,18 @@ end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_ContentGeneral(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  scheme      : IFRE_DB_SchemeObject;
-  res         : TFRE_DB_FORM_PANEL_DESC;
-  sf          : TFRE_DB_SERVER_FUNC_DESC;
-  service     : IFRE_DB_Object;
-  editable    : Boolean;
-  dc          : IFRE_DB_DERIVED_COLLECTION;
-  group       : TFRE_DB_INPUT_GROUP_DESC;
-  block       : TFRE_DB_INPUT_BLOCK_DESC;
-  addIPSf     : TFRE_DB_SERVER_FUNC_DESC;
+  scheme        : IFRE_DB_SchemeObject;
+  res           : TFRE_DB_FORM_PANEL_DESC;
+  sf            : TFRE_DB_SERVER_FUNC_DESC;
+  service       : IFRE_DB_Object;
+  editable      : Boolean;
+  dc            : IFRE_DB_DERIVED_COLLECTION;
+  group         : TFRE_DB_INPUT_GROUP_DESC;
+  block         : TFRE_DB_INPUT_BLOCK_DESC;
+  addIPSf       : TFRE_DB_SERVER_FUNC_DESC;
+  menu          : TFRE_DB_MENU_DESC;
+  servicePlugin : TFRE_DB_SERVICE_STATUS_PLUGIN;
+  applyDisabled : Boolean;
 
 begin
   CheckClassVisibility4AnyDomain(ses);
@@ -812,6 +935,28 @@ begin
 
     GetSystemScheme(TFRE_DB_DHCP,scheme);
     res:=TFRE_DB_FORM_PANEL_DESC.create.Describe('',false,editable);
+
+    if not service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin) then begin
+      servicePlugin:=TFRE_DB_SERVICE_STATUS_PLUGIN.CreateForDB;
+    end;
+
+    if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) and
+       conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_FIXED) and
+       conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_SUBNET) and
+       conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE) then begin //right in any domain => add button
+      if (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) and
+        conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,service.DomainID) and
+        conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,service.DomainID) and
+        conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,service.DomainID)) then begin  //right in current domain
+
+        applyDisabled:=servicePlugin.isConfigApplied;
+      end else begin
+        applyDisabled:=true;
+      end;
+      menu:=TFRE_DB_MENU_DESC.create.Describe;
+      menu.AddEntry.Describe(FetchModuleTextShort(ses,'tb_apply_config'),'',CWSF(@WEB_ApplyConfig),applyDisabled,'apply_config');
+      res.SetMenu(menu);
+    end;
     group:=res.AddSchemeFormGroup(scheme.GetInputGroup('main'),ses);
     block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'local_address_block'));
     block.AddSchemeFormGroupInputs(scheme.GetInputGroup('local_address'),ses,[],'',false,true);
@@ -826,6 +971,10 @@ begin
       block.AddInputButton(3).Describe('',FetchModuleTextShort(ses,'dhcp_general_new_ip_button'),addIPSf,true);
     end;
     group.AddSchemeFormGroup(scheme.GetInputGroup('settings'),ses,false,false,'',true,true);
+
+    group:=res.AddGroup.Describe(FetchModuleTextShort(ses,'dhcp_general_status_group'),false,false);
+    group.AddDescription.Describe(FetchModuleTextShort(ses,'dhcp_general_status_label'),_getStatusText(ses,servicePlugin.getStatus),'status');
+    group.AddDescription.Describe(FetchModuleTextShort(ses,'dhcp_general_config_status_label'),_getConfigStatusText(ses,servicePlugin.getConfigStatus),'config_status');
 
     res.FillWithObjectValues(service,ses);
 
@@ -853,26 +1002,49 @@ end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_ContentTemplates(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  res        : TFRE_DB_VIEW_LIST_DESC;
-  addDisabled: Boolean;
-  service    : IFRE_DB_Object;
+  res           : TFRE_DB_VIEW_LIST_DESC;
+  addDisabled   : Boolean;
+  service       : IFRE_DB_Object;
+  servicePlugin : TFRE_DB_SERVICE_STATUS_PLUGIN;
+  applyDisabled : Boolean;
 begin
   CheckClassVisibility4AnyDomain(ses);
 
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedDHCP') then begin
+    CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
+  end else begin
+    service:=nil;
+  end;
+
   res:=ses.FetchDerivedCollection('DHCP_TEMPLATES_GRID').GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DHCP_TEMPLATE) then begin
-    if ses.GetSessionModuleData(ClassName).FieldExists('selectedDHCP') then begin
-      CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
-      addDisabled:=not conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID);
+  if (conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) and
+      conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_FIXED) and
+      conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_SUBNET) and
+      conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE)) then begin
+    if Assigned(service) then begin
+      if not service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin) then begin
+        servicePlugin:=TFRE_DB_SERVICE_STATUS_PLUGIN.CreateForDB;
+      end;
+      applyDisabled:=conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,service.DomainID) and
+                     conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) and
+                     servicePlugin.isConfigApplied;
+    end else begin
+      applyDisabled:=true;
+    end;
+    res.AddButton.DescribeManualType('apply_config',CWSF(@WEB_ApplyConfig),'',FetchModuleTextShort(ses,'tb_apply_config'),FetchModuleTextHint(ses,'tb_apply_config'),applyDisabled);
+  end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DHCP_TEMPLATE) and conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) then begin
+    if Assigned(service) then begin
+      addDisabled:=not (conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID));
     end else begin
       addDisabled:=true;
     end;
     res.AddButton.DescribeManualType('add_template',CWSF(@WEB_AddTemplate),'',FetchModuleTextShort(ses,'tb_create_template'),FetchModuleTextHint(ses,'tb_create_template'),addDisabled);
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE) and conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) then begin
     res.AddButton.DescribeManualType('modify_template',CWSF(@WEB_ModifyTemplate),'',FetchModuleTextShort(ses,'tb_modify_template'),FetchModuleTextHint(ses,'tb_modify_template'),true);
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DHCP_TEMPLATE) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DHCP_TEMPLATE) and conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) then begin
     res.AddButton.DescribeManualType('delete_template',CWSF(@WEB_DeleteTemplate),'',FetchModuleTextShort(ses,'tb_delete_template'),FetchModuleTextHint(ses,'tb_delete_template'),true);
   end;
   Result:=res;
@@ -884,35 +1056,106 @@ var
   addSubnetDisabled: Boolean;
   addFixedDisabled : Boolean;
   service          : IFRE_DB_Object;
+  servicePlugin    : TFRE_DB_SERVICE_STATUS_PLUGIN;
+  applyDisabled    : Boolean;
 begin
   CheckClassVisibility4AnyDomain(ses);
 
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedDHCP') then begin
+    CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
+  end else begin
+    service:=nil;
+  end;
+
   res:=ses.FetchDerivedCollection('DHCP_ENTRIES_GRID').GetDisplayDescription as TFRE_DB_VIEW_LIST_DESC;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DHCP_SUBNET) then begin
-    if ses.GetSessionModuleData(ClassName).FieldExists('selectedDHCP') then begin
-      CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
-      addSubnetDisabled:=not conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID);
+  if (conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) and
+      conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_FIXED) and
+      conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_SUBNET) and
+      conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE)) then begin
+    if Assigned(service) then begin
+      if not service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin) then begin
+        servicePlugin:=TFRE_DB_SERVICE_STATUS_PLUGIN.CreateForDB;
+      end;
+      applyDisabled:=conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,service.DomainID) and
+                     conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) and
+                     servicePlugin.isConfigApplied;
+    end else begin
+      applyDisabled:=true;
+    end;
+    res.AddButton.DescribeManualType('apply_config',CWSF(@WEB_ApplyConfig),'',FetchModuleTextShort(ses,'tb_apply_config'),FetchModuleTextHint(ses,'tb_apply_config'),applyDisabled);
+  end;
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DHCP_SUBNET) and conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) then begin
+    if Assigned(service) then begin
+      addSubnetDisabled:=not (conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID));
     end else begin
       addSubnetDisabled:=true;
     end;
     res.AddButton.DescribeManualType('add_subnet_entry',CWSF(@WEB_AddSubnetEntry),'',FetchModuleTextShort(ses,'tb_create_subnet_entry'),FetchModuleTextHint(ses,'tb_create_subnet_entry'),addSubnetDisabled);
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DHCP_FIXED) then begin
+  if conn.sys.CheckClassRight4AnyDomain(sr_STORE,TFRE_DB_DHCP_FIXED) and conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) then begin
     if ses.GetSessionModuleData(ClassName).FieldExists('selectedDHCP') then begin
       CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
-      addFixedDisabled:=not conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID);
+      addFixedDisabled:=not (conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID));
     end else begin
       addFixedDisabled:=true;
     end;
     res.AddButton.DescribeManualType('add_fixed_entry',CWSF(@WEB_AddFixedEntry),'',FetchModuleTextShort(ses,'tb_create_fixed_entry'),FetchModuleTextHint(ses,'tb_create_fixed_entry'),addFixedDisabled);
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_SUBNET) or conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_FIXED) then begin
+  if (conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_SUBNET) or conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP_FIXED)) and conn.sys.CheckClassRight4AnyDomain(sr_UPDATE,TFRE_DB_DHCP) then begin
     res.AddButton.DescribeManualType('modify_entry',CWSF(@WEB_ModifyEntry),'',FetchModuleTextShort(ses,'tb_modify_entry'),FetchModuleTextHint(ses,'tb_modify_entry'),true);
   end;
-  if conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DHCP_SUBNET) or conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DHCP_FIXED) then begin
+  if (conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DHCP_SUBNET) or conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DHCP_FIXED) and conn.sys.CheckClassRight4AnyDomain(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID)) then begin
     res.AddButton.DescribeManualType('delete_entry',CWSF(@WEB_DeleteEntry),'',FetchModuleTextShort(ses,'tb_delete_entry'),FetchModuleTextHint(ses,'tb_delete_entry'),true);
   end;
   Result:=res;
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_ApplyConfig(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  service: IFRE_DB_Object;
+begin
+  CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
+
+  if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) and
+          conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,service.DomainID) and
+          conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,service.DomainID) and
+          conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) ) then
+    raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+  Result:=TFRE_DB_MESSAGE_DESC.create.Describe(FetchModuleTextShort(ses,'apply_service_diag_cap'),FetchModuleTextShort(ses,'apply_service_diag_msg'),fdbmt_confirm,CWSF(@WEB_ApplyConfigConfirmed));
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_ApplyConfigConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  service       : IFRE_DB_Object;
+  servicePlugin : TFRE_DB_SERVICE_STATUS_PLUGIN;
+  updateDBO     : IFRE_DB_Object;
+begin
+  if input.field('confirmed').AsBoolean then begin
+    CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
+
+    if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) ) then
+      raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
+
+    if not service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin) then begin
+      servicePlugin:=TFRE_DB_SERVICE_STATUS_PLUGIN.CreateForDB;
+      service.AttachPlugin(servicePlugin);
+    end;
+    servicePlugin.setConfigApplied;
+    CheckDbResult(conn.Update(service));
+
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('apply_config',true));
+    if ses.isUpdatableContentVisible('DHCP_GENERAL') then begin
+      updateDBO:=GFRE_DBI.NewObject;
+      updateDBO.Field('status').AsString:=_getStatusText(ses,servicePlugin.getStatus);
+      updateDBO.Field('config_status').AsString:=_getConfigStatusText(ses,servicePlugin.getConfigStatus);
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_FORM_DESC.create.Describe('DHCP_GENERAL',updateDBO));
+    end;
+  end;
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_AddDHCP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
@@ -956,6 +1199,7 @@ var
   zone    : TFRE_DB_ZONE;
   scheme  : IFRE_DB_SchemeObject;
   dhcp    : TFRE_DB_DHCP;
+  servicePlugin: TFRE_DB_SERVICE_STATUS_PLUGIN;
 begin
   if input.FieldPathExists('data.zone') then begin
     zoneId:=input.FieldPath('data.zone').AsString;
@@ -980,14 +1224,20 @@ begin
   dhcp.Field('all_interfaces').AsBoolean:=true;
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,dhcp,true,conn);
 
+  servicePlugin := TFRE_DB_SERVICE_STATUS_PLUGIN.Create;
+  servicePlugin.setConfigPlanned;
+  dhcp.AttachPlugin(servicePlugin);
+
   CheckDbResult(conn.GetCollection(CFOS_DB_SERVICES_COLLECTION).Store(dhcp));
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_StoreDHCP(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  scheme      : IFRE_DB_SchemeObject;
-  service     : TFRE_DB_DHCP;
+  scheme        : IFRE_DB_SchemeObject;
+  service       : TFRE_DB_DHCP;
+  updateDBO     : IFRE_DB_Object;
+  servicePlugin : TFRE_DB_SERVICE_STATUS_PLUGIN;
 
 begin
   GetSystemScheme(TFRE_DB_DHCP,scheme);
@@ -997,7 +1247,16 @@ begin
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   scheme.SetObjectFieldsWithScheme(input.Field('data').AsObject,service,false,conn);
-  CheckDbResult(conn.Update(service));
+  CheckDbResult(conn.Update(service.CloneToNewObject()));
+
+  _setConfigChanged(conn,ses,service);
+  service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin);
+  //if ses.isUpdatableContentVisible('DHCP_GENERAL') then begin
+    updateDBO:=GFRE_DBI.NewObject;
+    updateDBO.Field('status').AsString:=_getStatusText(ses,servicePlugin.getStatus);
+    updateDBO.Field('config_status').AsString:=_getConfigStatusText(ses,servicePlugin.getConfigStatus);
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_FORM_DESC.create.Describe('DHCP_GENERAL',updateDBO));
+  //end;
 
   Result:=GFRE_DB_NIL_DESC;
 end;
@@ -1008,6 +1267,7 @@ var
   addSubnetDisabled  : Boolean;
   addFixedDisabled   : Boolean;
   service            : IFRE_DB_Object;
+  servicePlugin      : TFRE_DB_SERVICE_STATUS_PLUGIN;
 begin
   addTemplateDisabled:=true;
   addSubnetDisabled:=true;
@@ -1015,14 +1275,16 @@ begin
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),service));
     ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID:=service.UID;
-    if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) then begin
-      addTemplateDisabled:=false;
-    end;
-    if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) then begin
-      addSubnetDisabled:=false;
-    end;
-    if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) then begin
-      addFixedDisabled:=false;
+    if conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) then begin
+      if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) then begin
+        addTemplateDisabled:=false;
+      end;
+      if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) then begin
+        addSubnetDisabled:=false;
+      end;
+      if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) then begin
+        addFixedDisabled:=false;
+      end;
     end;
   end else begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedDHCP');
@@ -1035,6 +1297,18 @@ begin
   if ses.isUpdatableContentVisible('DHCP_GENERAL') then begin
     Result:=WEB_ContentGeneral(input,ses,app,conn);
   end else begin
+    if (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) and
+        conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,service.DomainID) and
+        conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,service.DomainID) and
+        conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,service.DomainID)) then begin
+
+      if not service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin) then begin
+        servicePlugin:=TFRE_DB_SERVICE_STATUS_PLUGIN.CreateForDB;
+      end;
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('apply_config',servicePlugin.isConfigApplied));
+    end else begin
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('apply_config',true));
+    end;
     Result:=GFRE_DB_NIL_DESC;
   end;
 end;
@@ -1066,13 +1340,13 @@ begin
 
   if input.FieldExists('templateId') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('templateId').AsString),TFRE_DB_DHCP_TEMPLATE,templateObj));
-    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,templateObj.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,templateObj.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,templateObj.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     isNew:=false;
   end else begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('dhcpId').AsString),service));
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     templateObj:=TFRE_DB_DHCP_TEMPLATE.CreateForDB;
@@ -1104,6 +1378,7 @@ begin
   end else begin
     CheckDbResult(conn.Update(templateObj));
   end;
+  _setConfigChanged(conn,ses,service);
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
@@ -1118,7 +1393,7 @@ begin
 
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),template));
 
-  if not conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then
+  if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,template.DomainID)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   if conn.GetReferencesCount(template.UID,false,'','')>0 then begin
@@ -1138,15 +1413,18 @@ function TFRE_FIRMBOX_DHCP_MOD.WEB_DeleteTemplateConfirmed(const input: IFRE_DB_
 var
   i        : NativeInt;
   template : IFRE_DB_Object;
+  service: IFRE_DB_Object;
 begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[i]),template));
 
-      if not conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then
+      if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,template.DomainID)) then
         raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
+      CheckDbResult(conn.Fetch(template.Field('dhcp_id').AsObjectLink,service));
       CheckDbResult(conn.Delete(template.UID));
+      _setConfigChanged(conn,ses,service);
     end;
     result := GFRE_DB_NIL_DESC;
   end else begin
@@ -1166,11 +1444,13 @@ begin
   del_disabled:=true;
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),template));
-    if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then begin
-      modify_disabled:=false;
-    end;
-    if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then begin
-      del_disabled:=false;
+    if  conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,template.DomainID) then begin
+      if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then begin
+        modify_disabled:=false;
+      end;
+      if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then begin
+        del_disabled:=false;
+      end;
     end;
   end;
 
@@ -1188,15 +1468,17 @@ begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),template));
 
-  if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then begin
-    func:=CWSF(@WEB_ModifyTemplate);
-    func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_template'),'',func);
-  end;
-  if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then begin
-    func:=CWSF(@WEB_DeleteTemplate);
-    func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_template'),'',func);
+  if  conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,template.DomainID) then begin
+    if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then begin
+      func:=CWSF(@WEB_ModifyTemplate);
+      func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_template'),'',func);
+    end;
+    if conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_TEMPLATE,template.DomainID) then begin
+      func:=CWSF(@WEB_DeleteTemplate);
+      func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_template'),'',func);
+    end;
   end;
   Result:=res;
 end;
@@ -1346,13 +1628,19 @@ begin
 
   if input.FieldExists('entryId') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('entryId').AsString),TFRE_DB_DHCP_SUBNET,entryObj));
-    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,entryObj.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,entryObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entryObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entryObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,entryObj.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     isNew:=false;
   end else begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('dhcpId').AsString),service));
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_SUBNET,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     entryObj:=TFRE_DB_DHCP_SUBNET.CreateForDB;
@@ -1370,6 +1658,7 @@ begin
   end else begin
     CheckDbResult(conn.Update(entryObj));
   end;
+  _setConfigChanged(conn,ses,service);
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
@@ -1386,13 +1675,21 @@ begin
 
   if input.FieldExists('entryId') then begin
     CheckDbResult(conn.FetchAs(FREDB_H2G(input.Field('entryId').AsString),TFRE_DB_DHCP_FIXED,entryObj));
-    if not conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,entryObj.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,entryObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entryObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entryObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entryObj.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,entryObj.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     isNew:=false;
   end else begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('dhcpId').AsString),service));
-    if not conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) then
+    if not (conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_FIXED,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,service.DomainID) and
+            conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID)) then
       raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
     entryObj:=TFRE_DB_DHCP_FIXED.CreateForDB;
@@ -1410,6 +1707,7 @@ begin
   end else begin
     CheckDbResult(conn.Update(entryObj));
   end;
+  _setConfigChanged(conn,ses,service);
 
   Result:=TFRE_DB_CLOSE_DIALOG_DESC.Create.Describe();
 end;
@@ -1424,7 +1722,7 @@ begin
 
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[0]),entry));
 
-  if not conn.sys.CheckClassRight4DomainId(sr_DELETE,entry.Implementor_HC.ClassType,entry.DomainID) then
+  if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,entry.Implementor_HC.ClassType,entry.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,entry.DomainID)) then
     raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
   sf:=CWSF(@WEB_DeleteEntryConfirmed);
@@ -1442,18 +1740,26 @@ end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_DeleteEntryConfirmed(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
 var
-  i        : NativeInt;
+  i,j      : NativeInt;
   entry    : IFRE_DB_Object;
+  refs     : TFRE_DB_GUIDArray;
+  service  : IFRE_DB_Object;
 begin
   if input.field('confirmed').AsBoolean then begin
     for i:= 0 to input.Field('selected').ValueCount-1 do begin
       CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsStringArr[i]),entry));
 
-      if not conn.sys.CheckClassRight4DomainId(sr_DELETE,entry.Implementor_HC.ClassType,entry.DomainID) then
+      if not (conn.sys.CheckClassRight4DomainId(sr_DELETE,entry.Implementor_HC.ClassType,entry.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) and conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,entry.DomainID)) then
         raise EFRE_DB_Exception.Create(conn.FetchTranslateableTextShort(FREDB_GetGlobalTextKey('error_no_access')));
 
+      CheckDbResult(conn.Fetch(entry.Field('dhcp_id').AsObjectLink,service));
+      refs:=conn.GetReferences(entry.UID,true,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION.ClassName,'template');
+      for j := 0 to High(refs) do begin
+        CheckDbResult(conn.Delete(refs[j]));
+      end;
       CheckDbResult(conn.Delete(entry.UID));
     end;
+    _setConfigChanged(conn,ses,service);
     result := GFRE_DB_NIL_DESC;
   end else begin
     result := GFRE_DB_NIL_DESC;
@@ -1472,11 +1778,16 @@ begin
   del_disabled:=true;
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1)  then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),entry));
-    if conn.sys.CheckClassRight4DomainId(sr_UPDATE,entry.Implementor_HC.ClassType,entry.DomainID) then begin
-      modify_disabled:=false;
-    end;
-    if conn.sys.CheckClassRight4DomainId(sr_DELETE,entry.Implementor_HC.ClassType,entry.DomainID) then begin
-      del_disabled:=false;
+    if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,entry.DomainID) then begin
+      if conn.sys.CheckClassRight4DomainId(sr_UPDATE,entry.Implementor_HC.ClassType,entry.DomainID) and
+         conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) and
+         conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) and
+         conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) then begin
+        modify_disabled:=false;
+      end;
+      if (conn.sys.CheckClassRight4DomainId(sr_DELETE,entry.Implementor_HC.ClassType,entry.DomainID) and conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID)) then begin
+        del_disabled:=false;
+      end;
     end;
   end;
 
@@ -1494,15 +1805,21 @@ begin
   res:=TFRE_DB_MENU_DESC.create.Describe;
   CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),entry));
 
-  if conn.sys.CheckClassRight4DomainId(sr_UPDATE,entry.Implementor_HC.ClassType,entry.DomainID) then begin
-    func:=CWSF(@WEB_ModifyEntry);
-    func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_entry'),'',func);
-  end;
-  if conn.sys.CheckClassRight4DomainId(sr_DELETE,entry.Implementor_HC.ClassType,entry.DomainID) then begin
-    func:=CWSF(@WEB_DeleteEntry);
-    func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
-    res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_entry'),'',func);
+  if conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,entry.DomainID) then begin
+    if conn.sys.CheckClassRight4DomainId(sr_UPDATE,entry.Implementor_HC.ClassType,entry.DomainID) and
+       conn.sys.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) and
+       conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) and
+       conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) then begin
+      func:=CWSF(@WEB_ModifyEntry);
+      func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_modify_entry'),'',func);
+    end;
+    if conn.sys.CheckClassRight4DomainId(sr_DELETE,entry.Implementor_HC.ClassType,entry.DomainID) and
+       conn.sys.CheckClassRight4DomainId(sr_DELETE,TFRE_DB_DHCP_ENTRY_TEMPLATE_RELATION,entry.DomainID) then begin
+      func:=CWSF(@WEB_DeleteEntry);
+      func.AddParam.Describe('selected',input.Field('selected').AsStringArr);
+      res.AddEntry.Describe(FetchModuleTextShort(ses,'cm_delete_entry'),'',func);
+    end;
   end;
   Result:=res;
 end;

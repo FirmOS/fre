@@ -123,7 +123,38 @@ type
     published
     end;
 
-    { TFRE_DB_SERVICE_BASE }
+
+    { TFRE_DB_SERVICE_STATUS_PLUGIN }
+
+    TFRE_DB_SERVICE_STATUS_PLUGIN=class(TFRE_DB_STATUS_PLUGIN)
+    protected
+      procedure       InternalSetup                       ;override;
+    public
+      class procedure RegisterSystemScheme                (const scheme : IFRE_DB_SCHEMEOBJECT); override;
+      class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
+      procedure       setStatus                           (const status: TFRE_DB_String);
+      function        getStatus                           : TFRE_DB_String;
+      procedure       setConfigStatus                     (const status: TFRE_DB_String);
+      function        isConfigStatus                      (const status: TFRE_DB_String):Boolean;
+      function        getConfigStatus                     : TFRE_DB_String;
+      function        isLocked                            : Boolean; override;
+
+      procedure       setDisabled                         ;
+      procedure       setOnline                           ;
+      procedure       setDegraded                         ;
+      procedure       setOffline                          ;
+      procedure       setFaulted                          ;
+
+      procedure       setConfigPlanned                    ;
+      procedure       setConfigModified                   ;
+      procedure       setConfigApplied                    ;
+      function        isConfigApplied                     : Boolean;
+
+      class function  EnhancesGridRenderingTransform      : Boolean; override;
+      procedure       TransformGridEntry                  (const transformed_object : IFRE_DB_Object); override;
+    end;
+
+   { TFRE_DB_SERVICE_BASE }
 
    TFRE_DB_SERVICE_BASE=class(TFRE_DB_VIRTUALMOSOBJECT)
    public
@@ -1593,6 +1624,116 @@ implementation
 
    result   := gresult;
   end;
+
+{ TFRE_DB_SERVICE_STATUS_PLUGIN }
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.InternalSetup;
+begin
+  inherited InternalSetup;
+  setConfigPlanned;
+  setDisabled;
+end;
+
+class procedure TFRE_DB_SERVICE_STATUS_PLUGIN.RegisterSystemScheme(const scheme: IFRE_DB_SCHEMEOBJECT);
+begin
+  inherited RegisterSystemScheme(scheme);
+  scheme.SetParentSchemeByName(TFRE_DB_STATUS_PLUGIN.ClassName);
+end;
+
+class procedure TFRE_DB_SERVICE_STATUS_PLUGIN.InstallDBObjects(const conn: IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType);
+begin
+  newVersionId:='0.1';
+  if currentVersionId='' then begin
+    currentVersionId := '0.1';
+  end;
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setStatus(const status: TFRE_DB_String);
+begin
+  Field('status').AsString:=status;
+end;
+
+function TFRE_DB_SERVICE_STATUS_PLUGIN.getStatus: TFRE_DB_String;
+begin
+  Result:=Field('status').AsString;
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setConfigStatus(const status: TFRE_DB_String);
+begin
+  Field('configStatus').AsString:=status;
+end;
+
+function TFRE_DB_SERVICE_STATUS_PLUGIN.isConfigStatus(const status: TFRE_DB_String): Boolean;
+begin
+  Result:=Field('configStatus').AsString=status;
+end;
+
+function TFRE_DB_SERVICE_STATUS_PLUGIN.getConfigStatus: TFRE_DB_String;
+begin
+  Result:=Field('configStatus').AsString;
+end;
+
+function TFRE_DB_SERVICE_STATUS_PLUGIN.isLocked: Boolean;
+begin
+  Result:=inherited isLocked;
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setDisabled;
+begin
+  setStatus('disabled');
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setOnline;
+begin
+  setStatus('online');
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setDegraded;
+begin
+  setStatus('degraded');
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setOffline;
+begin
+  setStatus('offline');
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setFaulted;
+begin
+  setStatus('faulted');
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setConfigPlanned;
+begin
+  setConfigStatus('planned');
+  setDisabled;
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setConfigModified;
+begin
+  setConfigStatus('modified');
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.setConfigApplied;
+begin
+  setConfigStatus('applied');
+end;
+
+function TFRE_DB_SERVICE_STATUS_PLUGIN.isConfigApplied: Boolean;
+begin
+  Result:=isConfigStatus('applied');
+end;
+
+class function TFRE_DB_SERVICE_STATUS_PLUGIN.EnhancesGridRenderingTransform: Boolean;
+begin
+  Result:=true;
+end;
+
+procedure TFRE_DB_SERVICE_STATUS_PLUGIN.TransformGridEntry(const transformed_object: IFRE_DB_Object);
+begin
+  transformed_object.Field('config_status').AsString:=getConfigStatus;
+  transformed_object.Field('status').AsString:=getStatus;
+end;
 
 { TFRE_DB_DHCP_TEMPLATE_CUSTOM_OPTION }
 
@@ -10797,6 +10938,7 @@ begin
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_MACHINE_SETTING_TIME);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_MACHINE_SETTING_HOSTNAME);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_FC_PORT);
+   GFRE_DBI.RegisterObjectClassEx(TFRE_DB_SERVICE_STATUS_PLUGIN);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_SERVICE_BASE);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_SERVICE);
    GFRE_DBI.RegisterObjectClassEx(TFRE_DB_SUBSERVICE);
