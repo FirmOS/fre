@@ -83,9 +83,9 @@ type
   public
     class procedure RegisterSystemScheme                (const scheme : IFRE_DB_SCHEMEOBJECT); override;
     class procedure InstallDBObjects                    (const conn:IFRE_DB_SYS_CONNECTION; var currentVersionId: TFRE_DB_NameType; var newVersionId: TFRE_DB_NameType); override;
-    procedure       locked                             ;
+    procedure       lock                               ;
     procedure       unlock                             ;
-    function        isLocked                           : Boolean;
+    function        isLocked                           : Boolean; virtual;
   end;
 
  // TFRE_DB_NOTE_PLUGIN=class(TFRE_DB_OBJECT_PLUGIN_BASE);
@@ -135,7 +135,7 @@ begin
   end;
 end;
 
-procedure TFRE_DB_STATUS_PLUGIN.locked;
+procedure TFRE_DB_STATUS_PLUGIN.lock;
 begin
   Field('locked').AsBoolean:=true;
 end;
