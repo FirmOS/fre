@@ -750,6 +750,9 @@ implementation
         end else begin
           SetLength(ids,Length(ids)+1);
           ids[Length(ids)-1]:=block.Field('elements').AsObjectItem[i].Field('id').AsString;
+          if (block.Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_BUTTON_DESC) or (block.Field('elements').AsObjectItem[i].Implementor_HC is TFRE_DB_INPUT_DESCRIPTION_DESC) then begin
+            continue; //skip buttons and descriptions
+          end;
           if not (block.Field('elements').AsObjectItem[i].FieldExists('required') and block.Field('elements').AsObjectItem[i].Field('required').AsBoolean) then begin
             allRequired:=false;
           end;
