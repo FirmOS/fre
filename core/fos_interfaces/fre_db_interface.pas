@@ -3285,8 +3285,8 @@ end;
     procedure   UnregisterUpdatableDBO     (const UID_id: TFRE_DB_GUID);
     function    IsDBOUpdatable             (const UID_id: TFRE_DB_GUID):boolean;
 
-    procedure   RegisterDBOChangeCB        (const UID_id: TFRE_DB_GUID; const callback: TFRE_DB_SERVER_FUNC_DESC; const contentId: TFRE_DB_String);
-    procedure   UnregisterDBOChangeCB      (const contentId: TFRE_DB_String);
+    procedure   RegisterDBOChangeCB        (const UID_id: TFRE_DB_GUID; const callback: TFRE_DB_SERVER_FUNC_DESC; const cbGroupId: TFRE_DB_String);
+    procedure   UnregisterDBOChangeCB      (const cbGroupId: TFRE_DB_String);
     function    getDBOChangeCBs            (const UID_id: TFRE_DB_GUID):IFRE_DB_Object;
 
     procedure   SendServerClientRequest  (const description : TFRE_DB_CONTENT_DESC;const session_id:TFRE_DB_SESSION_ID=''); // Currently no continuation, and answer processing is implemented, is an Async request
@@ -3341,7 +3341,7 @@ end;
     procedure   FieldChange            (const old_field,new_field : IFRE_DB_Field ; const tsid : TFRE_DB_TransStepId);   { DIFFERENTIAL STATE}
     procedure   FinalizeNotif          ;
     procedure   ObjectDeleted          (const coll_names: TFRE_DB_NameTypeArray ; const obj : IFRE_DB_Object ; const tsid : TFRE_DB_TransStepId); { FULL STATE }
-    procedure   ObjectUpdated          (const upobj : IFRE_DB_Object ; const colls:TFRE_DB_StringArray ; const tsid : TFRE_DB_TransStepId);         { FULL STATE }
+    procedure   ObjectUpdated          (const upobj : IFRE_DB_Object ; const colls:TFRE_DB_StringArray ; const tsid : TFRE_DB_TransStepId);       { FULL STATE }
     {Helper}
     procedure   HandleDiffField        (const mode : TDiffFieldUpdateMode ; const fld : IFRE_DB_Field);
     function    BoundMachineUID        : TFRE_DB_GUID;
@@ -7831,21 +7831,21 @@ begin
   result := FUpdateableDBOS.FieldExists(id);
 end;
 
-procedure TFRE_DB_UserSession.RegisterDBOChangeCB(const UID_id: TFRE_DB_GUID; const callback: TFRE_DB_SERVER_FUNC_DESC; const contentId: TFRE_DB_String);
+procedure TFRE_DB_UserSession.RegisterDBOChangeCB(const UID_id: TFRE_DB_GUID; const callback: TFRE_DB_SERVER_FUNC_DESC; const cbGroupId: TFRE_DB_String);
 var id:ShortString;
 begin
   id := FREDB_G2H(UID_id);
   if callback.hasParam then
     raise EFRE_DB_Exception.Create(edb_ERROR,'no params allowed here');
-  FServerFuncDBOS.Field(id).AsObject.Field(contentId).AsObject:=callback;
+  FServerFuncDBOS.Field(id).AsObject.Field(cbGroupId).AsObject:=callback;
 end;
 
-procedure TFRE_DB_UserSession.UnregisterDBOChangeCB(const contentId: TFRE_DB_String);
+procedure TFRE_DB_UserSession.UnregisterDBOChangeCB(const cbGroupId: TFRE_DB_String);
 
   procedure _checkDBO(const field: IFRE_DB_Field);
   begin
-    if field.AsObject.FieldExists(contentId) then begin
-      field.AsObject.DeleteField(contentId);
+    if field.AsObject.FieldExists(cbGroupId) then begin
+      field.AsObject.DeleteField(cbGroupId);
     end;
   end;
 
@@ -8301,11 +8301,6 @@ var upo : IFRE_DB_Object;
     cbs: IFRE_DB_Object;
     upfo: TFRE_DB_UPDATE_FORM_DESC;
 
-  procedure _executeCallback(const obj: IFRE_DB_Object);
-  begin
-    SendServerClientRequest((obj.Implementor_HC as TFRE_DB_SERVER_FUNC_DESC).InternalInvokeDI(self,upo.CloneToNewObject).Implementor_HC as TFRE_DB_CONTENT_DESC);
-  end;
-
 begin
   key := FREDB_G2H(obj_uid);
   if FDifferentialUpdates.FieldOnlyExisting(key,fld) then
@@ -8326,11 +8321,6 @@ begin
           writeln('----------------------------------');
           SendServerClientRequest(upfo);
         end;
-
-      //cbs:=getDBOChangeCBs(upo.UID);
-      //if Assigned(cbs) then begin
-      //  cbs.ForAllObjects(@_executeCallback);
-      //end;
 
       //writeln('SENT');
       upo.Finalize;
@@ -8361,13 +8351,9 @@ var cbs : IFRE_DB_Object;
   end;
 
 begin
-  //writeln('>>> SWL:: A NEW OBJECT WAS UPDATED (LIE)',upobj.DumpToString,'  ',tsid );
-  if IsDBOUpdatable(upobj.UID) then
-    begin
-      cbs:=getDBOChangeCBs(upobj.UID);
-      if Assigned(cbs) then
-        cbs.ForAllObjects(@_executeCallback);
-    end;
+  cbs:=getDBOChangeCBs(upobj.UID); { On fullstate update check for session callbacks }
+  if Assigned(cbs) then
+    cbs.ForAllObjects(@_executeCallback);
 end;
 
 procedure TFRE_DB_UserSession.HandleDiffField(const mode: TDiffFieldUpdateMode; const fld: IFRE_DB_Field);
