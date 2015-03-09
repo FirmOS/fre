@@ -48,6 +48,7 @@ type
     function        WEB_CreateDHCP              (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_StoreDHCP               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ServiceSC               (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
+    function        WEB_ServiceObjChanged       (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
 
     function        WEB_AddTemplate             (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
     function        WEB_ModifyTemplate          (const input:IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION):IFRE_DB_Object;
@@ -300,7 +301,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'subnet_block'));
-  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('subnet'),ses,[],'',false,true);
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('subnet'),ses,[],'',true,true);
   if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
     addSubnetSf.AddParam.Describe('field','subnet');
     addSubnetSf.AddParam.Describe('ipversion','ipv4');
@@ -381,7 +382,7 @@ begin
   res:=TFRE_DB_FORM_DIALOG_DESC.create.Describe(diagCap,600);
   group:=res.AddSchemeFormGroup(scheme.GetInputGroup('general'),ses);
   block:=group.AddBlock.Describe(FetchModuleTextShort(ses,'ip_block'));
-  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ip'),ses,[],'',false,true);
+  block.AddSchemeFormGroupInputs(scheme.GetInputGroup('ip'),ses,[],'',true,true);
   if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4,service.DomainID) and conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_IPV4_SUBNET,service.DomainID) then begin
     addIPSf.AddParam.Describe('field','ip');
     addIPSf.AddParam.Describe('ipversion','ipv4');
@@ -517,7 +518,6 @@ begin
     service.AttachPlugin(servicePlugin);
     CheckDbResult(conn.Update(service.CloneToNewObject()));
   end;
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('apply_config',false));
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD._getStatusText(const ses: IFRE_DB_UserSession; const status: String): String;
@@ -1129,7 +1129,6 @@ function TFRE_FIRMBOX_DHCP_MOD.WEB_ApplyConfigConfirmed(const input: IFRE_DB_Obj
 var
   service       : IFRE_DB_Object;
   servicePlugin : TFRE_DB_SERVICE_STATUS_PLUGIN;
-  updateDBO     : IFRE_DB_Object;
 begin
   if input.field('confirmed').AsBoolean then begin
     CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
@@ -1146,14 +1145,6 @@ begin
     end;
     servicePlugin.setConfigApplied;
     CheckDbResult(conn.Update(service));
-
-    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('apply_config',true));
-    if ses.isUpdatableContentVisible('DHCP_GENERAL') then begin
-      updateDBO:=GFRE_DBI.NewObject;
-      updateDBO.Field('status').AsString:=_getStatusText(ses,servicePlugin.getStatus);
-      updateDBO.Field('config_status').AsString:=_getConfigStatusText(ses,servicePlugin.getConfigStatus);
-      ses.SendServerClientRequest(TFRE_DB_UPDATE_FORM_DESC.create.Describe('DHCP_GENERAL',updateDBO));
-    end;
   end;
   Result:=GFRE_DB_NIL_DESC;
 end;
@@ -1236,8 +1227,6 @@ function TFRE_FIRMBOX_DHCP_MOD.WEB_StoreDHCP(const input: IFRE_DB_Object; const 
 var
   scheme        : IFRE_DB_SchemeObject;
   service       : TFRE_DB_DHCP;
-  updateDBO     : IFRE_DB_Object;
-  servicePlugin : TFRE_DB_SERVICE_STATUS_PLUGIN;
 
 begin
   GetSystemScheme(TFRE_DB_DHCP,scheme);
@@ -1250,13 +1239,6 @@ begin
   CheckDbResult(conn.Update(service.CloneToNewObject()));
 
   _setConfigChanged(conn,ses,service);
-  service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin);
-  //if ses.isUpdatableContentVisible('DHCP_GENERAL') then begin
-    updateDBO:=GFRE_DBI.NewObject;
-    updateDBO.Field('status').AsString:=_getStatusText(ses,servicePlugin.getStatus);
-    updateDBO.Field('config_status').AsString:=_getConfigStatusText(ses,servicePlugin.getConfigStatus);
-    ses.SendServerClientRequest(TFRE_DB_UPDATE_FORM_DESC.create.Describe('DHCP_GENERAL',updateDBO));
-  //end;
 
   Result:=GFRE_DB_NIL_DESC;
 end;
@@ -1267,14 +1249,19 @@ var
   addSubnetDisabled  : Boolean;
   addFixedDisabled   : Boolean;
   service            : IFRE_DB_Object;
-  servicePlugin      : TFRE_DB_SERVICE_STATUS_PLUGIN;
 begin
   addTemplateDisabled:=true;
   addSubnetDisabled:=true;
   addFixedDisabled:=true;
+
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedDHCP') then begin
+    ses.UnregisterDBOChangeCB('dhcpMod');
+  end;
+
   if input.FieldExists('selected') and (input.Field('selected').ValueCount=1) then begin
     CheckDbResult(conn.Fetch(FREDB_H2G(input.Field('selected').AsString),service));
     ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID:=service.UID;
+    ses.RegisterDBOChangeCB(service.UID,CWSF(@WEB_ServiceObjChanged),'dhcpMod');
     if conn.SYS.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) then begin
       if conn.SYS.CheckClassRight4DomainId(sr_STORE,TFRE_DB_DHCP_TEMPLATE,service.DomainID) then begin
         addTemplateDisabled:=false;
@@ -1290,13 +1277,35 @@ begin
     ses.GetSessionModuleData(ClassName).DeleteField('selectedDHCP');
   end;
 
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_template',addTemplateDisabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_subnet_entry',addSubnetDisabled));
-  ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_fixed_entry',addFixedDisabled));
-
   if ses.isUpdatableContentVisible('DHCP_GENERAL') then begin
     Result:=WEB_ContentGeneral(input,ses,app,conn);
   end else begin
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_template',addTemplateDisabled));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_subnet_entry',addSubnetDisabled));
+    ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.Create.DescribeStatus('add_fixed_entry',addFixedDisabled));
+    Result:=GFRE_DB_NIL_DESC;
+  end;
+  WEB_ServiceObjChanged(input,ses,app,conn);
+end;
+
+function TFRE_FIRMBOX_DHCP_MOD.WEB_ServiceObjChanged(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
+var
+  service       : IFRE_DB_Object;
+  servicePlugin : TFRE_DB_SERVICE_STATUS_PLUGIN;
+  updateDBO     : IFRE_DB_Object;
+begin
+
+  if ses.GetSessionModuleData(ClassName).FieldExists('selectedDHCP') then begin
+    CheckDbResult(conn.Fetch(ses.GetSessionModuleData(ClassName).Field('selectedDHCP').AsGUID,service));
+
+    if ses.isUpdatableContentVisible('DHCP_GENERAL') then begin
+      Result:=WEB_ContentGeneral(input,ses,app,conn);
+      service.HasPlugin(TFRE_DB_SERVICE_STATUS_PLUGIN,servicePlugin);
+      updateDBO:=GFRE_DBI.NewObject;
+      updateDBO.Field('status').AsString:=_getStatusText(ses,servicePlugin.getStatus);
+      updateDBO.Field('config_status').AsString:=_getConfigStatusText(ses,servicePlugin.getConfigStatus);
+      ses.SendServerClientRequest(TFRE_DB_UPDATE_FORM_DESC.create.Describe('DHCP_GENERAL',updateDBO));
+    end;
     if (conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP,service.DomainID) and
         conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_FIXED,service.DomainID) and
         conn.sys.CheckClassRight4DomainId(sr_UPDATE,TFRE_DB_DHCP_SUBNET,service.DomainID) and
@@ -1309,8 +1318,8 @@ begin
     end else begin
       ses.SendServerClientRequest(TFRE_DB_UPDATE_UI_ELEMENT_DESC.create.DescribeStatus('apply_config',true));
     end;
-    Result:=GFRE_DB_NIL_DESC;
   end;
+  Result:=GFRE_DB_NIL_DESC;
 end;
 
 function TFRE_FIRMBOX_DHCP_MOD.WEB_AddTemplate(const input: IFRE_DB_Object; const ses: IFRE_DB_Usersession; const app: IFRE_DB_APPLICATION; const conn: IFRE_DB_CONNECTION): IFRE_DB_Object;
